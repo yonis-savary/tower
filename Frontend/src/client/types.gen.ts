@@ -366,6 +366,263 @@ export type DisconnectDeviceResponses = {
 
 export type DisconnectDeviceResponse = DisconnectDeviceResponses[keyof DisconnectDeviceResponses];
 
+export type TriggerEventData = {
+    body: {
+        type: string;
+        payload: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/events';
+};
+
+export type TriggerEventErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type TriggerEventError = TriggerEventErrors[keyof TriggerEventErrors];
+
+export type TriggerEventResponses = {
+    /**
+     * The event is launched
+     */
+    204: void;
+};
+
+export type TriggerEventResponse = TriggerEventResponses[keyof TriggerEventResponses];
+
+export type ListQuickActionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/quick-actions';
+};
+
+export type ListQuickActionsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListQuickActionsError = ListQuickActionsErrors[keyof ListQuickActionsErrors];
+
+export type ListQuickActionsResponses = {
+    /**
+     * The quick actions
+     */
+    200: Array<{
+        id: number;
+        name: string;
+        type: string;
+        payload: string;
+    }>;
+};
+
+export type ListQuickActionsResponse = ListQuickActionsResponses[keyof ListQuickActionsResponses];
+
+export type CreateQuickActionData = {
+    body: {
+        name: string;
+        type: string;
+        payload: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/quick-actions';
+};
+
+export type CreateQuickActionErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type CreateQuickActionError = CreateQuickActionErrors[keyof CreateQuickActionErrors];
+
+export type CreateQuickActionResponses = {
+    /**
+     * The quick action
+     */
+    201: {
+        id: number;
+        name: string;
+        type: string;
+        payload: string;
+    };
+};
+
+export type CreateQuickActionResponse = CreateQuickActionResponses[keyof CreateQuickActionResponses];
+
+export type DeleteQuickActionData = {
+    body?: never;
+    path: {
+        action: number;
+    };
+    query?: never;
+    url: '/api/quick-actions/{action}';
+};
+
+export type DeleteQuickActionErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such quick action in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type DeleteQuickActionError = DeleteQuickActionErrors[keyof DeleteQuickActionErrors];
+
+export type DeleteQuickActionResponses = {
+    /**
+     * The quick action is deleted
+     */
+    204: void;
+};
+
+export type DeleteQuickActionResponse = DeleteQuickActionResponses[keyof DeleteQuickActionResponses];
+
+export type TriggerQuickActionData = {
+    body?: never;
+    path: {
+        action: number;
+    };
+    query?: never;
+    url: '/api/quick-actions/{action}/trigger';
+};
+
+export type TriggerQuickActionErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such quick action in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type TriggerQuickActionError = TriggerQuickActionErrors[keyof TriggerQuickActionErrors];
+
+export type TriggerQuickActionResponses = {
+    /**
+     * The event is launched
+     */
+    204: void;
+};
+
+export type TriggerQuickActionResponse = TriggerQuickActionResponses[keyof TriggerQuickActionResponses];
+
+export type ListHistoryData = {
+    body?: never;
+    path?: never;
+    query?: {
+        before?: number;
+    };
+    url: '/api/history';
+};
+
+export type ListHistoryErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type ListHistoryError = ListHistoryErrors[keyof ListHistoryErrors];
+
+export type ListHistoryResponses = {
+    /**
+     * The lines older than `before`, or the latest ones
+     */
+    200: Array<{
+        id: number;
+        type: string;
+        origin: string;
+        details: string;
+        created_at: string;
+    }>;
+};
+
+export type ListHistoryResponse = ListHistoryResponses[keyof ListHistoryResponses];
+
+export type ListEventDeliveriesData = {
+    body?: never;
+    path: {
+        line: number;
+    };
+    query?: never;
+    url: '/api/history/{line}/deliveries';
+};
+
+export type ListEventDeliveriesErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such line in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type ListEventDeliveriesError = ListEventDeliveriesErrors[keyof ListEventDeliveriesErrors];
+
+export type ListEventDeliveriesResponses = {
+    /**
+     * One delivery per contacted device
+     */
+    200: Array<{
+        id: number;
+        connection_uuid: string;
+        hostname: string | null;
+        payload: string;
+        response: string | null;
+        responded_at: string | null;
+    }>;
+};
+
+export type ListEventDeliveriesResponse = ListEventDeliveriesResponses[keyof ListEventDeliveriesResponses];
+
 export type ListWorkspacesData = {
     body?: never;
     path?: never;

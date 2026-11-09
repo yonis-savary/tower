@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from './components/AppLayout.vue'
 import { useAuthStore } from './stores/auth'
+import EventsView from './views/EventsView.vue'
+import HistoryView from './views/HistoryView.vue'
 import HomeView from './views/HomeView.vue'
 import LoginView from './views/LoginView.vue'
 import RegisterView from './views/RegisterView.vue'
@@ -11,7 +13,11 @@ const router = createRouter({
     {
       path: '/',
       component: AppLayout,
-      children: [{ path: '', name: 'home', component: HomeView }],
+      children: [
+        { path: '', name: 'home', component: HomeView },
+        { path: 'events', name: 'events', component: EventsView },
+        { path: 'history', name: 'history', component: HistoryView },
+      ],
     },
     { path: '/login', name: 'login', component: LoginView, meta: { guestOnly: true } },
     { path: '/register', name: 'register', component: RegisterView, meta: { guestOnly: true } },

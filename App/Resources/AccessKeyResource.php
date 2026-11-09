@@ -23,13 +23,11 @@ class AccessKeyResource extends ModelResource
      */
     public function toArray(Model $model): array
     {
-        $lastUsedAt = $model->last_used_at;
-
         return [
             'id' => $model->id,
             'name' => $model->name,
             'client_id' => $model->client_id,
-            'last_used_at' => $lastUsedAt instanceof \DateTimeInterface ? $lastUsedAt->format(\DateTimeInterface::ATOM) : $lastUsedAt,
+            'last_used_at' => AtomDate::format($model->last_used_at),
         ];
     }
 }

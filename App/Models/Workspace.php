@@ -16,7 +16,8 @@ use Cube\Utils\Attributes\Generated;
  * @property int $author
  * @property User $_author
  * @property AccessKey[] $accessKeies
- * @property Event[] $events
+ * @property History[] $histories
+ * @property QuickAction[] $quickActions
  * @property Task[] $tasks
  * @property WorkspaceMember[] $members
  */
@@ -62,9 +63,15 @@ class Workspace extends Model
     }
 
     #[Generated]
-    public function events(): HasMany
+    public function histories(): HasMany
     {
-        return $this->hasMany('events', Event::class, 'workspace', 'id');
+        return $this->hasMany('histories', History::class, 'workspace', 'id');
+    }
+
+    #[Generated]
+    public function quickActions(): HasMany
+    {
+        return $this->hasMany('quickActions', QuickAction::class, 'workspace', 'id');
     }
 
     #[Generated]
@@ -84,7 +91,8 @@ class Workspace extends Model
     {
         return [
             "accessKeies",
-            "events",
+            "histories",
+            "quickActions",
             "tasks",
             "members",
             "_author",

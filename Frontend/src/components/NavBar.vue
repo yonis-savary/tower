@@ -47,9 +47,10 @@ onMounted(workspace.loadCurrent)
 const mainItems = computed<NavItem[]>(() => [
   { label: t('nav.home'), icon: 'pi pi-home', to: { name: 'home' } },
   { label: t('nav.tasks'), icon: 'pi pi-check-square' },
+  { label: t('nav.events'), icon: 'pi pi-bolt', to: { name: 'events' } },
   { label: t('nav.jira'), icon: 'pi pi-ticket' },
   { label: t('nav.mergeRequests'), icon: 'pi pi-share-alt' },
-  { label: t('nav.history'), icon: 'pi pi-history' },
+  { label: t('nav.history'), icon: 'pi pi-history', to: { name: 'history' } },
   { label: t('nav.settings'), icon: 'pi pi-cog' },
 ])
 

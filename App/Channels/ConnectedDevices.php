@@ -37,13 +37,27 @@ class ConnectedDevices
         $this->publish($workspace);
     }
 
-    public function remove(int $connection): void
+    /**
+     * @return ?array{workspace: int, device: Device} What was known of this connection
+     */
+    public function remove(int $connection): ?array
     {
         if (null === $workspace = $this->workspaces[$connection] ?? null)
-            return;
+            return null;
 
+        $device = $this->devices[$connection];
         unset($this->workspaces[$connection], $this->devices[$connection]);
         $this->publish($workspace);
+
+        return ['workspace' => $workspace, 'device' => $device];
+    }
+
+    /**
+     * @return Device
+     */
+    public function deviceOf(int $connection): array
+    {
+        return $this->devices[$connection];
     }
 
     /**
@@ -52,6 +66,14 @@ class ConnectedDevices
     public function listFor(int $workspace): array
     {
         return array_values(array_intersect_key($this->devices, array_flip(array_keys($this->workspaces, $workspace, true))));
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function connectionsIn(int $workspace): array
+    {
+        return array_keys($this->workspaces, $workspace, true);
     }
 
     /**

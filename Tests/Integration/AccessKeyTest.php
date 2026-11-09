@@ -7,6 +7,7 @@ use App\Connector\ConnectorConfiguration;
 use App\Connector\ConnectorPackager;
 use App\Models\AccessKey;
 use App\Services\AccessKeyService;
+use App\Services\HistoryService;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
@@ -57,7 +58,7 @@ class AccessKeyTest extends CubeTestCase
 
     private function authorize(array $headers): ?string
     {
-        return (new DevicesChannel(new AccessKeyService()))->authorize([], new Request('GET', '/devices', $headers));
+        return (new DevicesChannel(new AccessKeyService(), new HistoryService()))->authorize([], new Request('GET', '/devices', $headers));
     }
 
     private function credentials(array $created): array
@@ -161,7 +162,7 @@ class AccessKeyTest extends CubeTestCase
         $zip->addFromString('__main__.py', 'pass');
         $zip->close();
 
-        $packager = new ConnectorPackager(new ConnectorConfiguration($source), new DevicesChannel(new AccessKeyService()));
+        $packager = new ConnectorPackager(new ConnectorConfiguration($source), new DevicesChannel(new AccessKeyService(), new HistoryService()));
         $bytes = $packager->withEmbeddedConfig(['client_id' => 'twr_x']);
 
         $result = tempnam(sys_get_temp_dir(), 'pyz');

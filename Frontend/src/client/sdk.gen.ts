@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateAccessKeyData, CreateAccessKeyErrors, CreateAccessKeyResponses, DisconnectDeviceData, DisconnectDeviceErrors, DisconnectDeviceResponses, DownloadConnectorData, DownloadConnectorErrors, DownloadConnectorResponses, DownloadPreconfiguredConnectorData, DownloadPreconfiguredConnectorErrors, DownloadPreconfiguredConnectorResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetCurrentWorkspaceData, GetCurrentWorkspaceErrors, GetCurrentWorkspaceResponses, GetWorkspaceSocketData, GetWorkspaceSocketErrors, GetWorkspaceSocketResponses, ListAccessKeysData, ListAccessKeysErrors, ListAccessKeysResponses, ListWorkspacesData, ListWorkspacesErrors, ListWorkspacesResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, RegisterData, RegisterErrors, RegisterResponses, RevokeAccessKeyData, RevokeAccessKeyErrors, RevokeAccessKeyResponses, SelectWorkspaceData, SelectWorkspaceErrors, SelectWorkspaceResponses } from './types.gen';
+import type { CreateAccessKeyData, CreateAccessKeyErrors, CreateAccessKeyResponses, CreateQuickActionData, CreateQuickActionErrors, CreateQuickActionResponses, DeleteQuickActionData, DeleteQuickActionErrors, DeleteQuickActionResponses, DisconnectDeviceData, DisconnectDeviceErrors, DisconnectDeviceResponses, DownloadConnectorData, DownloadConnectorErrors, DownloadConnectorResponses, DownloadPreconfiguredConnectorData, DownloadPreconfiguredConnectorErrors, DownloadPreconfiguredConnectorResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetCurrentWorkspaceData, GetCurrentWorkspaceErrors, GetCurrentWorkspaceResponses, GetWorkspaceSocketData, GetWorkspaceSocketErrors, GetWorkspaceSocketResponses, ListAccessKeysData, ListAccessKeysErrors, ListAccessKeysResponses, ListEventDeliveriesData, ListEventDeliveriesErrors, ListEventDeliveriesResponses, ListHistoryData, ListHistoryErrors, ListHistoryResponses, ListQuickActionsData, ListQuickActionsErrors, ListQuickActionsResponses, ListWorkspacesData, ListWorkspacesErrors, ListWorkspacesResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, RegisterData, RegisterErrors, RegisterResponses, RevokeAccessKeyData, RevokeAccessKeyErrors, RevokeAccessKeyResponses, SelectWorkspaceData, SelectWorkspaceErrors, SelectWorkspaceResponses, TriggerEventData, TriggerEventErrors, TriggerEventResponses, TriggerQuickActionData, TriggerQuickActionErrors, TriggerQuickActionResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -115,6 +115,69 @@ export const getCurrentUser = <ThrowOnError extends boolean = false>(options?: O
  * Closes the connection of a device of the current workspace. The connector stops until it is launched again
  */
 export const disconnectDevice = <ThrowOnError extends boolean = false>(options: Options<DisconnectDeviceData, ThrowOnError>): RequestResult<DisconnectDeviceResponses, DisconnectDeviceErrors, ThrowOnError> => (options.client ?? client).post<DisconnectDeviceResponses, DisconnectDeviceErrors, ThrowOnError>({ url: '/api/devices/{uuid}/disconnect', ...options });
+
+/**
+ * Trigger event
+ *
+ * Journals an event and sends it to the connected devices of the current workspace
+ */
+export const triggerEvent = <ThrowOnError extends boolean = false>(options: Options<TriggerEventData, ThrowOnError>): RequestResult<TriggerEventResponses, TriggerEventErrors, ThrowOnError> => (options.client ?? client).post<TriggerEventResponses, TriggerEventErrors, ThrowOnError>({
+    url: '/api/events',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List quick actions
+ *
+ * The predefined events of the current workspace
+ */
+export const listQuickActions = <ThrowOnError extends boolean = false>(options?: Options<ListQuickActionsData, ThrowOnError>): RequestResult<ListQuickActionsResponses, ListQuickActionsErrors, ThrowOnError> => (options?.client ?? client).get<ListQuickActionsResponses, ListQuickActionsErrors, ThrowOnError>({ url: '/api/quick-actions', ...options });
+
+/**
+ * Create quick action
+ *
+ * Saves a predefined event in the current workspace
+ */
+export const createQuickAction = <ThrowOnError extends boolean = false>(options: Options<CreateQuickActionData, ThrowOnError>): RequestResult<CreateQuickActionResponses, CreateQuickActionErrors, ThrowOnError> => (options.client ?? client).post<CreateQuickActionResponses, CreateQuickActionErrors, ThrowOnError>({
+    url: '/api/quick-actions',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete quick action
+ *
+ * Deletes a quick action of the current workspace
+ */
+export const deleteQuickAction = <ThrowOnError extends boolean = false>(options: Options<DeleteQuickActionData, ThrowOnError>): RequestResult<DeleteQuickActionResponses, DeleteQuickActionErrors, ThrowOnError> => (options.client ?? client).delete<DeleteQuickActionResponses, DeleteQuickActionErrors, ThrowOnError>({ url: '/api/quick-actions/{action}', ...options });
+
+/**
+ * Trigger quick action
+ *
+ * Launches the event predefined by a quick action of the current workspace
+ */
+export const triggerQuickAction = <ThrowOnError extends boolean = false>(options: Options<TriggerQuickActionData, ThrowOnError>): RequestResult<TriggerQuickActionResponses, TriggerQuickActionErrors, ThrowOnError> => (options.client ?? client).post<TriggerQuickActionResponses, TriggerQuickActionErrors, ThrowOnError>({ url: '/api/quick-actions/{action}/trigger', ...options });
+
+/**
+ * List history
+ *
+ * The history of the current workspace, newest first, by pages of 50 lines
+ */
+export const listHistory = <ThrowOnError extends boolean = false>(options?: Options<ListHistoryData, ThrowOnError>): RequestResult<ListHistoryResponses, ListHistoryErrors, ThrowOnError> => (options?.client ?? client).get<ListHistoryResponses, ListHistoryErrors, ThrowOnError>({ url: '/api/history', ...options });
+
+/**
+ * List event deliveries
+ *
+ * The devices an event of the history was sent to, with their response
+ */
+export const listEventDeliveries = <ThrowOnError extends boolean = false>(options: Options<ListEventDeliveriesData, ThrowOnError>): RequestResult<ListEventDeliveriesResponses, ListEventDeliveriesErrors, ThrowOnError> => (options.client ?? client).get<ListEventDeliveriesResponses, ListEventDeliveriesErrors, ThrowOnError>({ url: '/api/history/{line}/deliveries', ...options });
 
 /**
  * List workspaces

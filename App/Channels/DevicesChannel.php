@@ -3,6 +3,7 @@
 namespace App\Channels;
 
 use App\Services\AccessKeyService;
+use App\Services\HistoryService;
 use Cube\Web\Websocket\Channel\Channel;
 use Psr\Http\Message\RequestInterface;
 use Ratchet\ConnectionInterface;
@@ -24,8 +25,14 @@ class DevicesChannel extends Channel
      */
     private array $accessKeys = [];
 
+    /**
+     * @var array<int,string> Why Tower is closing a connection, by connection id
+     */
+    private array $closeReasons = [];
+
     public function __construct(
         protected AccessKeyService $keys,
+        protected HistoryService $history,
     ) {}
 
     public function getRoute(): string
@@ -48,11 +55,9 @@ class DevicesChannel extends Channel
 
         $uuid = $this->uuid();
         $this->getSubscriber($connection)->send(['type' => 'connection', 'uuid' => $uuid]);
-        ConnectedDevices::getInstance()->add(
-            $connection->resourceId,
-            $key->workspace,
-            $this->describe($connection->httpRequest, $key->name, $uuid),
-        );
+        $device = $this->describe($connection->httpRequest, $key->name, $uuid);
+        ConnectedDevices::getInstance()->add($connection->resourceId, $key->workspace, $device);
+        $this->history->log($key->workspace, 'device.connected', $device, HistoryService::ORIGIN_DEVICE);
     }
 
     /**
@@ -82,14 +87,29 @@ class DevicesChannel extends Channel
 
     public function unsubscribe(ConnectionInterface $connection): bool
     {
-        unset($this->accessKeys[$connection->resourceId]);
-        ConnectedDevices::getInstance()->remove($connection->resourceId);
+        $id = $connection->resourceId;
+        $reason = $this->closeReasons[$id] ?? 'connection_closed';
+        unset($this->accessKeys[$id], $this->closeReasons[$id]);
+
+        if ($removed = ConnectedDevices::getInstance()->remove($id)) {
+            $this->history->log($removed['workspace'], 'device.disconnected', [
+                'uuid' => $removed['device']['uuid'],
+                'hostname' => $removed['device']['hostname'],
+                'access_key' => $removed['device']['access_key'],
+                'reason' => $reason,
+            ], HistoryService::ORIGIN_DEVICE);
+        }
 
         return parent::unsubscribe($connection);
     }
 
     public function dispatch(string $path, array $data = [])
     {
+        if ('event' === ($data['type'] ?? null)) {
+            $this->deliverEvent($data);
+            return;
+        }
+
         if ('disconnect' !== ($data['type'] ?? null)) {
             parent::dispatch($path, $data);
             return;
@@ -103,8 +123,33 @@ class DevicesChannel extends Channel
             if (!$subscriber = $this->subscribers[$connectionId] ?? null)
                 continue;
 
+            $this->closeReasons[$connectionId] = $data['reason'];
             $subscriber->send(['type' => 'disconnect', 'reason' => $data['reason']]);
             $subscriber->connection->close();
+        }
+    }
+
+    /**
+     * Send an event to every device connected to this workspace.
+     *
+     * @param int    $id      Its line in the history
+     * @param string $payload JSON object
+     */
+    public function sendEvent(int $workspace, int $id, string $event, string $payload): void
+    {
+        $this->emit(['type' => 'event', 'workspace' => $workspace, 'id' => $id, 'event' => $event, 'payload' => $payload]);
+    }
+
+    private function deliverEvent(array $data): void
+    {
+        $message = ['type' => 'event', 'id' => $data['id'], 'event' => $data['event'], 'payload' => json_decode($data['payload'])];
+        $connected = ConnectedDevices::getInstance();
+
+        foreach ($connected->connectionsIn($data['workspace']) as $connectionId) {
+            $this->subscribers[$connectionId]?->send($message);
+
+            $device = $connected->deviceOf($connectionId);
+            $this->history->logDelivery($data['id'], $device['uuid'], $device['hostname'], $data['payload']);
         }
     }
 

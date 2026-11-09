@@ -15,6 +15,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $password_hash
  * @property \DateTime $created_at
  * @property \DateTime $disabled_at
+ * @property History[] $histories
  * @property Workspace[] $workspaces
  * @property WorkspaceMember[] $workspaceMembers
  */
@@ -49,6 +50,12 @@ class User extends Model
     }
 
     #[Generated]
+    public function histories(): HasMany
+    {
+        return $this->hasMany('histories', History::class, 'user', 'id');
+    }
+
+    #[Generated]
     public function workspaces(): HasMany
     {
         return $this->hasMany('workspaces', Workspace::class, 'author', 'id');
@@ -64,6 +71,7 @@ class User extends Model
     public static function relations(): array
     {
         return [
+            "histories",
             "workspaces",
             "workspaceMembers",
         ];

@@ -9,6 +9,7 @@ use App\Requests\CreateAccessKeyRequest;
 use App\Requests\PreconfiguredConnectorRequest;
 use App\Resources\AccessKeyResource;
 use App\Services\AccessKeyService;
+use App\Services\HistoryService;
 use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
@@ -31,6 +32,7 @@ class AccessKeyController extends Controller
         protected AccessKeyService $keys,
         protected ConnectorPackager $connector,
         protected DevicesChannel $devices,
+        protected HistoryService $history,
     ) {}
 
     public function routes(Router $router): void
@@ -61,6 +63,7 @@ class AccessKeyController extends Controller
     public function create(CreateAccessKeyRequest $request): Response
     {
         [$key, $secret] = $this->keys->create($this->currentWorkspaceId(), $request->validated('name'));
+        $this->history->log($key->workspace, 'key.created', ['name' => $key->name], user: $this->authentication->userId());
 
         return Response::json([
             'key' => AccessKeyResource::of($key),
@@ -79,6 +82,7 @@ class AccessKeyController extends Controller
             return Response::json(['error' => 'Access key not found'], StatusCode::NOT_FOUND);
 
         $this->keys->revoke($accessKey);
+        $this->history->log($accessKey->workspace, 'key.revoked', ['name' => $accessKey->name], user: $this->authentication->userId());
         $this->devices->disconnectKey($accessKey->id, 'revoked');
 
         return Response::noContent();

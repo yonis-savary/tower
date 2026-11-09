@@ -7,6 +7,7 @@ use App\Channels\DevicesChannel;
 use App\Channels\WorkspaceDevicesChannel;
 use App\Security\WorkspaceSocketToken;
 use App\Services\AccessKeyService;
+use App\Services\HistoryService;
 use Cube\Test\CubeTestCase;
 use Cube\Web\Websocket\Servers\WebsocketConfiguration;
 use GuzzleHttp\Psr7\Request;
@@ -51,7 +52,7 @@ class ConnectedDevicesTest extends CubeTestCase
 
     private function describe(array $headers): array
     {
-        return (new DevicesChannel(new AccessKeyService()))->describe(new Request('GET', '/devices', $headers), 'My key', 'an-uuid');
+        return (new DevicesChannel(new AccessKeyService(), new HistoryService()))->describe(new Request('GET', '/devices', $headers), 'My key', 'an-uuid');
     }
 
     public function testDeviceIsDescribedFromItsHeaders()

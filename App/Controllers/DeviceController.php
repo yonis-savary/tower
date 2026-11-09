@@ -37,7 +37,7 @@ class DeviceController extends Controller
     public function disconnect(Request $request, string $uuid): Response
     {
         $workspace = $this->workspaces->current($this->authentication->userId())->id;
-        $this->devices->disconnectDevice($workspace, $uuid, 'disconnected from the web interface');
+        $this->devices->disconnectDevice($workspace, $uuid, 'disconnected_by_user');
 
         return Response::noContent();
     }
