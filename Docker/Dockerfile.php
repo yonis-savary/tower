@@ -47,6 +47,18 @@ USER www-data
 RUN composer install --no-scripts
 
 
+# Frontend build, copied into the production image and served by App/Routes/frontend.php
+FROM node:22-alpine AS frontend
+
+WORKDIR /build
+
+COPY Frontend/package.json Frontend/package-lock.json ./
+RUN npm ci
+
+COPY Frontend/ ./
+RUN npm run build
+
+
 # Production : your project is copied into the image, which never changes once built
 FROM base AS prod
 
@@ -59,5 +71,6 @@ USER www-data
 RUN composer install --no-dev --no-scripts --no-autoloader
 
 COPY --chown=www-data:www-data . .
+COPY --from=frontend --chown=www-data:www-data /build/dist ./Frontend/dist
 
 RUN composer dump-autoload --no-dev --classmap-authoritative

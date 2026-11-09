@@ -1,4 +1,4 @@
-.PHONY: dev dev-down build up down deploy exec launch-scheduler
+.PHONY: dev dev-down build up down deploy exec launch-scheduler sdk
 
 # Production reads docker-compose.yml only, never the development override
 PROD = docker compose -f docker-compose.yml
@@ -11,6 +11,8 @@ Storage:
 
 dev: Storage
 	docker compose up -d --build
+	@echo "Backend : http://$$(docker compose port nginx 80)"
+	cd Frontend && npm run dev
 
 dev-down:
 	docker compose down
@@ -38,3 +40,7 @@ exec:
 
 launch-scheduler:
 	$(EXEC) php do routine:launch
+
+sdk:
+	$(EXEC) php do make:openapi
+	cd Frontend && npm run api:generate

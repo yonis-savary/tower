@@ -3,6 +3,7 @@
 services:
   php-fpm:
     image: ${COMPOSE_PROJECT_NAME}-php # Reused by every background service (queues, websocket...)
+    pull_policy: never # Built here, it exists in no registry
     build:
       context: .
       dockerfile: Docker/Dockerfile.php
@@ -31,6 +32,7 @@ services:
 
   scheduler:
     image: ${COMPOSE_PROJECT_NAME}-php
+    pull_policy: never # Built by php-fpm, it exists in no registry
     # Sleeps to the start of the next minute before each launch, see Cube's docs/34-deployment.md
     command: sh -c 'while true; do sleep $$((60 - $$(date +%s) % 60)); php do routine:launch & done'
     restart: unless-stopped
@@ -44,6 +46,7 @@ services:
 
   websocket:
     image: ${COMPOSE_PROJECT_NAME}-php
+    pull_policy: never # Built by php-fpm, it exists in no registry
     command: ["php", "do", "websocket:serve", "-l"]
     restart: unless-stopped
     ports:

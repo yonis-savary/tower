@@ -3,8 +3,7 @@
 use Cube\Core\Autoloader\Applications;
 use Cube\Core\Autoloader\AutoloaderConfiguration;
 use Cube\Data\Database\DatabaseConfiguration;
-use Cube\Web\Helpers\StaticServer;
-use Cube\Web\Router\RouterConfiguration;
+use Cube\Data\OpenAPI\OpenAPIConfiguration;
 use Cube\Web\Websocket\Broadcast\BroadcastConfiguration;
 use Cube\Web\Websocket\Servers\WebsocketConfiguration;
 
@@ -35,10 +34,8 @@ return [
     // Class discovery is cached in production only : force it on or off here
     // new AutoloaderConfiguration(cached: true),
 
-    // You can serve your frontend application with a static file server
-    // new RouterConfiguration(
-    //     apis: [
-    //         new StaticServer('FrontEnd/Public')
-    //     ]
-    // )
+    new OpenAPIConfiguration(
+        outputFile: 'Frontend/openapi.json',
+        title: 'Tower',
+    ),
 ];

@@ -2,3 +2,5 @@
 .git
 vendor
 Storage
+Frontend/node_modules
+Frontend/dist
