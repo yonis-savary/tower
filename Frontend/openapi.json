@@ -473,6 +473,60 @@
                     }
                 }
             }
+        },
+        "\/api\/workspaces\/current\/socket": {
+            "get": {
+                "summary": "Workspace socket",
+                "description": "The websocket URL following the devices of the current workspace, valid for a minute",
+                "operationId": "getWorkspaceSocket",
+                "responses": {
+                    "200": {
+                        "description": "The URL to open",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "url": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The user belongs to no workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {

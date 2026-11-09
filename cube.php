@@ -29,6 +29,7 @@ return [
     new WebsocketConfiguration(
         httpHost: '0.0.0.0',
         broadcastSecret: env('WEBSOCKET_SECRET'),
+        allowedOrigins: explode(',', env('WEBSOCKET_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:8081')),
     ),
 
     new BroadcastConfiguration(

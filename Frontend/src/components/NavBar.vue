@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter, type RouteLocationRaw } from 'vue-router'
+import Badge from 'primevue/badge'
 import Button from 'primevue/button'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
 import { useAuthStore } from '../stores/auth'
+import { useDeviceSocketStore } from '../stores/deviceSocket'
 import { useWorkspaceStore } from '../stores/workspace'
 
 // An item without `to` has no screen yet
@@ -13,6 +15,7 @@ type NavItem = { label: string; icon: string; to?: RouteLocationRaw }
 
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
+const deviceSocket = useDeviceSocketStore()
 const router = useRouter()
 const { t } = useI18n()
 
@@ -45,9 +48,24 @@ const mainItems = computed<NavItem[]>(() => [
 ])
 
 const secondaryItems = computed<NavItem[]>(() => [
-  { label: t('nav.devices'), icon: 'pi pi-desktop' },
   { label: t('nav.download'), icon: 'pi pi-download' },
 ])
+
+const socketIndicator = computed(
+  () =>
+    ({
+      connecting: { icon: 'pi pi-spin pi-spinner', label: t('nav.socketConnecting') },
+      connected: { icon: 'pi pi-check', label: t('nav.socketConnected') },
+      disconnected: { icon: 'pi pi-times', label: t('nav.socketDisconnected') },
+    })[deviceSocket.status],
+)
+
+// Follows the selected workspace, and stops when the logout clears it
+watch(
+  () => workspace.current?.id,
+  (id) => (id ? deviceSocket.connect() : deviceSocket.disconnect()),
+)
+onBeforeUnmount(deviceSocket.disconnect)
 
 async function logOut() {
   await auth.signOut()
@@ -70,6 +88,20 @@ async function logOut() {
       <i class="pi pi-angle-down navbar-text" aria-hidden="true" />
     </button>
     <Menu ref="workspaceMenu" :model="workspaceMenuItems" popup @show="workspace.loadWorkspaces" />
+
+    <button type="button" class="navbar-item navbar-devices" :title="`${t('nav.devices')} · ${socketIndicator.label}`">
+      <i class="pi pi-desktop" aria-hidden="true" />
+      <span class="navbar-text">{{ t('nav.devices') }}</span>
+      <span class="navbar-devices-state">
+        <i
+          :class="[socketIndicator.icon, `navbar-socket-${deviceSocket.status}`]"
+          role="img"
+          :aria-label="socketIndicator.label"
+          :data-socket-status="deviceSocket.status"
+        />
+        <Badge :value="deviceSocket.activeDevices" severity="secondary" size="small" />
+      </span>
+    </button>
 
     <ul class="navbar-list">
       <li v-for="item in mainItems" :key="item.label">
@@ -171,6 +203,36 @@ async function logOut() {
   outline-offset: -2px;
 }
 
+.navbar-devices {
+  border: 1px solid light-dark(var(--p-blue-200), var(--p-blue-800));
+  background: light-dark(var(--p-blue-50), color-mix(in srgb, var(--p-blue-500) 16%, transparent));
+  color: light-dark(var(--p-blue-700), var(--p-blue-200));
+}
+
+.navbar-devices:hover {
+  background: light-dark(var(--p-blue-100), color-mix(in srgb, var(--p-blue-500) 24%, transparent));
+}
+
+.navbar-devices-state {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-devices-state i {
+  width: auto;
+  font-size: 0.875rem;
+}
+
+.navbar-socket-connected {
+  color: light-dark(var(--p-green-600), var(--p-green-400));
+}
+
+.navbar-socket-disconnected {
+  color: light-dark(var(--p-red-600), var(--p-red-400));
+}
+
 .navbar-item.router-link-active {
   background: var(--p-highlight-background);
   color: var(--p-highlight-color);
@@ -228,6 +290,16 @@ async function logOut() {
   .navbar-user {
     justify-content: center;
     padding-inline: 0;
+  }
+
+  .navbar-devices {
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .navbar-devices-state {
+    margin-left: 0;
+    gap: 0.25rem;
   }
 }
 </style>

@@ -252,3 +252,38 @@ export type SelectWorkspaceResponses = {
 };
 
 export type SelectWorkspaceResponse = SelectWorkspaceResponses[keyof SelectWorkspaceResponses];
+
+export type GetWorkspaceSocketData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/workspaces/current/socket';
+};
+
+export type GetWorkspaceSocketErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The user belongs to no workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type GetWorkspaceSocketError = GetWorkspaceSocketErrors[keyof GetWorkspaceSocketErrors];
+
+export type GetWorkspaceSocketResponses = {
+    /**
+     * The URL to open
+     */
+    200: {
+        url?: string;
+    };
+};
+
+export type GetWorkspaceSocketResponse = GetWorkspaceSocketResponses[keyof GetWorkspaceSocketResponses];

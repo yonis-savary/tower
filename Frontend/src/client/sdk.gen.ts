@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetCurrentWorkspaceData, GetCurrentWorkspaceErrors, GetCurrentWorkspaceResponses, ListWorkspacesData, ListWorkspacesErrors, ListWorkspacesResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, RegisterData, RegisterErrors, RegisterResponses, SelectWorkspaceData, SelectWorkspaceErrors, SelectWorkspaceResponses } from './types.gen';
+import type { GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetCurrentWorkspaceData, GetCurrentWorkspaceErrors, GetCurrentWorkspaceResponses, GetWorkspaceSocketData, GetWorkspaceSocketErrors, GetWorkspaceSocketResponses, ListWorkspacesData, ListWorkspacesErrors, ListWorkspacesResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, RegisterData, RegisterErrors, RegisterResponses, SelectWorkspaceData, SelectWorkspaceErrors, SelectWorkspaceResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -87,3 +87,10 @@ export const selectWorkspace = <ThrowOnError extends boolean = false>(options: O
         ...options.headers
     }
 });
+
+/**
+ * Workspace socket
+ *
+ * The websocket URL following the devices of the current workspace, valid for a minute
+ */
+export const getWorkspaceSocket = <ThrowOnError extends boolean = false>(options?: Options<GetWorkspaceSocketData, ThrowOnError>): RequestResult<GetWorkspaceSocketResponses, GetWorkspaceSocketErrors, ThrowOnError> => (options?.client ?? client).get<GetWorkspaceSocketResponses, GetWorkspaceSocketErrors, ThrowOnError>({ url: '/api/workspaces/current/socket', ...options });
