@@ -3,18 +3,15 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\Workspace;
-use App\Models\WorkspaceMember;
-use Cube\Data\Database\Database;
 
 class UserRegistration
 {
     public function __construct(
-        protected Database $database,
+        protected WorkspaceService $workspaces,
     ) {}
 
     /**
-     * Create a user with their first workspace.
+     * Create a user with their default workspace.
      *
      * @return ?User `null` when the email is already taken
      */
@@ -23,38 +20,28 @@ class UserRegistration
         if ($this->emailIsTaken($email))
             return null;
 
-        $user = null;
-        $failure = $this->database->transaction(function () use ($email, $password, &$user) {
+        try {
             // Not fromArray() nor a DateTime : generated models type a DATETIME column as DATE, which drops the time
             $user = (new User([
                 'email' => $email,
                 'password_hash' => password_hash($password, PASSWORD_DEFAULT),
                 'created_at' => date('Y-m-d H:i:s'),
             ]))->save();
+        } catch (\PDOException $exception) {
+            // Two simultaneous registrations : the unique index refused the second one
+            if ($this->emailIsTaken($email))
+                return null;
 
-            $workspace = Workspace::fromArray([
-                'name' => 'Mon workspace',
-                'author' => $user->id,
-            ])->save();
+            throw $exception;
+        }
 
-            WorkspaceMember::fromArray([
-                'workspace' => $workspace->id,
-                'user' => $user->id,
-            ])->save();
-        });
+        $this->workspaces->createDefault($user);
 
-        if (!$failure)
-            return $user;
-
-        // Two simultaneous registrations : the unique index refused the second one
-        if ($this->emailIsTaken($email))
-            return null;
-
-        throw $failure;
+        return $user;
     }
 
     private function emailIsTaken(string $email): bool
     {
-        return null !== User::findWhere(['email' => $email]);
+        return User::existsWhere(['email' => $email]);
     }
 }

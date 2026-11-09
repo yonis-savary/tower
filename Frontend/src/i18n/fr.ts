@@ -24,8 +24,19 @@ export default {
     emailTaken: 'Un compte existe déjà avec cet email.',
     invalid: 'Vérifie ton email et utilise un mot de passe de 8 à 72 caractères.',
   },
-  home: {
-    loggedInAs: 'Connecté en tant que {email}',
+  nav: {
+    label: 'Navigation principale',
+    workspace: 'Workspace',
+    manageWorkspaces: 'Gérer mes workspaces',
+    loadingWorkspaces: 'Chargement…',
+    home: 'Accueil',
+    tasks: 'Tâches',
+    jira: 'Jira',
+    mergeRequests: 'Merge Requests',
+    history: 'Historique',
+    settings: 'Paramètres',
+    devices: 'Appareils',
+    download: 'Download',
     logout: 'Se déconnecter',
   },
 }

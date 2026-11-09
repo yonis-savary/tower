@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, RegisterData, RegisterErrors, RegisterResponses } from './types.gen';
+import type { GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetCurrentWorkspaceData, GetCurrentWorkspaceErrors, GetCurrentWorkspaceResponses, ListWorkspacesData, ListWorkspacesErrors, ListWorkspacesResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, RegisterData, RegisterErrors, RegisterResponses, SelectWorkspaceData, SelectWorkspaceErrors, SelectWorkspaceResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -59,3 +59,31 @@ export const logout = <ThrowOnError extends boolean = false>(options?: Options<L
  * The user of the current session
  */
 export const getCurrentUser = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserData, ThrowOnError>): RequestResult<GetCurrentUserResponses, GetCurrentUserErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentUserResponses, GetCurrentUserErrors, ThrowOnError>({ url: '/api/auth/me', ...options });
+
+/**
+ * List workspaces
+ *
+ * The workspaces the current user is a member of
+ */
+export const listWorkspaces = <ThrowOnError extends boolean = false>(options?: Options<ListWorkspacesData, ThrowOnError>): RequestResult<ListWorkspacesResponses, ListWorkspacesErrors, ThrowOnError> => (options?.client ?? client).get<ListWorkspacesResponses, ListWorkspacesErrors, ThrowOnError>({ url: '/api/workspaces', ...options });
+
+/**
+ * Current workspace
+ *
+ * The workspace selected in the current session
+ */
+export const getCurrentWorkspace = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentWorkspaceData, ThrowOnError>): RequestResult<GetCurrentWorkspaceResponses, GetCurrentWorkspaceErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentWorkspaceResponses, GetCurrentWorkspaceErrors, ThrowOnError>({ url: '/api/workspaces/current', ...options });
+
+/**
+ * Select workspace
+ *
+ * Changes the workspace of the current session
+ */
+export const selectWorkspace = <ThrowOnError extends boolean = false>(options: Options<SelectWorkspaceData, ThrowOnError>): RequestResult<SelectWorkspaceResponses, SelectWorkspaceErrors, ThrowOnError> => (options.client ?? client).put<SelectWorkspaceResponses, SelectWorkspaceErrors, ThrowOnError>({
+    url: '/api/workspaces/current',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});

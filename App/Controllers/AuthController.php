@@ -8,6 +8,8 @@ use App\Requests\RegisterRequest;
 use App\Resources\UserResource;
 use App\Security\RegistrationConfiguration;
 use App\Services\UserRegistration;
+use App\Services\WorkspaceService;
+use App\Session\SelectedWorkspace;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
@@ -25,6 +27,7 @@ class AuthController extends Controller
     public function __construct(
         protected Authentication $authentication,
         protected UserRegistration $registration,
+        protected WorkspaceService $workspaces,
         protected RegistrationConfiguration $registrationConfiguration,
     ) {}
 
@@ -55,6 +58,7 @@ class AuthController extends Controller
             return Response::json(['error' => 'Email already used'], StatusCode::CONFLICT);
 
         $this->authentication->login($user);
+        $this->workspaces->selectFirst($user->id);
 
         return Response::json(UserResource::of($user), StatusCode::CREATED);
     }
@@ -67,7 +71,11 @@ class AuthController extends Controller
         if (!$this->authentication->attempt($request->validated('email'), $request->validated('password')))
             return Response::json(['error' => 'Invalid credentials'], StatusCode::UNAUTHORIZED);
 
-        return Response::json(UserResource::of($this->authentication->user()));
+        $user = $this->authentication->user();
+        $this->workspaces->createDefault($user);
+        $this->workspaces->selectFirst($user->id);
+
+        return Response::json(UserResource::of($user));
     }
 
     #[Endpoint('Log out', 'Closes the current session', 'logout')]
@@ -76,6 +84,7 @@ class AuthController extends Controller
     public function logout(Request $request): Response
     {
         $this->authentication->logout();
+        SelectedWorkspace::unset();
 
         return Response::noContent();
     }

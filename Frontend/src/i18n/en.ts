@@ -26,8 +26,19 @@ export default {
     emailTaken: 'An account already exists with this email.',
     invalid: 'Check your email and use a password of 8 to 72 characters.',
   },
-  home: {
-    loggedInAs: 'Logged in as {email}',
+  nav: {
+    label: 'Main navigation',
+    workspace: 'Workspace',
+    manageWorkspaces: 'Manage my workspaces',
+    loadingWorkspaces: 'Loading…',
+    home: 'Home',
+    tasks: 'Tasks',
+    jira: 'Jira',
+    mergeRequests: 'Merge Requests',
+    history: 'History',
+    settings: 'Settings',
+    devices: 'Devices',
+    download: 'Download',
     logout: 'Log out',
   },
 } satisfies typeof fr

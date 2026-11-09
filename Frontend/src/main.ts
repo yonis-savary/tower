@@ -6,6 +6,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import i18n from './i18n'
 import router from './router'
+import 'primeicons/primeicons.css'
 import './style.css'
 
 const TowerPreset = definePreset(Aura, {

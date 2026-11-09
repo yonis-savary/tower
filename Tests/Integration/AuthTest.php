@@ -70,6 +70,63 @@ class AuthTest extends CubeTestCase
         $this->get('/api/auth/me')->assertOk();
     }
 
+    private function logIn(): void
+    {
+        $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => self::PASSWORD])->assertOk();
+    }
+
+    private function deleteAuthoredWorkspaces(int $userId): void
+    {
+        foreach (Workspace::select()->where('author', $userId)->fetch() as $workspace) {
+            WorkspaceMember::delete()->where('workspace', $workspace->id)->fetch();
+            $workspace->destroy();
+        }
+    }
+
+    private function authoredWorkspacesCount(int $userId): int
+    {
+        return count(Workspace::select()->where('author', $userId)->fetch());
+    }
+
+    public function testLoginCreatesDefaultWorkspaceWhenUserHasNone()
+    {
+        $user = $this->register();
+        $this->post('/api/auth/logout')->assertNoContent();
+        $this->deleteAuthoredWorkspaces($user['id']);
+
+        $this->logIn();
+
+        $workspace = Workspace::findWhere(['author' => $user['id']]);
+        $this->assertNotNull($workspace);
+        $this->assertNotNull(WorkspaceMember::findWhere(['workspace' => $workspace->id, 'user' => $user['id']]));
+    }
+
+    public function testLoginDoesNotDuplicateDefaultWorkspace()
+    {
+        $user = $this->register();
+        $this->post('/api/auth/logout')->assertNoContent();
+
+        $this->logIn();
+
+        $this->assertEquals(1, $this->authoredWorkspacesCount($user['id']));
+    }
+
+    public function testBeingMemberOfAnotherWorkspaceDoesNotCount()
+    {
+        $user = $this->register();
+        $this->post('/api/auth/logout')->assertNoContent();
+        $this->deleteAuthoredWorkspaces($user['id']);
+
+        $owner = $this->postJson('/api/auth/register', ['email' => 'bob@example.com', 'password' => self::PASSWORD])->assertCreated()->json();
+        $this->post('/api/auth/logout')->assertNoContent();
+        $ownerWorkspace = Workspace::findWhere(['author' => $owner['id']]);
+        WorkspaceMember::fromArray(['workspace' => $ownerWorkspace->id, 'user' => $user['id']])->save();
+
+        $this->logIn();
+
+        $this->assertEquals(1, $this->authoredWorkspacesCount($user['id']));
+    }
+
     public function testLoginRefusesWrongPassword()
     {
         $this->register();

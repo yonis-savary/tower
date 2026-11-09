@@ -144,3 +144,111 @@ export type GetCurrentUserResponses = {
 };
 
 export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
+
+export type ListWorkspacesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/workspaces';
+};
+
+export type ListWorkspacesErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListWorkspacesError = ListWorkspacesErrors[keyof ListWorkspacesErrors];
+
+export type ListWorkspacesResponses = {
+    /**
+     * The workspaces of the user
+     */
+    200: Array<{
+        id: number;
+        name: string;
+    }>;
+};
+
+export type ListWorkspacesResponse = ListWorkspacesResponses[keyof ListWorkspacesResponses];
+
+export type GetCurrentWorkspaceData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/workspaces/current';
+};
+
+export type GetCurrentWorkspaceErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The user belongs to no workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type GetCurrentWorkspaceError = GetCurrentWorkspaceErrors[keyof GetCurrentWorkspaceErrors];
+
+export type GetCurrentWorkspaceResponses = {
+    /**
+     * The selected workspace
+     */
+    200: {
+        id: number;
+        name: string;
+    };
+};
+
+export type GetCurrentWorkspaceResponse = GetCurrentWorkspaceResponses[keyof GetCurrentWorkspaceResponses];
+
+export type SelectWorkspaceData = {
+    body: {
+        workspace: number;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/workspaces/current';
+};
+
+export type SelectWorkspaceErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The workspace does not exist or the user is not a member of it
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type SelectWorkspaceError = SelectWorkspaceErrors[keyof SelectWorkspaceErrors];
+
+export type SelectWorkspaceResponses = {
+    /**
+     * The newly selected workspace
+     */
+    200: {
+        id: number;
+        name: string;
+    };
+};
+
+export type SelectWorkspaceResponse = SelectWorkspaceResponses[keyof SelectWorkspaceResponses];
