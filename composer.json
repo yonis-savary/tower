@@ -1,0 +1,19 @@
+{
+    "name": "yonis-savary/tower",
+    "description": "Task, Work & Agent mediator app",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "App\\": "App/"
+        }
+    },
+    "authors": [
+        {
+            "name": "yonis-savary"
+        }
+    ],
+    "require": {
+        "yonis-savary/cube": "dev-main"
+    }
+}

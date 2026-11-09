@@ -1,0 +1,78 @@
+# Production stack : run it through the Makefile (`make build`, `make up`, `make deploy`), which reads
+# this file only. A plain `docker compose up` also reads docker-compose.override.yml : the dev stack.
+services:
+  php-fpm:
+    image: ${COMPOSE_PROJECT_NAME}-php # Reused by every background service (queues, websocket...)
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile.php
+      target: prod
+      args:
+        UID: ${UID:-1000} # The owner of Storage/ and .env on the host, see .env.example
+        GID: ${GID:-1000}
+    volumes:
+      - /var/www # Shared with nginx through its volumes_from
+      - ./Storage:/var/www/Storage # Persistent Storage
+      - ./.env:/var/www/.env:ro # Kept out of the image, which would carry your secrets in its layers
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8081:80"
+    volumes_from:
+      - php-fpm # Two `- /var/www` lines would create two distinct volumes, leaving nginx's empty
+    volumes:
+      - ./Docker/vhost.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php-fpm
+
+  scheduler:
+    image: ${COMPOSE_PROJECT_NAME}-php
+    # Sleeps to the start of the next minute before each launch, see Cube's docs/34-deployment.md
+    command: sh -c 'while true; do sleep $$((60 - $$(date +%s) % 60)); php do routine:launch & done'
+    restart: unless-stopped
+    init: true # sh as PID 1 ignores SIGTERM
+    stop_signal: SIGTERM # The PHP image sets SIGQUIT, which sh does not stop on
+    volumes:
+      - ./Storage:/var/www/Storage
+      - ./.env:/var/www/.env:ro
+    depends_on:
+      - php-fpm # builds the image
+
+  websocket:
+    image: ${COMPOSE_PROJECT_NAME}-php
+    command: ["php", "do", "websocket:serve", "-l"]
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    expose:
+      - "8089" # Broadcast side, reached by the other services only
+    volumes:
+      - ./Storage:/var/www/Storage
+      - ./.env:/var/www/.env:ro
+    depends_on:
+      - php-fpm # builds the image
+
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql:/var/lib/mysql
+    expose:
+      - "3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  mysql:
