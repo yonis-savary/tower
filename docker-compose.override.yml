@@ -21,5 +21,9 @@ services:
       - .:/var/www
       - vendor:/var/www/vendor
 
+  mysql:
+    ports:
+      - "127.0.0.1:3306:3306" # Debug from the host only, never reachable from the network
+
 volumes:
   vendor:

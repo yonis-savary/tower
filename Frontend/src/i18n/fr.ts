@@ -1,0 +1,31 @@
+export default {
+  auth: {
+    email: 'Email',
+    password: 'Mot de passe',
+    genericError: 'Une erreur est survenue, réessaie dans un instant.',
+  },
+  login: {
+    title: 'Connexion',
+    subtitle: 'Content de te revoir sur Tower',
+    submit: 'Se connecter',
+    noAccount: 'Pas encore de compte ?',
+    registerLink: 'Créer un compte',
+    invalidCredentials: 'Email ou mot de passe incorrect.',
+    invalidEmail: 'Vérifie le format de ton email.',
+  },
+  register: {
+    title: 'Créer un compte',
+    subtitle: 'Ton premier workspace sera créé automatiquement',
+    passwordHint: '8 caractères minimum',
+    submit: 'Créer mon compte',
+    hasAccount: 'Déjà un compte ?',
+    loginLink: 'Se connecter',
+    closed: 'Les inscriptions sont fermées sur cette instance.',
+    emailTaken: 'Un compte existe déjà avec cet email.',
+    invalid: 'Vérifie ton email et utilise un mot de passe de 8 à 72 caractères.',
+  },
+  home: {
+    loggedInAs: 'Connecté en tant que {email}',
+    logout: 'Se déconnecter',
+  },
+}

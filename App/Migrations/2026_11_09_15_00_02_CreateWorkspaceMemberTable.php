@@ -13,7 +13,9 @@ return new class extends Migration
             ModelField::id(),
             ModelField::integer('workspace')->notNull()->references('workspace', 'id'),
             ModelField::integer('user')->notNull()->references('user', 'id'),
-        ], 'UNIQUE (workspace, user)');
+        ]);
+
+        $plan->addUniqueIndex('workspace_member', ['workspace', 'user']);
     }
 
     public function down(Plan $plan, Database $database)
