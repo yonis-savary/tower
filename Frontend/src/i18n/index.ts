@@ -15,4 +15,8 @@ export default createI18n<[typeof fr], Locale, false>({
   locale,
   fallbackLocale: 'fr',
   messages,
+  datetimeFormats: {
+    fr: { short: { dateStyle: 'short', timeStyle: 'short' } },
+    en: { short: { dateStyle: 'short', timeStyle: 'short' } },
+  },
 })

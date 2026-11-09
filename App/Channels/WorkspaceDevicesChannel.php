@@ -34,7 +34,10 @@ class WorkspaceDevicesChannel extends Channel
     {
         parent::subscribe($path, $connection, $slugs);
 
-        // Also tells the browser its subscription was accepted : a refused socket opens too. No device can connect yet
-        $this->getSubscriber($connection)->send(['type' => 'devices.count', 'count' => 0]);
+        // Also tells the browser its subscription was accepted : a refused socket opens too
+        $this->getSubscriber($connection)->send([
+            'type' => 'devices.list',
+            'devices' => ConnectedDevices::getInstance()->listFor((int) $slugs['workspace']),
+        ]);
     }
 }

@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import PrimeVue from 'primevue/config'
+import ToastService from 'primevue/toastservice'
 import { definePreset, palette } from '@primeuix/themes'
 import Aura from '@primeuix/themes/aura'
 import { createPinia } from 'pinia'
@@ -17,6 +18,7 @@ const TowerPreset = definePreset(Aura, {
 
 createApp(App)
   .use(PrimeVue, { theme: { preset: TowerPreset } })
+  .use(ToastService)
   .use(createPinia())
   .use(i18n)
   .use(router) // Last : its first navigation runs the guard, which reads the auth store

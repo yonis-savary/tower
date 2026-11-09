@@ -8,6 +8,198 @@ export type ValidationErrors = Array<string> | {
     [key: string]: ValidationErrors;
 };
 
+export type ListAccessKeysData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/access-keys';
+};
+
+export type ListAccessKeysErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListAccessKeysError = ListAccessKeysErrors[keyof ListAccessKeysErrors];
+
+export type ListAccessKeysResponses = {
+    /**
+     * The access keys
+     */
+    200: Array<{
+        id: number;
+        name: string;
+        client_id: string;
+        last_used_at: string | null;
+    }>;
+};
+
+export type ListAccessKeysResponse = ListAccessKeysResponses[keyof ListAccessKeysResponses];
+
+export type CreateAccessKeyData = {
+    body: {
+        name: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/access-keys';
+};
+
+export type CreateAccessKeyErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type CreateAccessKeyError = CreateAccessKeyErrors[keyof CreateAccessKeyErrors];
+
+export type CreateAccessKeyResponses = {
+    /**
+     * The key and its connector configuration
+     */
+    201: {
+        key?: {
+            id: number;
+            name: string;
+            client_id: string;
+            last_used_at: string | null;
+        };
+        config?: {
+            tower_url?: string;
+            client_id?: string;
+            secret?: string;
+        };
+    };
+};
+
+export type CreateAccessKeyResponse = CreateAccessKeyResponses[keyof CreateAccessKeyResponses];
+
+export type RevokeAccessKeyData = {
+    body?: never;
+    path: {
+        key: number;
+    };
+    query?: never;
+    url: '/api/access-keys/{key}';
+};
+
+export type RevokeAccessKeyErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such usable key in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type RevokeAccessKeyError = RevokeAccessKeyErrors[keyof RevokeAccessKeyErrors];
+
+export type RevokeAccessKeyResponses = {
+    /**
+     * The key is revoked
+     */
+    204: void;
+};
+
+export type RevokeAccessKeyResponse = RevokeAccessKeyResponses[keyof RevokeAccessKeyResponses];
+
+export type DownloadPreconfiguredConnectorData = {
+    body: {
+        secret: string;
+    };
+    path: {
+        key: number;
+    };
+    query?: never;
+    url: '/api/access-keys/{key}/connector';
+};
+
+export type DownloadPreconfiguredConnectorErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such usable key in the current workspace, or wrong secret
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+    /**
+     * The connector was not built into this image
+     */
+    503: {
+        error?: string;
+    };
+};
+
+export type DownloadPreconfiguredConnectorError = DownloadPreconfiguredConnectorErrors[keyof DownloadPreconfiguredConnectorErrors];
+
+export type DownloadPreconfiguredConnectorResponses = {
+    /**
+     * tower-connector-preconfigured.pyz
+     */
+    200: Blob | File;
+};
+
+export type DownloadPreconfiguredConnectorResponse = DownloadPreconfiguredConnectorResponses[keyof DownloadPreconfiguredConnectorResponses];
+
+export type DownloadConnectorData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/connector';
+};
+
+export type DownloadConnectorErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The connector was not built into this image
+     */
+    503: {
+        error?: string;
+    };
+};
+
+export type DownloadConnectorError = DownloadConnectorErrors[keyof DownloadConnectorErrors];
+
+export type DownloadConnectorResponses = {
+    /**
+     * tower-connector.pyz
+     */
+    200: Blob | File;
+};
+
+export type DownloadConnectorResponse = DownloadConnectorResponses[keyof DownloadConnectorResponses];
+
 export type RegisterData = {
     body: {
         email: string;
@@ -144,6 +336,35 @@ export type GetCurrentUserResponses = {
 };
 
 export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
+
+export type DisconnectDeviceData = {
+    body?: never;
+    path: {
+        uuid: string;
+    };
+    query?: never;
+    url: '/api/devices/{uuid}/disconnect';
+};
+
+export type DisconnectDeviceErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type DisconnectDeviceError = DisconnectDeviceErrors[keyof DisconnectDeviceErrors];
+
+export type DisconnectDeviceResponses = {
+    /**
+     * The device is asked to disconnect, if it is still connected
+     */
+    204: void;
+};
+
+export type DisconnectDeviceResponse = DisconnectDeviceResponses[keyof DisconnectDeviceResponses];
 
 export type ListWorkspacesData = {
     body?: never;

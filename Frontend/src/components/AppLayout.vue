@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import Toast from 'primevue/toast'
 import NavBar from './NavBar.vue'
 </script>
 
@@ -9,6 +10,7 @@ import NavBar from './NavBar.vue'
     <main class="app-content">
       <RouterView />
     </main>
+    <Toast />
   </div>
 </template>
 

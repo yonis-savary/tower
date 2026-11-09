@@ -1,14 +1,24 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { getWorkspaceSocket } from '../client'
 
 export type SocketStatus = 'connecting' | 'connected' | 'disconnected'
+
+export type ConnectedDevice = {
+  uuid: string
+  hostname: string | null
+  type: 'desktop' | 'laptop' | 'mobile' | 'unknown'
+  user_agent: string | null
+  access_key: string
+  connected_at: string
+}
 
 const MAX_RETRY_DELAY_MS = 30_000
 
 export const useDeviceSocketStore = defineStore('deviceSocket', () => {
   const status = ref<SocketStatus>('disconnected')
-  const activeDevices = ref(0)
+  const devices = ref<ConnectedDevice[]>([])
+  const activeDevices = computed(() => devices.value.length)
 
   let socket: WebSocket | null = null
   let retryTimer: ReturnType<typeof setTimeout> | undefined
@@ -21,7 +31,7 @@ export const useDeviceSocketStore = defineStore('deviceSocket', () => {
     clearTimeout(retryTimer)
     socket?.close()
     socket = null
-    activeDevices.value = 0
+    devices.value = []
   }
 
   function scheduleRetry(attempt: number): void {
@@ -44,9 +54,9 @@ export const useDeviceSocketStore = defineStore('deviceSocket', () => {
       if (attempt !== generation) return
 
       const message = JSON.parse(frame)
-      if (message.type !== 'devices.count') return
+      if (message.type !== 'devices.list') return
 
-      activeDevices.value = message.count
+      devices.value = message.devices
       status.value = 'connected'
       retries = 0
     }
@@ -55,7 +65,7 @@ export const useDeviceSocketStore = defineStore('deviceSocket', () => {
       if (attempt !== generation) return
 
       socket = null
-      activeDevices.value = 0
+      devices.value = []
       scheduleRetry(attempt)
     }
   }
@@ -71,5 +81,5 @@ export const useDeviceSocketStore = defineStore('deviceSocket', () => {
     status.value = 'disconnected'
   }
 
-  return { status, activeDevices, connect, disconnect }
+  return { status, devices, activeDevices, connect, disconnect }
 })

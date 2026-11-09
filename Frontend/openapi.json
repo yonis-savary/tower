@@ -5,6 +5,381 @@
         "version": "0.0.1"
     },
     "paths": {
+        "\/api\/access-keys": {
+            "get": {
+                "summary": "List access keys",
+                "description": "The usable access keys of the current workspace",
+                "operationId": "listAccessKeys",
+                "responses": {
+                    "200": {
+                        "description": "The access keys",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "client_id": {
+                                                "type": "string"
+                                            },
+                                            "last_used_at": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "name",
+                                            "client_id",
+                                            "last_used_at"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 332,
+                                        "name": "nostrum quo sequi",
+                                        "client_id": "est sed non",
+                                        "last_used_at": "2021-01-04"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create access key",
+                "description": "Creates an access key in the current workspace. The secret is only given by this answer",
+                "operationId": "createAccessKey",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The key and its connector configuration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "key": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "client_id": {
+                                                    "type": "string"
+                                                },
+                                                "last_used_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "name",
+                                                "client_id",
+                                                "last_used_at"
+                                            ]
+                                        },
+                                        "config": {
+                                            "type": "object",
+                                            "properties": {
+                                                "tower_url": {
+                                                    "type": "string"
+                                                },
+                                                "client_id": {
+                                                    "type": "string"
+                                                },
+                                                "secret": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/access-keys\/{key}": {
+            "delete": {
+                "summary": "Revoke access key",
+                "description": "Revokes a key of the current workspace and disconnects the devices using it",
+                "operationId": "revokeAccessKey",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such usable key in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The key is revoked"
+                    }
+                }
+            }
+        },
+        "\/api\/access-keys\/{key}\/connector": {
+            "post": {
+                "summary": "Download preconfigured connector",
+                "description": "The Tower connector with this key embedded : it runs without a configuration file. Needs the secret given at creation",
+                "operationId": "downloadPreconfiguredConnector",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "secret": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "secret"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "tower-connector-preconfigured.pyz",
+                        "content": {
+                            "application\/octet-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such usable key in the current workspace, or wrong secret",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The connector was not built into this image",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/connector": {
+            "get": {
+                "summary": "Download connector",
+                "description": "The Tower connector, to run with a configuration file",
+                "operationId": "downloadConnector",
+                "responses": {
+                    "200": {
+                        "description": "tower-connector.pyz",
+                        "content": {
+                            "application\/octet-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The connector was not built into this image",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/api\/auth\/register": {
             "post": {
                 "summary": "Register",
@@ -259,6 +634,43 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "\/api\/devices\/{uuid}\/disconnect": {
+            "post": {
+                "summary": "Disconnect device",
+                "description": "Closes the connection of a device of the current workspace. The connector stops until it is launched again",
+                "operationId": "disconnectDevice",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The device is asked to disconnect, if it is still connected"
                     }
                 }
             }

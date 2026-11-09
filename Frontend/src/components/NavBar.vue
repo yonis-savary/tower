@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter, type RouteLocationRaw } from 'vue-router'
 import Badge from 'primevue/badge'
 import Button from 'primevue/button'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
+import { useToast } from 'primevue/usetoast'
+import { downloadConnector } from '../client'
+import { saveFile } from '../utils/saveFile'
+import ConfigDialog from './ConfigDialog.vue'
+import DevicesDialog from './DevicesDialog.vue'
 import { useAuthStore } from '../stores/auth'
 import { useDeviceSocketStore } from '../stores/deviceSocket'
 import { useWorkspaceStore } from '../stores/workspace'
@@ -16,6 +21,7 @@ type NavItem = { label: string; icon: string; to?: RouteLocationRaw }
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
 const deviceSocket = useDeviceSocketStore()
+const toast = useToast()
 const router = useRouter()
 const { t } = useI18n()
 
@@ -47,9 +53,20 @@ const mainItems = computed<NavItem[]>(() => [
   { label: t('nav.settings'), icon: 'pi pi-cog' },
 ])
 
-const secondaryItems = computed<NavItem[]>(() => [
-  { label: t('nav.download'), icon: 'pi pi-download' },
+const devicesDialogVisible = ref(false)
+const configDialogVisible = ref(false)
+const downloadMenu = useTemplateRef<InstanceType<typeof Menu>>('downloadMenu')
+const downloadMenuItems = computed<MenuItem[]>(() => [
+  { label: t('nav.downloadClient'), icon: 'pi pi-fw pi-download', command: downloadClient },
+  { label: t('nav.manageConfigs'), icon: 'pi pi-fw pi-cog', command: () => (configDialogVisible.value = true) },
 ])
+
+async function downloadClient() {
+  const { data } = await downloadConnector({ parseAs: 'blob' })
+
+  if (data instanceof Blob) saveFile(data, 'tower-connector.pyz')
+  else toast.add({ severity: 'error', summary: t('download.connectorError'), life: 5000 })
+}
 
 const socketIndicator = computed(
   () =>
@@ -89,7 +106,13 @@ async function logOut() {
     </button>
     <Menu ref="workspaceMenu" :model="workspaceMenuItems" popup @show="workspace.loadWorkspaces" />
 
-    <button type="button" class="navbar-item navbar-devices" :title="`${t('nav.devices')} · ${socketIndicator.label}`">
+    <button
+      type="button"
+      class="navbar-item navbar-devices"
+      aria-haspopup="dialog"
+      :title="`${t('nav.devices')} · ${socketIndicator.label}`"
+      @click="devicesDialogVisible = true"
+    >
       <i class="pi pi-desktop" aria-hidden="true" />
       <span class="navbar-text">{{ t('nav.devices') }}</span>
       <span class="navbar-devices-state">
@@ -102,6 +125,7 @@ async function logOut() {
         <Badge :value="deviceSocket.activeDevices" severity="secondary" size="small" />
       </span>
     </button>
+    <DevicesDialog v-model:visible="devicesDialogVisible" />
 
     <ul class="navbar-list">
       <li v-for="item in mainItems" :key="item.label">
@@ -117,14 +141,20 @@ async function logOut() {
       </li>
     </ul>
 
-    <ul class="navbar-list navbar-secondary">
-      <li v-for="item in secondaryItems" :key="item.label">
-        <button type="button" class="navbar-item" :title="item.label">
-          <i :class="item.icon" aria-hidden="true" />
-          <span class="navbar-text">{{ item.label }}</span>
-        </button>
-      </li>
-    </ul>
+    <div class="navbar-secondary">
+      <button
+        type="button"
+        class="navbar-item"
+        aria-haspopup="menu"
+        :title="t('nav.download')"
+        @click="downloadMenu?.toggle($event)"
+      >
+        <i class="pi pi-download" aria-hidden="true" />
+        <span class="navbar-text">{{ t('nav.download') }}</span>
+      </button>
+      <Menu ref="downloadMenu" :model="downloadMenuItems" popup />
+      <ConfigDialog v-model:visible="configDialogVisible" />
+    </div>
 
     <div class="navbar-user">
       <span class="navbar-text navbar-email" :title="auth.user?.email">{{ auth.user?.email }}</span>
@@ -233,7 +263,7 @@ async function logOut() {
   color: light-dark(var(--p-red-600), var(--p-red-400));
 }
 
-.navbar-item.router-link-active {
+.navbar-item.router-link-exact-active {
   background: var(--p-highlight-background);
   color: var(--p-highlight-color);
 }

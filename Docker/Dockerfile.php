@@ -31,6 +31,20 @@ EXPOSE 9000
 CMD ["php-fpm"]
 
 
+# Connector zipapp, downloaded from the frontend. No shebang : PHP appends the embedded config to the archive
+# The optional C speedups of websockets would tie the archive to this architecture
+FROM python:3.13-alpine AS connector
+
+WORKDIR /build
+
+COPY Connector/ ./
+RUN pip install --no-compile --target app -r requirements.txt \
+    && cp src/__main__.py app/ \
+    && find app -name '*.so' -delete \
+    && rm -rf app/bin app/*.dist-info \
+    && python -m zipapp app --compress --output tower-connector.pyz
+
+
 # Development : your project is mounted over /var/www (see docker-compose.override.yml)
 FROM base AS dev
 
@@ -45,6 +59,8 @@ RUN cp "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 USER www-data
 
 RUN composer install --no-scripts
+
+COPY --from=connector /build/tower-connector.pyz /opt/tower/tower-connector.pyz
 
 
 # Frontend build, copied into the production image and served by App/Routes/frontend.php
@@ -72,5 +88,6 @@ RUN composer install --no-dev --no-scripts --no-autoloader
 
 COPY --chown=www-data:www-data . .
 COPY --from=frontend --chown=www-data:www-data /build/dist ./Frontend/dist
+COPY --from=connector /build/tower-connector.pyz /opt/tower/tower-connector.pyz
 
 RUN composer dump-autoload --no-dev --classmap-authoritative

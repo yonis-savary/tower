@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetCurrentWorkspaceData, GetCurrentWorkspaceErrors, GetCurrentWorkspaceResponses, GetWorkspaceSocketData, GetWorkspaceSocketErrors, GetWorkspaceSocketResponses, ListWorkspacesData, ListWorkspacesErrors, ListWorkspacesResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, RegisterData, RegisterErrors, RegisterResponses, SelectWorkspaceData, SelectWorkspaceErrors, SelectWorkspaceResponses } from './types.gen';
+import type { CreateAccessKeyData, CreateAccessKeyErrors, CreateAccessKeyResponses, DisconnectDeviceData, DisconnectDeviceErrors, DisconnectDeviceResponses, DownloadConnectorData, DownloadConnectorErrors, DownloadConnectorResponses, DownloadPreconfiguredConnectorData, DownloadPreconfiguredConnectorErrors, DownloadPreconfiguredConnectorResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetCurrentWorkspaceData, GetCurrentWorkspaceErrors, GetCurrentWorkspaceResponses, GetWorkspaceSocketData, GetWorkspaceSocketErrors, GetWorkspaceSocketResponses, ListAccessKeysData, ListAccessKeysErrors, ListAccessKeysResponses, ListWorkspacesData, ListWorkspacesErrors, ListWorkspacesResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, RegisterData, RegisterErrors, RegisterResponses, RevokeAccessKeyData, RevokeAccessKeyErrors, RevokeAccessKeyResponses, SelectWorkspaceData, SelectWorkspaceErrors, SelectWorkspaceResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -17,6 +17,55 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+/**
+ * List access keys
+ *
+ * The usable access keys of the current workspace
+ */
+export const listAccessKeys = <ThrowOnError extends boolean = false>(options?: Options<ListAccessKeysData, ThrowOnError>): RequestResult<ListAccessKeysResponses, ListAccessKeysErrors, ThrowOnError> => (options?.client ?? client).get<ListAccessKeysResponses, ListAccessKeysErrors, ThrowOnError>({ url: '/api/access-keys', ...options });
+
+/**
+ * Create access key
+ *
+ * Creates an access key in the current workspace. The secret is only given by this answer
+ */
+export const createAccessKey = <ThrowOnError extends boolean = false>(options: Options<CreateAccessKeyData, ThrowOnError>): RequestResult<CreateAccessKeyResponses, CreateAccessKeyErrors, ThrowOnError> => (options.client ?? client).post<CreateAccessKeyResponses, CreateAccessKeyErrors, ThrowOnError>({
+    url: '/api/access-keys',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Revoke access key
+ *
+ * Revokes a key of the current workspace and disconnects the devices using it
+ */
+export const revokeAccessKey = <ThrowOnError extends boolean = false>(options: Options<RevokeAccessKeyData, ThrowOnError>): RequestResult<RevokeAccessKeyResponses, RevokeAccessKeyErrors, ThrowOnError> => (options.client ?? client).delete<RevokeAccessKeyResponses, RevokeAccessKeyErrors, ThrowOnError>({ url: '/api/access-keys/{key}', ...options });
+
+/**
+ * Download preconfigured connector
+ *
+ * The Tower connector with this key embedded : it runs without a configuration file. Needs the secret given at creation
+ */
+export const downloadPreconfiguredConnector = <ThrowOnError extends boolean = false>(options: Options<DownloadPreconfiguredConnectorData, ThrowOnError>): RequestResult<DownloadPreconfiguredConnectorResponses, DownloadPreconfiguredConnectorErrors, ThrowOnError> => (options.client ?? client).post<DownloadPreconfiguredConnectorResponses, DownloadPreconfiguredConnectorErrors, ThrowOnError>({
+    url: '/api/access-keys/{key}/connector',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Download connector
+ *
+ * The Tower connector, to run with a configuration file
+ */
+export const downloadConnector = <ThrowOnError extends boolean = false>(options?: Options<DownloadConnectorData, ThrowOnError>): RequestResult<DownloadConnectorResponses, DownloadConnectorErrors, ThrowOnError> => (options?.client ?? client).get<DownloadConnectorResponses, DownloadConnectorErrors, ThrowOnError>({ url: '/api/connector', ...options });
 
 /**
  * Register
@@ -59,6 +108,13 @@ export const logout = <ThrowOnError extends boolean = false>(options?: Options<L
  * The user of the current session
  */
 export const getCurrentUser = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserData, ThrowOnError>): RequestResult<GetCurrentUserResponses, GetCurrentUserErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentUserResponses, GetCurrentUserErrors, ThrowOnError>({ url: '/api/auth/me', ...options });
+
+/**
+ * Disconnect device
+ *
+ * Closes the connection of a device of the current workspace. The connector stops until it is launched again
+ */
+export const disconnectDevice = <ThrowOnError extends boolean = false>(options: Options<DisconnectDeviceData, ThrowOnError>): RequestResult<DisconnectDeviceResponses, DisconnectDeviceErrors, ThrowOnError> => (options.client ?? client).post<DisconnectDeviceResponses, DisconnectDeviceErrors, ThrowOnError>({ url: '/api/devices/{uuid}/disconnect', ...options });
 
 /**
  * List workspaces

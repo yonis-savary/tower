@@ -15,6 +15,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $accent_color
  * @property int $author
  * @property User $_author
+ * @property AccessKey[] $accessKeies
  * @property Event[] $events
  * @property Task[] $tasks
  * @property WorkspaceMember[] $members
@@ -55,6 +56,12 @@ class Workspace extends Model
     }
 
     #[Generated]
+    public function accessKeies(): HasMany
+    {
+        return $this->hasMany('accessKeies', AccessKey::class, 'workspace', 'id');
+    }
+
+    #[Generated]
     public function events(): HasMany
     {
         return $this->hasMany('events', Event::class, 'workspace', 'id');
@@ -76,6 +83,7 @@ class Workspace extends Model
     public static function relations(): array
     {
         return [
+            "accessKeies",
             "events",
             "tasks",
             "members",
