@@ -17,8 +17,10 @@ use Cube\Utils\Attributes\Generated;
  * @property string $details
  * @property \DateTime $created_at
  * @property int $user
+ * @property int $task
  * @property Workspace $_workspace
  * @property User $_user
+ * @property Task $_task
  * @property EventDelivery[] $eventDeliveries
  */
 class History extends Model
@@ -49,7 +51,8 @@ class History extends Model
             'origin' => (new ModelField('origin'))->type('STRING')->notNull()->hasDefault(false),
             'details' => (new ModelField('details'))->type('STRING')->notNull()->hasDefault(false),
             'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
-            'user' => (new ModelField('user'))->type('INTEGER')->nullable()->default(NULL)->references(User::class,'id')
+            'user' => (new ModelField('user'))->type('INTEGER')->nullable()->default(NULL)->references(User::class,'id'),
+            'task' => (new ModelField('task'))->type('INTEGER')->nullable()->default(NULL)->references(Task::class,'id')
         ];
     }
 
@@ -66,6 +69,12 @@ class History extends Model
     }
 
     #[Generated]
+    public function _task(): HasOne
+    {
+        return $this->hasOne('_task', 'task', Task::class, 'id');
+    }
+
+    #[Generated]
     public function eventDeliveries(): HasMany
     {
         return $this->hasMany('eventDeliveries', EventDelivery::class, 'history', 'id');
@@ -78,6 +87,7 @@ class History extends Model
             "eventDeliveries",
             "_workspace",
             "_user",
+            "_task",
         ];
     }
 

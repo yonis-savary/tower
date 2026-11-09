@@ -17,7 +17,10 @@ use Cube\Utils\Attributes\Generated;
  * @property User $_author
  * @property AccessKey[] $accessKeies
  * @property History[] $histories
+ * @property Integration[] $integrations
+ * @property PullRequest[] $pullRequests
  * @property QuickAction[] $quickActions
+ * @property Sprint[] $sprints
  * @property Task[] $tasks
  * @property WorkspaceMember[] $members
  */
@@ -69,9 +72,27 @@ class Workspace extends Model
     }
 
     #[Generated]
+    public function integrations(): HasMany
+    {
+        return $this->hasMany('integrations', Integration::class, 'workspace', 'id');
+    }
+
+    #[Generated]
+    public function pullRequests(): HasMany
+    {
+        return $this->hasMany('pullRequests', PullRequest::class, 'workspace', 'id');
+    }
+
+    #[Generated]
     public function quickActions(): HasMany
     {
         return $this->hasMany('quickActions', QuickAction::class, 'workspace', 'id');
+    }
+
+    #[Generated]
+    public function sprints(): HasMany
+    {
+        return $this->hasMany('sprints', Sprint::class, 'workspace', 'id');
     }
 
     #[Generated]
@@ -92,7 +113,10 @@ class Workspace extends Model
         return [
             "accessKeies",
             "histories",
+            "integrations",
+            "pullRequests",
             "quickActions",
+            "sprints",
             "tasks",
             "members",
             "_author",

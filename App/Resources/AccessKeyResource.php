@@ -27,6 +27,8 @@ class AccessKeyResource extends ModelResource
             'id' => $model->id,
             'name' => $model->name,
             'client_id' => $model->client_id,
+            // Patterns of the events sent to the devices using this key
+            'listen' => array_values(array_filter((array) (json_decode((string) $model->listen, true) ?? []), 'is_string')),
             'last_used_at' => AtomDate::format($model->last_used_at),
         ];
     }

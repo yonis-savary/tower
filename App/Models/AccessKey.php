@@ -18,7 +18,9 @@ use Cube\Utils\Attributes\Generated;
  * @property \DateTime $created_at
  * @property \DateTime $last_used_at
  * @property \DateTime $revoked_at
+ * @property string $listen
  * @property Workspace $_workspace
+ * @property EventDelivery[] $eventDeliveries
  */
 class AccessKey extends Model
 {
@@ -49,7 +51,8 @@ class AccessKey extends Model
             'secret_hash' => (new ModelField('secret_hash'))->type('STRING')->notNull()->hasDefault(false),
             'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
             'last_used_at' => (new ModelField('last_used_at'))->type('DATE')->nullable()->default(NULL),
-            'revoked_at' => (new ModelField('revoked_at'))->type('DATE')->nullable()->default(NULL)
+            'revoked_at' => (new ModelField('revoked_at'))->type('DATE')->nullable()->default(NULL),
+            'listen' => (new ModelField('listen'))->type('STRING')->notNull()->default(NULL)
         ];
     }
 
@@ -60,9 +63,16 @@ class AccessKey extends Model
     }
 
     #[Generated]
+    public function eventDeliveries(): HasMany
+    {
+        return $this->hasMany('eventDeliveries', EventDelivery::class, 'access_key', 'id');
+    }
+
+    #[Generated]
     public static function relations(): array
     {
         return [
+            "eventDeliveries",
             "_workspace",
         ];
     }

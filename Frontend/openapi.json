@@ -29,6 +29,9 @@
                                             "client_id": {
                                                 "type": "string"
                                             },
+                                            "listen": {
+                                                "type": "array"
+                                            },
                                             "last_used_at": {
                                                 "type": [
                                                     "string",
@@ -40,6 +43,7 @@
                                             "id",
                                             "name",
                                             "client_id",
+                                            "listen",
                                             "last_used_at"
                                         ]
                                     }
@@ -49,6 +53,7 @@
                                         "id": 332,
                                         "name": "nostrum quo sequi",
                                         "client_id": "est sed non",
+                                        "listen": [],
                                         "last_used_at": "2021-01-04T00:00:00+00:00"
                                     }
                                 ]
@@ -85,6 +90,12 @@
                                 "properties": {
                                     "name": {
                                         "type": "string"
+                                    },
+                                    "listen": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
                                     }
                                 },
                                 "required": [
@@ -124,6 +135,9 @@
                                                 "client_id": {
                                                     "type": "string"
                                                 },
+                                                "listen": {
+                                                    "type": "array"
+                                                },
                                                 "last_used_at": {
                                                     "type": [
                                                         "string",
@@ -135,6 +149,7 @@
                                                 "id",
                                                 "name",
                                                 "client_id",
+                                                "listen",
                                                 "last_used_at"
                                             ]
                                         },
@@ -223,6 +238,130 @@
                     },
                     "204": {
                         "description": "The key is revoked"
+                    }
+                }
+            }
+        },
+        "\/api\/access-keys\/{key}\/listen": {
+            "put": {
+                "summary": "Update listened events",
+                "description": "Changes the patterns of the events sent to the devices using this key. Applies without reconnecting",
+                "operationId": "updateAccessKeyListen",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "listen": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "listen"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The key",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "client_id": {
+                                            "type": "string"
+                                        },
+                                        "listen": {
+                                            "type": "array"
+                                        },
+                                        "last_used_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "client_id",
+                                        "listen",
+                                        "last_used_at"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 332,
+                                    "name": "nostrum quo sequi",
+                                    "client_id": "est sed non",
+                                    "listen": [],
+                                    "last_used_at": "2021-01-04T00:00:00+00:00"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such usable key in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1127,6 +1266,15 @@
                                             "payload": {
                                                 "type": "string"
                                             },
+                                            "status": {
+                                                "type": "string"
+                                            },
+                                            "exit_code": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ]
+                                            },
                                             "response": {
                                                 "type": [
                                                     "string",
@@ -1145,6 +1293,8 @@
                                             "connection_uuid",
                                             "hostname",
                                             "payload",
+                                            "status",
+                                            "exit_code",
                                             "response",
                                             "responded_at"
                                         ]
@@ -1156,6 +1306,8 @@
                                         "connection_uuid": "mollitia aut exercitationem",
                                         "hostname": "magnam illum enim",
                                         "payload": "consequatur qui nihil",
+                                        "status": "consequatur repellendus autem",
+                                        "exit_code": 861,
                                         "response": "vero rem officiis",
                                         "responded_at": "2009-10-10T00:00:00+00:00"
                                     }
@@ -1180,6 +1332,1438 @@
                     },
                     "404": {
                         "description": "No such line in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/integrations\/bitbucket": {
+            "get": {
+                "summary": "Get Bitbucket integration",
+                "description": "The Bitbucket integration of the current workspace, without its token",
+                "operationId": "getBitbucketIntegration",
+                "responses": {
+                    "200": {
+                        "description": "The integration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "workspace": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": "string"
+                                        },
+                                        "last_synced_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "last_error": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "workspace",
+                                        "email",
+                                        "last_synced_at",
+                                        "last_error"
+                                    ]
+                                },
+                                "example": {
+                                    "workspace": "",
+                                    "email": "",
+                                    "last_synced_at": "2020-09-22T00:00:00+00:00",
+                                    "last_error": "minus perspiciatis eum"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The current workspace has no Bitbucket integration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Save Bitbucket integration",
+                "description": "Creates or updates the Bitbucket integration of the current workspace. Without token, the current one is kept",
+                "operationId": "saveBitbucketIntegration",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "workspace": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "token": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "workspace",
+                                    "email"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "No token was given for a new integration, or an invalid field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The integration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "workspace": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": "string"
+                                        },
+                                        "last_synced_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "last_error": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "workspace",
+                                        "email",
+                                        "last_synced_at",
+                                        "last_error"
+                                    ]
+                                },
+                                "example": {
+                                    "workspace": "",
+                                    "email": "",
+                                    "last_synced_at": "2020-09-22T00:00:00+00:00",
+                                    "last_error": "minus perspiciatis eum"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete Bitbucket integration",
+                "description": "Deletes the Bitbucket integration of the current workspace, its token and its pull requests",
+                "operationId": "deleteBitbucketIntegration",
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The current workspace has no Bitbucket integration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The integration is deleted"
+                    }
+                }
+            }
+        },
+        "\/api\/integrations\/bitbucket\/sync": {
+            "post": {
+                "summary": "Synchronize Bitbucket integration",
+                "description": "Reads Bitbucket now instead of waiting for the next scheduled run. A failure is reported in `last_error`",
+                "operationId": "syncBitbucketIntegration",
+                "responses": {
+                    "200": {
+                        "description": "The integration after the run",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "workspace": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": "string"
+                                        },
+                                        "last_synced_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "last_error": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "workspace",
+                                        "email",
+                                        "last_synced_at",
+                                        "last_error"
+                                    ]
+                                },
+                                "example": {
+                                    "workspace": "",
+                                    "email": "",
+                                    "last_synced_at": "2020-09-22T00:00:00+00:00",
+                                    "last_error": "minus perspiciatis eum"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The current workspace has no Bitbucket integration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/pull-requests": {
+            "get": {
+                "summary": "List pull requests",
+                "description": "The open and recently closed pull requests of the current workspace",
+                "operationId": "listPullRequests",
+                "responses": {
+                    "200": {
+                        "description": "The stored pull requests",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "repository": {
+                                                "type": "string"
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "author": {
+                                                "type": "string"
+                                            },
+                                            "state": {
+                                                "type": "string"
+                                            },
+                                            "draft": {
+                                                "type": "boolean"
+                                            },
+                                            "source_branch": {
+                                                "type": "string"
+                                            },
+                                            "target_branch": {
+                                                "type": "string"
+                                            },
+                                            "url": {
+                                                "type": "string"
+                                            },
+                                            "comment_count": {
+                                                "type": "integer"
+                                            },
+                                            "pipeline_status": {
+                                                "type": "string"
+                                            },
+                                            "synced_at": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "repository",
+                                            "title",
+                                            "author",
+                                            "state",
+                                            "draft",
+                                            "source_branch",
+                                            "target_branch",
+                                            "url",
+                                            "comment_count",
+                                            "pipeline_status",
+                                            "synced_at"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 944,
+                                        "repository": "est qui rem",
+                                        "title": "sed mollitia aperiam",
+                                        "author": "voluptatem est in",
+                                        "state": "minus quibusdam assumenda",
+                                        "draft": true,
+                                        "source_branch": "in ad quis",
+                                        "target_branch": "temporibus vel impedit",
+                                        "url": "quia ut eos",
+                                        "comment_count": 581,
+                                        "pipeline_status": "perferendis quam error",
+                                        "synced_at": "2023-10-18T00:00:00+00:00"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/pull-requests\/approvals": {
+            "get": {
+                "summary": "List pull request approvals",
+                "description": "The reviewers of every stored pull request of the current workspace",
+                "operationId": "listPullRequestApprovals",
+                "responses": {
+                    "200": {
+                        "description": "The reviewers",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "pull_request": {
+                                                "type": "integer"
+                                            },
+                                            "display_name": {
+                                                "type": "string"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "pull_request",
+                                            "display_name",
+                                            "status"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "pull_request": 854,
+                                        "display_name": "veritatis qui atque",
+                                        "status": "iste magni modi"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/tasks": {
+            "get": {
+                "summary": "List tasks",
+                "description": "Every task of the current workspace, in their order",
+                "operationId": "listTasks",
+                "responses": {
+                    "200": {
+                        "description": "The tasks",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "sprint": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ]
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            },
+                                            "position": {
+                                                "type": "integer"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "sprint",
+                                            "title",
+                                            "description",
+                                            "status",
+                                            "position"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 212,
+                                        "sprint": 770,
+                                        "title": "ea assumenda voluptatem",
+                                        "description": "est fugiat neque",
+                                        "status": "aliquid ullam nesciunt",
+                                        "position": 719
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create task",
+                "description": "Adds a task at the end of the backlog or of a sprint",
+                "operationId": "createTask",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "sprint": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "title"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "Unknown or closed sprint, or an invalid field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The task",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "sprint": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "position": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "sprint",
+                                        "title",
+                                        "description",
+                                        "status",
+                                        "position"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 212,
+                                    "sprint": 770,
+                                    "title": "ea assumenda voluptatem",
+                                    "description": "est fugiat neque",
+                                    "status": "aliquid ullam nesciunt",
+                                    "position": 719
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/tasks\/{task}": {
+            "put": {
+                "summary": "Update task",
+                "description": "Changes the title and the description of a task",
+                "operationId": "updateTask",
+                "parameters": [
+                    {
+                        "name": "task",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "title"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The task",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "sprint": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "position": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "sprint",
+                                        "title",
+                                        "description",
+                                        "status",
+                                        "position"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 212,
+                                    "sprint": 770,
+                                    "title": "ea assumenda voluptatem",
+                                    "description": "est fugiat neque",
+                                    "status": "aliquid ullam nesciunt",
+                                    "position": 719
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such task in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/tasks\/{task}\/move": {
+            "put": {
+                "summary": "Move task",
+                "description": "Changes the status and the sprint of a task, and optionally the order of its destination list",
+                "operationId": "moveTask",
+                "parameters": [
+                    {
+                        "name": "task",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "sprint": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "todo",
+                                            "in_progress",
+                                            "in_review",
+                                            "finalizing",
+                                            "done",
+                                            "cancelled"
+                                        ]
+                                    },
+                                    "ordered": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "sprint",
+                                    "status"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "Unknown or closed sprint, or an invalid order",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The task",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "sprint": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "position": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "sprint",
+                                        "title",
+                                        "description",
+                                        "status",
+                                        "position"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 212,
+                                    "sprint": 770,
+                                    "title": "ea assumenda voluptatem",
+                                    "description": "est fugiat neque",
+                                    "status": "aliquid ullam nesciunt",
+                                    "position": 719
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such task in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/tasks\/{task}\/history": {
+            "get": {
+                "summary": "List task history",
+                "description": "What happened to a task and who did it, newest first",
+                "operationId": "listTaskHistory",
+                "parameters": [
+                    {
+                        "name": "task",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The history lines of this task",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "details": {
+                                                "type": "string"
+                                            },
+                                            "author": {},
+                                            "created_at": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "type",
+                                            "details",
+                                            "author",
+                                            "created_at"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 103,
+                                        "type": "corporis ut et",
+                                        "details": "explicabo dolores ipsam",
+                                        "author": null,
+                                        "created_at": "2028-04-10T00:00:00+00:00"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such task in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/sprints": {
+            "get": {
+                "summary": "List sprints",
+                "description": "The sprints of the current workspace, oldest first",
+                "operationId": "listSprints",
+                "responses": {
+                    "200": {
+                        "description": "The sprints",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "state": {
+                                                "type": "string"
+                                            },
+                                            "opened_at": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "closed_at": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "name",
+                                            "state",
+                                            "opened_at",
+                                            "closed_at"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 891,
+                                        "name": "aut similique magni",
+                                        "state": "nam error vero",
+                                        "opened_at": "2004-09-03T00:00:00+00:00",
+                                        "closed_at": "2027-05-24T00:00:00+00:00"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create sprint",
+                "description": "Plans a new sprint in the current workspace",
+                "operationId": "createSprint",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The sprint",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "state": {
+                                            "type": "string"
+                                        },
+                                        "opened_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "closed_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "state",
+                                        "opened_at",
+                                        "closed_at"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 891,
+                                    "name": "aut similique magni",
+                                    "state": "nam error vero",
+                                    "opened_at": "2004-09-03T00:00:00+00:00",
+                                    "closed_at": "2027-05-24T00:00:00+00:00"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/sprints\/{sprint}\/open": {
+            "post": {
+                "summary": "Open sprint",
+                "description": "Makes a sprint the active one of the current workspace",
+                "operationId": "openSprint",
+                "parameters": [
+                    {
+                        "name": "sprint",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The sprint",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "state": {
+                                            "type": "string"
+                                        },
+                                        "opened_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "closed_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "state",
+                                        "opened_at",
+                                        "closed_at"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 891,
+                                    "name": "aut similique magni",
+                                    "state": "nam error vero",
+                                    "opened_at": "2004-09-03T00:00:00+00:00",
+                                    "closed_at": "2027-05-24T00:00:00+00:00"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such sprint in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "A workspace has one active sprint at most",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/sprints\/{sprint}\/close": {
+            "post": {
+                "summary": "Close sprint",
+                "description": "Marks the active sprint as finished. Its tasks stay where they are",
+                "operationId": "closeSprint",
+                "parameters": [
+                    {
+                        "name": "sprint",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The sprint",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "state": {
+                                            "type": "string"
+                                        },
+                                        "opened_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "closed_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "state",
+                                        "opened_at",
+                                        "closed_at"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 891,
+                                    "name": "aut similique magni",
+                                    "state": "nam error vero",
+                                    "opened_at": "2004-09-03T00:00:00+00:00",
+                                    "closed_at": "2027-05-24T00:00:00+00:00"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such sprint in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Only the active sprint can be closed",
                         "content": {
                             "application\/json": {
                                 "schema": {

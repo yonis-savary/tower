@@ -17,7 +17,11 @@ use Cube\Utils\Attributes\Generated;
  * @property string $payload
  * @property string $response
  * @property \DateTime $responded_at
+ * @property string $status
+ * @property int $exit_code
+ * @property int $access_key
  * @property History $_history
+ * @property AccessKey $_access_key
  */
 class EventDelivery extends Model
 {
@@ -47,7 +51,10 @@ class EventDelivery extends Model
             'hostname' => (new ModelField('hostname'))->type('STRING')->nullable()->default(NULL),
             'payload' => (new ModelField('payload'))->type('STRING')->notNull()->hasDefault(false),
             'response' => (new ModelField('response'))->type('STRING')->nullable()->default(NULL),
-            'responded_at' => (new ModelField('responded_at'))->type('DATE')->nullable()->default(NULL)
+            'responded_at' => (new ModelField('responded_at'))->type('DATE')->nullable()->default(NULL),
+            'status' => (new ModelField('status'))->type('STRING')->notNull()->default(NULL),
+            'exit_code' => (new ModelField('exit_code'))->type('INTEGER')->nullable()->default(NULL),
+            'access_key' => (new ModelField('access_key'))->type('INTEGER')->nullable()->default(NULL)->references(AccessKey::class,'id')
         ];
     }
 
@@ -58,10 +65,17 @@ class EventDelivery extends Model
     }
 
     #[Generated]
+    public function _access_key(): HasOne
+    {
+        return $this->hasOne('_access_key', 'access_key', AccessKey::class, 'id');
+    }
+
+    #[Generated]
     public static function relations(): array
     {
         return [
             "_history",
+            "_access_key",
         ];
     }
 

@@ -17,7 +17,13 @@ use Cube\Utils\Attributes\Generated;
  * @property \DateTime $done_at
  * @property \DateTime $created_at
  * @property \DateTime $updated_at
+ * @property int $sprint
+ * @property string $description
+ * @property string $status
+ * @property int $position
  * @property Workspace $_workspace
+ * @property Sprint $_sprint
+ * @property History[] $histories
  */
 class Task extends Model
 {
@@ -47,7 +53,11 @@ class Task extends Model
             'color' => (new ModelField('color'))->type('STRING')->nullable()->default(NULL),
             'done_at' => (new ModelField('done_at'))->type('DATE')->nullable()->default(NULL),
             'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
-            'updated_at' => (new ModelField('updated_at'))->type('DATE')->notNull()->hasDefault(false)
+            'updated_at' => (new ModelField('updated_at'))->type('DATE')->notNull()->hasDefault(false),
+            'sprint' => (new ModelField('sprint'))->type('INTEGER')->nullable()->default(NULL)->references(Sprint::class,'id'),
+            'description' => (new ModelField('description'))->type('STRING')->notNull()->hasDefault(false),
+            'status' => (new ModelField('status'))->type('STRING')->notNull()->hasDefault(false),
+            'position' => (new ModelField('position'))->type('INTEGER')->notNull()->hasDefault(false)
         ];
     }
 
@@ -58,10 +68,24 @@ class Task extends Model
     }
 
     #[Generated]
+    public function _sprint(): HasOne
+    {
+        return $this->hasOne('_sprint', 'sprint', Sprint::class, 'id');
+    }
+
+    #[Generated]
+    public function histories(): HasMany
+    {
+        return $this->hasMany('histories', History::class, 'task', 'id');
+    }
+
+    #[Generated]
     public static function relations(): array
     {
         return [
+            "histories",
             "_workspace",
+            "_sprint",
         ];
     }
 

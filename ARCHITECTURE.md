@@ -1,25 +1,29 @@
 # Tower — Architecture
 
 Tower est un médiateur self-hosted entre mes appareils. Il centralise les tâches (pro et
-perso, séparées en workspaces), distribue des jobs aux appareils connectés, suit des outils
-externes (Jira, merge requests) et déclenche, au fil des événements, un agent IA qui tient
-les tâches à jour et lance des jobs.
+perso, séparées en workspaces), envoie des événements aux appareils connectés, suit des
+outils externes (Jira, merge requests) et, à terme, distribue des jobs et déclenche un agent
+IA qui tient les tâches à jour.
+
+Ce document décrit ce qui est en place et ce qui est prévu. Les parties prévues sont
+signalées par **(prévu)** ; elles restent la cible, mais peuvent changer quand on les
+abordera.
 
 ## Vue d'ensemble
 
 ```
                 ┌──────────────────── Tower (serveur) ─────────────────────┐
   Front Vue ──► │  API OpenAPI ──► Noyau : comptes, workspaces, tâches,    │
-                │                  journal d'événements                    │
+                │                  sprints, historique                     │
                 │        │                 │                    │          │
                 │        ▼                 ▼                    ▼          │
                 │  Bus d'appareils    Intégrations         Agent IA        │
-                │  (jobs, livraisons) (Jira, MR, diff)     (provider       │
-                │                                           abstrait)      │
+                │  (événements,       (Bitbucket, diff)    (prévu)         │
+                │   livraisons)                                            │
                 └───────┬─────────────────┬────────────────────────────────┘
                         │ WebSocket        │ HTTPS (polling)
                         │ ouvert par       ▼
-                        │ l'appareil   Jira, Bitbucket, GitLab, GitHub
+                        │ l'appareil   Bitbucket Cloud (Jira, GitLab, GitHub prévus)
               ┌─────────┴─────────┐
               │ Connecteur Python │  (un par appareil, lancé à la main ou en service)
               └───────────────────┘
@@ -28,76 +32,114 @@ les tâches à jour et lance des jobs.
 | Brique             | Techno                                     |
 |--------------------|--------------------------------------------|
 | Backend            | Cube                                       |
-| Front              | Vue.js, client généré depuis l'OpenAPI     |
+| Front              | Vue.js, PrimeVue, client généré depuis l'OpenAPI |
 | Connecteur         | Script Python livré en zipapp `.pyz`       |
-| Intégrations       | Jira ; Bitbucket, GitLab, GitHub           |
-| IA                 | Abstraction de provider, Claude en premier |
+| Intégrations       | Bitbucket Cloud ; Jira, GitLab, GitHub prévus |
+| IA                 | Abstraction de provider, Claude en premier (prévu) |
 | Notifications      | Hors périmètre v1                          |
 
-Vocabulaire : le **connecteur** est le script Python qui tourne sur un appareil ; une
-**intégration** est la liaison d'un workspace à un outil externe (Jira, forge Git).
+Vocabulaire :
+
+- le **connecteur** est le script Python qui tourne sur un appareil ;
+- une **configuration** (table `access_key`) est l'identité avec laquelle un connecteur se
+  connecte ; elle appartient à un workspace et peut servir sur plusieurs appareils ;
+- une **intégration** est la liaison d'un workspace à un outil externe (Jira, forge Git) ;
+- un **ticket** vient d'un outil externe ; une **tâche** est une unité de travail dans Tower.
 
 ## 1. Noyau
 
 ### Comptes
 
 - L'inscription est **ouverte par défaut** ; la configuration PHP permet de la fermer.
-- Une commande Cube permet d'inscrire un utilisateur à la main, inscription ouverte ou non.
 - À l'inscription, un workspace est créé pour l'utilisateur, qui en est le premier membre.
 - Un utilisateur n'est jamais supprimé : il est désactivé (`disabled_at`) et ne peut plus se
   connecter. Ses workspaces, tâches et adhésions restent en place.
+- **(prévu)** Une commande Cube pour inscrire un utilisateur à la main, inscription ouverte ou
+  non.
 
 ### Workspace
 
-Le workspace est la frontière d'isolement. Tâches, appareils, jobs, intégrations, runs IA et
-mémoire de l'agent appartiennent tous à **un** workspace (`pro`, `perso`, …).
+Le workspace est la frontière d'isolement. Tâches, sprints, configurations, historique,
+intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspace (`pro`,
+`perso`, …).
 
-- Un appareil enrôlé dans `pro` ne voit et n'exécute que des jobs de `pro`.
-- Un run de l'agent IA travaille sur un seul workspace à la fois ; il ne reçoit jamais de
-  données d'un autre.
-- Un même appareil physique qui doit servir deux workspaces est enrôlé deux fois, avec deux
-  identités distinctes.
+- Un appareil connecté avec une configuration de `pro` ne reçoit que des événements de `pro`.
+- Un même appareil physique qui doit servir deux workspaces lance deux connecteurs, avec deux
+  configurations.
 - Les appareils sont volatils : Tower ne tient pas de registre d'appareils. Un appareil
   n'existe pour Tower qu'à travers ses connexions (voir § Connexions).
 - Un workspace peut avoir plusieurs membres, et un utilisateur peut être membre de plusieurs
   workspaces. Tous les membres ont les mêmes droits sur le workspace ; il n'y a pas de rôles.
 - Un workspace ne peut pas être supprimé.
-- Chaque workspace a sa propre **clé d'appareils**, qui entre dans le calcul du secret de
-  chaque appareil (voir § Sécurité).
 
-### Tâches
+### Tâches et sprints
 
-Modèle volontairement minimal :
+Une tâche est une unité de travail. Elle peut plus tard être créée depuis un ticket, mais son
+statut reste **indépendant** de celui du ticket : le ticket suit la demande dans le workflow
+de l'équipe, la tâche suit mon travail. Le statut du ticket sera seulement affiché sur la
+tâche, et c'est l'utilisateur qui déplace la tâche.
 
 | Champ          | Rôle                                                    |
 |----------------|---------------------------------------------------------|
-| `id`           |                                                         |
 | `workspace`    |                                                         |
+| `sprint`       | nul : la tâche est dans le backlog                      |
 | `title`        |                                                         |
-| `color`        | pastille de couleur                                     |
-| `done_at`      | nul tant que la tâche n'est pas terminée                |
-| `created_at`   |                                                         |
-| `updated_at`   |                                                         |
+| `description`  |                                                         |
+| `status`       | voir ci-dessous                                         |
+| `position`     | ordre dans sa liste ; l'ordre tient lieu de priorité    |
+| `color`        | pastille de couleur (pas encore utilisée)               |
+| `done_at`      | renseigné quand la tâche passe à `done`, vidé sinon     |
+| `created_at`, `updated_at` |                                             |
 
-### Journal d'événements
+Statuts, fixes : `todo`, `in_progress`, `in_review`, `finalizing`, `done`, et `cancelled`,
+statut à part qui n'a pas de colonne sur le tableau.
 
-Toute mutation émet un événement persistant (`task.created`, `task.updated`, `job.failed`,
-`device.connected`, `jira.issue.changed`, `mr.added`, …). Chaque événement porte son
-`origin` : `user`, `device`, `integration` ou `agent`. Le journal a deux consommateurs :
+**Sprints.** Un sprint a un nom et un état `planned`, `active` ou `closed`. Il n'a pas de
+durée : il s'ouvre et se clôture à la main.
 
-- l'**agent IA**, qui ne lit que les événements postérieurs à son dernier run ;
-- les **appareils abonnés**, qui reçoivent les événements correspondant à leurs `listen.*`.
+- Un seul sprint `active` par workspace.
+- Clôturer un sprint le marque seulement comme terminé : ses tâches restent à leur place, avec
+  leur statut. On peut en retirer une tâche (pour la reprendre ailleurs), pas en ajouter.
+- L'API permet de rouvrir un sprint clôturé ; le front ne le propose pas encore.
+- Pas de suppression : une tâche abandonnée passe en `cancelled`.
+
+Le tableau montre le sprint actif en cinq colonnes ; le backlog montre les sprints ouverts et
+planifiés puis les tâches sans sprint. Les tâches se déplacent par glisser-déposer, entre les
+listes et à l'intérieur d'une liste.
+
+### Historique
+
+Toute action notable écrit une ligne dans la table `history` : `workspace`, `type`,
+`origin` (`user`, `device`, `integration`, plus tard `agent`), l'utilisateur à l'origine s'il
+y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les lignes sont
+écrites par `HistoryService::log()`.
+
+| Type                          | Quand                                               |
+|-------------------------------|-----------------------------------------------------|
+| `task.created`, `task.updated` | création, changement de titre ou de description    |
+| `task.status_changed`         | changement de statut (`from`, `to`)                 |
+| `task.sprint_changed`         | changement de sprint (noms, `null` pour le backlog) |
+| `sprint.created`, `sprint.opened`, `sprint.closed` |                                |
+| `event.triggered`             | événement lancé à la main ou par une quick-action   |
+| `pr.added`, `pr.changed`, `pr.removed` | différences vues par une intégration de forge |
+| `device.connected`, `device.disconnected` | connexions des appareils                |
+| `key.created`, `key.revoked`  | création et révocation d'une configuration          |
+
+Les lignes `task.*`, `sprint.*` et `event.triggered` sont aussi envoyées aux appareils
+connectés comme des événements du même type (voir § Événements). Les lignes `pr.*` ne le sont
+pas encore. Chaque tâche affiche son propre historique, avec l'auteur de chaque changement.
+
+L'historique a, à terme, un second consommateur : **(prévu)** l'agent IA, qui ne lira que les
+lignes postérieures à son dernier run.
 
 ### Rétention
 
-Une tâche planifiée tourne tous les jours à minuit et supprime les entrées du journal
-d'événements, les logs des livraisons et l'historique des runs de l'agent plus anciens que
-la durée de rétention. Cette durée se règle dans la configuration PHP de l'application,
-**31 jours** par défaut ; il n'y a pas d'interface d'administration. Les tâches, les jobs,
-l'historique des connexions, l'état courant des intégrations et la note de mémoire de
-l'agent ne sont jamais supprimés par ce nettoyage.
+Une tâche planifiée quotidienne supprime les lignes d'historique et leurs livraisons plus
+anciennes que **31 jours** (configuration PHP, `HistoryConfiguration`). Une autre supprime
+les merge requests fermées depuis plus de **30 jours**. Les tâches, les sprints et l'état
+courant des intégrations ne sont jamais supprimés par ce nettoyage.
 
-## 2. Appareils et jobs
+## 2. Appareils
 
 ### Principe
 
@@ -105,287 +147,141 @@ L'appareil ouvre lui-même la communication : Tower n'appelle jamais un appareil
 dont le connecteur n'est pas lancé est simplement hors ligne. Ça évite toute exposition de
 port côté appareil et fonctionne derrière un NAT.
 
-Tower envoie deux choses aux appareils :
+Tower envoie aux appareils :
 
-- des **jobs**, envoyés à un seul appareil, qui répond par un accusé de réception puis un
-  résultat ;
-- des **événements**, envoyés à tous les appareils abonnés. Tower n'attend pas leurs
-  réponses, mais enregistre chacune de celles qui arrivent.
+- des **événements**, envoyés à tous les appareils connectés du workspace dont la
+  configuration écoute ce type ; chaque appareil répond quand il a fini, et chaque réponse est
+  enregistrée ;
+- **(prévu)** des **jobs**, envoyés à un seul appareil, qui répond par un accusé de réception
+  puis un résultat. Le principe des jobs est en attente : pour l'instant, il n'y a que des
+  événements.
 
-Chaque envoi à un appareil est une **livraison**, avec son propre statut et sa propre
-réponse : un job a une livraison, un événement en a autant que d'appareils contactés.
+Chaque envoi à un appareil est une **livraison** (table `event_delivery`), avec son propre
+statut et sa propre réponse : un événement en a autant que d'appareils contactés.
 
-### Capacités déclarées par l'appareil
+### Configurations
 
-À chaque connexion, le connecteur annonce la liste fermée de ce qu'il sait faire, avec le
-schéma des paramètres, et les capacités pour lesquelles il veut être l'appareil par défaut :
+Une configuration est créée dans le front (menu Download). Elle donne un `client_id`
+(`twr_…`) et un secret de 256 bits, affiché une seule fois ; Tower n'en garde que le SHA-256.
+Elle peut servir sur plusieurs appareils et se révoque depuis le front : les appareils qui
+l'utilisent sont déconnectés.
 
-```json
-{
-  "capabilities": [
-    { "name": "backup.run",      "params": {} },
-    { "name": "git.pull",        "params": { "repo": { "type": "string", "enum": ["dotfiles", "notes"] } } },
-    { "name": "listen.mr.*",     "params": {} }
-  ],
-  "default_for": ["backup.*"]
-}
-```
+Chaque configuration porte ses **abonnements** (`listen`) : une liste de motifs, réglée dans
+le front, à la création ou ensuite. `*` par défaut, liste vide pour ne rien recevoir.
 
-- Tower ne peut émettre que des jobs correspondant à une capacité déclarée, avec des
-  paramètres validés contre ce schéma.
-- Le connecteur revalide localement : un job hors liste est refusé, même signé.
-- **Pas de shell arbitraire.** Chaque capacité correspond à une commande écrite dans le
-  fichier de configuration de l'appareil (voir § Configuration du connecteur).
-- **Abonnements.** Les capacités nommées `listen.<motif>` (par exemple `listen.task.created`
-  ou `listen.mr.*`) sont réservées aux abonnements : l'appareil reçoit les événements dont le
-  type correspond au motif et lance la commande associée. Elles ne peuvent pas être la cible
-  d'un job et n'ont pas de politique d'émission.
+- Les motifs suivent `fnmatch` : `*` correspond à n'importe quelle suite de caractères, points
+  compris (`task.*`, `deploy.start`, `*`).
+- Ils sont relus à chaque événement : une modification s'applique sans reconnecter ni
+  retélécharger quoi que ce soit.
+- Au plus 20 motifs, faits de minuscules, chiffres, points, tirets, `_`, `*` et `?`.
 
-**Motifs.** `listen.*` et `default_for` acceptent des jokers, avec la sémantique de
-`fnmatch` (disponible en Python et en PHP) : `*` correspond à n'importe quelle suite de
-caractères, points compris. `default_for` se compare aux noms des capacités de job :
-`backup.*` couvre les jobs `backup.…`, `*` couvre tous les jobs. Il n'a aucun effet sur les
-abonnements, puisqu'un événement part toujours vers tous les abonnés.
+### Événements
 
-### Gardes
+Un événement a un type (`deploy.start`, `task.created`…) et un payload, objet JSON. Il est
+produit :
 
-Deux portes indépendantes, l'une côté émetteur, l'autre côté exécutant.
+- à la main, depuis l'écran Événements, ou par une **quick-action** (événement prédéfini du
+  workspace, lancé en un clic) ;
+- par une ligne d'historique `task.*` ou `sprint.*`.
 
-**Côté Tower — ce que l'agent a le droit d'émettre.** La politique d'émission est déclarée
-par l'appareil et appliquée par Tower aux jobs lancés par l'agent. Elle ne concerne pas les
-jobs lancés par un utilisateur.
+L'événement est d'abord écrit dans l'historique, puis envoyé au processus WebSocket, qui le
+livre aux connexions dont la configuration l'écoute. Pour chacune, la livraison est écrite
+**avant** l'envoi, en `pending`, et son identifiant part avec l'événement. S'il n'y a aucun
+abonné connecté, l'événement n'est livré à personne et reste dans l'historique ; un appareil
+hors ligne au moment de l'envoi ne le reçoit jamais.
 
-| Politique   | Effet                                                                  |
-|-------------|------------------------------------------------------------------------|
-| `manual`    | l'agent ne peut pas lancer de job vers cet appareil                    |
-| `auto`      | l'agent peut lancer le job directement                                 |
-
-La politique appliquée est celle de l'**appareil cible**, une fois le routage fait :
-
-1. si l'appareil s'est déclaré par défaut pour la capacité (`default_for`), `auto` ;
-2. sinon, la `policy` déclarée dans la configuration du connecteur, donc pour son workspace ;
-3. sans `policy` déclarée, `manual`.
-
-Il n'y a pas d'étape de validation : un job que la politique autorise part directement.
-
-**Côté appareil — qui a le droit d'exécuter.** Configuré localement dans le connecteur, donc
-hors de portée de Tower. Un mode global, surchargeable par capacité, qui s'applique aux jobs
-comme aux événements :
-
-| Mode    | Effet                                                                      |
-|---------|----------------------------------------------------------------------------|
-| `deny`  | refusé sans question                                                       |
-| `ask`   | le connecteur demande confirmation dans son terminal avant d'exécuter      |
-| `auto`  | exécuté directement (confiance)                                            |
-
-En mode `ask` sans terminal interactif (connecteur lancé en service), la livraison est
-refusée avec le motif `confirmation_unavailable` plutôt qu'exécutée.
-
-### Routage
-
-**Appareils éligibles** : les appareils du workspace qui ont une connexion ouverte et qui
-déclarent la capacité. Pour un job, c'est le nom de la capacité ; pour un événement de type
-`T`, c'est une capacité `listen.<motif>` qui correspond à `T`.
-
-**Appareil par défaut** (jobs uniquement) : un appareil éligible dont un motif `default_for`
-correspond au nom de la capacité. Le rôle est porté par la connexion et disparaît avec elle.
-Si plusieurs appareils connectés sont par défaut pour le même nom, le dernier connecté
-l'emporte.
-
-Pour un **job**, la cible est, dans l'ordre :
-
-1. l'appareil par défaut ;
-2. le seul appareil éligible, s'il n'y en a qu'un ;
-3. s'il y en a plusieurs, l'appareil choisi par l'utilisateur dans le front (voir § Front,
-   indicateur Appareils) ; le job attend ce choix sans limite de temps ;
-4. s'il n'y en a aucun, le premier appareil éligible qui se connecte, dans la limite du
-   **délai d'attente** (5 minutes par défaut, réglé dans la configuration PHP). Au-delà, le
-   job passe en `failed` avec le motif `no_device` et reste dans l'historique.
-
-Un **événement** part vers tous les appareils éligibles. S'il n'y en a aucun, il n'est livré
-à personne et reste dans le journal.
+Un événement envoyé depuis une transaction ne part qu'une fois celle-ci validée : le processus
+WebSocket écrit la livraison contre la ligne d'historique, qui doit déjà être visible.
 
 ### Livraisons et réponses
 
-| Statut de livraison | Sens                                                        |
-|---------------------|-------------------------------------------------------------|
-| `sent`              | message envoyé sur la connexion                             |
-| `accepted`          | l'appareil a accepté et exécute                             |
-| `denied`            | l'appareil a refusé (mode, capacité inconnue, motif…)       |
-| `succeeded`         | commande terminée avec le code de sortie `0`                |
-| `failed`            | commande terminée avec un autre code, ou tuée au timeout    |
+| Statut      | Sens                                                              |
+|-------------|-------------------------------------------------------------------|
+| `unknown`   | livraison écrite avant que les réponses existent                  |
+| `pending`   | envoyée, pas encore de réponse                                    |
+| `running`   | le handler de l'appareil a démarré                                |
+| `received`  | reçue par un connecteur lancé sans handler                        |
+| `succeeded` | handler terminé avec le code de sortie `0`                        |
+| `failed`    | handler terminé avec un autre code, introuvable, ou tué au timeout |
 
-- Une livraison de job sans accusé de réception est renvoyée quand l'appareil se reconnecte.
-  Une livraison d'événement ne l'est pas : un abonné hors ligne au moment de l'envoi ne le
-  reçoit jamais.
-- Le statut d'un job suit celui de sa livraison unique ; un événement n'a pas de statut
-  global, seulement ses livraisons.
+- La réponse porte le code de sortie et la sortie du handler, tronquée à 64 Ko.
+- Une réponse n'est acceptée que de la **même configuration** que la livraison, même après
+  une reconnexion. Une livraison terminée (`received`, `succeeded`, `failed`) garde son
+  résultat.
+- L'historique affiche, pour chaque ligne envoyée, les appareils contactés avec leur statut,
+  leur code de sortie et leur réponse.
 
 ### Déconnexion forcée
 
-Depuis le front, un utilisateur peut déconnecter un appareil. Tower lui envoie un message
-`disconnect` : le connecteur termine proprement et **ne tente pas de se reconnecter**. Il
-faut le relancer sur l'appareil. Contrairement à la révocation, le secret reste valide.
-
-### Cycle de vie d'un job
-
-```mermaid
-stateDiagram-v2
-    [*] --> routing: lancé par l'utilisateur ou l'agent
-    routing --> dispatched: appareil déterminé, utilisateur ou politique auto
-    routing --> denied: appareil déterminé, agent et politique manual
-    routing --> awaiting_choice: plusieurs appareils éligibles, pas de défaut
-    routing --> waiting_device: aucun appareil éligible connecté
-    awaiting_choice --> dispatched: appareil choisi dans le front
-    waiting_device --> routing: un appareil éligible se connecte
-    waiting_device --> failed: délai d'attente dépassé (no_device)
-    awaiting_choice --> cancelled: révocation ou changement de clé
-    waiting_device --> cancelled: révocation ou changement de clé
-    dispatched --> dispatched: renvoyée à la reconnexion faute d'accusé
-    dispatched --> denied: refusé par l'appareil
-    dispatched --> running: accepté
-    running --> succeeded
-    running --> failed
-    succeeded --> [*]
-    failed --> [*]
-    denied --> [*]
-    cancelled --> [*]
-```
-
-Chaque transition est un événement du journal : l'agent IA voit donc les échecs de jobs
-au même titre que les changements de tâches.
+Depuis la modale Appareils, un utilisateur peut déconnecter un appareil. Tower lui envoie un
+message `disconnect` : le connecteur s'arrête et **ne tente pas de se reconnecter**. Il faut le
+relancer sur l'appareil. Contrairement à la révocation, la configuration reste valide.
 
 ### Connexions
 
-Chaque connexion WebSocket est enregistrée en base (`device_connection`) avec l'identité de
-l'appareil et ce qu'il a annoncé dans son `hello` : nom, capacités, `default_for` et
-`policy`. C'est la seule trace des appareils dans Tower : la liste des appareils affichée
-dans le front est dérivée des connexions, ouvertes et passées. Un appareil est **en ligne**
-s'il a une connexion ouverte ; le routage ne lit que les connexions ouvertes.
+Les connexions ouvertes sont tenues en mémoire par le processus WebSocket
+(`ConnectedDevices`) : il n'y a pas de table de connexions. Chaque connexion est décrite par
+ce que le connecteur envoie à l'ouverture :
 
-Une connexion est fermée, avec sa date et son motif, dans ces cas :
+| En-tête              | Contenu                                            |
+|----------------------|----------------------------------------------------|
+| `X-Tower-Client-Id`, `X-Tower-Secret` | la configuration                  |
+| `X-Tower-Hostname`   | nom de la machine                                  |
+| `X-Tower-Device-Type`| `desktop`, `laptop` ou `mobile`, détecté localement |
+| `User-Agent`         | version du connecteur, système, architecture, Python |
 
-| Motif            | Déclencheur                                                        |
-|------------------|--------------------------------------------------------------------|
-| `closed`         | fermeture WebSocket normale                                        |
-| `ping_timeout`   | pas de `pong` en réponse à un `ping`                               |
-| `forced`         | déconnexion forcée depuis le front                                 |
-| `revoked`        | révocation de l'appareil                                           |
-| `key_rotated`    | changement de la clé d'appareils du workspace                      |
-| `stale`          | aucun signe de vie depuis trop longtemps (voir ci-dessous)         |
-| `server_restart` | connexions encore ouvertes au démarrage de Tower                   |
+La liste des appareils connectés est publiée en direct aux navigateurs du workspace. Les
+ouvertures et fermetures sont écrites dans l'historique, avec le motif de fermeture :
+`connection_closed`, `revoked` ou `disconnected_by_user`.
 
-- Tower envoie un `ping` toutes les **5 minutes** ; chaque `pong` met à jour `last_seen_at`
-  de la connexion.
-- Une tâche planifiée ferme en `stale` les connexions ouvertes dont `last_seen_at` date de
-  plus de **15 minutes**. C'est le filet de sécurité quand le processus WebSocket meurt sans
-  avoir pu enregistrer les fermetures.
-- Au démarrage, Tower ferme en `server_restart` toutes les connexions restées ouvertes : les
-  sockets ne survivent pas à un redémarrage.
-- Les connexions fermées sont conservées comme historique.
-- Les deux durées se règlent dans la configuration PHP.
-- Le reverse proxy devant Tower doit avoir un délai d'inactivité supérieur à l'intervalle de
-  `ping`, sinon il coupe les connexions entre deux `ping` (nginx : `proxy_read_timeout`,
-  60 s par défaut).
+Le processus WebSocket vérifie sa connexion à la base toutes les 5 minutes et s'arrête s'il
+l'a perdue, pour être relancé par Docker.
+
+**(prévu)** Une table `device_connection`, un `ping` applicatif vers les appareils et la
+fermeture des connexions mortes (`ping_timeout`, `stale`, `server_restart`). Le reverse proxy
+devant Tower devra alors avoir un délai d'inactivité supérieur à l'intervalle de `ping`
+(nginx : `proxy_read_timeout`, 60 s par défaut).
 
 ### Protocole
 
-**Enrôlement**, en HTTP, une seule fois : le connecteur envoie un code d'appairage et reçoit
-en échange `workspace_id`, `device_id` et `secret`.
-
-Ensuite, une seule connexion WebSocket par appareil, ouverte par le connecteur, porte les
-deux sens : Tower y envoie les jobs et les événements, l'appareil y renvoie ses réponses.
+Une seule connexion WebSocket par connecteur, ouverte par lui sur `/devices`, porte les deux
+sens. Les messages sont des objets JSON.
 
 Messages de Tower vers l'appareil :
 
 | Type         | Contenu                                                             |
 |--------------|---------------------------------------------------------------------|
-| `job`        | `delivery_id`, `job_id`, `capability`, `params`, `expires_at`       |
-| `event`      | `delivery_id`, `type`, `payload`                                    |
-| `cancel`     | `delivery_id`                                                       |
-| `disconnect` | arrêt du connecteur, sans reconnexion                               |
-| `ping`       | maintien de connexion                                               |
+| `connection` | `uuid` de la connexion, à l'ouverture                               |
+| `event`      | `id` (ligne d'historique), `delivery`, `workspace`, `event`, `payload` |
+| `disconnect` | `reason` ; arrêt du connecteur, sans reconnexion                    |
 
 Messages de l'appareil vers Tower :
 
 | Type       | Contenu                                                               |
 |------------|-----------------------------------------------------------------------|
-| `hello`    | `workspace_id`, `device_id`, nom, version du connecteur, capacités, `default_for`, `policy` |
-| `ack`      | `delivery_id`, `accepted` ou `denied` + motif                         |
-| `progress` | `delivery_id`, fragment de log (optionnel, pour les commandes longues) |
-| `result`   | `delivery_id`, `succeeded` ou `failed`, code de sortie, sortie tronquée |
-| `pong`     | réponse au `ping`                                                     |
+| `response` | `delivery`, `status` (`running`, `received`, `succeeded`, `failed`), `exit_code`, `output` |
 
-Chaque message, dans les deux sens, est enveloppé et signé (voir § Sécurité) :
+Un message invalide reçoit une réponse `error` ; au-delà de 600 messages par minute, une
+connexion est limitée.
 
-```json
-{
-  "timestamp": 1762678800,
-  "nonce": "3f9c1e6a0b2d4c8e9a7f5b1d2e4c6a80",
-  "body": "{\"type\":\"job\",\"delivery_id\":\"…\",\"job_id\":\"…\",\"capability\":\"backup.run\",\"params\":{},\"expires_at\":1762679100}",
-  "signature": "sha256=5d1c…"
-}
-```
-
-`body` est transmis comme une chaîne JSON sérialisée, pas comme un objet : la signature porte
-sur ces octets exacts, et le récepteur vérifie avant de parser.
-
-Règles :
-
-- Le `delivery_id` rend la livraison idempotente : un message reçu deux fois après
-  reconnexion n'est exécuté qu'une fois.
-- Un job dont `expires_at` est dépassé est refusé, même si sa signature est valide.
-- La sortie remontée est tronquée à une taille fixe ; le détail complet reste dans les logs
-  locaux de l'appareil.
+**(prévu)** Messages signés pour les jobs : enveloppe `timestamp`, `nonce`, `body` sérialisé
+et signature HMAC-SHA256 avec un secret par appareil, horodatage vérifié à 5 minutes près,
+nonce à usage unique, comparaison en temps constant. Messages `job`, `cancel`, `ack`,
+`progress`, `result`, `ping`/`pong`, avec un `delivery_id` qui rend la livraison idempotente.
+Ce mécanisme reste à rapprocher des configurations actuelles quand les jobs seront abordés.
 
 ### Sécurité
 
-- TLS obligatoire.
-- **Code d'appairage** : à usage unique, lié à un workspace, d'une durée de validité réglée
-  dans la configuration PHP. Il est généré soit dans les paramètres, soit par l'assistant de
-  téléchargement (voir § Front).
-- **Secret dérivé, jamais stocké** : comme Tower ne garde pas de registre d'appareils, le
-  secret de chaque appareil est calculé à partir de deux clés :
-
-  ```
-  secret = HMAC-SHA256(cle_maitre, f"{workspace_id}.{cle_workspace}.{device_id}")
-  ```
-
-  - la **clé maître** est dans la configuration PHP, jamais en base ;
-  - la **clé d'appareils du workspace** est en base, propre à chaque workspace.
-
-  Tower recalcule le secret à chaque message à partir de l'identité annoncée. Un appareil qui
-  annonce un autre workspace que le sien obtient un secret différent et ses signatures
-  échouent.
-- **Changement de la clé d'un workspace** depuis les paramètres : tous les secrets du
-  workspace deviennent invalides, ses connexions ouvertes sont fermées en `key_rotated` et
-  ses jobs en attente annulés. Chaque appareil doit être ré-enrôlé. Les autres workspaces ne
-  sont pas touchés.
-- **Révocation d'un appareil** : l'identité est ajoutée à la table `revocation`, la
-  connexion fermée en `revoked`, les jobs en attente sur cet appareil annulés. Une identité
-  révoquée est refusée à la connexion.
-- **Signature HMAC-SHA256** de chaque message, dans les deux sens, avec le secret de
-  l'appareil. Le même mécanisme authentifie Tower auprès de l'appareil et l'appareil auprès
-  de Tower ; l'API appareil n'a pas d'autre authentification.
-- Le connecteur journalise localement chaque livraison reçue, acceptée ou refusée.
-
-Règles de signature, toutes obligatoires :
-
-1. **HMAC, pas un hash.** `signature = HMAC-SHA256(secret, f"{timestamp}.{nonce}.{body}")`.
-   Ni `sha256(body)`, recalculable par n'importe qui, ni `sha256(secret + body)`, vulnérable à
-   l'extension de longueur.
-2. **Horodatage et nonce dans les données signées.** Le récepteur refuse un message dont le
-   `timestamp` s'écarte de plus de 5 minutes de son horloge, ou dont le `nonce` a déjà été vu
-   dans cette fenêtre. Les nonces ne sont conservés que pour la durée de la fenêtre.
-3. **Comparaison en temps constant** : `hmac.compare_digest`, jamais `==`.
-4. **Un secret par appareil**, pour qu'une compromission reste locale et révocable
-   individuellement.
-
-Côté Python, tout repose sur la stdlib (`hmac`, `hashlib`, `secrets`).
-
-Limite assumée : il faut la clé maître **et** la base pour forger des messages. Une fuite de
-la base seule ne suffit pas ; une compromission complète du serveur, si. La liste fermée de
-capacités et les gardes locales `ask` / `deny` restent la dernière barrière.
+- TLS obligatoire en production (`wss://`).
+- Le secret d'une configuration n'est affiché qu'une fois et seul son SHA-256 est stocké :
+  avec 256 bits aléatoires, un hash lent n'apporterait rien et bloquerait la boucle
+  WebSocket.
+- Le connecteur exécute son handler **sans shell**, en liste d'arguments : le contenu d'un
+  événement ne peut jamais devenir une commande ou une option.
+- Tower ne peut que **déclencher** ce qu'un appareil a accepté de faire en lançant son
+  connecteur avec un handler. Il ne définit jamais la commande exécutée.
+- Les tokens des intégrations sont chiffrés en base avec `APP_KEY` (sodium) et ne sont
+  jamais renvoyés au front. Changer `APP_KEY` oblige à ressaisir les tokens.
 
 ### Reconnexion
 
@@ -394,147 +290,152 @@ La connexion est supposée instable (veille, changement de réseau, redémarrage
 - Le connecteur se reconnecte avec un backoff exponentiel plafonné et une gigue aléatoire
   (1 s, 2 s, 4 s… jusqu'à 60 s), pour que tous les appareils ne reviennent pas au même
   instant après un redémarrage de Tower.
-- Le backoff repart de zéro après une connexion stable.
-- Après un `disconnect`, le connecteur s'arrête au lieu de se reconnecter.
-- Tower envoie un `ping` périodique ; sans `pong`, la connexion est considérée morte et
-  l'appareil passe hors ligne (voir § Connexions).
-- Une commande en cours d'exécution au moment de la coupure continue localement ; son
-  `result` est envoyé à la reconnexion.
+- Le backoff repart de zéro après une connexion restée ouverte une minute.
+- Après un `disconnect`, ou si Tower refuse la configuration, le connecteur s'arrête au lieu
+  de se reconnecter.
+- Un handler en cours au moment d'une coupure continue localement. Sa réponse, comme toutes
+  celles qui n'ont pas pu partir, attend dans le connecteur (1 000 au plus, les plus anciennes
+  sont abandonnées) et part à la reconnexion.
 
 ### Distribution du connecteur
 
 Le connecteur est livré en un seul fichier zipapp (`tower-connector.pyz`, module `zipapp` de
 la stdlib) qui embarque ses dépendances, et se lance avec `python3 tower-connector.pyz`, sans
 pip ni venv. Ça évite la PEP 668 (`externally-managed-environment`) sur les distributions
-récentes. Il se télécharge depuis le menu Download du front.
+récentes. Il est construit dans l'image Docker et se télécharge depuis le menu Download.
 
 Contrainte : seules des dépendances en Python pur peuvent être embarquées, une extension
 compilée ne serait pas portable d'une architecture à l'autre. `websockets` est en Python pur.
+Python 3.10 minimum.
 
-### Configuration du connecteur
-
-Le connecteur se configure uniquement par un fichier JSON passé en argument :
+### Lancement du connecteur
 
 ```sh
-python3 tower-connector.pyz ~/.config/tower/pro.json
+python3 tower-connector.pyz [config.json] [--handler "<commande>" | --handler-file handlers.json]
+                            [--handler-timeout 60] [--max-jobs 4] [--no-color]
 ```
 
-Le fichier est normalement produit par l'assistant du menu Download ; il peut aussi être
-écrit à la main avec un code d'appairage généré dans les paramètres.
-
-**Premier lancement.** Le fichier contient un `pairing_code` au lieu d'une identité. Le
-connecteur réalise l'enrôlement, puis réécrit le fichier : `pairing_code` est remplacé par
-`workspace_id`, `device_id` et `secret`, et les permissions passent à `0600`. Si
-l'enrôlement échoue (code expiré, déjà utilisé, Tower injoignable), le connecteur s'arrête
-avec le motif et ne modifie pas le fichier.
-
-Format, tel que produit par l'assistant :
+**Configuration.** Un fichier JSON passé en argument, ou embarqué dans un connecteur
+**préconfiguré** téléchargé depuis le front (`tower-<configuration>-<workspace>.pyz`, qui se
+lance sans argument). Il peut porter ses handlers, ce qui donne un setup en un seul fichier :
 
 ```json
 {
   "tower_url": "wss://tower.example.com/devices",
-  "pairing_code": "K7Q-4MZ-9TD",
-  "name": "PC bureau",
-  "mode": "ask",
-  "policy": "auto",
-  "default_for": ["backup.*"],
-  "capabilities": {
-    "backup.run": {
-      "command": ["/usr/local/bin/backup.sh"],
-      "timeout": 3600,
-      "mode": "auto"
-    },
-    "git.pull": {
-      "command": ["git", "-C", "/home/me/{repo}", "pull"],
-      "params": { "repo": { "type": "string", "enum": ["dotfiles", "notes"] } },
-      "timeout": 120
-    },
-    "listen.mr.*": {
-      "command": ["notify-send", "Tower", "{title}"],
-      "timeout": 10,
-      "mode": "auto"
-    }
+  "client_id": "twr_…",
+  "secret": "…",
+  "handlers": {
+    "task.status_changed": "notify-send Tower \"{payload.title} : {payload.to}\"",
+    "deploy.*": ["git -C ~/projets/api pull", "make -C ~/projets/api deploy"],
+    "*": "python3 ~/tower/log.py"
   }
 }
 ```
 
-| Clé                          | Rôle                                                                 |
-|------------------------------|----------------------------------------------------------------------|
-| `pairing_code`               | présent jusqu'au premier lancement, remplacé ensuite par l'identité  |
-| `workspace_id`, `device_id`, `secret` | identité, écrite par le connecteur après l'enrôlement       |
-| `name`                       | nom affiché dans le front, annoncé dans `hello`                      |
-| `mode`                       | mode d'exécution global : `deny`, `ask` ou `auto`                    |
-| `policy`                     | politique d'émission de l'agent vers cet appareil : `manual` ou `auto` ; `manual` si absente |
-| `default_for`                | motifs des capacités de job pour lesquelles cet appareil est par défaut |
-| `capabilities.<nom>.command` | commande sous forme de liste d'arguments                             |
-| `capabilities.<nom>.params`  | schéma des paramètres, annoncé à Tower dans `hello` ; pour un `listen.*`, les `{placeholders}` sont les champs du payload de l'événement |
-| `capabilities.<nom>.timeout` | durée maximale d'exécution, en secondes                              |
-| `capabilities.<nom>.mode`    | surcharge du mode global pour cette capacité                         |
+Le fichier contient le secret : le partager, c'est donner accès au workspace. Les abonnements
+ne sont pas dans ce fichier : ils appartiennent à la configuration, côté Tower.
 
-Règles :
+**Handlers.** Trois sources, la première présente l'emporte :
 
-- La commande est exécutée **sans shell**, en liste d'arguments. Les paramètres, validés
-  contre leur schéma, remplacent les `{placeholders}` argument par argument : un paramètre ne
-  peut jamais injecter d'option ni de commande supplémentaire.
-- Code de sortie `0` : `succeeded` ; tout autre code : `failed` ; dépassement de `timeout` :
-  le processus est tué et la livraison passe en `failed`.
-- Si plusieurs capacités `listen.*` du même appareil correspondent à un événement, chacune
-  lance sa commande.
-- Une fois le `secret` écrit, le connecteur refuse de démarrer si le fichier est lisible par
-  d'autres utilisateurs que son propriétaire.
-- Les capacités et `default_for` annoncés à Tower sont exactement ceux du fichier ;
-  modifier le fichier puis relancer le connecteur suffit à les mettre à jour.
+1. `--handler "<commande>"` : une seule commande pour tous les événements ;
+2. `--handler-file fichier.json` : un fichier au format de la section `handlers`, utile avec
+   un connecteur préconfiguré, dont la configuration embarquée ne s'édite pas ;
+3. la section `handlers` de la configuration.
+
+Format de `handlers` : des motifs d'événements (`fnmatch`, comme les abonnements) en clés, une
+commande ou une liste de commandes en valeur.
+
+- Toutes les clés qui correspondent sont exécutées, dans l'ordre du fichier. Chacune est une
+  chaîne indépendante : dans une liste, les commandes s'enchaînent et s'arrêtent au premier
+  échec, comme `&&`, sans empêcher les autres clés.
+- Aucune clé ne correspond : le connecteur répond `received`.
+- `{event}`, `{id}`, `{delivery}`, `{workspace}` et `{payload.champ}` (champs imbriqués avec
+  des points) sont remplacés **à l'intérieur d'un argument**, après le découpage : une valeur
+  ne peut jamais ajouter d'argument ni de commande. Un nom inconnu reste tel quel.
+- Un fichier modifié est relu à l'événement suivant, sans relancer le connecteur ; s'il devient
+  invalide, la dernière version valide reste en service. Une configuration embarquée ne
+  change pas.
+
+Pour chaque commande :
+
+- elle est découpée comme le ferait un shell, mais exécutée sans shell ; `~` est développé ;
+- le message complet arrive en JSON sur son entrée standard ; `TOWER_EVENT`, `TOWER_EVENT_ID`,
+  `TOWER_DELIVERY` et `TOWER_WORKSPACE` sont dans son environnement ;
+- `--handler-timeout` (60 s par défaut) l'arrête si elle dure trop.
+
+Le connecteur répond `running` au démarrage, puis `succeeded` ou `failed`, avec le code de
+sortie du premier échec, ou de la dernière commande. La sortie renvoyée réunit celles des
+commandes : la sortie standard de chacune, ou sa sortie d'erreur si la première est vide.
+`--max-jobs` (4 par défaut) limite les événements traités en même temps ; les suivants
+attendent, et le connecteur continue de recevoir. Sans aucun handler, le connecteur affiche
+les événements et répond `received`.
+
+**Affichage.** Chaque message entrant s'affiche derrière une flèche bleue `->`, chaque réponse
+sortante derrière une flèche orange `<-`, avec son code de sortie, suivie d'une ligne vide.
+`--no-color` retire les couleurs pour les journaux système ; elles sont aussi retirées quand
+la sortie n'est pas un terminal ou que `NO_COLOR` est défini.
 
 ## 3. Intégrations
 
-Une intégration relie un workspace à un outil externe. Un workspace peut en avoir plusieurs
-(par exemple GitHub pour des projets perso et GitLab pour d'autres), et deux workspaces
-peuvent chacun avoir la leur sur le même outil.
+Une intégration relie un workspace à un outil externe. Les drivers d'une même famille sont
+des siblings sous une même abstraction (`PullRequestProvider` pour les forges) : chacun
+traduit les réponses de son API en objets valeur communs (`PullRequestData`), avec des
+statuts locaux à Tower, si bien que le diff, l'historique et les écrans ne connaissent pas
+l'outil d'origine.
 
-| Type        | Famille          | Dashboard                    |
-|-------------|------------------|------------------------------|
-| `jira`      | tickets          | Jira                         |
-| `bitbucket` | merge requests   | Merge Requests               |
-| `gitlab`    | merge requests   | Merge Requests               |
-| `github`    | merge requests   | Merge Requests               |
+| Type        | Famille          | Écran                        | État     |
+|-------------|------------------|------------------------------|----------|
+| `bitbucket` | merge requests   | Merge Requests               | en place |
+| `jira`      | tickets          | Jira                         | prévu    |
+| `gitlab`    | merge requests   | Merge Requests               | prévu    |
+| `github`    | merge requests   | Merge Requests               | prévu    |
 
-Les trois forges sont des drivers sibling sous une même abstraction de fournisseur de merge
-requests ; Jira est seul dans sa famille. Chaque driver traduit les réponses de son API en
-objets valeur communs, si bien que le diff, les événements et les dashboards ne connaissent
-pas l'outil d'origine.
+Pour l'instant, un workspace a au plus une intégration par type.
 
-Les identifiants (tokens d'API) sont **chiffrés en base** avec une clé de la configuration
-PHP (extension `sodium`, native en PHP).
+Les identifiants (tokens d'API) sont **chiffrés en base** avec `APP_KEY` (sodium).
 
 ### Synchronisation et diff
 
-Une tâche planifiée interroge chaque intégration à un intervalle réglé dans la configuration
-PHP. À chaque passage :
+Une tâche planifiée interroge chaque intégration toutes les 5 minutes ; le front permet aussi
+de lancer une synchronisation. À chaque passage :
 
-1. le driver récupère l'état courant (tickets non terminés, merge requests ouvertes) ;
-2. Tower le compare à l'état stocké lors du passage précédent, élément par élément ;
-3. chaque différence émet un événement d'`origin` `integration` ;
-4. le nouvel état remplace l'ancien.
+1. le driver récupère l'état courant ;
+2. Tower le compare à l'état stocké, élément par élément ;
+3. chaque différence écrit une ligne d'historique d'`origin` `integration` ;
+4. le nouvel état remplace l'ancien, dans une transaction.
 
-| Événement                 | Quand                                                          |
-|---------------------------|----------------------------------------------------------------|
-| `jira.issue.added`        | un ticket entre dans l'ensemble suivi                          |
-| `jira.issue.changed`      | un ticket suivi change (statut, sprint, assigné…) ; le payload liste les champs modifiés |
-| `jira.issue.removed`      | un ticket sort de l'ensemble suivi (terminé, supprimé…)        |
-| `mr.added`                | une merge request s'ouvre                                      |
-| `mr.changed`              | une merge request ouverte change                               |
-| `mr.removed`              | une merge request n'est plus ouverte (fusionnée, fermée…)      |
+| Type          | Quand                                                          |
+|---------------|----------------------------------------------------------------|
+| `pr.added`    | une merge request s'ouvre                                      |
+| `pr.changed`  | une merge request ouverte change ; le payload liste les champs modifiés |
+| `pr.removed`  | une merge request n'est plus ouverte (fusionnée, refusée…)     |
+| `jira.issue.added`, `jira.issue.changed`, `jira.issue.removed` | **(prévu)** mêmes règles pour les tickets |
 
-- Le **premier passage** d'une intégration sert de référence et n'émet aucun événement, sinon
-  il en produirait un par élément existant.
-- Un passage en erreur (token expiré, API indisponible) n'émet rien et ne remplace pas
+- Le **premier passage** d'une intégration sert de référence et n'écrit rien, sinon il
+  produirait une ligne par élément existant. Changer de compte ou de workspace externe efface
+  l'état stocké et refait une référence.
+- Un passage en erreur (token expiré, API indisponible) n'écrit rien et ne remplace pas
   l'état stocké ; l'erreur est enregistrée sur l'intégration et visible dans les paramètres.
-- Les dashboards lisent l'état stocké, pas l'API : l'affichage ne dépend pas de la
-  disponibilité de l'outil externe.
-- Ces événements suivent le même chemin que les autres : ils déclenchent l'agent et partent
-  vers les appareils abonnés (`listen.jira.*`, `listen.mr.*`).
+- Les écrans lisent l'état stocké, pas l'API : l'affichage ne dépend pas de la disponibilité
+  de l'outil externe.
+- **(prévu)** Envoyer les lignes `pr.*` aux appareils abonnés, comme les tâches.
 
-### Jira
+### Merge requests
+
+- **Bitbucket Cloud**, authentifié par l'e-mail du compte Atlassian et un API token (droits
+  `read:user:bitbucket`, `read:pullrequest:bitbucket`, `read:repository:bitbucket`).
+- Ensemble suivi : les merge requests ouvertes **dont l'utilisateur du token est l'auteur**
+  dans le workspace Bitbucket configuré, sans liste de dépôts. Lecture seule.
+- Une merge request qui disparaît de la liste est relue une dernière fois pour connaître son
+  état final ; les fermées restent affichées 30 jours.
+- Les statuts de pipeline ne sont relus que si le commit source a changé ou si le pipeline
+  n'était pas terminé.
+- Affichage en **arbre** : une merge request dont la branche cible est la branche source
+  d'une autre merge request ouverte du même dépôt en est l'enfant. Les racines sont les merge
+  requests qui visent une branche sans merge request ouverte (`main`, `develop`…).
+- Chaque merge request s'ouvre sur la forge, dans un nouvel onglet.
+
+### Jira (prévu)
 
 - Ensemble suivi : les tickets du board configuré dont le statut n'est pas dans la catégorie
   « terminé » de Jira.
@@ -543,18 +444,11 @@ PHP. À chaque passage :
 - Glisser un ticket d'une colonne à une autre déclenche la transition Jira correspondante.
   Seules les transitions autorisées par le workflow sont proposées ; si une transition exige
   des champs supplémentaires, Tower affiche l'erreur et propose d'ouvrir le ticket dans Jira.
-- Chaque ticket s'ouvre dans Jira, dans un nouvel onglet.
-- Après une transition, le ticket est relu immédiatement pour mettre à jour l'état stocké.
+- Un ticket peut être transformé en tâche. Le lien est gardé, et la catégorie de statut Jira
+  (`statusCategory` : à faire, en cours, terminé) est affichée sur la tâche, sans
+  synchronisation des statuts.
 
-### Merge requests
-
-- Ensemble suivi : les merge requests ouvertes des dépôts configurés. Lecture seule.
-- Affichage en **arbre** : une merge request dont la branche cible est la branche source
-  d'une autre merge request ouverte du même dépôt en est l'enfant. Les racines sont les merge
-  requests qui visent une branche sans merge request ouverte (`main`, `develop`…).
-- Chaque merge request s'ouvre sur la forge, dans un nouvel onglet.
-
-## 4. Agent IA
+## 4. Agent IA (prévu)
 
 ### Abstraction de provider
 
@@ -573,27 +467,27 @@ Les outils sont la seule voie d'action de l'agent, tous bornés au workspace du 
 | `get_task`         | détail d'une tâche                                          |
 | `create_task`      |                                                             |
 | `update_task`      |                                                             |
-| `list_devices`     | appareils du workspace, état de connexion, capacités        |
-| `dispatch_job`     | soumis à la politique d'émission de l'appareil cible        |
+| `list_devices`     | appareils du workspace et état de connexion                 |
+| `trigger_event`    | lance un événement vers les appareils abonnés               |
 | `write_memory`     | remplace la note de mémoire du workspace                    |
 
 ### Économie de tokens
 
 L'objectif : un run sans nouveauté coûte zéro token, un run normal quelques centaines.
 
-1. **Le déterministe hors IA.** Le diff des intégrations, le routage et les livraisons sont
-   calculés sans modèle ; l'agent ne reçoit que leurs résultats sous forme d'événements.
+1. **Le déterministe hors IA.** Le diff des intégrations et les livraisons sont calculés sans
+   modèle ; l'agent ne reçoit que leurs résultats sous forme de lignes d'historique.
 2. **Déclenchement par événement.** Il n'y a pas de planification de l'agent : c'est
-   l'arrivée d'un événement dans un workspace qui programme un run. Aucun événement, aucun
-   appel.
-   - **Regroupement** : un run démarre après une courte période sans nouvel événement, et au
-     plus tard après un délai maximal. Une rafale d'événements (dix tâches créées d'un
-     coup, un passage d'intégration chargé) produit un seul run, pas dix.
-   - **Pas d'auto-déclenchement** : les événements d'`origin` `agent` ne programment pas de
-     run, sinon chaque modification faite par l'agent le relancerait en boucle. Ils restent
-     dans le journal et sont lus au run suivant.
+   l'arrivée d'une ligne d'historique dans un workspace qui programme un run. Rien de
+   nouveau, aucun appel.
+   - **Regroupement** : un run démarre après une courte période sans nouvelle ligne, et au
+     plus tard après un délai maximal. Une rafale (dix tâches créées d'un coup, un passage
+     d'intégration chargé) produit un seul run, pas dix.
+   - **Pas d'auto-déclenchement** : les lignes d'`origin` `agent` ne programment pas de run,
+     sinon chaque modification faite par l'agent le relancerait en boucle. Elles sont lues au
+     run suivant.
 3. **Contexte compact.** Le prompt contient uniquement :
-   - les événements depuis le dernier run ;
+   - les lignes d'historique depuis le dernier run ;
    - les tâches non terminées, en résumé (`id`, titre, ancienneté) ;
    - la note de mémoire du workspace.
 
@@ -605,7 +499,7 @@ L'objectif : un run sans nouveauté coûte zéro token, un run normal quelques c
 6. **Deux étages.** Un modèle léger trie (`nothing_to_do` ou `escalate`) ; le modèle principal
    n'est appelé qu'en cas d'escalade.
 7. **Budget plafond** par workspace et par jour ; au-delà, les runs sont suspendus jusqu'au
-   lendemain et l'événement est journalisé.
+   lendemain et une ligne d'historique le signale.
 
 Chaque run est persisté (`agent_run`) avec son curseur, les tokens consommés (entrée,
 cache, sortie), les outils appelés et l'issue, pour pouvoir mesurer et ajuster.
@@ -614,64 +508,60 @@ cache, sortie), les outils appelés et l'issue, pour pouvoir mesurer et ajuster.
 
 ### Navbar
 
-Navbar verticale à gauche, toujours visible :
+Navbar verticale à gauche, toujours visible ; sur un écran étroit, elle se réduit à ses
+icônes.
 
 | Élément            | Contenu                                                            |
 |--------------------|--------------------------------------------------------------------|
 | Workspace          | tout en haut : sélecteur du workspace courant, avec une dernière option « Gérer mes workspaces » |
+| Appareils          | indicateur permanent, voir ci-dessous                              |
 | Accueil            |                                                                    |
-| Tâches             |                                                                    |
-| Jira               | affiché si le workspace a une intégration Jira                     |
-| Merge Requests     | affiché si le workspace a une intégration de forge                 |
+| Tâches             | tableau et backlog                                                 |
+| Événements         | lancement manuel et quick-actions                                  |
+| Jira               | **(prévu)** affiché si le workspace a une intégration Jira         |
+| Merge Requests     | **(prévu : affiché seulement avec une intégration de forge)**      |
 | Historique         |                                                                    |
 | Paramètres         |                                                                    |
-| Appareils          | indicateur permanent, voir ci-dessous                              |
-| Download           | téléchargement du connecteur et assistant de configuration         |
+| Download           | menu : télécharger le client, créer et gérer les configurations    |
 
 ### Indicateur Appareils
 
-Toujours présent dans la navbar. Il affiche le nombre d'appareils connectés et le nombre de
-jobs en cours (en attente ou en exécution), et prend une couleur selon l'état du
-workspace. Quand plusieurs états s'appliquent, le premier de la liste l'emporte :
+Toujours présent dans la navbar. Il affiche l'état de la connexion temps réel du navigateur
+et le nombre d'appareils connectés au workspace, mis à jour en direct.
 
-| État      | Couleur | Condition                                                         |
-|-----------|---------|-------------------------------------------------------------------|
-| warning   | orange  | au moins un job attend que l'utilisateur choisisse un appareil    |
-| erreur    | rouge   | un job a échoué depuis la dernière ouverture de la modale         |
-| info      | bleu    | au moins un job en attente ou en exécution                        |
-| ok        | vert    | aucun des cas précédents                                          |
+Un clic ouvre la **modale des appareils** : pour chaque appareil connecté, une icône de son
+type, son nom de machine, sa configuration, son système, l'heure de connexion et un bouton
+**Déconnecter**.
 
-Un clic ouvre la **modale de gestion des appareils** :
-
-- les appareils connectés, avec leur nom, leurs capacités, leurs `default_for` et l'heure de
-  connexion ;
-- pour chacun, les actions **déconnecter** et **révoquer** ;
-- les jobs en attente d'un choix d'appareil, avec la liste des appareils éligibles pour
-  choisir ;
-- les jobs échoués récents. Ouvrir la modale acquitte l'état erreur.
+**(prévu, avec les jobs)** Une couleur selon l'état du workspace (job en attente d'un choix
+d'appareil, job échoué, job en cours), et dans la modale les jobs en attente d'un choix et
+les jobs échoués récents.
 
 ### Écrans
 
 | Écran              | Contenu                                                              |
 |--------------------|----------------------------------------------------------------------|
-| Accueil            | derniers jobs, appareils connectés                                   |
-| Tâches             | liste des tâches : titre, pastille de couleur, terminée ou non ; création, modification, suppression |
-| Jira               | tickets non terminés regroupés par sprint, en kanban (voir § Intégrations) |
-| Merge Requests     | arbre des merge requests ouvertes, en lecture seule                  |
-| Historique         | jobs et leurs livraisons, connexions des appareils, runs de l'agent  |
-| Mes workspaces     | ouvert depuis le sélecteur : liste des workspaces de l'utilisateur, création, renommage ; pour chacun, ses membres, ajout d'un membre par l'e-mail de son compte, retrait d'un membre |
-| Paramètres         | clé d'appareils du workspace (changement), génération d'un code d'appairage, configuration des intégrations et état de leur dernière synchronisation |
+| Accueil            |                                                                      |
+| Tâches             | onglet Tableau (sprint actif, cinq colonnes, annulées à part) et onglet Backlog (sprints ouverts et planifiés, backlog, sprints clôturés repliés) ; fiche de tâche avec son historique |
+| Événements         | lancer un événement (type et payload JSON) ; créer, lancer et supprimer des quick-actions |
+| Merge Requests     | arbre des merge requests ouvertes par dépôt, approbations, commentaires, brouillon, pipeline ; section « Fermées récemment » |
+| Historique         | lignes du workspace, les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |
+| Paramètres         | intégration Bitbucket : workspace, e-mail, token, synchronisation, état de la dernière synchronisation |
+| Jira               | **(prévu)** tickets non terminés regroupés par sprint, en kanban     |
+| Mes workspaces     | **(prévu)** liste, création, renommage ; membres, ajout par e-mail, retrait |
 
 ### Download
 
-- Téléchargement de `tower-connector.pyz`.
-- **Assistant de configuration** : un formulaire guide la saisie du nom de l'appareil, du
-  mode, de la politique, de `default_for`, des capacités (commande, paramètres, timeout,
-  mode) et des abonnements. L'assistant génère un code d'appairage pour le workspace courant
-  et fait télécharger le fichier JSON prêt à l'emploi, avec la commande de lancement à
-  copier.
-- Le secret ne passe jamais par le navigateur : c'est le connecteur qui l'obtient au premier
-  lancement (voir § Configuration du connecteur).
+Un bouton menu en bas de la navbar :
+
+- **Télécharger le client** : `tower-connector.pyz`, à lancer avec un fichier de
+  configuration.
+- **Créer/Gérer les configurations** : une modale à deux onglets.
+  - *Voir/Gérer* : les configurations du workspace, leur dernière utilisation, leurs
+    abonnements (modifiables sur place) et un bouton de révocation.
+  - *Créer une configuration* : nom et abonnements. Le secret n'est affiché qu'une fois ; la
+    modale ne se ferme pas tant que l'utilisateur ne l'a pas confirmé, et propose le fichier
+    de configuration ou le **client préconfiguré** (`tower-<configuration>-<workspace>.pyz`).
 
 ## 6. Modèle de données
 
@@ -681,67 +571,84 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | Table             | Contenu principal                                                         |
 |-------------------|---------------------------------------------------------------------------|
 | `user`            | `email`, `password_hash`, `created_at`, `disabled_at`                     |
-| `workspace`       | nom, `accent_color`, `author` (utilisateur créateur), budget IA journalier, clé d'appareils |
-| `workspace_member` | `workspace`, `user`, dernière ouverture de la modale des appareils       |
-| `task`            | voir § Tâches                                                             |
-| `event`           | `workspace`, type, `origin`, payload, `created_at` (append-only)          |
-| `device_connection` | `workspace`, `device_id`, nom, capacités, `default_for` et `policy` annoncés, `opened_at`, `last_seen_at`, `closed_at`, motif de fermeture |
-| `revocation`      | `workspace`, `device_id`, `revoked_at`                                    |
-| `pairing_code`    | `workspace`, code, `expires_at`, `used_at`                                |
-| `job`             | `workspace`, capacité, params, statut, motif d'échec, origine (user/agent), `expires_at` |
-| `delivery`        | `job` ou `event`, `device_id`, `connection`, statut, motif, code de sortie, sortie tronquée |
-| `delivery_log`    | `delivery`, fragments de log (`progress`)                                 |
-| `integration`     | `workspace`, type, paramètres (URL, board, dépôts), identifiants chiffrés, `last_synced_at`, dernière erreur |
-| `integration_item` | `integration`, clé externe, données normalisées, empreinte (état stocké pour le diff) |
-| `agent_run`       | `workspace`, curseur, tokens, issue                                       |
-| `agent_memory`    | `workspace`, note courante                                                |
+| `workspace`       | `name`, `accent_color`, `author` (utilisateur créateur)                   |
+| `workspace_member` | `workspace`, `user`                                                      |
+| `task`            | voir § Tâches et sprints                                                  |
+| `sprint`          | `workspace`, `name`, `state`, `opened_at`, `closed_at`, `created_at`      |
+| `history`         | `workspace`, `type`, `origin`, `user`, `task`, `details`, `created_at`    |
+| `event_delivery`  | `history`, `access_key`, `connection_uuid`, `hostname`, `payload`, `status`, `exit_code`, `response`, `responded_at` |
+| `access_key`      | configurations : `workspace`, `name`, `client_id`, `secret_hash`, `listen`, `created_at`, `last_used_at`, `revoked_at` |
+| `quick_action`    | `workspace`, `name`, `type`, `payload`, `created_at`                      |
+| `integration`     | `workspace`, `type`, `settings` (JSON), `credentials` (chiffré), `last_synced_at`, `last_error` |
+| `pull_request`    | `workspace`, `integration`, `external_id`, `repository`, branches source et cible, `source_commit`, `url`, `title`, `author`, `state`, `draft`, `comment_count`, `pipeline_status`, `synced_at` |
+| `pull_request_approvals` | `pull_request`, `external_user_id`, `display_name`, `status`        |
+
+**(prévu)** `job`, `device_connection`, `agent_run`, `agent_memory`, et une table de tickets
+pour Jira.
 
 ## 7. API
 
 - **API utilisateur** (consommée par le front Vue) : inscription et connexion, workspaces,
-  tâches, appareils, jobs, intégrations et leurs dashboards, historique, paramètres. Décrite
-  en OpenAPI, client front généré. Chaque requête est limitée aux workspaces dont
-  l'utilisateur est membre.
-- **API appareil** : enrôlement en HTTP, puis connexion WebSocket. Authentification
-  distincte de l'API utilisateur.
+  tâches et sprints, configurations, appareils, événements et quick-actions, intégrations,
+  merge requests, historique. Décrite en OpenAPI (`php do make:openapi`), client front généré
+  (`npm run api:generate`). Chaque requête est limitée au workspace courant de
+  l'utilisateur.
+- **API appareil** : la connexion WebSocket `/devices`, authentifiée par la configuration.
 
 ## 8. Feuille de route
 
-1. Comptes, workspaces, tâches, journal d'événements, API utilisateur, front avec navbar et
-   écran Tâches.
-2. Support WebSocket dans Cube, connecteur Python et son empaquetage `.pyz`, enrôlement,
-   connexions, capacités, routage, livraisons, gardes ; indicateur et modale Appareils,
-   Download et assistant.
-3. Intégrations : synchronisation et diff, Jira (kanban, transitions), forges (arbre des
-   merge requests).
-4. Agent IA : abstraction, driver Claude, outils, déclenchement par événement, budget.
-5. Notifications.
+1. ~~Comptes, workspaces, tâches, historique, API utilisateur, front avec navbar.~~
+2. ~~WebSocket, connecteur `.pyz`, configurations, appareils connectés, événements et
+   quick-actions, abonnements, handler et réponses.~~
+3. Intégrations : ~~Bitbucket~~, Jira et tickets transformables en tâches, GitLab, GitHub.
+4. Jobs vers un appareil précis.
+5. Agent IA : abstraction, driver Claude, outils, déclenchement par historique, budget.
+6. Notifications.
 
 ## 9. Décisions
 
 ### Prises
 
-**Signature : HMAC-SHA256 avec un secret par appareil, dérivé de la clé maître et de la clé
-du workspace.** Retenu parce qu'il repose entièrement sur la stdlib et ne demande aucun
-registre d'appareils. La clé par workspace permet de révoquer tous les appareils d'un
-workspace sans toucher aux autres. Alternative écartée pour la v1 : Ed25519, qui demande
-`cryptography` ou `PyNaCl`, deux extensions compilées qu'on ne peut pas embarquer dans un
-`.pyz` portable. Passer à Ed25519 plus tard ne change que l'algorithme : le préfixe de
-`signature` (`sha256=`) indique lequel est utilisé.
+**Abonnements portés par la configuration, réglés dans le front.** Plutôt que des capacités
+`listen.*` déclarées par le connecteur. Tower filtre à l'envoi, et un changement s'applique
+sans toucher à l'appareil.
+
+**Handlers locaux au connecteur.** Une commande unique (`--handler`), ou des motifs associés à
+des commandes, dans un fichier ou dans la configuration elle-même pour un setup en un seul
+fichier. Plutôt que des plugins Python : le connecteur reste un transport générique. Les
+commandes sont exécutées sans shell, et Tower ne les envoie jamais à l'exécution : le prendre
+en main ne permet pas d'exécuter autre chose que ce que l'appareil a accepté.
+
+**Livraison écrite avant l'envoi, réponse asynchrone.** L'identifiant de la livraison voyage
+avec l'événement ; la réponse peut arriver après une reconnexion et n'est acceptée que de la
+même configuration.
+
+**Statuts de tâche indépendants des tickets.** Le ticket suit la demande, la tâche suit le
+travail ; les lier obligerait à mapper chaque workflow, et un ticket peut rester en recette
+longtemps après que le travail est fini. Le statut du ticket est seulement affiché.
+
+**Sprints sans durée.** Ouverts et clôturés à la main ; la clôture ne déplace rien.
+
+**Bitbucket : merge requests de l'auteur.** L'endpoint par utilisateur évite de configurer une
+liste de dépôts. Les merge requests des collègues, y compris celles à relire, ne sont pas
+suivies.
 
 **Transport : WebSocket, connecteur livré en `.pyz`.** Un seul canal bidirectionnel pour les
-jobs et leurs réponses. La dépendance `websockets` est embarquée dans le zipapp, donc rien à
-installer sur l'appareil. Les coupures sont gérées par la reconnexion avec backoff. Le support
-WebSocket est à ajouter à Cube. Alternatives écartées : SSE + POST (deux canaux à
-synchroniser) et long-polling (latence, requêtes à vide).
+événements et leurs réponses. La dépendance `websockets` est embarquée dans le zipapp, donc
+rien à installer sur l'appareil. Les coupures sont gérées par la reconnexion avec backoff.
+Alternatives écartées : SSE + POST (deux canaux à synchroniser) et long-polling (latence,
+requêtes à vide).
 
 **Intégrations par polling et diff.** Tower interroge les outils externes plutôt que de
 recevoir leurs webhooks : pas d'exposition à des appels entrants, et un seul mécanisme pour
-les quatre outils.
+tous les outils.
 
 ### Ouvertes
 
-#### À préciser
-
+- **Jobs** : envoi à un appareil précis, routage, politique d'émission pour l'agent, gardes
+  côté appareil (`deny`, `ask`, `auto`), et signature HMAC des messages. À rapprocher des
+  configurations et du handler actuels.
+- Envoyer les lignes `pr.*` aux appareils.
+- Suivre aussi, sur Bitbucket, les merge requests dont on est reviewer.
 - Valeurs par défaut du regroupement des runs de l'agent (période sans événement, délai
   maximal).

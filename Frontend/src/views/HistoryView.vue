@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import Tag from 'primevue/tag'
 import {
   listEventDeliveries,
   listHistory,
@@ -10,6 +11,7 @@ import {
   type ListHistoryResponse,
 } from '../client'
 import { useWorkspaceStore } from '../stores/workspace'
+import { taskChange } from '../utils/taskChange'
 
 type Line = ListHistoryResponse[number] & { parsed: Record<string, any> }
 
@@ -22,7 +24,19 @@ const icons: Record<string, string> = {
   [EVENT_TYPE]: 'pi-bolt',
   'key.created': 'pi-key',
   'key.revoked': 'pi-ban',
+  'pr.added': 'pi-share-alt',
+  'pr.changed': 'pi-pencil',
+  'pr.removed': 'pi-check-square',
+  'task.created': 'pi-plus',
+  'task.updated': 'pi-pencil',
+  'task.status_changed': 'pi-arrow-right',
+  'task.sprint_changed': 'pi-calendar',
+  'sprint.created': 'pi-calendar-plus',
+  'sprint.opened': 'pi-play',
+  'sprint.closed': 'pi-flag',
 }
+
+const deliverySeverity: Record<string, string> = { succeeded: 'success', received: 'success', failed: 'danger', running: 'info', pending: 'warn' }
 
 const { t, te, d } = useI18n()
 const workspace = useWorkspaceStore()
@@ -69,6 +83,11 @@ watch(
   { immediate: true },
 )
 
+// The lines sent to the devices : the others have no delivery
+function isSent(line: Line): boolean {
+  return line.type === EVENT_TYPE || line.type.startsWith('task.') || line.type.startsWith('sprint.')
+}
+
 function label(line: Line): string {
   // A dot in a message key would read as one more level
   const key = `history.type.${line.type.replaceAll('.', '_')}`
@@ -78,9 +97,18 @@ function label(line: Line): string {
 function detail(line: Line): string {
   const { parsed } = line
 
+  if (line.type.startsWith('task.')) {
+    const change = taskChange(t, line.type, parsed)
+    return change ? `${parsed.title} · ${change}` : parsed.title
+  }
+
   switch (line.type) {
     case EVENT_TYPE:
       return parsed.event
+    case 'pr.added':
+    case 'pr.changed':
+    case 'pr.removed':
+      return `${parsed.title} · ${parsed.repository}`
     case 'device.connected':
       return `${parsed.hostname ?? t('devices.unknownHost')} · ${parsed.access_key}`
     case 'device.disconnected': {
@@ -121,7 +149,7 @@ async function toggle(line: Line) {
           </div>
           <time class="line-date" :datetime="line.created_at">{{ d(new Date(line.created_at), 'short') }}</time>
           <Button
-            v-if="line.type === EVENT_TYPE"
+            v-if="isSent(line)"
             :icon="openLine === line.id ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
             severity="secondary"
             text
@@ -136,10 +164,17 @@ async function toggle(line: Line) {
         <div v-if="openLine === line.id && deliveries" class="deliveries">
           <p v-if="!deliveries.length" class="empty">{{ t('history.noDelivery') }}</p>
           <article v-for="delivery in deliveries" :key="delivery.id" class="delivery">
-            <strong>{{ delivery.hostname ?? t('devices.unknownHost') }}</strong>
+            <div class="delivery-head">
+              <strong>{{ delivery.hostname ?? t('devices.unknownHost') }}</strong>
+              <Tag :value="t(`history.delivery.${delivery.status}`)" :severity="deliverySeverity[delivery.status] ?? 'secondary'" />
+            </div>
             <dl>
               <dt>{{ t('history.payload') }}</dt>
               <dd><code>{{ delivery.payload }}</code></dd>
+              <template v-if="delivery.exit_code !== null">
+                <dt>{{ t('history.exitCode') }}</dt>
+                <dd><code>{{ delivery.exit_code }}</code></dd>
+              </template>
               <dt>{{ t('history.response') }}</dt>
               <dd>
                 <code v-if="delivery.response">{{ delivery.response }}</code>
@@ -253,6 +288,13 @@ async function toggle(line: Line) {
   margin-top: 0.75rem;
 }
 
+.delivery-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .delivery dl {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -272,6 +314,7 @@ async function toggle(line: Line) {
 
 .delivery code {
   font-size: 0.8125rem;
+  white-space: pre-wrap;
 }
 
 .empty {

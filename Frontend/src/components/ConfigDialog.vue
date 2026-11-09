@@ -15,6 +15,7 @@ import {
   downloadPreconfiguredConnector,
   listAccessKeys,
   revokeAccessKey,
+  updateAccessKeyListen,
   type CreateAccessKeyResponse,
   type ListAccessKeysResponse,
 } from '../client'
@@ -27,9 +28,16 @@ const visible = defineModel<boolean>('visible', { required: true })
 const { t, d } = useI18n()
 const workspace = useWorkspaceStore()
 
+type AccessKey = ListAccessKeysResponse[number]
+
 const keys = ref<ListAccessKeysResponse>([])
 const tab = ref('manage')
 const name = ref('')
+const listen = ref('*')
+// The key whose listened events are being edited
+const editing = ref<number | null>(null)
+const editedListen = ref('')
+const savingListen = ref(false)
 const creating = ref(false)
 const downloading = ref(false)
 const error = ref<string | null>(null)
@@ -48,10 +56,42 @@ async function loadKeys() {
   keys.value = data ?? []
 }
 
+function parseListen(value: string): string[] {
+  return value.split(/[\s,]+/).filter(Boolean)
+}
+
+function listenLabel(key: AccessKey): string {
+  const patterns = (key.listen ?? []) as string[]
+  return patterns.length ? patterns.join(', ') : t('download.listenNothing')
+}
+
+function editListen(key: AccessKey) {
+  editing.value = key.id!
+  editedListen.value = ((key.listen ?? []) as string[]).join(', ')
+}
+
+async function saveListen(id: number) {
+  savingListen.value = true
+  error.value = null
+
+  const { response } = await updateAccessKeyListen({ path: { key: id }, body: { listen: parseListen(editedListen.value) } })
+  savingListen.value = false
+
+  if (!response?.ok) {
+    error.value = t('download.listenError')
+    return
+  }
+
+  editing.value = null
+  await loadKeys()
+}
+
 watch(visible, (open) => {
   error.value = null
   tab.value = 'manage'
   name.value = ''
+  listen.value = '*'
+  editing.value = null
   created.value = null
   if (open) void loadKeys()
 })
@@ -60,7 +100,7 @@ async function create() {
   creating.value = true
   error.value = null
 
-  const { data } = await createAccessKey({ body: { name: name.value.trim() } })
+  const { data } = await createAccessKey({ body: { name: name.value.trim(), listen: parseListen(listen.value) } })
   creating.value = false
 
   if (data) created.value = data
@@ -132,6 +172,16 @@ async function revoke(id: number, keyName: string) {
                 <small>
                   {{ key.last_used_at ? t('download.lastUsed', { date: d(new Date(key.last_used_at), 'short') }) : t('download.neverUsed') }}
                 </small>
+                <form v-if="editing === key.id" class="listen-form" @submit.prevent="saveListen(key.id!)">
+                  <InputText v-model="editedListen" :aria-label="t('download.listenLabel')" size="small" fluid autofocus />
+                  <Button type="submit" :label="t('download.listenSave')" size="small" :loading="savingListen" />
+                  <Button :label="t('download.listenCancel')" severity="secondary" text size="small" @click="editing = null" />
+                </form>
+                <small v-else class="key-listen">
+                  <i class="pi pi-bell" aria-hidden="true" />
+                  {{ t('download.listening', { events: listenLabel(key) }) }}
+                  <Button :label="t('download.listenEdit')" link size="small" class="listen-edit" @click="editListen(key)" />
+                </small>
               </div>
               <Button
                 :label="t('download.revokeButton')"
@@ -159,6 +209,11 @@ async function revoke(id: number, keyName: string) {
             />
             <Button type="submit" :label="t('download.createButton')" icon="pi pi-plus" :loading="creating" />
           </form>
+          <div class="listen-field">
+            <label for="config-listen">{{ t('download.listenLabel') }}</label>
+            <InputText id="config-listen" v-model="listen" fluid />
+            <small>{{ t('download.listenHint') }}</small>
+          </div>
         </TabPanel>
       </TabPanels>
     </Tabs>
@@ -221,6 +276,7 @@ async function revoke(id: number, keyName: string) {
 }
 
 .key-identity {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
@@ -234,6 +290,41 @@ async function revoke(id: number, keyName: string) {
 }
 
 .key-identity small {
+  color: var(--p-text-muted-color);
+}
+
+.key-listen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  overflow-wrap: anywhere;
+}
+
+.key-listen .listen-edit {
+  padding: 0;
+  font-size: inherit;
+}
+
+.listen-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
+}
+
+.listen-form :deep(input) {
+  flex: 1 1 10rem;
+}
+
+.listen-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-top: 1rem;
+}
+
+.listen-field small {
   color: var(--p-text-muted-color);
 }
 

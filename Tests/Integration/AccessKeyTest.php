@@ -86,7 +86,7 @@ class AccessKeyTest extends CubeTestCase
         $this->assertSame(hash('sha256', $created['config']['secret']), $stored->secret_hash);
 
         $listed = $this->get('/api/access-keys')->assertOk()->json();
-        $this->assertEquals(['id', 'name', 'client_id', 'last_used_at'], array_keys($listed[0]));
+        $this->assertEquals(['id', 'name', 'client_id', 'listen', 'last_used_at'], array_keys($listed[0]));
     }
 
     public function testNameIsValidated()

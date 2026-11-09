@@ -24,7 +24,14 @@ class AccessKeyService
     /**
      * @return array{0: AccessKey, 1: string} The key and its secret, which cannot be read back afterwards
      */
-    public function create(int $workspace, string $name): array
+    public const LISTEN_EVERYTHING = ['*'];
+    public const MAX_LISTEN_PATTERNS = 20;
+    public const LISTEN_PATTERN = '/^[a-z0-9_.*?-]{1,100}$/';
+
+    /**
+     * @param list<string> $listen Patterns of the events sent to the devices using this key
+     */
+    public function create(int $workspace, string $name, array $listen = self::LISTEN_EVERYTHING): array
     {
         $secret = bin2hex(random_bytes(32));
 
@@ -34,6 +41,7 @@ class AccessKeyService
             'name' => $name,
             'client_id' => 'twr_'.bin2hex(random_bytes(12)),
             'secret_hash' => $this->hash($secret),
+            'listen' => $this->encodeListen($listen),
             'created_at' => date('Y-m-d H:i:s'),
         ]))->save();
 
@@ -45,6 +53,45 @@ class AccessKeyService
         $key = AccessKey::find($id);
 
         return $key && $key->workspace === $workspace && !$key->revoked_at ? $key : null;
+    }
+
+    /**
+     * @param list<string> $listen
+     */
+    public function setListen(AccessKey $key, array $listen): void
+    {
+        $key->listen = $this->encodeListen($listen);
+        $key->save();
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function listenOf(AccessKey $key): array
+    {
+        $listen = json_decode((string) $key->listen, true);
+
+        return is_array($listen) ? array_values(array_filter($listen, 'is_string')) : [];
+    }
+
+    /**
+     * `*` matches any sequence of characters, dots included.
+     *
+     * @param list<string> $listen
+     */
+    public function listens(array $listen, string $event): bool
+    {
+        foreach ($listen as $pattern) {
+            if (fnmatch($pattern, $event))
+                return true;
+        }
+
+        return false;
+    }
+
+    private function encodeListen(array $listen): string
+    {
+        return json_encode(array_values(array_unique($listen)), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
     }
 
     public function revoke(AccessKey $key): void

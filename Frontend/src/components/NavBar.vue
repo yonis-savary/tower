@@ -46,12 +46,12 @@ onMounted(workspace.loadCurrent)
 // TODO: Jira and Merge Requests are only shown when the workspace has the matching integration
 const mainItems = computed<NavItem[]>(() => [
   { label: t('nav.home'), icon: 'pi pi-home', to: { name: 'home' } },
-  { label: t('nav.tasks'), icon: 'pi pi-check-square' },
+  { label: t('nav.tasks'), icon: 'pi pi-check-square', to: { name: 'tasks' } },
   { label: t('nav.events'), icon: 'pi pi-bolt', to: { name: 'events' } },
   { label: t('nav.jira'), icon: 'pi pi-ticket' },
-  { label: t('nav.mergeRequests'), icon: 'pi pi-share-alt' },
+  { label: t('nav.mergeRequests'), icon: 'pi pi-share-alt', to: { name: 'merge-requests' } },
   { label: t('nav.history'), icon: 'pi pi-history', to: { name: 'history' } },
-  { label: t('nav.settings'), icon: 'pi pi-cog' },
+  { label: t('nav.settings'), icon: 'pi pi-cog', to: { name: 'settings' } },
 ])
 
 const devicesDialogVisible = ref(false)

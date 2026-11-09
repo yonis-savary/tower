@@ -10,7 +10,7 @@ use Cube\Data\OpenAPI\Attributes\Nullable;
 /**
  * @extends ModelResource<EventDelivery>
  */
-#[Nullable(['hostname', 'response', 'responded_at'])]
+#[Nullable(['hostname', 'response', 'responded_at', 'exit_code'])]
 class EventDeliveryResource extends ModelResource
 {
     public static function getModelClass(): string
@@ -28,6 +28,8 @@ class EventDeliveryResource extends ModelResource
             'connection_uuid' => $model->connection_uuid,
             'hostname' => $model->hostname,
             'payload' => $model->payload,
+            'status' => $model->status,
+            'exit_code' => $model->exit_code,
             'response' => $model->response,
             'responded_at' => AtomDate::format($model->responded_at),
         ];

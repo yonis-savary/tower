@@ -14,6 +14,7 @@ class CreateAccessKeyRequest extends Request
                 fn ($name) => '' !== (string) $name && mb_strlen((string) $name) <= 100,
                 '{key} must contain between 1 and 100 characters'
             ),
+            'listen' => ListenRequest::listenRule()->optional(),
         ];
     }
 }

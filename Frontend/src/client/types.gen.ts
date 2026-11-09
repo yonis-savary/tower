@@ -34,6 +34,7 @@ export type ListAccessKeysResponses = {
         id: number;
         name: string;
         client_id: string;
+        listen: Array<unknown>;
         last_used_at: string | null;
     }>;
 };
@@ -43,6 +44,7 @@ export type ListAccessKeysResponse = ListAccessKeysResponses[keyof ListAccessKey
 export type CreateAccessKeyData = {
     body: {
         name: string;
+        listen?: Array<string>;
     };
     path?: never;
     query?: never;
@@ -73,6 +75,7 @@ export type CreateAccessKeyResponses = {
             id: number;
             name: string;
             client_id: string;
+            listen: Array<unknown>;
             last_used_at: string | null;
         };
         config?: {
@@ -119,6 +122,53 @@ export type RevokeAccessKeyResponses = {
 };
 
 export type RevokeAccessKeyResponse = RevokeAccessKeyResponses[keyof RevokeAccessKeyResponses];
+
+export type UpdateAccessKeyListenData = {
+    body: {
+        listen: Array<string>;
+    };
+    path: {
+        key: number;
+    };
+    query?: never;
+    url: '/api/access-keys/{key}/listen';
+};
+
+export type UpdateAccessKeyListenErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such usable key in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type UpdateAccessKeyListenError = UpdateAccessKeyListenErrors[keyof UpdateAccessKeyListenErrors];
+
+export type UpdateAccessKeyListenResponses = {
+    /**
+     * The key
+     */
+    200: {
+        id: number;
+        name: string;
+        client_id: string;
+        listen: Array<unknown>;
+        last_used_at: string | null;
+    };
+};
+
+export type UpdateAccessKeyListenResponse = UpdateAccessKeyListenResponses[keyof UpdateAccessKeyListenResponses];
 
 export type DownloadPreconfiguredConnectorData = {
     body: {
@@ -616,12 +666,622 @@ export type ListEventDeliveriesResponses = {
         connection_uuid: string;
         hostname: string | null;
         payload: string;
+        status: string;
+        exit_code: number | null;
         response: string | null;
         responded_at: string | null;
     }>;
 };
 
 export type ListEventDeliveriesResponse = ListEventDeliveriesResponses[keyof ListEventDeliveriesResponses];
+
+export type DeleteBitbucketIntegrationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/integrations/bitbucket';
+};
+
+export type DeleteBitbucketIntegrationErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current workspace has no Bitbucket integration
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type DeleteBitbucketIntegrationError = DeleteBitbucketIntegrationErrors[keyof DeleteBitbucketIntegrationErrors];
+
+export type DeleteBitbucketIntegrationResponses = {
+    /**
+     * The integration is deleted
+     */
+    204: void;
+};
+
+export type DeleteBitbucketIntegrationResponse = DeleteBitbucketIntegrationResponses[keyof DeleteBitbucketIntegrationResponses];
+
+export type GetBitbucketIntegrationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/integrations/bitbucket';
+};
+
+export type GetBitbucketIntegrationErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current workspace has no Bitbucket integration
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type GetBitbucketIntegrationError = GetBitbucketIntegrationErrors[keyof GetBitbucketIntegrationErrors];
+
+export type GetBitbucketIntegrationResponses = {
+    /**
+     * The integration
+     */
+    200: {
+        workspace: string;
+        email: string;
+        last_synced_at: string | null;
+        last_error: string | null;
+    };
+};
+
+export type GetBitbucketIntegrationResponse = GetBitbucketIntegrationResponses[keyof GetBitbucketIntegrationResponses];
+
+export type SaveBitbucketIntegrationData = {
+    body: {
+        workspace: string;
+        email: string;
+        token?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/integrations/bitbucket';
+};
+
+export type SaveBitbucketIntegrationErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No token was given for a new integration, or an invalid field
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type SaveBitbucketIntegrationError = SaveBitbucketIntegrationErrors[keyof SaveBitbucketIntegrationErrors];
+
+export type SaveBitbucketIntegrationResponses = {
+    /**
+     * The integration
+     */
+    200: {
+        workspace: string;
+        email: string;
+        last_synced_at: string | null;
+        last_error: string | null;
+    };
+};
+
+export type SaveBitbucketIntegrationResponse = SaveBitbucketIntegrationResponses[keyof SaveBitbucketIntegrationResponses];
+
+export type SyncBitbucketIntegrationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/integrations/bitbucket/sync';
+};
+
+export type SyncBitbucketIntegrationErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current workspace has no Bitbucket integration
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type SyncBitbucketIntegrationError = SyncBitbucketIntegrationErrors[keyof SyncBitbucketIntegrationErrors];
+
+export type SyncBitbucketIntegrationResponses = {
+    /**
+     * The integration after the run
+     */
+    200: {
+        workspace: string;
+        email: string;
+        last_synced_at: string | null;
+        last_error: string | null;
+    };
+};
+
+export type SyncBitbucketIntegrationResponse = SyncBitbucketIntegrationResponses[keyof SyncBitbucketIntegrationResponses];
+
+export type ListPullRequestsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/pull-requests';
+};
+
+export type ListPullRequestsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListPullRequestsError = ListPullRequestsErrors[keyof ListPullRequestsErrors];
+
+export type ListPullRequestsResponses = {
+    /**
+     * The stored pull requests
+     */
+    200: Array<{
+        id: number;
+        repository: string;
+        title: string;
+        author: string;
+        state: string;
+        draft: boolean;
+        source_branch: string;
+        target_branch: string;
+        url: string;
+        comment_count: number;
+        pipeline_status: string;
+        synced_at: string;
+    }>;
+};
+
+export type ListPullRequestsResponse = ListPullRequestsResponses[keyof ListPullRequestsResponses];
+
+export type ListPullRequestApprovalsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/pull-requests/approvals';
+};
+
+export type ListPullRequestApprovalsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListPullRequestApprovalsError = ListPullRequestApprovalsErrors[keyof ListPullRequestApprovalsErrors];
+
+export type ListPullRequestApprovalsResponses = {
+    /**
+     * The reviewers
+     */
+    200: Array<{
+        pull_request: number;
+        display_name: string;
+        status: string;
+    }>;
+};
+
+export type ListPullRequestApprovalsResponse = ListPullRequestApprovalsResponses[keyof ListPullRequestApprovalsResponses];
+
+export type ListTasksData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/tasks';
+};
+
+export type ListTasksErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListTasksError = ListTasksErrors[keyof ListTasksErrors];
+
+export type ListTasksResponses = {
+    /**
+     * The tasks
+     */
+    200: Array<{
+        id: number;
+        sprint: number | null;
+        title: string;
+        description: string;
+        status: string;
+        position: number;
+    }>;
+};
+
+export type ListTasksResponse = ListTasksResponses[keyof ListTasksResponses];
+
+export type CreateTaskData = {
+    body: {
+        title: string;
+        description?: string;
+        sprint?: number | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/tasks';
+};
+
+export type CreateTaskErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * Unknown or closed sprint, or an invalid field
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type CreateTaskError = CreateTaskErrors[keyof CreateTaskErrors];
+
+export type CreateTaskResponses = {
+    /**
+     * The task
+     */
+    201: {
+        id: number;
+        sprint: number | null;
+        title: string;
+        description: string;
+        status: string;
+        position: number;
+    };
+};
+
+export type CreateTaskResponse = CreateTaskResponses[keyof CreateTaskResponses];
+
+export type UpdateTaskData = {
+    body: {
+        title: string;
+        description?: string;
+    };
+    path: {
+        task: number;
+    };
+    query?: never;
+    url: '/api/tasks/{task}';
+};
+
+export type UpdateTaskErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such task in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type UpdateTaskError = UpdateTaskErrors[keyof UpdateTaskErrors];
+
+export type UpdateTaskResponses = {
+    /**
+     * The task
+     */
+    200: {
+        id: number;
+        sprint: number | null;
+        title: string;
+        description: string;
+        status: string;
+        position: number;
+    };
+};
+
+export type UpdateTaskResponse = UpdateTaskResponses[keyof UpdateTaskResponses];
+
+export type MoveTaskData = {
+    body: {
+        sprint: number | null;
+        status: 'todo' | 'in_progress' | 'in_review' | 'finalizing' | 'done' | 'cancelled';
+        ordered?: Array<number>;
+    };
+    path: {
+        task: number;
+    };
+    query?: never;
+    url: '/api/tasks/{task}/move';
+};
+
+export type MoveTaskErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such task in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * Unknown or closed sprint, or an invalid order
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type MoveTaskError = MoveTaskErrors[keyof MoveTaskErrors];
+
+export type MoveTaskResponses = {
+    /**
+     * The task
+     */
+    200: {
+        id: number;
+        sprint: number | null;
+        title: string;
+        description: string;
+        status: string;
+        position: number;
+    };
+};
+
+export type MoveTaskResponse = MoveTaskResponses[keyof MoveTaskResponses];
+
+export type ListTaskHistoryData = {
+    body?: never;
+    path: {
+        task: number;
+    };
+    query?: never;
+    url: '/api/tasks/{task}/history';
+};
+
+export type ListTaskHistoryErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such task in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type ListTaskHistoryError = ListTaskHistoryErrors[keyof ListTaskHistoryErrors];
+
+export type ListTaskHistoryResponses = {
+    /**
+     * The history lines of this task
+     */
+    200: Array<{
+        id: number;
+        type: string;
+        details: string;
+        author: unknown;
+        created_at: string;
+    }>;
+};
+
+export type ListTaskHistoryResponse = ListTaskHistoryResponses[keyof ListTaskHistoryResponses];
+
+export type ListSprintsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/sprints';
+};
+
+export type ListSprintsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListSprintsError = ListSprintsErrors[keyof ListSprintsErrors];
+
+export type ListSprintsResponses = {
+    /**
+     * The sprints
+     */
+    200: Array<{
+        id: number;
+        name: string;
+        state: string;
+        opened_at: string | null;
+        closed_at: string | null;
+    }>;
+};
+
+export type ListSprintsResponse = ListSprintsResponses[keyof ListSprintsResponses];
+
+export type CreateSprintData = {
+    body: {
+        name: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/sprints';
+};
+
+export type CreateSprintErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type CreateSprintError = CreateSprintErrors[keyof CreateSprintErrors];
+
+export type CreateSprintResponses = {
+    /**
+     * The sprint
+     */
+    201: {
+        id: number;
+        name: string;
+        state: string;
+        opened_at: string | null;
+        closed_at: string | null;
+    };
+};
+
+export type CreateSprintResponse = CreateSprintResponses[keyof CreateSprintResponses];
+
+export type OpenSprintData = {
+    body?: never;
+    path: {
+        sprint: number;
+    };
+    query?: never;
+    url: '/api/sprints/{sprint}/open';
+};
+
+export type OpenSprintErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such sprint in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * A workspace has one active sprint at most
+     */
+    409: {
+        error?: string;
+    };
+};
+
+export type OpenSprintError = OpenSprintErrors[keyof OpenSprintErrors];
+
+export type OpenSprintResponses = {
+    /**
+     * The sprint
+     */
+    200: {
+        id: number;
+        name: string;
+        state: string;
+        opened_at: string | null;
+        closed_at: string | null;
+    };
+};
+
+export type OpenSprintResponse = OpenSprintResponses[keyof OpenSprintResponses];
+
+export type CloseSprintData = {
+    body?: never;
+    path: {
+        sprint: number;
+    };
+    query?: never;
+    url: '/api/sprints/{sprint}/close';
+};
+
+export type CloseSprintErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such sprint in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * Only the active sprint can be closed
+     */
+    409: {
+        error?: string;
+    };
+};
+
+export type CloseSprintError = CloseSprintErrors[keyof CloseSprintErrors];
+
+export type CloseSprintResponses = {
+    /**
+     * The sprint
+     */
+    200: {
+        id: number;
+        name: string;
+        state: string;
+        opened_at: string | null;
+        closed_at: string | null;
+    };
+};
+
+export type CloseSprintResponse = CloseSprintResponses[keyof CloseSprintResponses];
 
 export type ListWorkspacesData = {
     body?: never;

@@ -2,9 +2,13 @@
 
 namespace App\Channels;
 
+use App\Models\AccessKey;
 use App\Services\AccessKeyService;
 use App\Services\HistoryService;
+use Cube\Web\Http\Rules\Param;
+use Cube\Web\Http\Rules\Rule;
 use Cube\Web\Websocket\Channel\Channel;
+use Cube\Web\Websocket\Channel\ChannelSubscriber;
 use Psr\Http\Message\RequestInterface;
 use Ratchet\ConnectionInterface;
 
@@ -140,17 +144,61 @@ class DevicesChannel extends Channel
         $this->emit(['type' => 'event', 'workspace' => $workspace, 'id' => $id, 'event' => $event, 'payload' => $payload]);
     }
 
+    /**
+     * Only to the devices whose configuration listens to this event. The listened patterns are read
+     * at each event : a change made in the front applies without reconnecting.
+     */
     private function deliverEvent(array $data): void
     {
-        $message = ['type' => 'event', 'id' => $data['id'], 'event' => $data['event'], 'payload' => json_decode($data['payload'])];
         $connected = ConnectedDevices::getInstance();
+        $connections = array_filter($connected->connectionsIn($data['workspace']), fn (int $id) => isset($this->subscribers[$id], $this->accessKeys[$id]));
+        if (!$connections)
+            return;
 
-        foreach ($connected->connectionsIn($data['workspace']) as $connectionId) {
-            $this->subscribers[$connectionId]?->send($message);
+        $listen = [];
+        foreach (AccessKey::select()->whereIn('id', array_unique(array_map(fn (int $id) => $this->accessKeys[$id], $connections)))->fetch() as $key)
+            $listen[$key->id] = $this->keys->listenOf($key);
+
+        foreach ($connections as $connectionId) {
+            $key = $this->accessKeys[$connectionId];
+            if (!$this->keys->listens($listen[$key] ?? [], $data['event']))
+                continue;
 
             $device = $connected->deviceOf($connectionId);
-            $this->history->logDelivery($data['id'], $device['uuid'], $device['hostname'], $data['payload']);
+            $delivery = $this->history->logDelivery($data['id'], $device['uuid'], $device['hostname'], $data['payload'], $key);
+
+            $this->subscribers[$connectionId]->send([
+                'type' => 'event',
+                'id' => $data['id'],
+                'delivery' => $delivery->id,
+                'workspace' => $data['workspace'],
+                'event' => $data['event'],
+                'payload' => json_decode($data['payload']),
+            ]);
         }
+    }
+
+    public function getMessageRule(): ?Rule
+    {
+        return Param::object([
+            'type' => Param::string()->inArray(['response']),
+            'delivery' => Param::integer(),
+            'status' => Param::string()->inArray(HistoryService::DELIVERY_ANSWERS),
+            'exit_code' => Param::integer(nullable: true)->optional(),
+            'output' => Param::string(trim: false, nullable: true)->optional(),
+        ]);
+    }
+
+    /**
+     * What a connector answers for a delivery : `running` when its handler starts, then the result.
+     */
+    public function onMessage(ChannelSubscriber $from, array $data): void
+    {
+        $key = $this->accessKeys[$from->connection->resourceId] ?? null;
+        if (null === $key)
+            return;
+
+        $this->history->recordResponse($key, $data['delivery'], $data['status'], $data['exit_code'] ?? null, $data['output'] ?? null);
     }
 
     /**
@@ -169,7 +217,7 @@ class DevicesChannel extends Channel
         $this->emit(['type' => 'disconnect', 'access_key' => $accessKey, 'reason' => $reason]);
     }
 
-    private function authenticate(RequestInterface $request): ?\App\Models\AccessKey
+    private function authenticate(RequestInterface $request): ?AccessKey
     {
         return $this->keys->authenticate(
             $request->getHeaderLine(self::HEADER_CLIENT_ID),

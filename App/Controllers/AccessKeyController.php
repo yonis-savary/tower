@@ -6,6 +6,7 @@ use App\Channels\DevicesChannel;
 use App\Connector\ConnectorPackager;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\CreateAccessKeyRequest;
+use App\Requests\ListenRequest;
 use App\Requests\PreconfiguredConnectorRequest;
 use App\Resources\AccessKeyResource;
 use App\Services\AccessKeyService;
@@ -41,6 +42,7 @@ class AccessKeyController extends Controller
             Route::get('/access-keys', [self::class, 'list']),
             Route::post('/access-keys', [self::class, 'create']),
             Route::delete('/access-keys/{int:key}', [self::class, 'revoke']),
+            Route::put('/access-keys/{int:key}/listen', [self::class, 'updateListen']),
             Route::post('/access-keys/{int:key}/connector', [self::class, 'downloadPreconfigured']),
             Route::get('/connector', [self::class, 'download']),
         ]);
@@ -62,7 +64,7 @@ class AccessKeyController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function create(CreateAccessKeyRequest $request): Response
     {
-        [$key, $secret] = $this->keys->create($this->currentWorkspaceId(), $request->validated('name'));
+        [$key, $secret] = $this->keys->create($this->currentWorkspaceId(), $request->validated('name'), $request->validated('listen') ?? AccessKeyService::LISTEN_EVERYTHING);
         $this->history->log($key->workspace, 'key.created', ['name' => $key->name], user: $this->authentication->userId());
 
         return Response::json([
@@ -86,6 +88,21 @@ class AccessKeyController extends Controller
         $this->devices->disconnectKey($accessKey->id, 'revoked');
 
         return Response::noContent();
+    }
+
+    #[Endpoint('Update listened events', 'Changes the patterns of the events sent to the devices using this key. Applies without reconnecting', 'updateAccessKeyListen')]
+    #[ResourceResponse(AccessKeyResource::class, description: 'The key')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace')]
+    public function updateListen(ListenRequest $request, int $key): Response
+    {
+        $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
+        if (!$accessKey)
+            return Response::json(['error' => 'Access key not found'], StatusCode::NOT_FOUND);
+
+        $this->keys->setListen($accessKey, $request->validated('listen'));
+
+        return Response::json(AccessKeyResource::of($accessKey));
     }
 
     #[Endpoint('Download connector', 'The Tower connector, to run with a configuration file', 'downloadConnector')]

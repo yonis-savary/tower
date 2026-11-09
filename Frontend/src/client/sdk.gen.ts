@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateAccessKeyData, CreateAccessKeyErrors, CreateAccessKeyResponses, CreateQuickActionData, CreateQuickActionErrors, CreateQuickActionResponses, DeleteQuickActionData, DeleteQuickActionErrors, DeleteQuickActionResponses, DisconnectDeviceData, DisconnectDeviceErrors, DisconnectDeviceResponses, DownloadConnectorData, DownloadConnectorErrors, DownloadConnectorResponses, DownloadPreconfiguredConnectorData, DownloadPreconfiguredConnectorErrors, DownloadPreconfiguredConnectorResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetCurrentWorkspaceData, GetCurrentWorkspaceErrors, GetCurrentWorkspaceResponses, GetWorkspaceSocketData, GetWorkspaceSocketErrors, GetWorkspaceSocketResponses, ListAccessKeysData, ListAccessKeysErrors, ListAccessKeysResponses, ListEventDeliveriesData, ListEventDeliveriesErrors, ListEventDeliveriesResponses, ListHistoryData, ListHistoryErrors, ListHistoryResponses, ListQuickActionsData, ListQuickActionsErrors, ListQuickActionsResponses, ListWorkspacesData, ListWorkspacesErrors, ListWorkspacesResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, RegisterData, RegisterErrors, RegisterResponses, RevokeAccessKeyData, RevokeAccessKeyErrors, RevokeAccessKeyResponses, SelectWorkspaceData, SelectWorkspaceErrors, SelectWorkspaceResponses, TriggerEventData, TriggerEventErrors, TriggerEventResponses, TriggerQuickActionData, TriggerQuickActionErrors, TriggerQuickActionResponses } from './types.gen';
+import type { CloseSprintData, CloseSprintErrors, CloseSprintResponses, CreateAccessKeyData, CreateAccessKeyErrors, CreateAccessKeyResponses, CreateQuickActionData, CreateQuickActionErrors, CreateQuickActionResponses, CreateSprintData, CreateSprintErrors, CreateSprintResponses, CreateTaskData, CreateTaskErrors, CreateTaskResponses, DeleteBitbucketIntegrationData, DeleteBitbucketIntegrationErrors, DeleteBitbucketIntegrationResponses, DeleteQuickActionData, DeleteQuickActionErrors, DeleteQuickActionResponses, DisconnectDeviceData, DisconnectDeviceErrors, DisconnectDeviceResponses, DownloadConnectorData, DownloadConnectorErrors, DownloadConnectorResponses, DownloadPreconfiguredConnectorData, DownloadPreconfiguredConnectorErrors, DownloadPreconfiguredConnectorResponses, GetBitbucketIntegrationData, GetBitbucketIntegrationErrors, GetBitbucketIntegrationResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetCurrentWorkspaceData, GetCurrentWorkspaceErrors, GetCurrentWorkspaceResponses, GetWorkspaceSocketData, GetWorkspaceSocketErrors, GetWorkspaceSocketResponses, ListAccessKeysData, ListAccessKeysErrors, ListAccessKeysResponses, ListEventDeliveriesData, ListEventDeliveriesErrors, ListEventDeliveriesResponses, ListHistoryData, ListHistoryErrors, ListHistoryResponses, ListPullRequestApprovalsData, ListPullRequestApprovalsErrors, ListPullRequestApprovalsResponses, ListPullRequestsData, ListPullRequestsErrors, ListPullRequestsResponses, ListQuickActionsData, ListQuickActionsErrors, ListQuickActionsResponses, ListSprintsData, ListSprintsErrors, ListSprintsResponses, ListTaskHistoryData, ListTaskHistoryErrors, ListTaskHistoryResponses, ListTasksData, ListTasksErrors, ListTasksResponses, ListWorkspacesData, ListWorkspacesErrors, ListWorkspacesResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MoveTaskData, MoveTaskErrors, MoveTaskResponses, OpenSprintData, OpenSprintErrors, OpenSprintResponses, RegisterData, RegisterErrors, RegisterResponses, RevokeAccessKeyData, RevokeAccessKeyErrors, RevokeAccessKeyResponses, SaveBitbucketIntegrationData, SaveBitbucketIntegrationErrors, SaveBitbucketIntegrationResponses, SelectWorkspaceData, SelectWorkspaceErrors, SelectWorkspaceResponses, SyncBitbucketIntegrationData, SyncBitbucketIntegrationErrors, SyncBitbucketIntegrationResponses, TriggerEventData, TriggerEventErrors, TriggerEventResponses, TriggerQuickActionData, TriggerQuickActionErrors, TriggerQuickActionResponses, UpdateAccessKeyListenData, UpdateAccessKeyListenErrors, UpdateAccessKeyListenResponses, UpdateTaskData, UpdateTaskErrors, UpdateTaskResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -45,6 +45,20 @@ export const createAccessKey = <ThrowOnError extends boolean = false>(options: O
  * Revokes a key of the current workspace and disconnects the devices using it
  */
 export const revokeAccessKey = <ThrowOnError extends boolean = false>(options: Options<RevokeAccessKeyData, ThrowOnError>): RequestResult<RevokeAccessKeyResponses, RevokeAccessKeyErrors, ThrowOnError> => (options.client ?? client).delete<RevokeAccessKeyResponses, RevokeAccessKeyErrors, ThrowOnError>({ url: '/api/access-keys/{key}', ...options });
+
+/**
+ * Update listened events
+ *
+ * Changes the patterns of the events sent to the devices using this key. Applies without reconnecting
+ */
+export const updateAccessKeyListen = <ThrowOnError extends boolean = false>(options: Options<UpdateAccessKeyListenData, ThrowOnError>): RequestResult<UpdateAccessKeyListenResponses, UpdateAccessKeyListenErrors, ThrowOnError> => (options.client ?? client).put<UpdateAccessKeyListenResponses, UpdateAccessKeyListenErrors, ThrowOnError>({
+    url: '/api/access-keys/{key}/listen',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * Download preconfigured connector
@@ -178,6 +192,146 @@ export const listHistory = <ThrowOnError extends boolean = false>(options?: Opti
  * The devices an event of the history was sent to, with their response
  */
 export const listEventDeliveries = <ThrowOnError extends boolean = false>(options: Options<ListEventDeliveriesData, ThrowOnError>): RequestResult<ListEventDeliveriesResponses, ListEventDeliveriesErrors, ThrowOnError> => (options.client ?? client).get<ListEventDeliveriesResponses, ListEventDeliveriesErrors, ThrowOnError>({ url: '/api/history/{line}/deliveries', ...options });
+
+/**
+ * Delete Bitbucket integration
+ *
+ * Deletes the Bitbucket integration of the current workspace, its token and its pull requests
+ */
+export const deleteBitbucketIntegration = <ThrowOnError extends boolean = false>(options?: Options<DeleteBitbucketIntegrationData, ThrowOnError>): RequestResult<DeleteBitbucketIntegrationResponses, DeleteBitbucketIntegrationErrors, ThrowOnError> => (options?.client ?? client).delete<DeleteBitbucketIntegrationResponses, DeleteBitbucketIntegrationErrors, ThrowOnError>({ url: '/api/integrations/bitbucket', ...options });
+
+/**
+ * Get Bitbucket integration
+ *
+ * The Bitbucket integration of the current workspace, without its token
+ */
+export const getBitbucketIntegration = <ThrowOnError extends boolean = false>(options?: Options<GetBitbucketIntegrationData, ThrowOnError>): RequestResult<GetBitbucketIntegrationResponses, GetBitbucketIntegrationErrors, ThrowOnError> => (options?.client ?? client).get<GetBitbucketIntegrationResponses, GetBitbucketIntegrationErrors, ThrowOnError>({ url: '/api/integrations/bitbucket', ...options });
+
+/**
+ * Save Bitbucket integration
+ *
+ * Creates or updates the Bitbucket integration of the current workspace. Without token, the current one is kept
+ */
+export const saveBitbucketIntegration = <ThrowOnError extends boolean = false>(options: Options<SaveBitbucketIntegrationData, ThrowOnError>): RequestResult<SaveBitbucketIntegrationResponses, SaveBitbucketIntegrationErrors, ThrowOnError> => (options.client ?? client).put<SaveBitbucketIntegrationResponses, SaveBitbucketIntegrationErrors, ThrowOnError>({
+    url: '/api/integrations/bitbucket',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Synchronize Bitbucket integration
+ *
+ * Reads Bitbucket now instead of waiting for the next scheduled run. A failure is reported in `last_error`
+ */
+export const syncBitbucketIntegration = <ThrowOnError extends boolean = false>(options?: Options<SyncBitbucketIntegrationData, ThrowOnError>): RequestResult<SyncBitbucketIntegrationResponses, SyncBitbucketIntegrationErrors, ThrowOnError> => (options?.client ?? client).post<SyncBitbucketIntegrationResponses, SyncBitbucketIntegrationErrors, ThrowOnError>({ url: '/api/integrations/bitbucket/sync', ...options });
+
+/**
+ * List pull requests
+ *
+ * The open and recently closed pull requests of the current workspace
+ */
+export const listPullRequests = <ThrowOnError extends boolean = false>(options?: Options<ListPullRequestsData, ThrowOnError>): RequestResult<ListPullRequestsResponses, ListPullRequestsErrors, ThrowOnError> => (options?.client ?? client).get<ListPullRequestsResponses, ListPullRequestsErrors, ThrowOnError>({ url: '/api/pull-requests', ...options });
+
+/**
+ * List pull request approvals
+ *
+ * The reviewers of every stored pull request of the current workspace
+ */
+export const listPullRequestApprovals = <ThrowOnError extends boolean = false>(options?: Options<ListPullRequestApprovalsData, ThrowOnError>): RequestResult<ListPullRequestApprovalsResponses, ListPullRequestApprovalsErrors, ThrowOnError> => (options?.client ?? client).get<ListPullRequestApprovalsResponses, ListPullRequestApprovalsErrors, ThrowOnError>({ url: '/api/pull-requests/approvals', ...options });
+
+/**
+ * List tasks
+ *
+ * Every task of the current workspace, in their order
+ */
+export const listTasks = <ThrowOnError extends boolean = false>(options?: Options<ListTasksData, ThrowOnError>): RequestResult<ListTasksResponses, ListTasksErrors, ThrowOnError> => (options?.client ?? client).get<ListTasksResponses, ListTasksErrors, ThrowOnError>({ url: '/api/tasks', ...options });
+
+/**
+ * Create task
+ *
+ * Adds a task at the end of the backlog or of a sprint
+ */
+export const createTask = <ThrowOnError extends boolean = false>(options: Options<CreateTaskData, ThrowOnError>): RequestResult<CreateTaskResponses, CreateTaskErrors, ThrowOnError> => (options.client ?? client).post<CreateTaskResponses, CreateTaskErrors, ThrowOnError>({
+    url: '/api/tasks',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Update task
+ *
+ * Changes the title and the description of a task
+ */
+export const updateTask = <ThrowOnError extends boolean = false>(options: Options<UpdateTaskData, ThrowOnError>): RequestResult<UpdateTaskResponses, UpdateTaskErrors, ThrowOnError> => (options.client ?? client).put<UpdateTaskResponses, UpdateTaskErrors, ThrowOnError>({
+    url: '/api/tasks/{task}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Move task
+ *
+ * Changes the status and the sprint of a task, and optionally the order of its destination list
+ */
+export const moveTask = <ThrowOnError extends boolean = false>(options: Options<MoveTaskData, ThrowOnError>): RequestResult<MoveTaskResponses, MoveTaskErrors, ThrowOnError> => (options.client ?? client).put<MoveTaskResponses, MoveTaskErrors, ThrowOnError>({
+    url: '/api/tasks/{task}/move',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List task history
+ *
+ * What happened to a task and who did it, newest first
+ */
+export const listTaskHistory = <ThrowOnError extends boolean = false>(options: Options<ListTaskHistoryData, ThrowOnError>): RequestResult<ListTaskHistoryResponses, ListTaskHistoryErrors, ThrowOnError> => (options.client ?? client).get<ListTaskHistoryResponses, ListTaskHistoryErrors, ThrowOnError>({ url: '/api/tasks/{task}/history', ...options });
+
+/**
+ * List sprints
+ *
+ * The sprints of the current workspace, oldest first
+ */
+export const listSprints = <ThrowOnError extends boolean = false>(options?: Options<ListSprintsData, ThrowOnError>): RequestResult<ListSprintsResponses, ListSprintsErrors, ThrowOnError> => (options?.client ?? client).get<ListSprintsResponses, ListSprintsErrors, ThrowOnError>({ url: '/api/sprints', ...options });
+
+/**
+ * Create sprint
+ *
+ * Plans a new sprint in the current workspace
+ */
+export const createSprint = <ThrowOnError extends boolean = false>(options: Options<CreateSprintData, ThrowOnError>): RequestResult<CreateSprintResponses, CreateSprintErrors, ThrowOnError> => (options.client ?? client).post<CreateSprintResponses, CreateSprintErrors, ThrowOnError>({
+    url: '/api/sprints',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Open sprint
+ *
+ * Makes a sprint the active one of the current workspace
+ */
+export const openSprint = <ThrowOnError extends boolean = false>(options: Options<OpenSprintData, ThrowOnError>): RequestResult<OpenSprintResponses, OpenSprintErrors, ThrowOnError> => (options.client ?? client).post<OpenSprintResponses, OpenSprintErrors, ThrowOnError>({ url: '/api/sprints/{sprint}/open', ...options });
+
+/**
+ * Close sprint
+ *
+ * Marks the active sprint as finished. Its tasks stay where they are
+ */
+export const closeSprint = <ThrowOnError extends boolean = false>(options: Options<CloseSprintData, ThrowOnError>): RequestResult<CloseSprintResponses, CloseSprintErrors, ThrowOnError> => (options.client ?? client).post<CloseSprintResponses, CloseSprintErrors, ThrowOnError>({ url: '/api/sprints/{sprint}/close', ...options });
 
 /**
  * List workspaces
