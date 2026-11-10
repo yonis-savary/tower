@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from './components/AppLayout.vue'
 import { useAuthStore } from './stores/auth'
+import DocsView from './views/DocsView.vue'
 import EventsView from './views/EventsView.vue'
 import HistoryView from './views/HistoryView.vue'
 import HomeView from './views/HomeView.vue'
@@ -18,13 +19,14 @@ const router = createRouter({
       path: '/',
       component: AppLayout,
       children: [
-        { path: '', name: 'home', component: HomeView },
-        { path: 'tasks', name: 'tasks', component: TasksView, meta: { section: 'tasks' } },
-        { path: 'events', name: 'events', component: EventsView, meta: { section: 'events' } },
-        { path: 'history', name: 'history', component: HistoryView },
-        { path: 'jira', name: 'jira', component: JiraView, meta: { section: 'jira' } },
-        { path: 'merge-requests', name: 'merge-requests', component: MergeRequestsView, meta: { section: 'merge_requests' } },
-        { path: 'settings', name: 'settings', component: SettingsView },
+        { path: '', name: 'home', component: HomeView, meta: { title: 'nav.home' } },
+        { path: 'tasks', name: 'tasks', component: TasksView, meta: { title: 'nav.tasks', section: 'tasks' } },
+        { path: 'events', name: 'events', component: EventsView, meta: { title: 'nav.events', section: 'events' } },
+        { path: 'history', name: 'history', component: HistoryView, meta: { title: 'nav.history' } },
+        { path: 'jira', name: 'jira', component: JiraView, meta: { title: 'nav.jira', section: 'jira' } },
+        { path: 'merge-requests', name: 'merge-requests', component: MergeRequestsView, meta: { title: 'nav.mergeRequests', section: 'merge_requests' } },
+        { path: 'docs', name: 'docs', component: DocsView, meta: { title: 'nav.docs' } },
+        { path: 'settings', name: 'settings', component: SettingsView, meta: { title: 'nav.settings' } },
       ],
     },
     { path: '/login', name: 'login', component: LoginView, meta: { guestOnly: true } },

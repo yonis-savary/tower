@@ -491,7 +491,7 @@ s'affichent, mais n'émettent rien.
 | Type                        | Quand                                                          |
 |-----------------------------|----------------------------------------------------------------|
 | `jira.issue.assigned`       | un ticket du board devient le sien : nouveau, ou réassigné à lui |
-| `jira.issue.done`           | un des siens sort du board non terminé, dans la catégorie « terminé » |
+| `jira.issue.done`           | un des siens devient terminé : catégorie « terminé », ou statut de la dernière colonne du board |
 | `jira.issue.unassigned`     | un des siens ne l'est plus : réassigné (`assignee`, `null` si plus personne), sorti du board, ou supprimé (`status` à `null`) |
 | `jira.issue.status_changed` | son statut change (statuts et catégories avant et après)       |
 | `jira.issue.sprint_changed` | son sprint change (`null` : sans sprint)                       |
@@ -562,9 +562,13 @@ la synchronisation, qui seule sait qu'un élément apparaît ou disparaît.
   site doit être de la forme `https://<nom>.atlassian.net` : le token n'est envoyé qu'à un site
   Jira Cloud.
 - Un **board** est configuré par son identifiant (le nombre de son adresse, `…/boards/42`).
-- Ensemble suivi : **tous** les tickets du board dont le statut n'est pas dans la catégorie
-  « terminé » de Jira (API Jira Software, `board/{id}/issue`), avec leur assigné (identifiant,
-  nom, avatar). Chaque passage lit aussi le compte du token (`/myself`), gardé dans les
+- Ensemble suivi : **tous** les tickets du board qui ne sont pas terminés (API Jira Software,
+  `board/{id}/issue`), avec leur assigné (identifiant, nom, avatar). Un ticket est terminé si
+  son statut est dans la catégorie « terminé » de Jira, **ou** dans la dernière colonne du board :
+  c'est elle qui fait foi, un board pouvant y ranger des statuts que Jira classe « en cours »
+  (un « Fix », par exemple). Les statuts de cette colonne sont exclus de la requête et gardés
+  dans les `settings` (`done_statuses`) ; le premier passage qui les connaît sert de nouvelle
+  référence. Chaque passage lit aussi le compte du token (`/myself`), gardé dans les
   `settings` : c'est « moi » pour le filtre, le compteur et les événements. Le premier passage
   qui connaît le compte sert de nouvelle référence.
 - Chaque carte porte la pastille de son assigné : son avatar Jira, ses initiales si l'avatar ne
@@ -684,6 +688,7 @@ du sprint actif, tickets non terminés de l'utilisateur, merge requests ouvertes
 | Merge Requests     | section `merge_requests`                                           |
 | Événements         | section `events` : lancement manuel et quick-actions               |
 | Historique         | en bas                                                             |
+| Documentation / API | en bas, voir § Écrans                                             |
 | Paramètres         | en bas                                                             |
 
 ### Indicateur Appareils
@@ -710,6 +715,7 @@ les jobs échoués récents.
 | Historique         | lignes du workspace, les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |
 | Paramètres         | onglets verticaux à gauche, contenu à droite, onglet choisi dans l'adresse (`?tab=`) : **Compte** (thème auto, clair ou sombre, gardé dans le navigateur ; changement de mot de passe) ; intégrations Bitbucket et Jira, chacune affichée si sa section est active : workspace ou site et board, e-mail, token, synchronisation, état de la dernière synchronisation ; bloc « Vider une section », toujours visible, qui supprime d'un coup l'intégration Jira ou Bitbucket et ses données |
 | Jira               | tickets non terminés du board, avec la pastille de leur assigné, ou seulement les siens, en kanban avec les colonnes du board ; transition par glisser-déposer, ouverture dans Jira, création de tâche |
+| Documentation / API | onglets verticaux comme les Paramètres, page choisie dans l'adresse (`?page=`) : accueil, lancer le connecteur en service sous Linux (systemd). Les blocs de code sont colorés (highlight.js, avec seulement les langages utilisés) et ont un bouton pour copier leur contenu brut. Le contenu des pages est en français |
 | Mes workspaces     | modale ouverte par « Gérer mes workspaces » : liste, création, renommage, couleur, sections, passage sur un workspace ; membres, ajout par e-mail, retrait, départ |
 
 ### Connecter un appareil

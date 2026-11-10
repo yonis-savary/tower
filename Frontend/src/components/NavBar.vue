@@ -7,6 +7,7 @@ import Button from 'primevue/button'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
 import DevicesDialog from './DevicesDialog.vue'
+import AppIcon, { PULL_REQUEST_ICON } from './AppIcon.vue'
 import TowerLogo from './TowerLogo.vue'
 import WorkspacesDialog from './WorkspacesDialog.vue'
 import { useAuthStore } from '../stores/auth'
@@ -50,7 +51,7 @@ onMounted(workspace.loadCurrent)
 const remainingTasks = computed(
   () => tasks.tasks.filter(({ sprint, status }) => sprint !== null && sprint === tasks.activeSprint?.id && status !== 'done' && status !== 'cancelled').length,
 )
-const openIssues = computed(() => jira.mine.filter(({ status_category }) => status_category !== 'done').length)
+const openIssues = computed(() => jira.mine.filter((issue) => !jira.isDone(issue)).length)
 
 // Loaded with the page rather than with each screen, for the counters of the menu
 watch(
@@ -67,13 +68,15 @@ const mainItems = computed<NavItem[]>(() =>
   [
     { label: t('nav.home'), icon: 'pi pi-home', to: { name: 'home' } },
     { label: t('nav.tasks'), icon: 'pi pi-check-square', to: { name: 'tasks' }, count: remainingTasks.value, section: 'tasks' as const },
-    { label: t('nav.jira'), icon: 'pi pi-ticket', to: { name: 'jira' }, count: openIssues.value, section: 'jira' as const },
-    { label: t('nav.mergeRequests'), icon: 'pi pi-share-alt', to: { name: 'merge-requests' }, count: pullRequests.open.length, section: 'merge_requests' as const },
+    { label: t('nav.jira'), icon: 'pi pi-objects-column', to: { name: 'jira' }, count: openIssues.value, section: 'jira' as const },
+    { label: t('nav.mergeRequests'), icon: PULL_REQUEST_ICON, to: { name: 'merge-requests' }, count: pullRequests.open.length, section: 'merge_requests' as const },
     { label: t('nav.events'), icon: 'pi pi-bolt', to: { name: 'events' }, section: 'events' as const },
   ].filter(({ section }) => !section || workspace.hasSection(section)),
 )
 
 const secondaryItems = computed<NavItem[]>(() => [
+  { label: t('nav.history'), icon: 'pi pi-history', to: { name: 'history' } },
+  { label: t('nav.docs'), icon: 'pi pi-book', to: { name: 'docs' } },
   { label: t('nav.settings'), icon: 'pi pi-cog', to: { name: 'settings' } },
 ])
 
@@ -147,7 +150,7 @@ async function logOut() {
           v-bind="item.to ? { to: item.to } : { type: 'button' }"
           :title="item.label"
         >
-          <i :class="item.icon" aria-hidden="true" />
+          <AppIcon :icon="item.icon" />
           <span class="navbar-text">{{ item.label }}</span>
           <Badge v-if="item.count" :value="item.count" severity="secondary" size="small" class="navbar-text navbar-count" />
         </component>
@@ -158,7 +161,7 @@ async function logOut() {
       <ul class="navbar-list">
         <li v-for="item in secondaryItems" :key="item.label">
           <RouterLink :to="item.to!" class="navbar-item" :title="item.label">
-            <i :class="item.icon" aria-hidden="true" />
+            <AppIcon :icon="item.icon" />
             <span class="navbar-text">{{ item.label }}</span>
           </RouterLink>
         </li>
@@ -276,7 +279,8 @@ async function logOut() {
   color: var(--p-highlight-color);
 }
 
-.navbar-item i {
+.navbar-item .app-icon {
+  flex: none;
   width: 1.25rem;
   text-align: center;
 }

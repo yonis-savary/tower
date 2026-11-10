@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { onBeforeUnmount, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import Toast from 'primevue/toast'
 import NavBar from './NavBar.vue'
@@ -8,6 +9,17 @@ import { useWorkspaceStore, type WorkspaceSection } from '../stores/workspace'
 const workspace = useWorkspaceStore()
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
+
+// The logo already says it is Tower : the tab names the workspace and the screen
+watch(
+  () => [workspace.current?.name, route.meta.title as string | undefined] as const,
+  ([name, title]) => {
+    document.title = [name, title && t(title)].filter(Boolean).join(' - ') || 'Tower'
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => (document.title = 'Tower'))
 
 // A screen of a section the workspace does not use : opened by its address, or left open while switching workspace
 watch(

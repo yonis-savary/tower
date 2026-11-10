@@ -60,7 +60,7 @@ class JiraIssueSync
     }
 
     /**
-     * @return array{account: JiraUser, columns: list<JiraColumn>, stored: array<string,JiraIssue>, board: list<JiraIssueData>, left: list<array{0: JiraIssue, 1: ?JiraIssueData}>}
+     * @return array{account: JiraUser, columns: list<JiraColumn>, doneStatuses: list<string>, stored: array<string,JiraIssue>, board: list<JiraIssueData>, left: list<array{0: JiraIssue, 1: ?JiraIssueData}>}
      */
     private function read(Integration $integration, JiraProvider $provider): array
     {
@@ -69,7 +69,10 @@ class JiraIssueSync
         foreach (JiraIssue::select()->where('integration', $integration->id)->fetch() as $row)
             $stored[$row->external_id] = $row;
 
-        $board = $provider->boardIssues();
+        $columns = $provider->boardColumns();
+        // The last column of the board is its "done", whatever the category Jira gives its statuses
+        $doneStatuses = [] === $columns ? [] : end($columns)->statusIds;
+        $board = $provider->boardIssues($doneStatuses);
         $seen = array_flip(array_map(fn (JiraIssueData $issue) => $issue->externalId, $board));
 
         $left = [];
@@ -80,7 +83,7 @@ class JiraIssueSync
             $left[] = [$row, $row->assignee_id === $account->accountId ? $provider->issue($row->issue_key) : null];
         }
 
-        return ['account' => $account, 'columns' => $provider->boardColumns(), 'stored' => $stored, 'board' => $board, 'left' => $left];
+        return ['account' => $account, 'columns' => $columns, 'doneStatuses' => $doneStatuses, 'stored' => $stored, 'board' => $board, 'left' => $left];
     }
 
     /**
@@ -88,10 +91,11 @@ class JiraIssueSync
      */
     private function apply(Integration $integration, array $changes): array
     {
-        // The first run is the reference, and so is the first one knowing the account : it would otherwise log every existing issue
-        $logChanges = null !== $integration->last_synced_at && isset($this->integrations->settingsOf($integration)['account']);
+        // The first run is the reference, and so is the first one knowing the account and the done column : it would otherwise log every existing issue
+        $settings = $this->integrations->settingsOf($integration);
+        $logChanges = null !== $integration->last_synced_at && isset($settings['account'], $settings['done_statuses']);
         $account = $changes['account']->accountId;
-        $this->storeBoard($integration, $changes['columns'], $account);
+        $this->storeBoard($integration, $changes['columns'], $account, $changes['doneStatuses']);
         $lines = [];
 
         foreach ($changes['board'] as $issue) {
@@ -113,7 +117,7 @@ class JiraIssueSync
                 $row->copyFrom($final);
 
             if ($logChanges && $wasMine)
-                $lines[] = $this->events->logIssue($row, $this->leaving($final));
+                $lines[] = $this->events->logIssue($row, $this->leaving($final, $changes['doneStatuses']));
 
             // A task keeps showing the status of its issue : the row stays, only out of the board
             if (!Task::findWhere(['jira_issue' => $row->id])) {
@@ -159,22 +163,27 @@ class JiraIssueSync
         return $changes;
     }
 
-    private function leaving(?JiraIssueData $final): IntegrationChange
+    /**
+     * @param list<string> $doneStatuses
+     */
+    private function leaving(?JiraIssueData $final, array $doneStatuses): IntegrationChange
     {
-        return JiraIssueData::CATEGORY_DONE === $final?->statusCategory
+        return $final && (JiraIssueData::CATEGORY_DONE === $final->statusCategory || in_array($final->statusId, $doneStatuses, true))
             ? new IntegrationChange('jira.issue.done', ['status' => $final->status])
             : new IntegrationChange('jira.issue.unassigned', ['status' => $final?->status]);
     }
 
     /**
      * @param list<JiraColumn> $columns
+     * @param list<string>     $doneStatuses
      */
-    private function storeBoard(Integration $integration, array $columns, string $account): void
+    private function storeBoard(Integration $integration, array $columns, string $account, array $doneStatuses): void
     {
         $integration->settings = json_encode([
             ...$this->integrations->settingsOf($integration),
             'columns' => array_map(fn (JiraColumn $column) => ['name' => $column->name, 'statuses' => $column->statusIds], $columns),
             'account' => $account,
+            'done_statuses' => $doneStatuses,
         ], JSON_THROW_ON_ERROR);
     }
 }

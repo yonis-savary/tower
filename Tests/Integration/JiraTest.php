@@ -29,6 +29,7 @@ class JiraTest extends CubeTestCase
     private array $assigned = [];
     private ?array $refusal = null;
     private int $searchStatus = 200;
+    private ?string $lastJql = null;
     private Broadcast $originalBroadcast;
     private object $broadcast;
 
@@ -69,6 +70,7 @@ class JiraTest extends CubeTestCase
         '22' => ['id' => '22', 'name' => 'In Review', 'statusCategory' => ['key' => 'indeterminate']],
         '23' => ['id' => '23', 'name' => 'Ready for review', 'statusCategory' => ['key' => 'indeterminate']],
         '31' => ['id' => '31', 'name' => 'Done', 'statusCategory' => ['key' => 'done']],
+        '32' => ['id' => '32', 'name' => 'Fix', 'statusCategory' => ['key' => 'indeterminate']],
     ];
 
     private function fakeJira(): HttpMockServer
@@ -79,6 +81,7 @@ class JiraTest extends CubeTestCase
                 if (200 !== $this->searchStatus || self::BOARD !== $board)
                     return Response::json([], 200 === $this->searchStatus ? 404 : $this->searchStatus);
 
+                $this->lastJql = $request->param('jql');
                 $startAt = (int) $request->param('startAt', 0);
                 $key = $this->assigned[$startAt] ?? null;
 
@@ -88,7 +91,7 @@ class JiraTest extends CubeTestCase
                 ['name' => 'Backlog', 'statuses' => [['id' => '11']]],
                 ['name' => 'In Progress', 'statuses' => [['id' => '21']]],
                 ['name' => 'Review', 'statuses' => [['id' => '22'], ['id' => '23']]],
-                ['name' => 'Done', 'statuses' => [['id' => '31']]],
+                ['name' => 'Done', 'statuses' => [['id' => '31'], ['id' => '32']]],
             ]]]),
             '/rest/agile/1.0/issue/{key}' => fn (Request $request, string $key) => isset($this->issues[$key])
                 ? Response::json($this->issues[$key])
@@ -317,6 +320,23 @@ class JiraTest extends CubeTestCase
         $this->assertNull($this->stored('PLAT-2'));
     }
 
+    public function testTheLastColumnOfTheBoardIsDone()
+    {
+        $this->register();
+        $this->save();
+        $this->issue('100', 'PLAT-1');
+        $this->assigned = ['PLAT-1'];
+        $this->sync();
+        $this->assertStringContainsString('status NOT IN (31, 32)', $this->lastJql);
+
+        $this->issue('100', 'PLAT-1', ['status' => self::STATUSES['32']]);
+        $this->assigned = [];
+        $this->sync();
+
+        $this->assertSame(['jira.issue.done'], $this->historyTypes());
+        $this->assertSame('Fix', json_decode(History::findWhere(['type' => 'jira.issue.done'])->details, true)['status']);
+    }
+
     public function testTheFirstSyncKnowingTheAccountIsANewReference()
     {
         $this->register();
@@ -387,8 +407,8 @@ class JiraTest extends CubeTestCase
         $id = $this->stored('PLAT-1')->id;
 
         $transitions = $this->get("/api/jira/issues/{$id}/transitions")->assertOk()->json();
-        $this->assertSame(['11', '21', '22', '23', '31'], array_column($transitions, 'status_id'));
-        $this->assertSame(['todo', 'in_progress', 'in_progress', 'in_progress', 'done'], array_column($transitions, 'status_category'));
+        $this->assertSame(['11', '21', '22', '23', '31', '32'], array_column($transitions, 'status_id'));
+        $this->assertSame(['todo', 'in_progress', 'in_progress', 'in_progress', 'done', 'in_progress'], array_column($transitions, 'status_category'));
 
         $moved = $this->postJson("/api/jira/issues/{$id}/transitions", ['transition' => '22'])->assertOk()->json();
         $this->assertSame('In Review', $moved['status']);

@@ -10,6 +10,7 @@ import {
   type ListEventDeliveriesResponse,
   type ListHistoryResponse,
 } from '../client'
+import AppIcon, { PULL_REQUEST_ICON } from '../components/AppIcon.vue'
 import { useWorkspaceStore } from '../stores/workspace'
 import { taskChange } from '../utils/taskChange'
 
@@ -19,36 +20,36 @@ const PAGE_SIZE = 50
 const EVENT_TYPE = 'event.triggered'
 
 const icons: Record<string, string> = {
-  'device.connected': 'pi-link',
-  'device.disconnected': 'pi-times-circle',
-  [EVENT_TYPE]: 'pi-bolt',
-  'key.created': 'pi-key',
-  'key.revoked': 'pi-ban',
-  'pr.opened': 'pi-share-alt',
-  'pr.merged': 'pi-check-circle',
-  'pr.declined': 'pi-times-circle',
-  'pr.pipeline.failed': 'pi-times',
-  'pr.pipeline.succeeded': 'pi-check',
-  'pr.review.approved': 'pi-thumbs-up',
-  'pr.review.changes_requested': 'pi-thumbs-down',
-  'pr.commented': 'pi-comment',
-  'pr.pushed': 'pi-upload',
-  'pr.ready': 'pi-eye',
-  'pr.retargeted': 'pi-directions',
-  'jira.issue.assigned': 'pi-ticket',
-  'jira.issue.done': 'pi-check-square',
-  'jira.issue.unassigned': 'pi-user-minus',
-  'jira.issue.status_changed': 'pi-arrow-right',
-  'jira.issue.sprint_changed': 'pi-calendar',
-  'jira.issue.priority_changed': 'pi-sort-amount-up',
-  'jira.issue.updated': 'pi-pencil',
-  'task.created': 'pi-plus',
-  'task.updated': 'pi-pencil',
-  'task.status_changed': 'pi-arrow-right',
-  'task.sprint_changed': 'pi-calendar',
-  'sprint.created': 'pi-calendar-plus',
-  'sprint.opened': 'pi-play',
-  'sprint.closed': 'pi-flag',
+  'device.connected': 'pi pi-link',
+  'device.disconnected': 'pi pi-times-circle',
+  [EVENT_TYPE]: 'pi pi-bolt',
+  'key.created': 'pi pi-key',
+  'key.revoked': 'pi pi-ban',
+  'pr.opened': PULL_REQUEST_ICON,
+  'pr.merged': 'pi pi-check-circle',
+  'pr.declined': 'pi pi-times-circle',
+  'pr.pipeline.failed': 'pi pi-times',
+  'pr.pipeline.succeeded': 'pi pi-check',
+  'pr.review.approved': 'pi pi-thumbs-up',
+  'pr.review.changes_requested': 'pi pi-thumbs-down',
+  'pr.commented': 'pi pi-comment',
+  'pr.pushed': 'pi pi-upload',
+  'pr.ready': 'pi pi-eye',
+  'pr.retargeted': 'pi pi-directions',
+  'jira.issue.assigned': 'pi pi-objects-column',
+  'jira.issue.done': 'pi pi-check-square',
+  'jira.issue.unassigned': 'pi pi-user-minus',
+  'jira.issue.status_changed': 'pi pi-arrow-right',
+  'jira.issue.sprint_changed': 'pi pi-calendar',
+  'jira.issue.priority_changed': 'pi pi-sort-amount-up',
+  'jira.issue.updated': 'pi pi-pencil',
+  'task.created': 'pi pi-plus',
+  'task.updated': 'pi pi-pencil',
+  'task.status_changed': 'pi pi-arrow-right',
+  'task.sprint_changed': 'pi pi-calendar',
+  'sprint.created': 'pi pi-calendar-plus',
+  'sprint.opened': 'pi pi-play',
+  'sprint.closed': 'pi pi-flag',
 }
 
 const deliverySeverity: Record<string, string> = { succeeded: 'success', received: 'success', failed: 'danger', running: 'info', pending: 'warn' }
@@ -177,7 +178,7 @@ async function toggle(line: Line) {
     <ul v-if="lines.length" class="lines">
       <li v-for="line in lines" :key="line.id" class="line">
         <div class="line-row">
-          <span class="line-icon"><i :class="['pi', icons[line.type] ?? 'pi-circle']" aria-hidden="true" /></span>
+          <span class="line-icon"><AppIcon :icon="icons[line.type] ?? 'pi pi-circle'" /></span>
           <div class="line-text">
             <strong>{{ label(line) }}</strong>
             <span v-if="detail(line)">{{ detail(line) }}</span>

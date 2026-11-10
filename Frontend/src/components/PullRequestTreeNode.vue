@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ListPullRequestApprovalsResponse, ListPullRequestsResponse } from '../client'
+import AppIcon, { PULL_REQUEST_ICON } from './AppIcon.vue'
 
 const props = defineProps<{ pullRequest: ListPullRequestsResponse[number]; reviewers: ListPullRequestApprovalsResponse }>()
 
@@ -47,7 +48,7 @@ function approvalStyle(angle: number) {
       :title="title"
       :aria-label="title"
     >
-      <i :class="['pi', PIPELINE_ICONS[pullRequest.pipeline_status] ?? 'pi-share-alt']" aria-hidden="true" />
+      <AppIcon :icon="PIPELINE_ICONS[pullRequest.pipeline_status] ? `pi ${PIPELINE_ICONS[pullRequest.pipeline_status]}` : PULL_REQUEST_ICON" />
       <span v-if="pullRequest.comment_count" class="comments" aria-hidden="true">{{ pullRequest.comment_count }}</span>
       <span v-for="(angle, index) in approvalAngles" :key="index" class="approval" :style="approvalStyle(angle)" aria-hidden="true">
         <i class="pi pi-thumbs-up" />

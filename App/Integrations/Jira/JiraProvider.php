@@ -8,7 +8,7 @@ class JiraProvider
     private const FIELDS = 'summary,status,issuetype,priority,project,sprint,assignee';
     private const CONTENT_FIELDS = self::FIELDS.',description,assignee,reporter,labels,comment';
     private const CONTENT_COMMENTS = 20;
-    private const BOARD_JQL = 'statusCategory != Done ORDER BY updated DESC';
+    private const BOARD_JQL = 'statusCategory != Done{exclusion} ORDER BY updated DESC';
 
     private const CATEGORIES = [
         'new' => JiraIssueData::CATEGORY_TODO,
@@ -22,13 +22,18 @@ class JiraProvider
     ) {}
 
     /**
+     * @param list<string> $excludedStatusIds
+     *
      * @return list<JiraIssueData>
      */
-    public function boardIssues(): array
+    public function boardIssues(array $excludedStatusIds = []): array
     {
         $path = "/rest/agile/1.0/board/{$this->board}/issue";
         $issues = [];
-        $parameters = ['jql' => self::BOARD_JQL, 'fields' => self::FIELDS, 'maxResults' => self::PAGE_LENGTH, 'startAt' => 0];
+        // Status ids come from Jira's board configuration, they are numbers : nothing else may enter the query
+        $ids = array_filter($excludedStatusIds, fn (string $id) => ctype_digit($id));
+        $exclusion = [] === $ids ? '' : ' AND status NOT IN ('.implode(', ', $ids).')';
+        $parameters = ['jql' => str_replace('{exclusion}', $exclusion, self::BOARD_JQL), 'fields' => self::FIELDS, 'maxResults' => self::PAGE_LENGTH, 'startAt' => 0];
 
         while (true) {
             $page = $this->client->read($path, $parameters) ?? throw new \RuntimeException("Jira does not know the board {$this->board}");

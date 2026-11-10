@@ -301,6 +301,14 @@ export default {
     launchError: 'The event could not be launched.',
     deleteError: 'The quick action could not be deleted.',
   },
+  docs: {
+    copy: 'Copy',
+    copied: 'Copied',
+    pages: {
+      home: 'Home',
+      linuxService: 'Linux service',
+    },
+  },
   workspaces: {
     title: 'My workspaces',
     current: 'Current',
@@ -370,6 +378,7 @@ export default {
     mergeRequests: 'Merge Requests',
     history: 'History',
     settings: 'Settings',
+    docs: 'Documentation / API',
     devices: 'Devices',
     socketConnecting: 'Connecting to the server',
     socketConnected: 'Connected to the server',

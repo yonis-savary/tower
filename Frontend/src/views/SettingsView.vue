@@ -20,6 +20,8 @@ import {
   type GetJiraIntegrationResponse,
 } from '../client'
 import AccountSettings from '../components/AccountSettings.vue'
+import { PULL_REQUEST_ICON } from '../components/AppIcon.vue'
+import SideTabs from '../components/SideTabs.vue'
 import { useJiraStore } from '../stores/jira'
 import { usePullRequestsStore } from '../stores/pullRequests'
 import { useWorkspaceStore } from '../stores/workspace'
@@ -34,8 +36,8 @@ type SettingsTab = 'account' | 'bitbucket' | 'jira' | 'clear'
 const tabs = computed(() =>
   [
     { value: 'account' as const, icon: 'pi pi-user', label: t('settings.tabs.account') },
-    { value: 'bitbucket' as const, icon: 'pi pi-share-alt', label: t('settings.tabs.bitbucket'), shown: workspace.hasSection('merge_requests') },
-    { value: 'jira' as const, icon: 'pi pi-ticket', label: t('settings.tabs.jira'), shown: workspace.hasSection('jira') },
+    { value: 'bitbucket' as const, icon: PULL_REQUEST_ICON, label: t('settings.tabs.bitbucket'), shown: workspace.hasSection('merge_requests') },
+    { value: 'jira' as const, icon: 'pi pi-objects-column', label: t('settings.tabs.jira'), shown: workspace.hasSection('jira') },
     { value: 'clear' as const, icon: 'pi pi-trash', label: t('settings.tabs.clear') },
   ].filter(({ shown }) => shown !== false),
 )
@@ -181,119 +183,103 @@ async function removeJira() {
 <template>
   <h1 class="page-title">{{ t('nav.settings') }}</h1>
 
-  <div class="settings-layout">
-    <nav class="settings-tabs" :aria-label="t('nav.settings')">
-      <button
-        v-for="item in tabs"
-        :key="item.value"
-        type="button"
-        :class="['settings-tab', { selected: item.value === tab }]"
-        :aria-current="item.value === tab ? 'page' : undefined"
-        @click="tab = item.value"
-      >
-        <i :class="item.icon" aria-hidden="true" />
-        {{ item.label }}
-      </button>
-    </nav>
+  <SideTabs v-model="tab" :items="tabs" :label="t('nav.settings')">
+    <AccountSettings v-if="tab === 'account'" />
 
-    <div class="settings-content">
-      <AccountSettings v-if="tab === 'account'" />
+    <section v-if="tab === 'bitbucket'" class="panel">
+      <h2>{{ t('settings.bitbucket.title') }}</h2>
+      <p class="description">{{ t('settings.bitbucket.description') }}</p>
 
-      <section v-if="tab === 'bitbucket'" class="panel">
-        <h2>{{ t('settings.bitbucket.title') }}</h2>
-        <p class="description">{{ t('settings.bitbucket.description') }}</p>
+      <Message v-if="error" class="panel-message" severity="error" :closable="false">{{ error }}</Message>
+      <Message v-if="integration?.last_error" class="panel-message" severity="warn" :closable="false">{{ integration.last_error }}</Message>
 
-        <Message v-if="error" class="panel-message" severity="error" :closable="false">{{ error }}</Message>
-        <Message v-if="integration?.last_error" class="panel-message" severity="warn" :closable="false">{{ integration.last_error }}</Message>
-
-        <form v-if="loaded" class="settings-form" @submit.prevent="save">
-          <div class="field">
-            <label for="bitbucket-workspace">{{ t('settings.bitbucket.workspace') }}</label>
-            <InputText id="bitbucket-workspace" v-model="form.workspace" placeholder="mon-equipe" required fluid />
-          </div>
-          <div class="field">
-            <label for="bitbucket-email">{{ t('settings.bitbucket.email') }}</label>
-            <InputText id="bitbucket-email" v-model="form.email" type="email" autocomplete="off" required fluid />
-          </div>
-          <div class="field">
-            <label for="bitbucket-token">{{ t('settings.bitbucket.token') }}</label>
-            <Password
-              v-model="form.token"
-              input-id="bitbucket-token"
-              :feedback="false"
-              :required="!integration"
-              :placeholder="integration ? t('settings.bitbucket.tokenKeep') : ''"
-              :input-props="{ autocomplete: 'new-password' }"
-              toggle-mask
-              fluid
-            />
-            <small>{{ t('settings.bitbucket.tokenHint') }}</small>
-          </div>
-
-          <div class="actions">
-            <small v-if="integration" class="sync-status">{{ syncStatus }}</small>
-            <Button v-if="integration" :label="t('settings.bitbucket.delete')" severity="danger" text @click="remove" />
-            <Button v-if="integration" :label="t('settings.bitbucket.sync')" icon="pi pi-refresh" severity="secondary" :loading="busy" @click="synchronize" />
-            <Button type="submit" :label="t('settings.bitbucket.save')" :loading="busy" />
-          </div>
-        </form>
-      </section>
-
-      <section v-if="tab === 'jira'" class="panel">
-        <h2>{{ t('settings.jira.title') }}</h2>
-        <p class="description">{{ t('settings.jira.description') }}</p>
-
-        <Message v-if="jiraError" class="panel-message" severity="error" :closable="false">{{ jiraError }}</Message>
-        <Message v-if="jira?.last_error" class="panel-message" severity="warn" :closable="false">{{ jira.last_error }}</Message>
-
-        <form v-if="loaded" class="settings-form" @submit.prevent="saveJira">
-          <div class="field">
-            <label for="jira-site">{{ t('settings.jira.site') }}</label>
-            <InputText id="jira-site" v-model="jiraForm.site" type="url" placeholder="https://mon-equipe.atlassian.net" required fluid />
-          </div>
-          <div class="field">
-            <label for="jira-board">{{ t('settings.jira.board') }}</label>
-            <InputNumber v-model="jiraForm.board" input-id="jira-board" :min="1" :use-grouping="false" required fluid />
-            <small>{{ t('settings.jira.boardHint') }}</small>
-          </div>
-          <div class="field">
-            <label for="jira-email">{{ t('settings.bitbucket.email') }}</label>
-            <InputText id="jira-email" v-model="jiraForm.email" type="email" autocomplete="off" required fluid />
-          </div>
-          <div class="field">
-            <label for="jira-token">{{ t('settings.bitbucket.token') }}</label>
-            <Password
-              v-model="jiraForm.token"
-              input-id="jira-token"
-              :feedback="false"
-              :required="!jira"
-              :placeholder="jira ? t('settings.bitbucket.tokenKeep') : ''"
-              :input-props="{ autocomplete: 'new-password' }"
-              toggle-mask
-              fluid
-            />
-            <small>{{ t('settings.jira.tokenHint') }}</small>
-          </div>
-
-          <div class="actions">
-            <small v-if="jira" class="sync-status">{{ jiraSyncStatus }}</small>
-            <Button v-if="jira" :label="t('settings.bitbucket.delete')" severity="danger" text @click="removeJira" />
-            <Button v-if="jira" :label="t('settings.bitbucket.sync')" icon="pi pi-refresh" severity="secondary" :loading="jiraBusy" @click="synchronizeJira" />
-            <Button type="submit" :label="t('settings.bitbucket.save')" :loading="jiraBusy" />
-          </div>
-        </form>
-      </section>
-
-      <section v-if="tab === 'clear'" class="panel">
-        <h2>{{ t('settings.clear.title') }}</h2>
-        <p class="description">{{ t('settings.clear.description') }}</p>
-        <div class="clear-actions">
-          <Button :label="t('settings.clear.jira')" icon="pi pi-trash" severity="danger" outlined :disabled="!jira" @click="removeJira" />
-          <Button :label="t('settings.clear.mergeRequests')" icon="pi pi-trash" severity="danger" outlined :disabled="!integration" @click="remove" />
+      <form v-if="loaded" class="settings-form" @submit.prevent="save">
+        <div class="field">
+          <label for="bitbucket-workspace">{{ t('settings.bitbucket.workspace') }}</label>
+          <InputText id="bitbucket-workspace" v-model="form.workspace" placeholder="mon-equipe" required fluid />
         </div>
-      </section>
-    </div>
-  </div>
+        <div class="field">
+          <label for="bitbucket-email">{{ t('settings.bitbucket.email') }}</label>
+          <InputText id="bitbucket-email" v-model="form.email" type="email" autocomplete="off" required fluid />
+        </div>
+        <div class="field">
+          <label for="bitbucket-token">{{ t('settings.bitbucket.token') }}</label>
+          <Password
+            v-model="form.token"
+            input-id="bitbucket-token"
+            :feedback="false"
+            :required="!integration"
+            :placeholder="integration ? t('settings.bitbucket.tokenKeep') : ''"
+            :input-props="{ autocomplete: 'new-password' }"
+            toggle-mask
+            fluid
+          />
+          <small>{{ t('settings.bitbucket.tokenHint') }}</small>
+        </div>
+
+        <div class="actions">
+          <small v-if="integration" class="sync-status">{{ syncStatus }}</small>
+          <Button v-if="integration" :label="t('settings.bitbucket.delete')" severity="danger" text @click="remove" />
+          <Button v-if="integration" :label="t('settings.bitbucket.sync')" icon="pi pi-refresh" severity="secondary" :loading="busy" @click="synchronize" />
+          <Button type="submit" :label="t('settings.bitbucket.save')" :loading="busy" />
+        </div>
+      </form>
+    </section>
+
+    <section v-if="tab === 'jira'" class="panel">
+      <h2>{{ t('settings.jira.title') }}</h2>
+      <p class="description">{{ t('settings.jira.description') }}</p>
+
+      <Message v-if="jiraError" class="panel-message" severity="error" :closable="false">{{ jiraError }}</Message>
+      <Message v-if="jira?.last_error" class="panel-message" severity="warn" :closable="false">{{ jira.last_error }}</Message>
+
+      <form v-if="loaded" class="settings-form" @submit.prevent="saveJira">
+        <div class="field">
+          <label for="jira-site">{{ t('settings.jira.site') }}</label>
+          <InputText id="jira-site" v-model="jiraForm.site" type="url" placeholder="https://mon-equipe.atlassian.net" required fluid />
+        </div>
+        <div class="field">
+          <label for="jira-board">{{ t('settings.jira.board') }}</label>
+          <InputNumber v-model="jiraForm.board" input-id="jira-board" :min="1" :use-grouping="false" required fluid />
+          <small>{{ t('settings.jira.boardHint') }}</small>
+        </div>
+        <div class="field">
+          <label for="jira-email">{{ t('settings.bitbucket.email') }}</label>
+          <InputText id="jira-email" v-model="jiraForm.email" type="email" autocomplete="off" required fluid />
+        </div>
+        <div class="field">
+          <label for="jira-token">{{ t('settings.bitbucket.token') }}</label>
+          <Password
+            v-model="jiraForm.token"
+            input-id="jira-token"
+            :feedback="false"
+            :required="!jira"
+            :placeholder="jira ? t('settings.bitbucket.tokenKeep') : ''"
+            :input-props="{ autocomplete: 'new-password' }"
+            toggle-mask
+            fluid
+          />
+          <small>{{ t('settings.jira.tokenHint') }}</small>
+        </div>
+
+        <div class="actions">
+          <small v-if="jira" class="sync-status">{{ jiraSyncStatus }}</small>
+          <Button v-if="jira" :label="t('settings.bitbucket.delete')" severity="danger" text @click="removeJira" />
+          <Button v-if="jira" :label="t('settings.bitbucket.sync')" icon="pi pi-refresh" severity="secondary" :loading="jiraBusy" @click="synchronizeJira" />
+          <Button type="submit" :label="t('settings.bitbucket.save')" :loading="jiraBusy" />
+        </div>
+      </form>
+    </section>
+
+    <section v-if="tab === 'clear'" class="panel">
+      <h2>{{ t('settings.clear.title') }}</h2>
+      <p class="description">{{ t('settings.clear.description') }}</p>
+      <div class="clear-actions">
+        <Button :label="t('settings.clear.jira')" icon="pi pi-trash" severity="danger" outlined :disabled="!jira" @click="removeJira" />
+        <Button :label="t('settings.clear.mergeRequests')" icon="pi pi-trash" severity="danger" outlined :disabled="!integration" @click="remove" />
+      </div>
+    </section>
+  </SideTabs>
 </template>
 
 <style scoped>
@@ -301,52 +287,6 @@ async function removeJira() {
   margin: 0 0 1.25rem;
   font-size: 1.5rem;
   font-weight: 600;
-}
-
-.settings-layout {
-  display: grid;
-  grid-template-columns: 13rem minmax(0, 48rem);
-  align-items: start;
-  gap: 1.25rem;
-}
-
-@media (max-width: 48rem) {
-  .settings-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-.settings-tabs {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.settings-tab {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0.5rem 0.75rem;
-  color: var(--p-text-color);
-  background: transparent;
-  border: 0;
-  border-radius: var(--p-content-border-radius);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.settings-tab:hover {
-  background: var(--p-content-hover-background);
-}
-
-.settings-tab.selected {
-  background: var(--p-highlight-background);
-  color: var(--p-highlight-color);
-}
-
-.settings-tab:focus-visible {
-  outline: 2px solid var(--p-primary-color);
 }
 
 .panel {

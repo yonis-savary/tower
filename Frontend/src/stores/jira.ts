@@ -25,6 +25,9 @@ export const useJiraStore = defineStore('jira', () => {
   const byId = computed(() => new Map(issues.value.map((issue) => [issue.id, issue])))
   const tracked = computed(() => issues.value.filter(({ tracked }) => tracked))
   const mine = computed(() => tracked.value.filter(({ assignee_id }) => assignee_id !== null && assignee_id === accountId.value))
+  // The last column of the board is its "done", whatever the category Jira gives its statuses
+  const doneStatuses = computed(() => new Set(columns.value.at(-1)?.statuses ?? []))
+  const isDone = (issue: JiraIssue) => issue.status_category === 'done' || doneStatuses.value.has(issue.status_id)
 
   async function load(): Promise<void> {
     const [issueList, board] = await Promise.all([listJiraIssues(), getJiraBoard()])
@@ -57,5 +60,5 @@ export const useJiraStore = defineStore('jira', () => {
     return !!response?.ok
   }
 
-  return { issues, columns, accountId, failed, byId, tracked, mine, load, transitionsOf, transition, createTask, discuss }
+  return { issues, columns, accountId, failed, byId, tracked, mine, isDone, load, transitionsOf, transition, createTask, discuss }
 })

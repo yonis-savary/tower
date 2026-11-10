@@ -299,6 +299,14 @@ export default {
     launchError: "L'évènement n'a pas pu être lancé.",
     deleteError: "La quick-action n'a pas pu être supprimée.",
   },
+  docs: {
+    copy: 'Copier',
+    copied: 'Copié',
+    pages: {
+      home: 'Accueil',
+      linuxService: 'Service Linux',
+    },
+  },
   workspaces: {
     title: 'Mes workspaces',
     current: 'Courant',
@@ -368,6 +376,7 @@ export default {
     mergeRequests: 'Merge Requests',
     history: 'Historique',
     settings: 'Paramètres',
+    docs: 'Documentation / API',
     devices: 'Appareils',
     socketConnecting: 'Connexion au serveur en cours',
     socketConnected: 'Connecté au serveur',
