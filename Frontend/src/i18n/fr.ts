@@ -374,6 +374,7 @@ export default {
       home: 'Accueil',
       events: 'Événements',
       linuxService: 'Service Linux',
+      linuxServer: 'Serveur sans écran',
     },
   },
   workspaces: {

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import CodeBlock from '../../../components/CodeBlock.vue'
+import type { DocPage } from '../pages'
+
+defineEmits<{ open: [page: DocPage] }>()
 
 const unit = `
 [Unit]
@@ -37,13 +40,6 @@ journalctl --user -u tower-connector -f
 `
 
 const restart = 'systemctl --user start tower-connector'
-
-const headless = `
-# Dans le fichier du service, remplace graphical-session.target par default.target, puis :
-loginctl enable-linger "$USER"
-systemctl --user daemon-reload
-systemctl --user reenable tower-connector
-`
 </script>
 
 <template>
@@ -91,13 +87,10 @@ systemctl --user reenable tower-connector
   <p>Le service est resté arrêté volontairement. Pour le relancer :</p>
   <CodeBlock :code="restart" language="bash" />
 
-  <h3>Sur une machine sans écran</h3>
+  <h3>Sur un serveur sans écran</h3>
   <p>
-    Pour un serveur qui n'ouvre pas de fenêtres, le service peut démarrer au boot, sans que personne ne se connecte :
-  </p>
-  <CodeBlock :code="headless" language="bash" />
-  <p class="note">
-    Le handler de base a besoin d'une session graphique pour ouvrir ses fenêtres : sur une machine sans écran, utilise ton
-    propre handler, ou aucun.
+    Ce service suit ta session graphique. Pour un serveur, où le connecteur doit démarrer au boot et survivre à la fermeture
+    de tes sessions SSH, suis la page
+    <a href="#" @click.prevent="$emit('open', 'linux-server')">Serveur sans écran</a>.
   </p>
 </template>

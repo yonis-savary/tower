@@ -37,5 +37,9 @@ defineEmits<{ open: [page: DocPage] }>()
       <a href="#" @click.prevent="$emit('open', 'linux-service')">Lancer le connecteur en service sous Linux</a> : le relancer
       automatiquement à chaque session, avec systemd.
     </li>
+    <li>
+      <a href="#" @click.prevent="$emit('open', 'linux-server')">Le connecteur sur un serveur sans écran</a> : le démarrer au
+      boot et le garder en marche après la fermeture de tes sessions SSH, avec ses handlers et les commandes qui demandent root.
+    </li>
   </ul>
 </template>

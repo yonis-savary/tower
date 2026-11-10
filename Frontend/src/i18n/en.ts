@@ -376,6 +376,7 @@ export default {
       home: 'Home',
       events: 'Events',
       linuxService: 'Linux service',
+      linuxServer: 'Headless server',
     },
   },
   workspaces: {

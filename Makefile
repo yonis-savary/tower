@@ -26,14 +26,17 @@ up: Storage
 down:
 	$(PROD) down
 
+# The previous release answers during the build and the migrations : keep migrations compatible with it
+# The PHP services only stop for the cache tasks, so that no old process writes its caches back. nginx
+# and mysql keep running
 deploy: Storage
 	git pull
 	$(MAKE) build
-	$(MAKE) down
 	$(DO) migrate:migrate
+	$(PROD) stop php-fpm scheduler websocket
 	$(DO) cube:dispatch --event PostDeployment
 	$(DO) configuration:cache
-	$(MAKE) up
+	$(PROD) up -d
 
 exec:
 	$(EXEC) bash

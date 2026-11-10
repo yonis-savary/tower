@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import CodeBlock from '../../../components/CodeBlock.vue'
+import type { DocPage } from '../pages'
+
+defineEmits<{ open: [page: DocPage] }>()
 
 const unit = `
 [Unit]
@@ -37,13 +40,6 @@ journalctl --user -u tower-connector -f
 `
 
 const restart = 'systemctl --user start tower-connector'
-
-const headless = `
-# In the service file, replace graphical-session.target with default.target, then:
-loginctl enable-linger "$USER"
-systemctl --user daemon-reload
-systemctl --user reenable tower-connector
-`
 </script>
 
 <template>
@@ -87,11 +83,10 @@ systemctl --user reenable tower-connector
   <p>The service stayed stopped on purpose. To start it again:</p>
   <CodeBlock :code="restart" language="bash" />
 
-  <h3>On a machine without a screen</h3>
-  <p>For a server that opens no windows, the service can start at boot, without anyone logging in:</p>
-  <CodeBlock :code="headless" language="bash" />
-  <p class="note">
-    The basic handler needs a graphical session to open its windows: on a machine without a screen, use your own handler,
-    or none.
+  <h3>On a headless server</h3>
+  <p>
+    This service follows your graphical session. For a server, where the connector must start at boot and outlive your SSH
+    sessions, follow the
+    <a href="#" @click.prevent="$emit('open', 'linux-server')">Headless server</a> page.
   </p>
 </template>
