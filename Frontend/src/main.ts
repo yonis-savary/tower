@@ -7,6 +7,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import i18n from './i18n'
 import router from './router'
+import { DARK_CLASS } from './utils/theme'
 import 'primeicons/primeicons.css'
 import './style.css'
 
@@ -17,7 +18,7 @@ const TowerPreset = definePreset(Aura, {
 })
 
 createApp(App)
-  .use(PrimeVue, { theme: { preset: TowerPreset } })
+  .use(PrimeVue, { theme: { preset: TowerPreset, options: { darkModeSelector: `.${DARK_CLASS}` } } })
   .use(ToastService)
   .use(createPinia())
   .use(i18n)

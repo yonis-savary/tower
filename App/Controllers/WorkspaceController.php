@@ -110,7 +110,7 @@ class WorkspaceController extends Controller
         return Response::json(WorkspaceResource::of($workspace), StatusCode::CREATED);
     }
 
-    #[Endpoint('Update workspace', 'Changes the name and the accent color of a workspace the current user is a member of', 'updateWorkspace')]
+    #[Endpoint('Update workspace', 'Changes the name, the accent color and, when given, the sections of a workspace the current user is a member of', 'updateWorkspace')]
     #[ResourceResponse(WorkspaceResource::class, description: 'The workspace')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
@@ -120,7 +120,7 @@ class WorkspaceController extends Controller
         if (!$found)
             return $this->workspaceNotFound();
 
-        $updated = $this->workspaces->update($found, trim($request->validated('name')), $request->validated('accent_color'));
+        $updated = $this->workspaces->update($found, trim($request->validated('name')), $request->validated('accent_color'), $request->validated('sections'));
 
         return Response::json(WorkspaceResource::of($updated));
     }

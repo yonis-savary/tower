@@ -8,6 +8,9 @@ import {
   type ListWorkspacesResponse,
 } from '../client'
 
+export type WorkspaceSection = 'tasks' | 'jira' | 'merge_requests' | 'events'
+export const WORKSPACE_SECTIONS: WorkspaceSection[] = ['tasks', 'jira', 'merge_requests', 'events']
+
 export const useWorkspaceStore = defineStore('workspace', () => {
   const current = ref<GetCurrentWorkspaceResponse | null>(null)
   // `null` until the first answer
@@ -31,10 +34,14 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     if (data) current.value = data
   }
 
+  function hasSection(section: WorkspaceSection): boolean {
+    return current.value?.sections.includes(section) ?? false
+  }
+
   function clear(): void {
     current.value = null
     workspaces.value = null
   }
 
-  return { current, workspaces, loadCurrent, loadWorkspaces, select, clear }
+  return { current, workspaces, loadCurrent, loadWorkspaces, select, hasSection, clear }
 })

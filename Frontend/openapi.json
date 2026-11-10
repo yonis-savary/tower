@@ -827,6 +827,70 @@
                 }
             }
         },
+        "\/api\/auth\/password": {
+            "put": {
+                "summary": "Change password",
+                "description": "Replaces the password of the current user, after checking the current one. Other open sessions stay open",
+                "operationId": "changePassword",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "current_password": {
+                                        "type": "string"
+                                    },
+                                    "new_password": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "current_password",
+                                    "new_password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The current password is wrong, or the new one is invalid",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The password is changed"
+                    }
+                }
+            }
+        },
         "\/api\/devices\/{uuid}\/disconnect": {
             "post": {
                 "summary": "Disconnect device",
@@ -3875,20 +3939,32 @@
                                                     "string",
                                                     "null"
                                                 ]
+                                            },
+                                            "sections": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
                                             }
                                         },
                                         "required": [
                                             "id",
                                             "name",
-                                            "accent_color"
+                                            "accent_color",
+                                            "sections"
                                         ]
                                     }
                                 },
                                 "example": [
                                     {
-                                        "id": 959,
-                                        "name": "aut aspernatur sed",
-                                        "accent_color": "voluptatibus adipisci sapiente"
+                                        "id": 275,
+                                        "name": "voluptate cupiditate dolores",
+                                        "accent_color": "#c8cbd5",
+                                        "sections": [
+                                            "events",
+                                            "jira",
+                                            "merge_requests"
+                                        ]
                                     }
                                 ]
                             }
@@ -3962,18 +4038,30 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "sections": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
                                         }
                                     },
                                     "required": [
                                         "id",
                                         "name",
-                                        "accent_color"
+                                        "accent_color",
+                                        "sections"
                                     ]
                                 },
                                 "example": {
-                                    "id": 959,
-                                    "name": "aut aspernatur sed",
-                                    "accent_color": "voluptatibus adipisci sapiente"
+                                    "id": 275,
+                                    "name": "voluptate cupiditate dolores",
+                                    "accent_color": "#c8cbd5",
+                                    "sections": [
+                                        "events",
+                                        "jira",
+                                        "merge_requests"
+                                    ]
                                 }
                             }
                         }
@@ -4020,18 +4108,30 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "sections": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
                                         }
                                     },
                                     "required": [
                                         "id",
                                         "name",
-                                        "accent_color"
+                                        "accent_color",
+                                        "sections"
                                     ]
                                 },
                                 "example": {
-                                    "id": 959,
-                                    "name": "aut aspernatur sed",
-                                    "accent_color": "voluptatibus adipisci sapiente"
+                                    "id": 275,
+                                    "name": "voluptate cupiditate dolores",
+                                    "accent_color": "#c8cbd5",
+                                    "sections": [
+                                        "events",
+                                        "jira",
+                                        "merge_requests"
+                                    ]
                                 }
                             }
                         }
@@ -4119,18 +4219,30 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "sections": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
                                         }
                                     },
                                     "required": [
                                         "id",
                                         "name",
-                                        "accent_color"
+                                        "accent_color",
+                                        "sections"
                                     ]
                                 },
                                 "example": {
-                                    "id": 959,
-                                    "name": "aut aspernatur sed",
-                                    "accent_color": "voluptatibus adipisci sapiente"
+                                    "id": 275,
+                                    "name": "voluptate cupiditate dolores",
+                                    "accent_color": "#c8cbd5",
+                                    "sections": [
+                                        "events",
+                                        "jira",
+                                        "merge_requests"
+                                    ]
                                 }
                             }
                         }
@@ -4225,7 +4337,7 @@
         "\/api\/workspaces\/{workspace}": {
             "put": {
                 "summary": "Update workspace",
-                "description": "Changes the name and the accent color of a workspace the current user is a member of",
+                "description": "Changes the name, the accent color and, when given, the sections of a workspace the current user is a member of",
                 "operationId": "updateWorkspace",
                 "parameters": [
                     {
@@ -4252,6 +4364,18 @@
                                             "string",
                                             "null"
                                         ]
+                                    },
+                                    "sections": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "enum": [
+                                                "tasks",
+                                                "jira",
+                                                "merge_requests",
+                                                "events"
+                                            ]
+                                        }
                                     }
                                 },
                                 "required": [
@@ -4291,18 +4415,30 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "sections": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
                                         }
                                     },
                                     "required": [
                                         "id",
                                         "name",
-                                        "accent_color"
+                                        "accent_color",
+                                        "sections"
                                     ]
                                 },
                                 "example": {
-                                    "id": 959,
-                                    "name": "aut aspernatur sed",
-                                    "accent_color": "voluptatibus adipisci sapiente"
+                                    "id": 275,
+                                    "name": "voluptate cupiditate dolores",
+                                    "accent_color": "#c8cbd5",
+                                    "sections": [
+                                        "events",
+                                        "jira",
+                                        "merge_requests"
+                                    ]
                                 }
                             }
                         }

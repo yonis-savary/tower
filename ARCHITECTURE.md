@@ -52,6 +52,8 @@ Vocabulaire :
 
 - L'inscription est **ouverte par défaut** ; la configuration PHP permet de la fermer.
 - À l'inscription, un workspace est créé pour l'utilisateur, qui en est le premier membre.
+- Un utilisateur change son mot de passe depuis les Paramètres, en donnant l'actuel ; le nouveau
+  suit les règles de l'inscription. Ses autres sessions restent ouvertes.
 - Un utilisateur n'est jamais supprimé : il est désactivé (`disabled_at`) et ne peut plus se
   connecter. Ses workspaces, tâches et adhésions restent en place.
 - **(prévu)** Une commande Cube pour inscrire un utilisateur à la main, inscription ouverte ou
@@ -70,6 +72,11 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
   n'existe pour Tower qu'à travers ses connexions (voir § Connexions).
 - Un workspace peut avoir plusieurs membres, et un utilisateur peut être membre de plusieurs
   workspaces. Tous les membres ont les mêmes droits sur le workspace ; il n'y a pas de rôles.
+- Un workspace choisit ses **sections** parmi `tasks`, `jira`, `merge_requests` et `events`
+  (toutes pour un workspace jamais configuré). Une section décochée est seulement masquée : elle
+  quitte la navbar et les Paramètres, et son adresse renvoie à l'accueil, mais ses données, ses
+  synchronisations et ses événements continuent. Accueil, Historique, Paramètres, le menu
+  Connecteur et les appareils sont toujours là.
 - Un workspace peut avoir une couleur (`accent_color`, `#rrggbb`) : quand il est le workspace
   courant, la page porte une bordure de cette couleur à gauche ; sans couleur, rien.
 - Tout membre peut renommer le workspace, changer sa couleur, en ajouter un autre par l'e-mail de son compte Tower
@@ -661,18 +668,23 @@ cache, sortie), les outils appelés et l'issue, pour pouvoir mesurer et ajuster.
 Navbar verticale à gauche, toujours visible ; sur un écran étroit, elle se réduit à ses
 icônes.
 
+En haut, les éléments principaux ; en bas, les secondaires, puis l'e-mail et la déconnexion.
+Tâches, Jira, Merge Requests et Événements n'apparaissent que si le workspace courant a cette
+section (voir § Workspace). Tâches, Jira et Merge Requests portent un compteur : tâches restantes
+du sprint actif, tickets non terminés de l'utilisateur, merge requests ouvertes.
+
 | Élément            | Contenu                                                            |
 |--------------------|--------------------------------------------------------------------|
 | Workspace          | tout en haut : sélecteur du workspace courant, avec une dernière option « Gérer mes workspaces » |
 | Appareils          | indicateur permanent, voir ci-dessous                              |
 | Accueil            |                                                                    |
-| Tâches             | tableau et backlog                                                 |
-| Événements         | lancement manuel et quick-actions                                  |
-| Jira               | kanban des tickets assignés (**prévu** : affiché seulement avec une intégration Jira) |
-| Merge Requests     | **(prévu : affiché seulement avec une intégration de forge)**      |
-| Historique         |                                                                    |
-| Paramètres         |                                                                    |
-| Connecteur         | menu : télécharger le client et le handler de base, créer et gérer les configurations |
+| Tâches             | section `tasks` : tableau et backlog                               |
+| Jira               | section `jira` : kanban du board                                   |
+| Merge Requests     | section `merge_requests`                                           |
+| Événements         | section `events` : lancement manuel et quick-actions               |
+| Historique         | en bas                                                             |
+| Paramètres         | en bas                                                             |
+| Connecteur         | en bas, encadré en vert : télécharger le client et le handler de base, créer et gérer les configurations |
 
 ### Indicateur Appareils
 
@@ -696,9 +708,9 @@ les jobs échoués récents.
 | Événements         | lancer un événement (type et payload JSON) ; créer, lancer et supprimer des quick-actions |
 | Merge Requests     | un onglet par dépôt : graphique en arbre des merge requests ouvertes, puis leur liste (approbations, commentaires, brouillon, pipeline), puis celles du dépôt fermées récemment |
 | Historique         | lignes du workspace, les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |
-| Paramètres         | intégrations Bitbucket et Jira : workspace ou site et board, e-mail, token, synchronisation, état de la dernière synchronisation |
+| Paramètres         | onglets verticaux à gauche, contenu à droite, onglet choisi dans l'adresse (`?tab=`) : **Compte** (thème auto, clair ou sombre, gardé dans le navigateur ; changement de mot de passe) ; intégrations Bitbucket et Jira, chacune affichée si sa section est active : workspace ou site et board, e-mail, token, synchronisation, état de la dernière synchronisation ; bloc « Vider une section », toujours visible, qui supprime d'un coup l'intégration Jira ou Bitbucket et ses données |
 | Jira               | tickets non terminés du board, avec la pastille de leur assigné, ou seulement les siens, en kanban avec les colonnes du board ; transition par glisser-déposer, ouverture dans Jira, création de tâche |
-| Mes workspaces     | modale ouverte par « Gérer mes workspaces » : liste, création, renommage, couleur, passage sur un workspace ; membres, ajout par e-mail, retrait, départ |
+| Mes workspaces     | modale ouverte par « Gérer mes workspaces » : liste, création, renommage, couleur, sections, passage sur un workspace ; membres, ajout par e-mail, retrait, départ |
 
 ### Connecteur
 
@@ -724,7 +736,7 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | Table             | Contenu principal                                                         |
 |-------------------|---------------------------------------------------------------------------|
 | `user`            | `email`, `password_hash`, `created_at`, `disabled_at`                     |
-| `workspace`       | `name`, `accent_color`, `author` (utilisateur créateur)                   |
+| `workspace`       | `name`, `accent_color`, `author` (utilisateur créateur), `sections` (JSON, `null` : toutes) |
 | `workspace_member` | `workspace`, `user`                                                      |
 | `task`            | voir § Tâches et sprints                                                  |
 | `sprint`          | `workspace`, `name`, `state`, `opened_at`, `closed_at`, `created_at`      |

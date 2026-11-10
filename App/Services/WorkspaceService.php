@@ -12,6 +12,8 @@ use Cube\Data\Database\Query;
 
 class WorkspaceService
 {
+    public const SECTIONS = ['tasks', 'jira', 'merge_requests', 'events'];
+
     public function __construct(
         protected Database $database,
     ) {}
@@ -47,10 +49,15 @@ class WorkspaceService
         return $workspace;
     }
 
-    public function update(Workspace $workspace, string $name, ?string $accentColor): Workspace
+    /**
+     * @param ?list<string> $sections null keeps the current ones
+     */
+    public function update(Workspace $workspace, string $name, ?string $accentColor, ?array $sections = null): Workspace
     {
         $workspace->name = $name;
         $workspace->accent_color = null === $accentColor ? null : strtolower($accentColor);
+        if (null !== $sections)
+            $workspace->sections = json_encode(array_values(array_intersect(self::SECTIONS, $sections)), JSON_THROW_ON_ERROR);
 
         return $workspace->save();
     }
@@ -100,6 +107,14 @@ class WorkspaceService
         WorkspaceMember::deleteWhere(['workspace' => $workspace->id, 'user' => $userId]);
 
         return true;
+    }
+
+    /**
+     * @return list<string> In the order of SECTIONS ; a workspace never configured has them all
+     */
+    public static function sectionsOf(Workspace $workspace): array
+    {
+        return null === $workspace->sections ? self::SECTIONS : json_decode($workspace->sections, true);
     }
 
     public function isMember(int $userId, int $workspaceId): bool

@@ -147,4 +147,19 @@ class AuthTest extends CubeTestCase
 
         $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => self::PASSWORD])->assertUnauthorized();
     }
+
+    public function testChangePasswordChecksTheCurrentOne()
+    {
+        $this->register();
+        $this->putJson('/api/auth/password', ['current_password' => 'wrong password', 'new_password' => 'a new long password'])->assertUnprocessableContent();
+        $this->putJson('/api/auth/password', ['current_password' => self::PASSWORD, 'new_password' => 'short'])->assertUnprocessableContent();
+        $this->putJson('/api/auth/password', ['current_password' => self::PASSWORD, 'new_password' => 'a new long password'])->assertNoContent();
+
+        $this->post('/api/auth/logout')->assertNoContent();
+        $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => self::PASSWORD])->assertUnauthorized();
+        $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => 'a new long password'])->assertOk();
+
+        $this->post('/api/auth/logout')->assertNoContent();
+        $this->putJson('/api/auth/password', ['current_password' => 'a new long password', 'new_password' => 'x'.self::PASSWORD])->assertUnauthorized();
+    }
 }

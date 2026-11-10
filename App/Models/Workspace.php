@@ -14,6 +14,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $name
  * @property string $accent_color
  * @property int $author
+ * @property string $sections
  * @property User $_author
  * @property AccessKey[] $accessKeies
  * @property History[] $histories
@@ -50,7 +51,8 @@ class Workspace extends Model
             'id' => (new ModelField('id'))->type('INTEGER')->autoIncrement()->notNull()->hasDefault(false),
             'name' => (new ModelField('name'))->type('STRING')->notNull()->hasDefault(false),
             'accent_color' => (new ModelField('accent_color'))->type('STRING')->nullable()->default(NULL),
-            'author' => (new ModelField('author'))->type('INTEGER')->notNull()->hasDefault(false)->references(User::class,'id')
+            'author' => (new ModelField('author'))->type('INTEGER')->notNull()->hasDefault(false)->references(User::class,'id'),
+            'sections' => (new ModelField('sections'))->type('STRING')->nullable()->default(NULL)
         ];
     }
 

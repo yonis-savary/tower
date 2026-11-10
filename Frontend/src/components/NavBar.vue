@@ -19,10 +19,10 @@ import { useDeviceSocketStore } from '../stores/deviceSocket'
 import { useJiraStore } from '../stores/jira'
 import { usePullRequestsStore } from '../stores/pullRequests'
 import { useTasksStore } from '../stores/tasks'
-import { useWorkspaceStore } from '../stores/workspace'
+import { useWorkspaceStore, type WorkspaceSection } from '../stores/workspace'
 
 // An item without `to` has no screen yet
-type NavItem = { label: string; icon: string; to?: RouteLocationRaw; count?: number }
+type NavItem = { label: string; icon: string; to?: RouteLocationRaw; count?: number; section?: WorkspaceSection }
 
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
@@ -60,21 +60,26 @@ const openIssues = computed(() => jira.mine.filter(({ status_category }) => stat
 
 // Loaded with the page rather than with each screen, for the counters of the menu
 watch(
-  () => workspace.current?.id,
-  (id) => { if (id) void Promise.all([tasks.load(), jira.load(), pullRequests.load()]) },
+  () => [workspace.current?.id, workspace.current?.sections] as const,
+  ([id]) => {
+    if (!id) return
+    if (workspace.hasSection('tasks')) void tasks.load()
+    if (workspace.hasSection('jira')) void jira.load()
+    if (workspace.hasSection('merge_requests')) void pullRequests.load()
+  },
 )
 
-// TODO: Jira and Merge Requests are only shown when the workspace has the matching integration
-const mainItems = computed<NavItem[]>(() => [
-  { label: t('nav.home'), icon: 'pi pi-home', to: { name: 'home' } },
-  { label: t('nav.tasks'), icon: 'pi pi-check-square', to: { name: 'tasks' }, count: remainingTasks.value },
-  { label: t('nav.jira'), icon: 'pi pi-ticket', to: { name: 'jira' }, count: openIssues.value },
-  { label: t('nav.mergeRequests'), icon: 'pi pi-share-alt', to: { name: 'merge-requests' }, count: pullRequests.open.length },
-])
+const mainItems = computed<NavItem[]>(() =>
+  [
+    { label: t('nav.home'), icon: 'pi pi-home', to: { name: 'home' } },
+    { label: t('nav.tasks'), icon: 'pi pi-check-square', to: { name: 'tasks' }, count: remainingTasks.value, section: 'tasks' as const },
+    { label: t('nav.jira'), icon: 'pi pi-ticket', to: { name: 'jira' }, count: openIssues.value, section: 'jira' as const },
+    { label: t('nav.mergeRequests'), icon: 'pi pi-share-alt', to: { name: 'merge-requests' }, count: pullRequests.open.length, section: 'merge_requests' as const },
+    { label: t('nav.events'), icon: 'pi pi-bolt', to: { name: 'events' }, section: 'events' as const },
+  ].filter(({ section }) => !section || workspace.hasSection(section)),
+)
 
 const secondaryItems = computed<NavItem[]>(() => [
-  { label: t('nav.events'), icon: 'pi pi-bolt', to: { name: 'events' } },
-  { label: t('nav.history'), icon: 'pi pi-history', to: { name: 'history' } },
   { label: t('nav.settings'), icon: 'pi pi-cog', to: { name: 'settings' } },
 ])
 

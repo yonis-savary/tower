@@ -420,6 +420,42 @@ export type GetCurrentUserResponses = {
 
 export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
 
+export type ChangePasswordData = {
+    body: {
+        current_password: string;
+        new_password: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/auth/password';
+};
+
+export type ChangePasswordErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current password is wrong, or the new one is invalid
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type ChangePasswordError = ChangePasswordErrors[keyof ChangePasswordErrors];
+
+export type ChangePasswordResponses = {
+    /**
+     * The password is changed
+     */
+    204: void;
+};
+
+export type ChangePasswordResponse = ChangePasswordResponses[keyof ChangePasswordResponses];
+
 export type DisconnectDeviceData = {
     body?: never;
     path: {
@@ -1765,6 +1801,7 @@ export type ListWorkspacesResponses = {
         id: number;
         name: string;
         accent_color: string | null;
+        sections: Array<string>;
     }>;
 };
 
@@ -1802,6 +1839,7 @@ export type CreateWorkspaceResponses = {
         id: number;
         name: string;
         accent_color: string | null;
+        sections: Array<string>;
     };
 };
 
@@ -1839,6 +1877,7 @@ export type GetCurrentWorkspaceResponses = {
         id: number;
         name: string;
         accent_color: string | null;
+        sections: Array<string>;
     };
 };
 
@@ -1882,6 +1921,7 @@ export type SelectWorkspaceResponses = {
         id: number;
         name: string;
         accent_color: string | null;
+        sections: Array<string>;
     };
 };
 
@@ -1926,6 +1966,7 @@ export type UpdateWorkspaceData = {
     body: {
         name: string;
         accent_color: string | null;
+        sections?: Array<'tasks' | 'jira' | 'merge_requests' | 'events'>;
     };
     path: {
         workspace: number;
@@ -1963,6 +2004,7 @@ export type UpdateWorkspaceResponses = {
         id: number;
         name: string;
         accent_color: string | null;
+        sections: Array<string>;
     };
 };
 

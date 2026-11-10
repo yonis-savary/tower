@@ -14,11 +14,16 @@ class RegisterRequest extends Request
     {
         return [
             'email' => Param::email()->withTransformer(fn ($email) => is_string($email) ? strtolower($email) : $email),
-            'password' => Param::string(trim: false)->withValueCondition(
-                fn ($password) => mb_strlen((string) $password) >= self::PASSWORD_MIN_LENGTH
-                    && strlen((string) $password) <= self::PASSWORD_MAX_BYTES,
-                '{key} must contain at least 8 characters and at most 72 bytes'
-            ),
+            'password' => self::newPassword(),
         ];
+    }
+
+    public static function newPassword(): Param
+    {
+        return Param::string(trim: false)->withValueCondition(
+            fn ($password) => mb_strlen((string) $password) >= self::PASSWORD_MIN_LENGTH
+                && strlen((string) $password) <= self::PASSWORD_MAX_BYTES,
+            '{key} must contain at least 8 characters and at most 72 bytes'
+        );
     }
 }

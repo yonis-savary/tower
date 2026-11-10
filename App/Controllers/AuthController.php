@@ -3,10 +3,13 @@
 namespace App\Controllers;
 
 use App\Middlewares\IsAuthenticated;
+use App\Models\User;
+use App\Requests\ChangePasswordRequest;
 use App\Requests\LoginRequest;
 use App\Requests\RegisterRequest;
 use App\Resources\UserResource;
 use App\Security\RegistrationConfiguration;
+use App\Services\AccountService;
 use App\Services\UserRegistration;
 use App\Services\WorkspaceService;
 use App\Session\SelectedWorkspace;
@@ -28,6 +31,7 @@ class AuthController extends Controller
         protected Authentication $authentication,
         protected UserRegistration $registration,
         protected WorkspaceService $workspaces,
+        protected AccountService $accounts,
         protected RegistrationConfiguration $registrationConfiguration,
     ) {}
 
@@ -41,6 +45,7 @@ class AuthController extends Controller
         $router->group('/api/auth', middlewares: [IsAuthenticated::class], routes: [
             Route::post('/logout', [self::class, 'logout']),
             Route::get('/me', [self::class, 'currentUser']),
+            Route::put('/password', [self::class, 'changePassword']),
         ]);
     }
 
@@ -95,5 +100,22 @@ class AuthController extends Controller
     public function currentUser(Request $request): Response
     {
         return Response::json(UserResource::of($this->authentication->user()));
+    }
+
+    #[Endpoint('Change password', 'Replaces the password of the current user, after checking the current one. Other open sessions stay open', 'changePassword')]
+    #[NoContentResponse('The password is changed')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Wrong current password'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'The current password is wrong, or the new one is invalid')]
+    public function changePassword(ChangePasswordRequest $request): Response
+    {
+        $changed = $this->accounts->changePassword(
+            User::find($this->authentication->userId()),
+            $request->validated('current_password'),
+            $request->validated('new_password'),
+        );
+
+        return $changed
+            ? Response::noContent()
+            : Response::json(['error' => 'Wrong current password'], StatusCode::UNPROCESSABLE_CONTENT);
     }
 }

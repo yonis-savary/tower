@@ -3,6 +3,7 @@
 namespace App\Resources;
 
 use App\Models\Workspace;
+use App\Services\WorkspaceService;
 use Cube\Data\Models\Model;
 use Cube\Data\Models\ModelResource;
 use Cube\Data\OpenAPI\Attributes\Nullable;
@@ -27,6 +28,7 @@ class WorkspaceResource extends ModelResource
             'id' => $model->id,
             'name' => $model->name,
             'accent_color' => $model->accent_color,
+            'sections' => WorkspaceService::sectionsOf($model),
         ];
     }
 }
