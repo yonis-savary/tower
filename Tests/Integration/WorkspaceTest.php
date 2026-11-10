@@ -54,6 +54,8 @@ class WorkspaceTest extends CubeTestCase
         $this->get('/api/workspaces')->assertUnauthorized();
         $this->get('/api/workspaces/current')->assertUnauthorized();
         $this->putJson('/api/workspaces/current', ['workspace' => 1])->assertUnauthorized();
+        $this->postJson('/api/workspaces', ['name' => 'x'])->assertUnauthorized();
+        $this->get('/api/workspaces/1/members')->assertUnauthorized();
     }
 
     public function testListOnlyContainsWorkspacesOfTheUser()
@@ -138,5 +140,57 @@ class WorkspaceTest extends CubeTestCase
         WorkspaceMember::findWhere(['workspace' => $second, 'user' => $alice])->destroy();
 
         $this->assertEquals($this->defaultWorkspaceId($alice), $this->get('/api/workspaces/current')->assertOk()->json()['id']);
+    }
+
+    public function testCreateAndRename()
+    {
+        $alice = $this->register('alice@example.com');
+
+        $created = $this->postJson('/api/workspaces', ['name' => '  Perso  '])->assertCreated()->json();
+        $this->assertSame('Perso', $created['name']);
+        $this->assertEquals($this->defaultWorkspaceId($alice), $this->get('/api/workspaces/current')->assertOk()->json()['id']);
+        $this->assertCount(2, $this->get('/api/workspaces')->assertOk()->json());
+
+        $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Personnel'])->assertOk();
+        $this->assertSame('Personnel', Workspace::find($created['id'])->name);
+
+        $this->postJson('/api/workspaces', ['name' => '   '])->assertUnprocessableContent();
+        $this->putJson("/api/workspaces/{$created['id']}", ['name' => str_repeat('x', 101)])->assertUnprocessableContent();
+    }
+
+    public function testMembersAreAddedByEmailAndRemoved()
+    {
+        $bob = $this->register('bob@example.com');
+        $this->logOut();
+        $alice = $this->register('alice@example.com');
+        $workspace = $this->defaultWorkspaceId($alice);
+
+        $this->postJson("/api/workspaces/{$workspace}/members", ['email' => 'nobody@example.com'])->assertUnprocessableContent();
+        $this->postJson("/api/workspaces/{$workspace}/members", ['email' => 'bob@example.com'])->assertOk();
+        $this->postJson("/api/workspaces/{$workspace}/members", ['email' => 'bob@example.com'])->assertOk();
+        $this->assertSame(['alice@example.com', 'bob@example.com'], array_column($this->get("/api/workspaces/{$workspace}/members")->assertOk()->json(), 'email'));
+
+        $this->delete("/api/workspaces/{$workspace}/members/{$alice}")->assertNoContent();
+        $this->get("/api/workspaces/{$workspace}/members")->assertNotFound();
+
+        $this->logOut();
+        $this->logIn('bob@example.com');
+        $this->delete("/api/workspaces/{$workspace}/members/{$bob}")->assertConflict();
+        $this->delete("/api/workspaces/{$workspace}/members/{$alice}")->assertNotFound();
+    }
+
+    public function testOnlyMembersManageAWorkspace()
+    {
+        $this->register('bob@example.com');
+        $this->logOut();
+        $alice = $this->register('alice@example.com');
+        $workspace = $this->defaultWorkspaceId($alice);
+        $this->logOut();
+        $this->logIn('bob@example.com');
+
+        $this->putJson("/api/workspaces/{$workspace}", ['name' => 'Taken'])->assertNotFound();
+        $this->get("/api/workspaces/{$workspace}/members")->assertNotFound();
+        $this->postJson("/api/workspaces/{$workspace}/members", ['email' => 'bob@example.com'])->assertNotFound();
+        $this->delete("/api/workspaces/{$workspace}/members/{$alice}")->assertNotFound();
     }
 }

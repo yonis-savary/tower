@@ -97,6 +97,8 @@ function notifySprintError() {
       group="tasks-backlog"
       :animation="150"
       :force-fallback="true"
+      filter="a, button"
+      :prevent-on-filter="false"
       ghost-class="task-ghost"
       @add="drop(item, $event)"
       @update="drop(item, $event)"
@@ -124,6 +126,8 @@ function notifySprintError() {
           :sort="false"
           :animation="150"
           :force-fallback="true"
+          filter="a, button"
+          :prevent-on-filter="false"
           ghost-class="task-ghost"
         >
           <TaskCard v-for="task in item.tasks" :key="task.id" :task="task" show-status @open="emit('open', task)" />

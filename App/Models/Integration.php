@@ -19,6 +19,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $last_error
  * @property \DateTime $created_at
  * @property Workspace $_workspace
+ * @property JiraIssue[] $jiraIssues
  * @property PullRequest[] $pullRequests
  */
 class Integration extends Model
@@ -61,6 +62,12 @@ class Integration extends Model
     }
 
     #[Generated]
+    public function jiraIssues(): HasMany
+    {
+        return $this->hasMany('jiraIssues', JiraIssue::class, 'integration', 'id');
+    }
+
+    #[Generated]
     public function pullRequests(): HasMany
     {
         return $this->hasMany('pullRequests', PullRequest::class, 'integration', 'id');
@@ -70,6 +77,7 @@ class Integration extends Model
     public static function relations(): array
     {
         return [
+            "jiraIssues",
             "pullRequests",
             "_workspace",
         ];

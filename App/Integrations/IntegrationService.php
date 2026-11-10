@@ -4,7 +4,10 @@ namespace App\Integrations;
 
 use App\Integrations\Bitbucket\BitbucketClient;
 use App\Integrations\Bitbucket\BitbucketProvider;
+use App\Integrations\Jira\JiraClient;
+use App\Integrations\Jira\JiraProvider;
 use App\Models\Integration;
+use App\Models\JiraIssue;
 use App\Models\PullRequest;
 use App\Models\PullRequestApprovals;
 use Cube\Data\Database\Database;
@@ -15,6 +18,7 @@ use function Cube\encrypt;
 class IntegrationService
 {
     public const TYPE_BITBUCKET = 'bitbucket';
+    public const TYPE_JIRA = 'jira';
 
     public function findBitbucket(int $workspace): ?Integration
     {
@@ -48,10 +52,53 @@ class IntegrationService
         return $integration->save();
     }
 
+    public function findJira(int $workspace): ?Integration
+    {
+        return Integration::findWhere(['workspace' => $workspace, 'type' => self::TYPE_JIRA]);
+    }
+
+    /**
+     * @param string  $site  https://<name>.atlassian.net
+     * @param ?string $token null keeps the current one
+     */
+    public function saveJira(int $workspace, string $site, string $email, int $board, #[\SensitiveParameter] ?string $token): Integration
+    {
+        $existing = $this->findJira($workspace);
+        $integration = $existing ?? new Integration([
+            'workspace' => $workspace,
+            'type' => self::TYPE_JIRA,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $settings = $existing ? $this->settingsOf($existing) : [];
+
+        // Another account, site or board : what is stored describes someone else, and the next run is a new reference
+        if ($existing && ($settings['site'] !== $site || $settings['email'] !== $email || ($settings['board'] ?? null) !== $board)) {
+            $this->forgetIssues($integration);
+            $integration->last_synced_at = null;
+            $settings = [];
+        }
+
+        $integration->settings = json_encode([...$settings, 'site' => $site, 'email' => $email, 'board' => $board], JSON_THROW_ON_ERROR);
+        if (null !== $token)
+            $integration->credentials = encrypt($token);
+
+        return $integration->save();
+    }
+
     public function delete(Integration $integration): void
     {
-        $this->forgetPullRequests($integration);
+        match ($integration->type) {
+            self::TYPE_BITBUCKET => $this->forgetPullRequests($integration),
+            self::TYPE_JIRA => $this->forgetIssues($integration),
+        };
         Integration::deleteId($integration->id);
+    }
+
+    private function forgetIssues(Integration $integration): void
+    {
+        Database::getInstance()->exec('UPDATE task SET jira_issue = NULL WHERE jira_issue IN (SELECT id FROM jira_issue WHERE integration = {})', [$integration->id]);
+        JiraIssue::deleteWhere(['integration' => $integration->id]);
     }
 
     private function forgetPullRequests(Integration $integration): void
@@ -63,6 +110,15 @@ class IntegrationService
     public function settingsOf(Integration $integration): array
     {
         return json_decode($integration->settings, true) ?? [];
+    }
+
+    public function jiraProviderFor(Integration $integration): JiraProvider
+    {
+        $settings = $this->settingsOf($integration);
+
+        $board = $settings['board'] ?? throw new \RuntimeException('Choose the Jira board in the settings');
+
+        return new JiraProvider(new JiraClient($settings['site'], $settings['email'], decrypt($integration->credentials)), $board);
     }
 
     public function providerFor(Integration $integration): PullRequestProvider

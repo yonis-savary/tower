@@ -67,6 +67,8 @@ async function closeActive() {
           group="tasks-board"
           :animation="150"
           :force-fallback="true"
+          filter="a, button"
+          :prevent-on-filter="false"
           ghost-class="task-ghost"
           @add="drop(status, $event)"
           @update="drop(status, $event)"

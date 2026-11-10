@@ -2,10 +2,11 @@
 
 namespace App\Integrations;
 
+use App\Models\History;
 use App\Models\Integration;
 use App\Models\PullRequest;
 use App\Models\PullRequestApprovals;
-use App\Services\HistoryService;
+use Cube\Data\Bunch;
 use Cube\Data\Database\Database;
 use Cube\Env\Logger\Logger;
 
@@ -16,14 +17,17 @@ class PullRequestSync
 {
     private const UNFINISHED_PIPELINES = [PullRequestData::PIPELINE_PENDING, PullRequestData::PIPELINE_RUNNING];
 
+    /** @var ?Bunch<int,PullRequestChangeDetector> */
+    private ?Bunch $detectors = null;
+
     public function __construct(
         protected IntegrationService $integrations,
-        protected HistoryService $history,
+        protected IntegrationEvents $events,
     ) {}
 
     public function syncAll(): void
     {
-        foreach (Integration::select()->fetch() as $integration)
+        foreach (Integration::select()->where('type', IntegrationService::TYPE_BITBUCKET)->fetch() as $integration)
             $this->sync($integration);
     }
 
@@ -33,9 +37,14 @@ class PullRequestSync
             // Everything is read first : a failing forge must leave the stored state untouched
             $changes = $this->read($integration, $this->provider($integration));
 
-            $failure = Database::getInstance()->transaction(fn () => $this->apply($integration, $changes));
+            $lines = [];
+            $failure = Database::getInstance()->transaction(function () use ($integration, $changes, &$lines) {
+                $lines = $this->apply($integration, $changes);
+            });
             if ($failure)
                 throw $failure;
+
+            $this->events->announce($lines);
 
             $integration->last_synced_at = date('Y-m-d H:i:s');
             $integration->last_error = null;
@@ -89,24 +98,27 @@ class PullRequestSync
         return $provider->pipelineStatus($pullRequest->repository, $pullRequest->externalId);
     }
 
-    private function apply(Integration $integration, array $changes): void
+    /**
+     * @return list<History> The lines to announce
+     */
+    private function apply(Integration $integration, array $changes): array
     {
         // The first run is the reference : it would otherwise log every existing pull request
         $logChanges = null !== $integration->last_synced_at;
         $reviewers = $this->storedReviewers($integration);
+        $lines = [];
 
         foreach ($changes['open'] as [$pullRequest, $pipeline]) {
             $row = $changes['stored'][$this->key($pullRequest->repository, $pullRequest->externalId)] ?? null;
-            $changed = $row ? $this->changedFields($row, $pullRequest, $pipeline, $reviewers[$row->id] ?? []) : [];
+            $before = $row?->toState($reviewers[$row->id] ?? []);
+            $found = $before ? $this->detect($before, new PullRequestState($pullRequest, $pipeline)) : [new IntegrationChange('pr.opened')];
 
             $saved = $this->store($integration, $row, $pullRequest, $pipeline);
-            if (!$row || in_array('reviewers', $changed, true))
+            if (!$before || $this->statuses($before->pullRequest->reviewers) !== $this->statuses($pullRequest->reviewers))
                 $this->storeReviewers($saved, $pullRequest);
 
-            if ($logChanges && !$row)
-                $this->log($integration, 'pr.added', $saved);
-            elseif ($logChanges && [] !== $changed)
-                $this->log($integration, 'pr.changed', $saved, ['fields' => $changed]);
+            if ($logChanges)
+                array_push($lines, ...array_map(fn (IntegrationChange $change) => $this->events->logPullRequest($saved, $change), $found));
         }
 
         foreach ($changes['closed'] as [$row, $final]) {
@@ -119,8 +131,31 @@ class PullRequestSync
             }
 
             if ($logChanges)
-                $this->log($integration, 'pr.removed', $saved, ['state' => $final?->state]);
+                $lines[] = $this->events->logPullRequest($saved, $this->closing($final));
         }
+
+        return $lines;
+    }
+
+    /**
+     * @return list<IntegrationChange>
+     */
+    private function detect(PullRequestState $before, PullRequestState $after): array
+    {
+        $this->detectors ??= Bunch::fromImplements(PullRequestChangeDetector::class);
+
+        $changes = [];
+        foreach ($this->detectors as $detector)
+            array_push($changes, ...$detector->detect($before, $after));
+
+        return $changes;
+    }
+
+    private function closing(?PullRequestData $final): IntegrationChange
+    {
+        return PullRequestData::STATE_MERGED === $final?->state
+            ? new IntegrationChange('pr.merged')
+            : new IntegrationChange('pr.declined', ['state' => $final?->state]);
     }
 
     private function store(Integration $integration, ?PullRequest $row, PullRequestData $pullRequest, string $pipeline): PullRequest
@@ -148,31 +183,20 @@ class PullRequestSync
     }
 
     /**
-     * @param array<string,string> $reviewers Status by external user id
+     * @param array<string,array{name: string, status: string}> $reviewers
      *
-     * @return list<string>
+     * @return array<string,string>
      */
-    private function changedFields(PullRequest $row, PullRequestData $pullRequest, string $pipeline, array $reviewers): array
+    private function statuses(array $reviewers): array
     {
-        $current = array_map(fn (array $reviewer) => $reviewer['status'], $pullRequest->reviewers);
-        ksort($current);
-        ksort($reviewers);
+        $statuses = array_map(fn (array $reviewer) => $reviewer['status'], $reviewers);
+        ksort($statuses);
 
-        return array_keys(array_filter([
-            'title' => $row->title !== $pullRequest->title,
-            'state' => $row->state !== $pullRequest->state,
-            'draft' => (bool) $row->draft !== $pullRequest->draft,
-            'source_branch' => $row->source_branch !== $pullRequest->sourceBranch,
-            'target_branch' => $row->target_branch !== $pullRequest->targetBranch,
-            'source_commit' => $row->source_commit !== $pullRequest->sourceCommit,
-            'comment_count' => (int) $row->comment_count !== $pullRequest->commentCount,
-            'pipeline_status' => $row->pipeline_status !== $pipeline,
-            'reviewers' => $reviewers !== $current,
-        ]));
+        return $statuses;
     }
 
     /**
-     * @return array<int,array<string,string>> Status by external user id, by pull request id
+     * @return array<int,array<string,array{name: string, status: string}>> By pull request id, then external user id
      */
     private function storedReviewers(Integration $integration): array
     {
@@ -180,7 +204,7 @@ class PullRequestSync
         $approvals = PullRequestApprovals::select()->whereRaw("pull_request IN (SELECT id FROM pull_request WHERE integration = {$integration->id})")->fetch();
 
         foreach ($approvals as $approval)
-            $reviewers[$approval->pull_request][$approval->external_user_id] = $approval->status;
+            $reviewers[$approval->pull_request][$approval->external_user_id] = ['name' => $approval->display_name, 'status' => $approval->status];
 
         return $reviewers;
     }
@@ -203,16 +227,6 @@ class PullRequestSync
     {
         PullRequestApprovals::deleteWhere(['pull_request' => $row->id]);
         PullRequest::deleteId($row->id);
-    }
-
-    private function log(Integration $integration, string $type, PullRequest $row, array $details = []): void
-    {
-        $this->history->log($integration->workspace, $type, [
-            'title' => $row->title,
-            'repository' => $row->repository,
-            'url' => $row->url,
-            ...$details,
-        ], HistoryService::ORIGIN_INTEGRATION);
     }
 
     private function key(string $repository, string $externalId): string

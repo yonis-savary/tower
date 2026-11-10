@@ -2,15 +2,21 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
+import InputNumber from 'primevue/inputnumber'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Password from 'primevue/password'
 import {
   deleteBitbucketIntegration,
+  deleteJiraIntegration,
   getBitbucketIntegration,
+  getJiraIntegration,
   saveBitbucketIntegration,
+  saveJiraIntegration,
   syncBitbucketIntegration,
+  syncJiraIntegration,
   type GetBitbucketIntegrationResponse,
+  type GetJiraIntegrationResponse,
 } from '../client'
 import { useWorkspaceStore } from '../stores/workspace'
 
@@ -23,10 +29,17 @@ const loaded = ref(false)
 const busy = ref(false)
 const error = ref<string | null>(null)
 
-const syncStatus = computed(() => {
-  const syncedAt = integration.value?.last_synced_at
+const jira = ref<GetJiraIntegrationResponse | null>(null)
+const jiraForm = ref({ site: '', email: '', board: null as number | null, token: '' })
+const jiraBusy = ref(false)
+const jiraError = ref<string | null>(null)
+
+function syncStatusOf(syncedAt: string | null | undefined): string {
   return syncedAt ? t('settings.bitbucket.lastSync', { date: d(new Date(syncedAt), 'short') }) : t('settings.bitbucket.neverSynced')
-})
+}
+
+const syncStatus = computed(() => syncStatusOf(integration.value?.last_synced_at))
+const jiraSyncStatus = computed(() => syncStatusOf(jira.value?.last_synced_at))
 
 function show(found: GetBitbucketIntegrationResponse | null) {
   integration.value = found
@@ -37,12 +50,19 @@ function show(found: GetBitbucketIntegrationResponse | null) {
   }
 }
 
+function showJira(found: GetJiraIntegrationResponse | null) {
+  jira.value = found
+  jiraForm.value = { site: found?.site ?? '', email: found?.email ?? '', board: found?.board || null, token: '' }
+}
+
 async function load() {
   // The form stays hidden meanwhile : the answer would erase what is being typed
   loaded.value = false
   error.value = null
-  const { data } = await getBitbucketIntegration()
-  show(data ?? null)
+  jiraError.value = null
+  const [bitbucket, jiraIntegration] = await Promise.all([getBitbucketIntegration(), getJiraIntegration()])
+  show(bitbucket.data ?? null)
+  showJira(jiraIntegration.data ?? null)
   loaded.value = true
 }
 
@@ -85,6 +105,45 @@ async function remove() {
   const { response } = await deleteBitbucketIntegration()
   if (response?.ok) show(null)
   else error.value = t('settings.bitbucket.deleteError')
+}
+
+async function synchronizeJira() {
+  jiraBusy.value = true
+  jiraError.value = null
+
+  const { data } = await syncJiraIntegration()
+  jiraBusy.value = false
+
+  if (data) jira.value = data
+  else jiraError.value = t('settings.jira.syncError')
+}
+
+async function saveJira() {
+  jiraBusy.value = true
+  jiraError.value = null
+
+  const { site, email, board, token } = jiraForm.value
+  const { data } = await saveJiraIntegration({
+    body: { site: site.trim().replace(/\/+$/, ''), email: email.trim(), board: board ?? 0, token: token || undefined },
+  })
+  jiraBusy.value = false
+
+  if (!data) {
+    jiraError.value = t('settings.jira.saveError')
+    return
+  }
+
+  showJira(data)
+  await synchronizeJira()
+}
+
+async function removeJira() {
+  if (!window.confirm(t('settings.jira.deleteConfirm'))) return
+
+  jiraError.value = null
+  const { response } = await deleteJiraIntegration()
+  if (response?.ok) showJira(null)
+  else jiraError.value = t('settings.jira.deleteError')
 }
 </script>
 
@@ -130,6 +189,51 @@ async function remove() {
       </div>
     </form>
   </section>
+
+  <section class="panel">
+    <h2>{{ t('settings.jira.title') }}</h2>
+    <p class="description">{{ t('settings.jira.description') }}</p>
+
+    <Message v-if="jiraError" class="panel-message" severity="error" :closable="false">{{ jiraError }}</Message>
+    <Message v-if="jira?.last_error" class="panel-message" severity="warn" :closable="false">{{ jira.last_error }}</Message>
+
+    <form v-if="loaded" class="settings-form" @submit.prevent="saveJira">
+      <div class="field">
+        <label for="jira-site">{{ t('settings.jira.site') }}</label>
+        <InputText id="jira-site" v-model="jiraForm.site" type="url" placeholder="https://mon-equipe.atlassian.net" required fluid />
+      </div>
+      <div class="field">
+        <label for="jira-board">{{ t('settings.jira.board') }}</label>
+        <InputNumber v-model="jiraForm.board" input-id="jira-board" :min="1" :use-grouping="false" required fluid />
+        <small>{{ t('settings.jira.boardHint') }}</small>
+      </div>
+      <div class="field">
+        <label for="jira-email">{{ t('settings.bitbucket.email') }}</label>
+        <InputText id="jira-email" v-model="jiraForm.email" type="email" autocomplete="off" required fluid />
+      </div>
+      <div class="field">
+        <label for="jira-token">{{ t('settings.bitbucket.token') }}</label>
+        <Password
+          v-model="jiraForm.token"
+          input-id="jira-token"
+          :feedback="false"
+          :required="!jira"
+          :placeholder="jira ? t('settings.bitbucket.tokenKeep') : ''"
+          :input-props="{ autocomplete: 'new-password' }"
+          toggle-mask
+          fluid
+        />
+        <small>{{ t('settings.jira.tokenHint') }}</small>
+      </div>
+
+      <div class="actions">
+        <small v-if="jira" class="sync-status">{{ jiraSyncStatus }}</small>
+        <Button v-if="jira" :label="t('settings.bitbucket.delete')" severity="danger" text @click="removeJira" />
+        <Button v-if="jira" :label="t('settings.bitbucket.sync')" icon="pi pi-refresh" severity="secondary" :loading="jiraBusy" @click="synchronizeJira" />
+        <Button type="submit" :label="t('settings.bitbucket.save')" :loading="jiraBusy" />
+      </div>
+    </form>
+  </section>
 </template>
 
 <style scoped>
@@ -141,6 +245,7 @@ async function remove() {
 
 .panel {
   max-width: 48rem;
+  margin-bottom: 1.25rem;
   padding: 1.25rem;
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);

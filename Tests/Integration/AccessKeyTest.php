@@ -9,6 +9,7 @@ use App\Models\AccessKey;
 use App\Services\AccessKeyService;
 use App\Services\HistoryService;
 use App\Session\SelectedWorkspace;
+use Cube\Env\Configuration;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
 use Cube\Web\Websocket\Broadcast\Broadcast;
@@ -72,6 +73,24 @@ class AccessKeyTest extends CubeTestCase
         $this->postJson('/api/access-keys', ['name' => 'x'])->assertUnauthorized();
         $this->deleteJson('/api/access-keys/1')->assertUnauthorized();
         $this->get('/api/connector')->assertUnauthorized();
+        $this->get('/api/connector/handler')->assertUnauthorized();
+    }
+
+    public function testBasicHandlerIsDownloadedWhenBuilt()
+    {
+        $this->register('alice@example.com');
+        $handler = tempnam(sys_get_temp_dir(), 'pyz');
+        file_put_contents($handler, 'handler-bytes');
+
+        try {
+            Configuration::getInstance()->add(new ConnectorConfiguration(handlerArchivePath: $handler));
+            $this->assertSame('handler-bytes', $this->get('/api/connector/handler')->assertOk()->body());
+
+            Configuration::getInstance()->add(new ConnectorConfiguration(handlerArchivePath: '/nowhere/tower-handler.pyz'));
+            $this->get('/api/connector/handler')->assertResponseCode(503);
+        } finally {
+            Configuration::getInstance()->add(new ConnectorConfiguration());
+        }
     }
 
     public function testCreateGivesTheSecretOnceAndOnlyStoresItsHash()

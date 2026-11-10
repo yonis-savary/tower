@@ -23,7 +23,7 @@ services:
 
   mysql:
     ports:
-      - "127.0.0.1:3306:3306" # Debug from the host only, never reachable from the network
+      - "127.0.0.1:${TOWER_MYSQL_DEV_PORT:-3306}:3306" # Debug from the host only, never reachable from the network
 
 volumes:
   vendor:

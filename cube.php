@@ -7,6 +7,8 @@ use Cube\Core\Autoloader\Applications;
 use Cube\Core\Autoloader\AutoloaderConfiguration;
 use Cube\Data\Database\DatabaseConfiguration;
 use Cube\Data\OpenAPI\OpenAPIConfiguration;
+use Cube\Env\Session\Drivers\DatabaseSession;
+use Cube\Env\Session\SessionConfiguration;
 use Cube\Security\Authentication\AuthenticationConfiguration;
 use Cube\Web\Websocket\Broadcast\BroadcastConfiguration;
 use Cube\Web\Websocket\Servers\WebsocketConfiguration;
@@ -29,7 +31,7 @@ return [
     new WebsocketConfiguration(
         httpHost: '0.0.0.0',
         broadcastSecret: env('WEBSOCKET_SECRET'),
-        allowedOrigins: explode(',', env('WEBSOCKET_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:8081')),
+        allowedOrigins: explode(',', env('WEBSOCKET_ALLOWED_ORIGINS', 'http://localhost:' . env('TOWER_VITE_DEV_PORT', '5173') . ',http://localhost:8081')),
     ),
 
     new BroadcastConfiguration(
@@ -38,6 +40,8 @@ return [
 
     // Class discovery is cached in production only : force it on or off here
     // new AutoloaderConfiguration(cached: true),
+
+    new SessionConfiguration(driver: new DatabaseSession()),
 
     new AuthenticationConfiguration(
         new ActiveUserAuthentication(

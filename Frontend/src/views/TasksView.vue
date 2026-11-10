@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Message from 'primevue/message'
 import Tab from 'primevue/tab'
@@ -10,24 +11,41 @@ import Tabs from 'primevue/tabs'
 import TaskBacklog from '../components/TaskBacklog.vue'
 import TaskBoard from '../components/TaskBoard.vue'
 import TaskDialog from '../components/TaskDialog.vue'
+import { useJiraStore } from '../stores/jira'
 import { useTasksStore, type Task } from '../stores/tasks'
 import { useWorkspaceStore } from '../stores/workspace'
 
 const { t } = useI18n()
 const workspace = useWorkspaceStore()
 const store = useTasksStore()
+const jira = useJiraStore()
+const route = useRoute()
+const router = useRouter()
 
 const tab = ref('board')
 const dialogVisible = ref(false)
 const dialogTask = ref<Task | null>(null)
 const dialogSprint = ref<number | null>(null)
 
-watch(() => workspace.current?.id, (id) => { if (id) void store.load() }, { immediate: true })
+watch(() => workspace.current?.id, (id) => { if (id) void Promise.all([store.load(), jira.load()]) }, { immediate: true })
 
 function openTask(task: Task) {
   dialogTask.value = task
   dialogVisible.value = true
 }
+
+// Opened from another screen through ?task=<id>, once the tasks are loaded
+watch(
+  () => [route.query.task, store.tasks] as const,
+  ([id, tasks]) => {
+    const task = id ? tasks.find((candidate) => candidate.id === Number(id)) : undefined
+    if (!task) return
+
+    openTask(task)
+    void router.replace({ query: {} })
+  },
+  { immediate: true },
+)
 
 function createTask(sprint: number | null) {
   dialogTask.value = null

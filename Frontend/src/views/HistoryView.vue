@@ -24,9 +24,24 @@ const icons: Record<string, string> = {
   [EVENT_TYPE]: 'pi-bolt',
   'key.created': 'pi-key',
   'key.revoked': 'pi-ban',
-  'pr.added': 'pi-share-alt',
-  'pr.changed': 'pi-pencil',
-  'pr.removed': 'pi-check-square',
+  'pr.opened': 'pi-share-alt',
+  'pr.merged': 'pi-check-circle',
+  'pr.declined': 'pi-times-circle',
+  'pr.pipeline.failed': 'pi-times',
+  'pr.pipeline.succeeded': 'pi-check',
+  'pr.review.approved': 'pi-thumbs-up',
+  'pr.review.changes_requested': 'pi-thumbs-down',
+  'pr.commented': 'pi-comment',
+  'pr.pushed': 'pi-upload',
+  'pr.ready': 'pi-eye',
+  'pr.retargeted': 'pi-directions',
+  'jira.issue.assigned': 'pi-ticket',
+  'jira.issue.done': 'pi-check-square',
+  'jira.issue.unassigned': 'pi-user-minus',
+  'jira.issue.status_changed': 'pi-arrow-right',
+  'jira.issue.sprint_changed': 'pi-calendar',
+  'jira.issue.priority_changed': 'pi-sort-amount-up',
+  'jira.issue.updated': 'pi-pencil',
   'task.created': 'pi-plus',
   'task.updated': 'pi-pencil',
   'task.status_changed': 'pi-arrow-right',
@@ -85,7 +100,7 @@ watch(
 
 // The lines sent to the devices : the others have no delivery
 function isSent(line: Line): boolean {
-  return line.type === EVENT_TYPE || line.type.startsWith('task.') || line.type.startsWith('sprint.')
+  return [EVENT_TYPE, 'task.', 'sprint.', 'pr.', 'jira.issue.'].some((prefix) => line.type.startsWith(prefix))
 }
 
 function label(line: Line): string {
@@ -97,6 +112,9 @@ function label(line: Line): string {
 function detail(line: Line): string {
   const { parsed } = line
 
+  if (line.type.startsWith('pr.')) return `${parsed.title} · ${parsed.repository}${integrationChange(line.type, parsed)}`
+  if (line.type.startsWith('jira.issue.')) return `${parsed.key} · ${parsed.summary}${integrationChange(line.type, parsed)}`
+
   if (line.type.startsWith('task.')) {
     const change = taskChange(t, line.type, parsed)
     return change ? `${parsed.title} · ${change}` : parsed.title
@@ -105,10 +123,6 @@ function detail(line: Line): string {
   switch (line.type) {
     case EVENT_TYPE:
       return parsed.event
-    case 'pr.added':
-    case 'pr.changed':
-    case 'pr.removed':
-      return `${parsed.title} · ${parsed.repository}`
     case 'device.connected':
       return `${parsed.hostname ?? t('devices.unknownHost')} · ${parsed.access_key}`
     case 'device.disconnected': {
@@ -118,6 +132,27 @@ function detail(line: Line): string {
     default:
       return parsed.name ?? ''
   }
+}
+
+const transition = (parsed: Record<string, any>) => ` · ${parsed.from ?? '∅'} → ${parsed.to ?? '∅'}`
+const outcome = (parsed: Record<string, any>) => (parsed.state ?? parsed.status ? ` · ${parsed.state ?? parsed.status}` : '')
+
+const integrationChanges: Record<string, (parsed: Record<string, any>) => string> = {
+  'pr.declined': outcome,
+  'pr.review.approved': (parsed) => ` · ${parsed.reviewer}`,
+  'pr.review.changes_requested': (parsed) => ` · ${parsed.reviewer}`,
+  'pr.commented': (parsed) => ` · +${parsed.count}`,
+  'pr.pushed': (parsed) => ` · ${parsed.branch} ${String(parsed.to).slice(0, 7)}`,
+  'pr.retargeted': transition,
+  'jira.issue.done': outcome,
+  'jira.issue.unassigned': outcome,
+  'jira.issue.status_changed': transition,
+  'jira.issue.sprint_changed': transition,
+  'jira.issue.priority_changed': transition,
+}
+
+function integrationChange(type: string, parsed: Record<string, any>): string {
+  return integrationChanges[type]?.(parsed) ?? ''
 }
 
 async function toggle(line: Line) {

@@ -4,6 +4,7 @@ import { useAuthStore } from './stores/auth'
 import EventsView from './views/EventsView.vue'
 import HistoryView from './views/HistoryView.vue'
 import HomeView from './views/HomeView.vue'
+import JiraView from './views/JiraView.vue'
 import LoginView from './views/LoginView.vue'
 import MergeRequestsView from './views/MergeRequestsView.vue'
 import RegisterView from './views/RegisterView.vue'
@@ -21,6 +22,7 @@ const router = createRouter({
         { path: 'tasks', name: 'tasks', component: TasksView },
         { path: 'events', name: 'events', component: EventsView },
         { path: 'history', name: 'history', component: HistoryView },
+        { path: 'jira', name: 'jira', component: JiraView },
         { path: 'merge-requests', name: 'merge-requests', component: MergeRequestsView },
         { path: 'settings', name: 'settings', component: SettingsView },
       ],

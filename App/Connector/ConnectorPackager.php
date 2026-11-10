@@ -25,6 +25,16 @@ class ConnectorPackager
         return $this->configuration->archivePath;
     }
 
+    public function isHandlerAvailable(): bool
+    {
+        return is_file($this->configuration->handlerArchivePath);
+    }
+
+    public function handlerArchivePath(): string
+    {
+        return $this->configuration->handlerArchivePath;
+    }
+
     /**
      * @return array{tower_url: string, client_id: string, secret: string}
      */

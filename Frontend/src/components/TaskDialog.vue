@@ -6,8 +6,10 @@ import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
+import Tag from 'primevue/tag'
 import Textarea from 'primevue/textarea'
 import { createTask, listTaskHistory, updateTask, type ListTaskHistoryResponse } from '../client'
+import { JIRA_SEVERITIES, useJiraStore } from '../stores/jira'
 import { TASK_STATUSES, useTasksStore, type Task, type TaskStatus } from '../stores/tasks'
 import { taskChange } from '../utils/taskChange'
 
@@ -17,6 +19,9 @@ const props = defineProps<{ task: Task | null; sprint: number | null }>()
 
 const { t, te, d } = useI18n()
 const store = useTasksStore()
+const jira = useJiraStore()
+
+const issue = computed(() => (props.task?.jira_issue ? jira.byId.get(props.task.jira_issue) : undefined))
 
 const form = ref({ title: '', description: '', status: 'todo' as TaskStatus, sprint: null as number | null })
 const history = ref<ListTaskHistoryResponse>([])
@@ -96,6 +101,11 @@ async function save() {
     <form class="task-form" @submit.prevent="save">
       <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
 
+      <p v-if="issue" class="jira-link">
+        <a :href="issue.url" target="_blank" rel="noopener noreferrer">{{ t('tasks.openIssue', { key: issue.key }) }} <i class="pi pi-external-link" aria-hidden="true" /></a>
+        <Tag :value="issue.status" :severity="JIRA_SEVERITIES[issue.status_category]" />
+      </p>
+
       <div class="field">
         <label for="task-title">{{ t('tasks.titleLabel') }}</label>
         <InputText id="task-title" v-model="form.title" maxlength="255" required autofocus fluid />
@@ -158,6 +168,18 @@ async function save() {
 
 .field-row .field {
   flex-basis: 12rem;
+}
+
+.jira-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.jira-link .pi {
+  font-size: 0.75rem;
 }
 
 .actions {

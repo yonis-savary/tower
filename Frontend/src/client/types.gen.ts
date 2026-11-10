@@ -250,6 +250,39 @@ export type DownloadConnectorResponses = {
 
 export type DownloadConnectorResponse = DownloadConnectorResponses[keyof DownloadConnectorResponses];
 
+export type DownloadHandlerData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/connector/handler';
+};
+
+export type DownloadHandlerErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The handler was not built into this image
+     */
+    503: {
+        error?: string;
+    };
+};
+
+export type DownloadHandlerError = DownloadHandlerErrors[keyof DownloadHandlerErrors];
+
+export type DownloadHandlerResponses = {
+    /**
+     * tower-handler.pyz
+     */
+    200: Blob | File;
+};
+
+export type DownloadHandlerResponse = DownloadHandlerResponses[keyof DownloadHandlerResponses];
+
 export type RegisterData = {
     body: {
         email: string;
@@ -826,6 +859,416 @@ export type SyncBitbucketIntegrationResponses = {
 
 export type SyncBitbucketIntegrationResponse = SyncBitbucketIntegrationResponses[keyof SyncBitbucketIntegrationResponses];
 
+export type DeleteJiraIntegrationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/integrations/jira';
+};
+
+export type DeleteJiraIntegrationErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current workspace has no Jira integration
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type DeleteJiraIntegrationError = DeleteJiraIntegrationErrors[keyof DeleteJiraIntegrationErrors];
+
+export type DeleteJiraIntegrationResponses = {
+    /**
+     * The integration is deleted
+     */
+    204: void;
+};
+
+export type DeleteJiraIntegrationResponse = DeleteJiraIntegrationResponses[keyof DeleteJiraIntegrationResponses];
+
+export type GetJiraIntegrationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/integrations/jira';
+};
+
+export type GetJiraIntegrationErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current workspace has no Jira integration
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type GetJiraIntegrationError = GetJiraIntegrationErrors[keyof GetJiraIntegrationErrors];
+
+export type GetJiraIntegrationResponses = {
+    /**
+     * The integration
+     */
+    200: {
+        site: string;
+        email: string;
+        board: number;
+        last_synced_at: string | null;
+        last_error: string | null;
+    };
+};
+
+export type GetJiraIntegrationResponse = GetJiraIntegrationResponses[keyof GetJiraIntegrationResponses];
+
+export type SaveJiraIntegrationData = {
+    body: {
+        site: string;
+        email: string;
+        board: number;
+        token?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/integrations/jira';
+};
+
+export type SaveJiraIntegrationErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No token was given for a new integration, or an invalid field
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type SaveJiraIntegrationError = SaveJiraIntegrationErrors[keyof SaveJiraIntegrationErrors];
+
+export type SaveJiraIntegrationResponses = {
+    /**
+     * The integration
+     */
+    200: {
+        site: string;
+        email: string;
+        board: number;
+        last_synced_at: string | null;
+        last_error: string | null;
+    };
+};
+
+export type SaveJiraIntegrationResponse = SaveJiraIntegrationResponses[keyof SaveJiraIntegrationResponses];
+
+export type SyncJiraIntegrationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/integrations/jira/sync';
+};
+
+export type SyncJiraIntegrationErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current workspace has no Jira integration
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type SyncJiraIntegrationError = SyncJiraIntegrationErrors[keyof SyncJiraIntegrationErrors];
+
+export type SyncJiraIntegrationResponses = {
+    /**
+     * The integration after the run
+     */
+    200: {
+        site: string;
+        email: string;
+        board: number;
+        last_synced_at: string | null;
+        last_error: string | null;
+    };
+};
+
+export type SyncJiraIntegrationResponse = SyncJiraIntegrationResponses[keyof SyncJiraIntegrationResponses];
+
+export type ListJiraColumnsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/jira/columns';
+};
+
+export type ListJiraColumnsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListJiraColumnsError = ListJiraColumnsErrors[keyof ListJiraColumnsErrors];
+
+export type ListJiraColumnsResponses = {
+    /**
+     * The columns, empty before the first sync
+     */
+    200: Array<{
+        name?: string;
+        statuses?: Array<string>;
+    }>;
+};
+
+export type ListJiraColumnsResponse = ListJiraColumnsResponses[keyof ListJiraColumnsResponses];
+
+export type ListJiraIssuesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/jira/issues';
+};
+
+export type ListJiraIssuesErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListJiraIssuesError = ListJiraIssuesErrors[keyof ListJiraIssuesErrors];
+
+export type ListJiraIssuesResponses = {
+    /**
+     * The stored issues
+     */
+    200: Array<{
+        id: number;
+        key: string;
+        summary: string;
+        url: string;
+        project: string;
+        issue_type: string;
+        priority: string | null;
+        status_id: string;
+        status: string;
+        status_category: string;
+        sprint_id: string | null;
+        sprint_name: string | null;
+        sprint_state: string | null;
+        tracked: boolean;
+    }>;
+};
+
+export type ListJiraIssuesResponse = ListJiraIssuesResponses[keyof ListJiraIssuesResponses];
+
+export type ListJiraIssueTransitionsData = {
+    body?: never;
+    path: {
+        issue: number;
+    };
+    query?: never;
+    url: '/api/jira/issues/{issue}/transitions';
+};
+
+export type ListJiraIssueTransitionsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such issue in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type ListJiraIssueTransitionsError = ListJiraIssueTransitionsErrors[keyof ListJiraIssueTransitionsErrors];
+
+export type ListJiraIssueTransitionsResponses = {
+    /**
+     * The transitions
+     */
+    200: Array<{
+        id?: string;
+        name?: string;
+        status_id?: string;
+        status?: string;
+        status_category?: string;
+    }>;
+};
+
+export type ListJiraIssueTransitionsResponse = ListJiraIssueTransitionsResponses[keyof ListJiraIssueTransitionsResponses];
+
+export type TransitionJiraIssueData = {
+    body: {
+        transition: string;
+    };
+    path: {
+        issue: number;
+    };
+    query?: never;
+    url: '/api/jira/issues/{issue}/transitions';
+};
+
+export type TransitionJiraIssueErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such issue in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * Jira refused the transition, for example because it needs more fields
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type TransitionJiraIssueError = TransitionJiraIssueErrors[keyof TransitionJiraIssueErrors];
+
+export type TransitionJiraIssueResponses = {
+    /**
+     * The issue in its new status
+     */
+    200: {
+        id: number;
+        key: string;
+        summary: string;
+        url: string;
+        project: string;
+        issue_type: string;
+        priority: string | null;
+        status_id: string;
+        status: string;
+        status_category: string;
+        sprint_id: string | null;
+        sprint_name: string | null;
+        sprint_state: string | null;
+        tracked: boolean;
+    };
+};
+
+export type TransitionJiraIssueResponse = TransitionJiraIssueResponses[keyof TransitionJiraIssueResponses];
+
+export type CreateTaskFromJiraIssueData = {
+    body?: never;
+    path: {
+        issue: number;
+    };
+    query?: never;
+    url: '/api/jira/issues/{issue}/task';
+};
+
+export type CreateTaskFromJiraIssueErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such issue in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * An issue has one task at most
+     */
+    409: {
+        error?: string;
+    };
+};
+
+export type CreateTaskFromJiraIssueError = CreateTaskFromJiraIssueErrors[keyof CreateTaskFromJiraIssueErrors];
+
+export type CreateTaskFromJiraIssueResponses = {
+    /**
+     * The task
+     */
+    201: {
+        id: number;
+        sprint: number | null;
+        title: string;
+        description: string;
+        status: string;
+        position: number;
+        jira_issue: number | null;
+    };
+};
+
+export type CreateTaskFromJiraIssueResponse = CreateTaskFromJiraIssueResponses[keyof CreateTaskFromJiraIssueResponses];
+
+export type DiscussJiraIssueData = {
+    body?: never;
+    path: {
+        issue: number;
+    };
+    query?: never;
+    url: '/api/jira/issues/{issue}/discuss';
+};
+
+export type DiscussJiraIssueErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such issue in the current workspace, or Jira does not know it anymore
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type DiscussJiraIssueError = DiscussJiraIssueErrors[keyof DiscussJiraIssueErrors];
+
+export type DiscussJiraIssueResponses = {
+    /**
+     * The event is sent
+     */
+    204: void;
+};
+
+export type DiscussJiraIssueResponse = DiscussJiraIssueResponses[keyof DiscussJiraIssueResponses];
+
 export type ListPullRequestsData = {
     body?: never;
     path?: never;
@@ -926,6 +1369,7 @@ export type ListTasksResponses = {
         description: string;
         status: string;
         position: number;
+        jira_issue: number | null;
     }>;
 };
 
@@ -970,6 +1414,7 @@ export type CreateTaskResponses = {
         description: string;
         status: string;
         position: number;
+        jira_issue: number | null;
     };
 };
 
@@ -1019,6 +1464,7 @@ export type UpdateTaskResponses = {
         description: string;
         status: string;
         position: number;
+        jira_issue: number | null;
     };
 };
 
@@ -1071,6 +1517,7 @@ export type MoveTaskResponses = {
         description: string;
         status: string;
         position: number;
+        jira_issue: number | null;
     };
 };
 
@@ -1313,6 +1760,42 @@ export type ListWorkspacesResponses = {
 
 export type ListWorkspacesResponse = ListWorkspacesResponses[keyof ListWorkspacesResponses];
 
+export type CreateWorkspaceData = {
+    body: {
+        name: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/workspaces';
+};
+
+export type CreateWorkspaceErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type CreateWorkspaceError = CreateWorkspaceErrors[keyof CreateWorkspaceErrors];
+
+export type CreateWorkspaceResponses = {
+    /**
+     * The workspace
+     */
+    201: {
+        id: number;
+        name: string;
+    };
+};
+
+export type CreateWorkspaceResponse = CreateWorkspaceResponses[keyof CreateWorkspaceResponses];
+
 export type GetCurrentWorkspaceData = {
     body?: never;
     path?: never;
@@ -1425,3 +1908,182 @@ export type GetWorkspaceSocketResponses = {
 };
 
 export type GetWorkspaceSocketResponse = GetWorkspaceSocketResponses[keyof GetWorkspaceSocketResponses];
+
+export type RenameWorkspaceData = {
+    body: {
+        name: string;
+    };
+    path: {
+        workspace: number;
+    };
+    query?: never;
+    url: '/api/workspaces/{workspace}';
+};
+
+export type RenameWorkspaceErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The workspace does not exist or the user is not a member of it
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type RenameWorkspaceError = RenameWorkspaceErrors[keyof RenameWorkspaceErrors];
+
+export type RenameWorkspaceResponses = {
+    /**
+     * The workspace
+     */
+    200: {
+        id: number;
+        name: string;
+    };
+};
+
+export type RenameWorkspaceResponse = RenameWorkspaceResponses[keyof RenameWorkspaceResponses];
+
+export type ListWorkspaceMembersData = {
+    body?: never;
+    path: {
+        workspace: number;
+    };
+    query?: never;
+    url: '/api/workspaces/{workspace}/members';
+};
+
+export type ListWorkspaceMembersErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The workspace does not exist or the user is not a member of it
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type ListWorkspaceMembersError = ListWorkspaceMembersErrors[keyof ListWorkspaceMembersErrors];
+
+export type ListWorkspaceMembersResponses = {
+    /**
+     * The members
+     */
+    200: Array<{
+        id: number;
+        email: string;
+    }>;
+};
+
+export type ListWorkspaceMembersResponse = ListWorkspaceMembersResponses[keyof ListWorkspaceMembersResponses];
+
+export type AddWorkspaceMemberData = {
+    body: {
+        email: string;
+    };
+    path: {
+        workspace: number;
+    };
+    query?: never;
+    url: '/api/workspaces/{workspace}/members';
+};
+
+export type AddWorkspaceMemberErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The workspace does not exist or the user is not a member of it
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * No active account has this e-mail, or an invalid field
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type AddWorkspaceMemberError = AddWorkspaceMemberErrors[keyof AddWorkspaceMemberErrors];
+
+export type AddWorkspaceMemberResponses = {
+    /**
+     * The member
+     */
+    200: {
+        id: number;
+        email: string;
+    };
+};
+
+export type AddWorkspaceMemberResponse = AddWorkspaceMemberResponses[keyof AddWorkspaceMemberResponses];
+
+export type RemoveWorkspaceMemberData = {
+    body?: never;
+    path: {
+        workspace: number;
+        user: number;
+    };
+    query?: never;
+    url: '/api/workspaces/{workspace}/members/{user}';
+};
+
+export type RemoveWorkspaceMemberErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The workspace does not exist, or the current user or this user is not a member of it
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * This is the last member : a workspace cannot be deleted, so it cannot be left empty
+     */
+    409: {
+        error?: string;
+    };
+};
+
+export type RemoveWorkspaceMemberError = RemoveWorkspaceMemberErrors[keyof RemoveWorkspaceMemberErrors];
+
+export type RemoveWorkspaceMemberResponses = {
+    /**
+     * The member is removed
+     */
+    204: void;
+};
+
+export type RemoveWorkspaceMemberResponse = RemoveWorkspaceMemberResponses[keyof RemoveWorkspaceMemberResponses];
+
+export type ServeIndexFileData = {
+    body?: never;
+    path: {
+        any: unknown;
+    };
+    query?: never;
+    url: '/{any}';
+};

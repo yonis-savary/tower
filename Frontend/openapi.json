@@ -519,6 +519,56 @@
                 }
             }
         },
+        "\/api\/connector\/handler": {
+            "get": {
+                "summary": "Download basic handler",
+                "description": "The basic handler of Tower events, run by the connector : ai.discuss opens a Claude Code discussion about a Jira issue",
+                "operationId": "downloadHandler",
+                "responses": {
+                    "200": {
+                        "description": "tower-handler.pyz",
+                        "content": {
+                            "application\/octet-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The handler was not built into this image",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/api\/auth\/register": {
             "post": {
                 "summary": "Register",
@@ -1655,6 +1705,937 @@
                 }
             }
         },
+        "\/api\/integrations\/jira": {
+            "get": {
+                "summary": "Get Jira integration",
+                "description": "The Jira integration of the current workspace, without its token",
+                "operationId": "getJiraIntegration",
+                "responses": {
+                    "200": {
+                        "description": "The integration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "site": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": "string"
+                                        },
+                                        "board": {
+                                            "type": "integer"
+                                        },
+                                        "last_synced_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "last_error": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "site",
+                                        "email",
+                                        "board",
+                                        "last_synced_at",
+                                        "last_error"
+                                    ]
+                                },
+                                "example": {
+                                    "site": "",
+                                    "email": "",
+                                    "board": 0,
+                                    "last_synced_at": "2020-09-22T00:00:00+00:00",
+                                    "last_error": "minus perspiciatis eum"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The current workspace has no Jira integration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Save Jira integration",
+                "description": "Creates or updates the Jira integration of the current workspace. Without token, the current one is kept",
+                "operationId": "saveJiraIntegration",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "site": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "board": {
+                                        "type": "integer"
+                                    },
+                                    "token": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "site",
+                                    "email",
+                                    "board"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "No token was given for a new integration, or an invalid field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The integration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "site": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": "string"
+                                        },
+                                        "board": {
+                                            "type": "integer"
+                                        },
+                                        "last_synced_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "last_error": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "site",
+                                        "email",
+                                        "board",
+                                        "last_synced_at",
+                                        "last_error"
+                                    ]
+                                },
+                                "example": {
+                                    "site": "",
+                                    "email": "",
+                                    "board": 0,
+                                    "last_synced_at": "2020-09-22T00:00:00+00:00",
+                                    "last_error": "minus perspiciatis eum"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete Jira integration",
+                "description": "Deletes the Jira integration of the current workspace, its token and its issues. Their tasks stay, unlinked",
+                "operationId": "deleteJiraIntegration",
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The current workspace has no Jira integration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The integration is deleted"
+                    }
+                }
+            }
+        },
+        "\/api\/integrations\/jira\/sync": {
+            "post": {
+                "summary": "Synchronize Jira integration",
+                "description": "Reads Jira now instead of waiting for the next scheduled run. A failure is reported in `last_error`",
+                "operationId": "syncJiraIntegration",
+                "responses": {
+                    "200": {
+                        "description": "The integration after the run",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "site": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": "string"
+                                        },
+                                        "board": {
+                                            "type": "integer"
+                                        },
+                                        "last_synced_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "last_error": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "site",
+                                        "email",
+                                        "board",
+                                        "last_synced_at",
+                                        "last_error"
+                                    ]
+                                },
+                                "example": {
+                                    "site": "",
+                                    "email": "",
+                                    "board": 0,
+                                    "last_synced_at": "2020-09-22T00:00:00+00:00",
+                                    "last_error": "minus perspiciatis eum"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The current workspace has no Jira integration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/jira\/columns": {
+            "get": {
+                "summary": "List Jira board columns",
+                "description": "The columns of the configured board, in its order, with the ids of the statuses each one holds. Read on each sync",
+                "operationId": "listJiraColumns",
+                "responses": {
+                    "200": {
+                        "description": "The columns, empty before the first sync",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "statuses": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/jira\/issues": {
+            "get": {
+                "summary": "List Jira issues",
+                "description": "The unfinished issues assigned to the Jira account (`tracked`), and the issues kept because a task is linked to them",
+                "operationId": "listJiraIssues",
+                "responses": {
+                    "200": {
+                        "description": "The stored issues",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "key": {
+                                                "type": "string"
+                                            },
+                                            "summary": {
+                                                "type": "string"
+                                            },
+                                            "url": {
+                                                "type": "string"
+                                            },
+                                            "project": {
+                                                "type": "string"
+                                            },
+                                            "issue_type": {
+                                                "type": "string"
+                                            },
+                                            "priority": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "status_id": {
+                                                "type": "string"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            },
+                                            "status_category": {
+                                                "type": "string"
+                                            },
+                                            "sprint_id": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "sprint_name": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "sprint_state": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "tracked": {
+                                                "type": "boolean"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "key",
+                                            "summary",
+                                            "url",
+                                            "project",
+                                            "issue_type",
+                                            "priority",
+                                            "status_id",
+                                            "status",
+                                            "status_category",
+                                            "sprint_id",
+                                            "sprint_name",
+                                            "sprint_state",
+                                            "tracked"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 973,
+                                        "key": "alias nihil debitis",
+                                        "summary": "est praesentium labore",
+                                        "url": "sequi eum id",
+                                        "project": "natus fugit quia",
+                                        "issue_type": "eum in quos",
+                                        "priority": "at sit in",
+                                        "status_id": "et sed velit",
+                                        "status": "molestiae quo distinctio",
+                                        "status_category": "deserunt eum reiciendis",
+                                        "sprint_id": "dolores repellat nisi",
+                                        "sprint_name": "eum nesciunt nulla",
+                                        "sprint_state": "voluptate quia ab",
+                                        "tracked": true
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/jira\/issues\/{issue}\/transitions": {
+            "get": {
+                "summary": "List Jira issue transitions",
+                "description": "The transitions the Jira workflow allows from the current status of the issue, read from Jira",
+                "operationId": "listJiraIssueTransitions",
+                "parameters": [
+                    {
+                        "name": "issue",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The transitions",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "status_id": {
+                                                "type": "string"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            },
+                                            "status_category": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such issue in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Transition Jira issue",
+                "description": "Applies a transition in Jira, then stores the new status of the issue",
+                "operationId": "transitionJiraIssue",
+                "parameters": [
+                    {
+                        "name": "issue",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "transition": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "transition"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "Jira refused the transition, for example because it needs more fields",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The issue in its new status",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "key": {
+                                            "type": "string"
+                                        },
+                                        "summary": {
+                                            "type": "string"
+                                        },
+                                        "url": {
+                                            "type": "string"
+                                        },
+                                        "project": {
+                                            "type": "string"
+                                        },
+                                        "issue_type": {
+                                            "type": "string"
+                                        },
+                                        "priority": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "status_id": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "status_category": {
+                                            "type": "string"
+                                        },
+                                        "sprint_id": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "sprint_name": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "sprint_state": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "tracked": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "key",
+                                        "summary",
+                                        "url",
+                                        "project",
+                                        "issue_type",
+                                        "priority",
+                                        "status_id",
+                                        "status",
+                                        "status_category",
+                                        "sprint_id",
+                                        "sprint_name",
+                                        "sprint_state",
+                                        "tracked"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 973,
+                                    "key": "alias nihil debitis",
+                                    "summary": "est praesentium labore",
+                                    "url": "sequi eum id",
+                                    "project": "natus fugit quia",
+                                    "issue_type": "eum in quos",
+                                    "priority": "at sit in",
+                                    "status_id": "et sed velit",
+                                    "status": "molestiae quo distinctio",
+                                    "status_category": "deserunt eum reiciendis",
+                                    "sprint_id": "dolores repellat nisi",
+                                    "sprint_name": "eum nesciunt nulla",
+                                    "sprint_state": "voluptate quia ab",
+                                    "tracked": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such issue in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/jira\/issues\/{issue}\/task": {
+            "post": {
+                "summary": "Create task from Jira issue",
+                "description": "Adds a task linked to the issue at the end of the backlog",
+                "operationId": "createTaskFromJiraIssue",
+                "parameters": [
+                    {
+                        "name": "issue",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The task",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "sprint": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "position": {
+                                            "type": "integer"
+                                        },
+                                        "jira_issue": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "sprint",
+                                        "title",
+                                        "description",
+                                        "status",
+                                        "position",
+                                        "jira_issue"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 212,
+                                    "sprint": 770,
+                                    "title": "ea assumenda voluptatem",
+                                    "description": "est fugiat neque",
+                                    "status": "aliquid ullam nesciunt",
+                                    "position": 719,
+                                    "jira_issue": 452
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such issue in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "An issue has one task at most",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/jira\/issues\/{issue}\/discuss": {
+            "post": {
+                "summary": "Discuss Jira issue",
+                "description": "Reads the issue from Jira (description, last comments...) and sends it to the connected devices as an `ai.discuss` event",
+                "operationId": "discussJiraIssue",
+                "parameters": [
+                    {
+                        "name": "issue",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such issue in the current workspace, or Jira does not know it anymore",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The event is sent"
+                    }
+                }
+            }
+        },
         "\/api\/pull-requests": {
             "get": {
                 "summary": "List pull requests",
@@ -1855,6 +2836,12 @@
                                             },
                                             "position": {
                                                 "type": "integer"
+                                            },
+                                            "jira_issue": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ]
                                             }
                                         },
                                         "required": [
@@ -1863,7 +2850,8 @@
                                             "title",
                                             "description",
                                             "status",
-                                            "position"
+                                            "position",
+                                            "jira_issue"
                                         ]
                                     }
                                 },
@@ -1874,7 +2862,8 @@
                                         "title": "ea assumenda voluptatem",
                                         "description": "est fugiat neque",
                                         "status": "aliquid ullam nesciunt",
-                                        "position": 719
+                                        "position": 719,
+                                        "jira_issue": 452
                                     }
                                 ]
                             }
@@ -1971,6 +2960,12 @@
                                         },
                                         "position": {
                                             "type": "integer"
+                                        },
+                                        "jira_issue": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -1979,7 +2974,8 @@
                                         "title",
                                         "description",
                                         "status",
-                                        "position"
+                                        "position",
+                                        "jira_issue"
                                     ]
                                 },
                                 "example": {
@@ -1988,7 +2984,8 @@
                                     "title": "ea assumenda voluptatem",
                                     "description": "est fugiat neque",
                                     "status": "aliquid ullam nesciunt",
-                                    "position": 719
+                                    "position": 719,
+                                    "jira_issue": 452
                                 }
                             }
                         }
@@ -2085,6 +3082,12 @@
                                         },
                                         "position": {
                                             "type": "integer"
+                                        },
+                                        "jira_issue": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -2093,7 +3096,8 @@
                                         "title",
                                         "description",
                                         "status",
-                                        "position"
+                                        "position",
+                                        "jira_issue"
                                     ]
                                 },
                                 "example": {
@@ -2102,7 +3106,8 @@
                                     "title": "ea assumenda voluptatem",
                                     "description": "est fugiat neque",
                                     "status": "aliquid ullam nesciunt",
-                                    "position": 719
+                                    "position": 719,
+                                    "jira_issue": 452
                                 }
                             }
                         }
@@ -2237,6 +3242,12 @@
                                         },
                                         "position": {
                                             "type": "integer"
+                                        },
+                                        "jira_issue": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -2245,7 +3256,8 @@
                                         "title",
                                         "description",
                                         "status",
-                                        "position"
+                                        "position",
+                                        "jira_issue"
                                     ]
                                 },
                                 "example": {
@@ -2254,7 +3266,8 @@
                                     "title": "ea assumenda voluptatem",
                                     "description": "est fugiat neque",
                                     "status": "aliquid ullam nesciunt",
-                                    "position": 719
+                                    "position": 719,
+                                    "jira_issue": 452
                                 }
                             }
                         }
@@ -2833,6 +3846,82 @@
                         }
                     }
                 }
+            },
+            "post": {
+                "summary": "Create workspace",
+                "description": "Creates a workspace whose only member is the current user. It is not selected",
+                "operationId": "createWorkspace",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 959,
+                                    "name": "aut aspernatur sed"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "\/api\/workspaces\/current": {
@@ -3043,6 +4132,386 @@
                         }
                     }
                 }
+            }
+        },
+        "\/api\/workspaces\/{workspace}": {
+            "put": {
+                "summary": "Rename workspace",
+                "description": "Changes the name of a workspace the current user is a member of",
+                "operationId": "renameWorkspace",
+                "parameters": [
+                    {
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 959,
+                                    "name": "aut aspernatur sed"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The workspace does not exist or the user is not a member of it",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/workspaces\/{workspace}\/members": {
+            "get": {
+                "summary": "List workspace members",
+                "description": "The members of a workspace the current user is a member of, oldest first",
+                "operationId": "listWorkspaceMembers",
+                "parameters": [
+                    {
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The members",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "email": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "email"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 209,
+                                        "email": "repellat quo dolore"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The workspace does not exist or the user is not a member of it",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Add workspace member",
+                "description": "Adds the user with this e-mail to the workspace. Adding a member again changes nothing",
+                "operationId": "addWorkspaceMember",
+                "parameters": [
+                    {
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    }
+                                },
+                                "required": [
+                                    "email"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "No active account has this e-mail, or an invalid field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The member",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "email": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "email"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 209,
+                                    "email": "repellat quo dolore"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The workspace does not exist or the user is not a member of it",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/workspaces\/{workspace}\/members\/{user}": {
+            "delete": {
+                "summary": "Remove workspace member",
+                "description": "Removes a member from a workspace, the current user included",
+                "operationId": "removeWorkspaceMember",
+                "parameters": [
+                    {
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The workspace does not exist, or the current user or this user is not a member of it",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "This is the last member : a workspace cannot be deleted, so it cannot be left empty",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The member is removed"
+                    }
+                }
+            }
+        },
+        "\/{any}": {
+            "get": {
+                "summary": "serveIndexFile",
+                "description": "StaticServer.serveIndexFile",
+                "operationId": "serveIndexFile",
+                "parameters": [
+                    {
+                        "name": "any",
+                        "in": "path",
+                        "required": true,
+                        "schema": {}
+                    }
+                ]
             }
         }
     },

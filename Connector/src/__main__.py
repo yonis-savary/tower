@@ -6,6 +6,7 @@ and output are sent back to Tower, in the history of the event.
 
 Handlers map event patterns to one command or a list of commands :
     {"task.*": "notify-send Tower {payload.title}", "deploy.*": ["git pull", "make deploy"]}
+A command starting with a .py or .pyz file runs with the Python of the connector.
 They are read, by priority, from --handler (one command for every event), --handler-file, or the
 "handlers" section of the configuration.
 """
@@ -42,6 +43,9 @@ WINDOWS_NO_BATTERY = 128
 WINDOWS_BATTERY_UNKNOWN = 255
 # Kept by Tower for each delivery
 MAX_OUTPUT_BYTES = 65535
+# Shown in the console only : Tower and the handlers receive the whole payload
+MAX_SHOWN_PAYLOAD = 100
+PYTHON_SCRIPTS = (".py", ".pyz")
 # Answers waiting for the connection to come back : the oldest are dropped beyond
 MAX_PENDING_ANSWERS = 1000
 
@@ -71,7 +75,14 @@ def parse_arguments() -> argparse.Namespace:
 
 def split_command(command: str) -> list[str]:
     # Run without shell : the payload can never become a command or an option
-    return [os.path.expanduser(part) for part in shlex.split(command, posix=os.name != "nt")]
+    parts = [os.path.expanduser(part) for part in shlex.split(command, posix=os.name != "nt")]
+    if parts and parts[0].lower().endswith(PYTHON_SCRIPTS):
+        parts.insert(0, sys.executable)
+    return parts
+
+
+def shorten(text: str) -> str:
+    return text if len(text) <= MAX_SHOWN_PAYLOAD else text[:MAX_SHOWN_PAYLOAD - 1] + "…"
 
 
 def read_config(path: str | None) -> dict:
@@ -104,12 +115,14 @@ class Console:
 
     def incoming(self, text: str, detail: str = "") -> None:
         arrow = self.paint("->", self.BLUE, self.BOLD)
+        detail = shorten(detail)
         print(f"{arrow} {text}" + (f" {self.paint(detail, self.DIM)}" if detail else ""), flush=True)
 
-    def outgoing(self, text: str, exit_code: int | None = None) -> None:
+    def outgoing(self, text: str, exit_code: int | None = None, output: str = "") -> None:
         arrow = self.paint("<-", self.ORANGE, self.BOLD)
         suffix = "" if exit_code is None else f" {self.paint(f'exit {exit_code}', self.BOLD)}"
-        print(f"{arrow} {text}{suffix}\n", flush=True)
+        details = "".join(f"\n   {self.paint(line, self.DIM)}" for line in output.strip("\n").splitlines())
+        print(f"{arrow} {text}{suffix}{details}\n", flush=True)
 
     def event(self, message: dict) -> str:
         return f"{self.paint(str(message.get('event')), self.BOLD)} {self.paint('#' + str(message.get('delivery')), self.DIM)}"
@@ -259,8 +272,7 @@ class Handler:
             await self.outbox.send({"type": "response", "delivery": delivery, "status": "running"})
             status, exit_code, output = await self.execute_all(chains, message)
 
-        failure = f" · {output}" if status == "failed" and exit_code is None else ""
-        self.console.outgoing(f"{self.console.event(message)} {status}{failure}", exit_code)
+        self.console.outgoing(f"{self.console.event(message)} {status}", exit_code, output if status == "failed" else "")
         await self.outbox.send({"type": "response", "delivery": delivery, "status": status, "exit_code": exit_code, "output": output})
 
     async def execute_all(self, chains: list[list[list[str]]], message: dict) -> tuple[str, int | None, str]:

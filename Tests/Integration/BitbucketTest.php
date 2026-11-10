@@ -5,26 +5,51 @@ namespace Tests\Integration;
 use App\Integrations\Bitbucket\BitbucketClient;
 use App\Integrations\Bitbucket\BitbucketProvider;
 use App\Integrations\IntegrationConfiguration;
+use App\Integrations\IntegrationEvents;
 use App\Integrations\IntegrationService;
 use App\Integrations\PullRequestData;
 use App\Integrations\PullRequestProvider;
 use App\Integrations\PullRequestSync;
 use App\Models\Integration;
 use App\Models\PullRequest;
-use App\Services\HistoryService;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
 use Cube\Web\Http\HttpMockServer;
 use Cube\Web\Http\Response;
+use Cube\Web\Websocket\Broadcast\Broadcast;
+use Cube\Web\Websocket\Broadcast\BroadcastConfiguration;
 
 class BitbucketTest extends CubeTestCase
 {
+    private Broadcast $originalBroadcast;
+    private object $broadcast;
+
     protected function setUp(): void
     {
         parent::setUp();
         Authentication::getInstance()->logout();
         SelectedWorkspace::unset();
+
+        // Never reach the real websocket server
+        $this->originalBroadcast = Broadcast::getInstance();
+        $this->broadcast = new class(new BroadcastConfiguration()) extends Broadcast {
+            public array $emitted = [];
+
+            public function emit(string $event, array $data): bool
+            {
+                $this->emitted[] = $data;
+
+                return true;
+            }
+        };
+        Broadcast::setInstance($this->broadcast);
+    }
+
+    protected function tearDown(): void
+    {
+        Broadcast::setInstance($this->originalBroadcast);
+        parent::tearDown();
     }
 
     private function register(string $email = 'alice@example.com'): void
@@ -99,10 +124,10 @@ class BitbucketTest extends CubeTestCase
 
     private function sync(object $forge): void
     {
-        $sync = new class(new IntegrationService(), new HistoryService(), $forge) extends PullRequestSync {
-            public function __construct(IntegrationService $integrations, HistoryService $history, private object $forge)
+        $sync = new class(new IntegrationService(), inject(IntegrationEvents::class), $forge) extends PullRequestSync {
+            public function __construct(IntegrationService $integrations, IntegrationEvents $events, private object $forge)
             {
-                parent::__construct($integrations, $history);
+                parent::__construct($integrations, $events);
             }
 
             protected function provider(Integration $integration): PullRequestProvider
@@ -117,6 +142,18 @@ class BitbucketTest extends CubeTestCase
     private function historyTypes(): array
     {
         return array_column($this->get('/api/history')->assertOk()->json(), 'type');
+    }
+
+    /**
+     * @return array<string,array> The details of the newest line of each type
+     */
+    private function historyDetails(): array
+    {
+        $details = [];
+        foreach (array_reverse($this->get('/api/history')->assertOk()->json()) as $line)
+            $details[$line['type']] = json_decode($line['details'], true);
+
+        return $details;
     }
 
     public function testTokenIsEncryptedAndNeverGivenBack()
@@ -151,16 +188,67 @@ class BitbucketTest extends CubeTestCase
         $this->assertSame(1, PullRequest::select()->where('integration', $this->integration()->id)->count());
         $this->assertSame([], $this->historyTypes());
 
-        $forge->open = [$this->pr('1', ['title' => 'Renamed']), $this->pr('2')];
+        $forge->open = [$this->pr('1', ['commentCount' => 2]), $this->pr('2')];
         $this->sync($forge);
-        $this->assertEqualsCanonicalizing(['pr.added', 'pr.changed'], $this->historyTypes());
+        $this->assertEqualsCanonicalizing(['pr.opened', 'pr.commented'], $this->historyTypes());
 
         $forge->open = [$this->pr('2')];
         $forge->final = ['1' => $this->pr('1', ['state' => PullRequestData::STATE_MERGED])];
         $this->sync($forge);
 
         $this->assertSame(PullRequestData::STATE_MERGED, PullRequest::findWhere(['external_id' => '1'])->state);
-        $this->assertSame('pr.removed', $this->historyTypes()[0]);
+        $this->assertSame('pr.merged', $this->historyTypes()[0]);
+
+        $forge->open = [];
+        $forge->final = ['2' => $this->pr('2', ['state' => PullRequestData::STATE_DECLINED])];
+        $this->sync($forge);
+        $this->assertSame('pr.declined', $this->historyTypes()[0]);
+        $this->assertSame('declined', $this->historyDetails()['pr.declined']['state']);
+    }
+
+    public function testEachChangeIsAPreciseEventSentToTheDevices()
+    {
+        $this->register();
+        $this->save();
+        $forge = $this->fakeForge();
+        $forge->open = [$this->pr('1', ['draft' => true, 'reviewers' => ['u1' => ['name' => 'Bob', 'status' => PullRequestData::REVIEW_PENDING]]])];
+        $this->sync($forge);
+
+        $forge->pipeline = PullRequestData::PIPELINE_FAILED;
+        $forge->open = [$this->pr('1', [
+            'title' => 'Renamed',
+            'draft' => false,
+            'sourceCommit' => 'def',
+            'targetBranch' => 'develop',
+            'commentCount' => 3,
+            'reviewers' => [
+                'u1' => ['name' => 'Bob', 'status' => PullRequestData::REVIEW_APPROVED],
+                'u2' => ['name' => 'Carol', 'status' => PullRequestData::REVIEW_CHANGES_REQUESTED],
+            ],
+        ])];
+        $this->sync($forge);
+
+        $this->assertEqualsCanonicalizing([
+            'pr.ready', 'pr.pushed', 'pr.retargeted', 'pr.commented', 'pr.review.approved', 'pr.review.changes_requested', 'pr.pipeline.failed',
+        ], $this->historyTypes());
+
+        $details = $this->historyDetails();
+        $this->assertSame(['source' => 'bitbucket', 'id' => '1', 'repository' => 'team/api', 'title' => 'Renamed', 'url' => 'https://bitbucket.org/team/api/pull-requests/1', 'count' => 3, 'from' => 0, 'to' => 3], $details['pr.commented']);
+        $this->assertSame(['success', 'failed'], [$details['pr.pipeline.failed']['from'], $details['pr.pipeline.failed']['to']]);
+        $this->assertSame(['main', 'develop'], [$details['pr.retargeted']['from'], $details['pr.retargeted']['to']]);
+        $this->assertSame('Bob', $details['pr.review.approved']['reviewer']);
+        $this->assertSame('Carol', $details['pr.review.changes_requested']['reviewer']);
+
+        $this->assertEqualsCanonicalizing($this->historyTypes(), array_column($this->broadcast->emitted, 'event'));
+
+        $forge->pipeline = PullRequestData::PIPELINE_SUCCESS;
+        $forge->open = [$this->pr('1', ['title' => 'Renamed again', 'sourceCommit' => 'ghi', 'targetBranch' => 'develop', 'commentCount' => 3, 'reviewers' => [
+            'u1' => ['name' => 'Bob', 'status' => PullRequestData::REVIEW_APPROVED],
+            'u2' => ['name' => 'Carol', 'status' => PullRequestData::REVIEW_CHANGES_REQUESTED],
+        ]])];
+        $this->sync($forge);
+        $this->assertEqualsCanonicalizing(['pr.pushed', 'pr.pipeline.succeeded'], array_slice($this->historyTypes(), 0, 2));
+        $this->assertCount(9, $this->historyTypes());
     }
 
     public function testPipelineIsOnlyAskedWhenItCanHaveChanged()

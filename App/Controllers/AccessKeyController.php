@@ -45,6 +45,7 @@ class AccessKeyController extends Controller
             Route::put('/access-keys/{int:key}/listen', [self::class, 'updateListen']),
             Route::post('/access-keys/{int:key}/connector', [self::class, 'downloadPreconfigured']),
             Route::get('/connector', [self::class, 'download']),
+            Route::get('/connector/handler', [self::class, 'downloadHandler']),
         ]);
     }
 
@@ -115,6 +116,18 @@ class AccessKeyController extends Controller
             return $this->connectorUnavailable();
 
         return Response::download($this->connector->archivePath(), attachmentFile: 'tower-connector.pyz');
+    }
+
+    #[Endpoint('Download basic handler', 'The basic handler of Tower events, run by the connector : ai.discuss opens a Claude Code discussion about a Jira issue', 'downloadHandler')]
+    #[RawResponse(mimeType: 'application/octet-stream', description: 'tower-handler.pyz')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Connector unavailable'], responseCode: StatusCode::SERVICE_UNAVAILABLE, description: 'The handler was not built into this image')]
+    public function downloadHandler(Request $request): Response
+    {
+        if (!$this->connector->isHandlerAvailable())
+            return $this->connectorUnavailable();
+
+        return Response::download($this->connector->handlerArchivePath(), attachmentFile: 'tower-handler.pyz');
     }
 
     #[Endpoint('Download preconfigured connector', 'The Tower connector with this key embedded : it runs without a configuration file. Needs the secret given at creation', 'downloadPreconfiguredConnector')]

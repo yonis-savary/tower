@@ -4,11 +4,16 @@ namespace App\Controllers;
 
 use App\Channels\WorkspaceDevicesChannel;
 use App\Middlewares\IsAuthenticated;
+use App\Models\Workspace;
+use App\Requests\AddWorkspaceMemberRequest;
 use App\Requests\SelectWorkspaceRequest;
+use App\Requests\WorkspaceNameRequest;
+use App\Resources\UserResource;
 use App\Resources\WorkspaceResource;
 use App\Security\WorkspaceSocketToken;
 use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
+use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
 use Cube\Data\OpenAPI\Attributes\ResourceResponse;
 use Cube\Security\Authentication;
@@ -36,6 +41,11 @@ class WorkspaceController extends Controller
             Route::get('/current', [self::class, 'current']),
             Route::put('/current', [self::class, 'select']),
             Route::get('/current/socket', [self::class, 'socket']),
+            Route::post('/', [self::class, 'create']),
+            Route::put('/{int:workspace}', [self::class, 'rename']),
+            Route::get('/{int:workspace}/members', [self::class, 'members']),
+            Route::post('/{int:workspace}/members', [self::class, 'addMember']),
+            Route::delete('/{int:workspace}/members/{int:user}', [self::class, 'removeMember']),
         ]);
     }
 
@@ -87,5 +97,83 @@ class WorkspaceController extends Controller
             return Response::json(['error' => 'Workspace not found'], StatusCode::NOT_FOUND);
 
         return Response::json(WorkspaceResource::of($workspace));
+    }
+
+    #[Endpoint('Create workspace', 'Creates a workspace whose only member is the current user. It is not selected', 'createWorkspace')]
+    #[ResourceResponse(WorkspaceResource::class, responseCode: StatusCode::CREATED, description: 'The workspace')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    public function create(WorkspaceNameRequest $request): Response
+    {
+        $workspace = $this->workspaces->create($this->authentication->userId(), trim($request->validated('name')));
+
+        return Response::json(WorkspaceResource::of($workspace), StatusCode::CREATED);
+    }
+
+    #[Endpoint('Rename workspace', 'Changes the name of a workspace the current user is a member of', 'renameWorkspace')]
+    #[ResourceResponse(WorkspaceResource::class, description: 'The workspace')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
+    public function rename(WorkspaceNameRequest $request, int $workspace): Response
+    {
+        $found = $this->workspaceOfUser($workspace);
+        if (!$found)
+            return $this->workspaceNotFound();
+
+        return Response::json(WorkspaceResource::of($this->workspaces->rename($found, trim($request->validated('name')))));
+    }
+
+    #[Endpoint('List workspace members', 'The members of a workspace the current user is a member of, oldest first', 'listWorkspaceMembers')]
+    #[ResourceResponse(UserResource::class, isArray: true, description: 'The members')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
+    public function members(Request $request, int $workspace): Response
+    {
+        $found = $this->workspaceOfUser($workspace);
+
+        return $found ? Response::json(UserResource::of($this->workspaces->members($found))) : $this->workspaceNotFound();
+    }
+
+    #[Endpoint('Add workspace member', 'Adds the user with this e-mail to the workspace. Adding a member again changes nothing', 'addWorkspaceMember')]
+    #[ResourceResponse(UserResource::class, description: 'The member')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
+    #[RawResponse(['error' => 'No account with this e-mail'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'No active account has this e-mail, or an invalid field')]
+    public function addMember(AddWorkspaceMemberRequest $request, int $workspace): Response
+    {
+        $found = $this->workspaceOfUser($workspace);
+        if (!$found)
+            return $this->workspaceNotFound();
+
+        $member = $this->workspaces->addMember($found, $request->validated('email'));
+
+        return $member
+            ? Response::json(UserResource::of($member))
+            : Response::json(['error' => 'No account with this e-mail'], StatusCode::UNPROCESSABLE_CONTENT);
+    }
+
+    #[Endpoint('Remove workspace member', 'Removes a member from a workspace, the current user included', 'removeWorkspaceMember')]
+    #[NoContentResponse('The member is removed')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist, or the current user or this user is not a member of it')]
+    #[RawResponse(['error' => 'A workspace keeps at least one member'], responseCode: StatusCode::CONFLICT, description: 'This is the last member : a workspace cannot be deleted, so it cannot be left empty')]
+    public function removeMember(Request $request, int $workspace, int $user): Response
+    {
+        $found = $this->workspaceOfUser($workspace);
+        if (!$found || !$this->workspaces->isMember($user, $found->id))
+            return $this->workspaceNotFound();
+
+        return $this->workspaces->removeMember($found, $user)
+            ? Response::noContent()
+            : Response::json(['error' => 'A workspace keeps at least one member'], StatusCode::CONFLICT);
+    }
+
+    private function workspaceOfUser(int $workspace): ?Workspace
+    {
+        return $this->workspaces->findFor($this->authentication->userId(), $workspace);
+    }
+
+    private function workspaceNotFound(): Response
+    {
+        return Response::json(['error' => 'Workspace not found'], StatusCode::NOT_FOUND);
     }
 }

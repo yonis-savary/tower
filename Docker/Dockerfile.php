@@ -16,6 +16,9 @@ RUN echo "apc.enable_cli=1" > /usr/local/etc/php/conf.d/apcu.ini \
     && echo "apc.enable=1"    >> /usr/local/etc/php/conf.d/apcu.ini \
     && echo "chdir = /var/www" >> /usr/local/etc/php-fpm.d/www.conf
 
+RUN echo "session.gc_maxlifetime=604800"  > /usr/local/etc/php/conf.d/session.ini \
+    && echo "session.cookie_lifetime=604800" >> /usr/local/etc/php/conf.d/session.ini
+
 # -o : the host ids may already belong to a user of the image (gid 20 is `staff` on macOS, `dialout` here)
 # php-fpm ignores user/group with a warning when it does not start as root
 RUN groupmod -o -g ${GID} www-data \
@@ -44,6 +47,10 @@ RUN pip install --no-compile --target app -r requirements.txt \
     && rm -rf app/bin app/*.dist-info \
     && python -m zipapp app --compress --output tower-connector.pyz
 
+# The basic handler only uses the standard library
+COPY Handler/src/ handler/
+RUN python -m zipapp handler --compress --output tower-handler.pyz
+
 
 # Development : your project is mounted over /var/www (see docker-compose.override.yml)
 FROM base AS dev
@@ -61,6 +68,7 @@ USER www-data
 RUN composer install --no-scripts
 
 COPY --from=connector /build/tower-connector.pyz /opt/tower/tower-connector.pyz
+COPY --from=connector /build/tower-handler.pyz /opt/tower/tower-handler.pyz
 
 
 # Frontend build, copied into the production image and served by App/Routes/frontend.php
@@ -89,5 +97,6 @@ RUN composer install --no-dev --no-scripts --no-autoloader
 COPY --chown=www-data:www-data . .
 COPY --from=frontend --chown=www-data:www-data /build/dist ./Frontend/dist
 COPY --from=connector /build/tower-connector.pyz /opt/tower/tower-connector.pyz
+COPY --from=connector /build/tower-handler.pyz /opt/tower/tower-handler.pyz
 
 RUN composer dump-autoload --no-dev --classmap-authoritative

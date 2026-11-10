@@ -42,7 +42,7 @@ class TaskService
     /**
      * @return ?Task null when the sprint cannot receive tasks
      */
-    public function createTask(int $workspace, int $user, string $title, string $description, ?int $sprint): ?Task
+    public function createTask(int $workspace, int $user, string $title, string $description, ?int $sprint, ?int $jiraIssue = null): ?Task
     {
         if (!$this->acceptsTasks($workspace, $sprint))
             return null;
@@ -55,6 +55,7 @@ class TaskService
             'description' => $description,
             'status' => self::STATUS_TODO,
             'position' => $this->nextPosition($workspace, $sprint),
+            'jira_issue' => $jiraIssue,
             'created_at' => $now,
             'updated_at' => $now,
         ]))->save();

@@ -27,20 +27,83 @@ class WorkspaceService
         if (Workspace::existsWhere(['author' => $user->id]))
             return;
 
-        $failure = $this->database->transaction(function () use ($user) {
-            $workspace = Workspace::fromArray([
-                'name' => 'Mon workspace',
-                'author' => $user->id,
-            ])->save();
+        $this->create($user->id, 'Mon workspace');
+    }
 
-            WorkspaceMember::fromArray([
-                'workspace' => $workspace->id,
-                'user' => $user->id,
-            ])->save();
+    /**
+     * Opens its own transaction : Cube cannot nest them, never call it inside one.
+     */
+    public function create(int $userId, string $name): Workspace
+    {
+        $workspace = null;
+        $failure = $this->database->transaction(function () use ($userId, $name, &$workspace) {
+            $workspace = Workspace::fromArray(['name' => $name, 'author' => $userId])->save();
+            WorkspaceMember::fromArray(['workspace' => $workspace->id, 'user' => $userId])->save();
         });
 
         if ($failure)
             throw $failure;
+
+        return $workspace;
+    }
+
+    public function rename(Workspace $workspace, string $name): Workspace
+    {
+        $workspace->name = $name;
+
+        return $workspace->save();
+    }
+
+    /**
+     * @return ?Workspace `null` when the user is not a member of this workspace
+     */
+    public function findFor(int $userId, int $workspaceId): ?Workspace
+    {
+        return $this->isMember($userId, $workspaceId) ? Workspace::find($workspaceId) : null;
+    }
+
+    /**
+     * @return Bunch<int,User> Oldest membership first
+     */
+    public function members(Workspace $workspace): Bunch
+    {
+        return Bunch::wrap(WorkspaceMember::select(['_user'])->where('workspace', $workspace->id)->order('id', 'ASC')->fetch())
+            ->map(fn (WorkspaceMember $membership) => $membership->_user);
+    }
+
+    /**
+     * Adding someone already member changes nothing.
+     *
+     * @return ?User `null` when no active account has this e-mail
+     */
+    public function addMember(Workspace $workspace, string $email): ?User
+    {
+        $user = User::findWhere(['email' => $email]);
+        if (!$user || null !== $user->disabled_at)
+            return null;
+
+        if (!$this->isMember($user->id, $workspace->id))
+            WorkspaceMember::fromArray(['workspace' => $workspace->id, 'user' => $user->id])->save();
+
+        return $user;
+    }
+
+    /**
+     * @return bool false when the user is its last member : a workspace cannot be left empty, as it cannot be deleted
+     */
+    public function removeMember(Workspace $workspace, int $userId): bool
+    {
+        if (WorkspaceMember::select()->where('workspace', $workspace->id)->count() <= 1)
+            return false;
+
+        WorkspaceMember::deleteWhere(['workspace' => $workspace->id, 'user' => $userId]);
+
+        return true;
+    }
+
+    public function isMember(int $userId, int $workspaceId): bool
+    {
+        return WorkspaceMember::existsWhere(['user' => $userId, 'workspace' => $workspaceId]);
     }
 
     /**
@@ -91,11 +154,6 @@ class WorkspaceService
         return $selected && $this->isMember($userId, $selected)
             ? Workspace::find($selected)
             : $this->selectFirst($userId);
-    }
-
-    private function isMember(int $userId, int $workspaceId): bool
-    {
-        return WorkspaceMember::existsWhere(['user' => $userId, 'workspace' => $workspaceId]);
     }
 
     private function memberships(int $userId): Query

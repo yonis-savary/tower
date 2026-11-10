@@ -1,3 +1,6 @@
 /vendor
 Storage
 /.env
+.composer
+.bash_history
+.phpunit.result.cache

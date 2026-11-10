@@ -18,6 +18,7 @@ use Cube\Utils\Attributes\Generated;
  * @property AccessKey[] $accessKeies
  * @property History[] $histories
  * @property Integration[] $integrations
+ * @property JiraIssue[] $jiraIssues
  * @property PullRequest[] $pullRequests
  * @property QuickAction[] $quickActions
  * @property Sprint[] $sprints
@@ -78,6 +79,12 @@ class Workspace extends Model
     }
 
     #[Generated]
+    public function jiraIssues(): HasMany
+    {
+        return $this->hasMany('jiraIssues', JiraIssue::class, 'workspace', 'id');
+    }
+
+    #[Generated]
     public function pullRequests(): HasMany
     {
         return $this->hasMany('pullRequests', PullRequest::class, 'workspace', 'id');
@@ -114,6 +121,7 @@ class Workspace extends Model
             "accessKeies",
             "histories",
             "integrations",
+            "jiraIssues",
             "pullRequests",
             "quickActions",
             "sprints",

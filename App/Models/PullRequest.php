@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Integrations\PullRequestData;
+use App\Integrations\PullRequestState;
 use Cube\Data\Models\Model;
 use Cube\Data\Models\ModelField;
 use Cube\Data\Models\Relations\HasMany;
@@ -97,6 +99,27 @@ class PullRequest extends Model
             "_workspace",
             "_integration",
         ];
+    }
+
+    /**
+     * @param array<string,array{name: string, status: string}> $reviewers
+     */
+    public function toState(array $reviewers): PullRequestState
+    {
+        return new PullRequestState(new PullRequestData(
+            externalId: $this->external_id,
+            repository: $this->repository,
+            title: $this->title,
+            author: $this->author,
+            state: $this->state,
+            draft: (bool) $this->draft,
+            sourceBranch: $this->source_branch,
+            targetBranch: $this->target_branch,
+            sourceCommit: $this->source_commit,
+            url: $this->url,
+            commentCount: (int) $this->comment_count,
+            reviewers: $reviewers,
+        ), $this->pipeline_status);
     }
 
 }

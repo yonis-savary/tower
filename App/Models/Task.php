@@ -21,8 +21,10 @@ use Cube\Utils\Attributes\Generated;
  * @property string $description
  * @property string $status
  * @property int $position
+ * @property int $jira_issue
  * @property Workspace $_workspace
  * @property Sprint $_sprint
+ * @property JiraIssue $_jira_issue
  * @property History[] $histories
  */
 class Task extends Model
@@ -57,7 +59,8 @@ class Task extends Model
             'sprint' => (new ModelField('sprint'))->type('INTEGER')->nullable()->default(NULL)->references(Sprint::class,'id'),
             'description' => (new ModelField('description'))->type('STRING')->notNull()->hasDefault(false),
             'status' => (new ModelField('status'))->type('STRING')->notNull()->hasDefault(false),
-            'position' => (new ModelField('position'))->type('INTEGER')->notNull()->hasDefault(false)
+            'position' => (new ModelField('position'))->type('INTEGER')->notNull()->hasDefault(false),
+            'jira_issue' => (new ModelField('jira_issue'))->type('INTEGER')->nullable()->default(NULL)->references(JiraIssue::class,'id')
         ];
     }
 
@@ -74,6 +77,12 @@ class Task extends Model
     }
 
     #[Generated]
+    public function _jira_issue(): HasOne
+    {
+        return $this->hasOne('_jira_issue', 'jira_issue', JiraIssue::class, 'id');
+    }
+
+    #[Generated]
     public function histories(): HasMany
     {
         return $this->hasMany('histories', History::class, 'task', 'id');
@@ -86,6 +95,7 @@ class Task extends Model
             "histories",
             "_workspace",
             "_sprint",
+            "_jira_issue",
         ];
     }
 

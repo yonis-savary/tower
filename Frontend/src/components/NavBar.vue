@@ -7,20 +7,28 @@ import Button from 'primevue/button'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
 import { useToast } from 'primevue/usetoast'
-import { downloadConnector } from '../client'
+import { downloadConnector, downloadHandler } from '../client'
 import { saveFile } from '../utils/saveFile'
 import ConfigDialog from './ConfigDialog.vue'
 import DevicesDialog from './DevicesDialog.vue'
+import HandlerDialog from './HandlerDialog.vue'
+import WorkspacesDialog from './WorkspacesDialog.vue'
 import { useAuthStore } from '../stores/auth'
 import { useDeviceSocketStore } from '../stores/deviceSocket'
+import { useJiraStore } from '../stores/jira'
+import { usePullRequestsStore } from '../stores/pullRequests'
+import { useTasksStore } from '../stores/tasks'
 import { useWorkspaceStore } from '../stores/workspace'
 
 // An item without `to` has no screen yet
-type NavItem = { label: string; icon: string; to?: RouteLocationRaw }
+type NavItem = { label: string; icon: string; to?: RouteLocationRaw; count?: number }
 
 const auth = useAuthStore()
 const workspace = useWorkspaceStore()
 const deviceSocket = useDeviceSocketStore()
+const tasks = useTasksStore()
+const jira = useJiraStore()
+const pullRequests = usePullRequestsStore()
 const toast = useToast()
 const router = useRouter()
 const { t } = useI18n()
@@ -38,27 +46,45 @@ const workspaceMenuItems = computed<MenuItem[]>(() => [
         command: () => workspace.select(id),
       }))),
   { separator: true },
-  { label: t('nav.manageWorkspaces'), icon: 'pi pi-fw pi-cog' },
+  { label: t('nav.manageWorkspaces'), icon: 'pi pi-fw pi-cog', command: () => (workspacesDialogVisible.value = true) },
 ])
 
 onMounted(workspace.loadCurrent)
 
+// What is left to do in the active sprint
+const remainingTasks = computed(
+  () => tasks.tasks.filter(({ sprint, status }) => sprint !== null && sprint === tasks.activeSprint?.id && status !== 'done' && status !== 'cancelled').length,
+)
+const openIssues = computed(() => jira.tracked.filter(({ status_category }) => status_category !== 'done').length)
+
+// Loaded with the page rather than with each screen, for the counters of the menu
+watch(
+  () => workspace.current?.id,
+  (id) => { if (id) void Promise.all([tasks.load(), jira.load(), pullRequests.load()]) },
+)
+
 // TODO: Jira and Merge Requests are only shown when the workspace has the matching integration
 const mainItems = computed<NavItem[]>(() => [
   { label: t('nav.home'), icon: 'pi pi-home', to: { name: 'home' } },
-  { label: t('nav.tasks'), icon: 'pi pi-check-square', to: { name: 'tasks' } },
+  { label: t('nav.tasks'), icon: 'pi pi-check-square', to: { name: 'tasks' }, count: remainingTasks.value },
+  { label: t('nav.jira'), icon: 'pi pi-ticket', to: { name: 'jira' }, count: openIssues.value },
+  { label: t('nav.mergeRequests'), icon: 'pi pi-share-alt', to: { name: 'merge-requests' }, count: pullRequests.open.length },
+])
+
+const secondaryItems = computed<NavItem[]>(() => [
   { label: t('nav.events'), icon: 'pi pi-bolt', to: { name: 'events' } },
-  { label: t('nav.jira'), icon: 'pi pi-ticket' },
-  { label: t('nav.mergeRequests'), icon: 'pi pi-share-alt', to: { name: 'merge-requests' } },
   { label: t('nav.history'), icon: 'pi pi-history', to: { name: 'history' } },
   { label: t('nav.settings'), icon: 'pi pi-cog', to: { name: 'settings' } },
 ])
 
 const devicesDialogVisible = ref(false)
+const workspacesDialogVisible = ref(false)
 const configDialogVisible = ref(false)
+const handlerDialogVisible = ref(false)
 const downloadMenu = useTemplateRef<InstanceType<typeof Menu>>('downloadMenu')
 const downloadMenuItems = computed<MenuItem[]>(() => [
   { label: t('nav.downloadClient'), icon: 'pi pi-fw pi-download', command: downloadClient },
+  { label: t('nav.downloadHandler'), icon: 'pi pi-fw pi-comments', command: downloadBasicHandler },
   { label: t('nav.manageConfigs'), icon: 'pi pi-fw pi-cog', command: () => (configDialogVisible.value = true) },
 ])
 
@@ -67,6 +93,18 @@ async function downloadClient() {
 
   if (data instanceof Blob) saveFile(data, 'tower-connector.pyz')
   else toast.add({ severity: 'error', summary: t('download.connectorError'), life: 5000 })
+}
+
+async function downloadBasicHandler() {
+  const { data } = await downloadHandler({ parseAs: 'blob' })
+
+  if (!(data instanceof Blob)) {
+    toast.add({ severity: 'error', summary: t('download.handlerError'), life: 5000 })
+    return
+  }
+
+  saveFile(data, 'tower-handler.pyz')
+  handlerDialogVisible.value = true
 }
 
 const socketIndicator = computed(
@@ -106,6 +144,7 @@ async function logOut() {
       <i class="pi pi-angle-down navbar-text" aria-hidden="true" />
     </button>
     <Menu ref="workspaceMenu" :model="workspaceMenuItems" popup @show="workspace.loadWorkspaces" />
+    <WorkspacesDialog v-model:visible="workspacesDialogVisible" />
 
     <button
       type="button"
@@ -138,14 +177,24 @@ async function logOut() {
         >
           <i :class="item.icon" aria-hidden="true" />
           <span class="navbar-text">{{ item.label }}</span>
+          <Badge v-if="item.count" :value="item.count" severity="secondary" size="small" class="navbar-text navbar-count" />
         </component>
       </li>
     </ul>
 
     <div class="navbar-secondary">
+      <ul class="navbar-list">
+        <li v-for="item in secondaryItems" :key="item.label">
+          <RouterLink :to="item.to!" class="navbar-item" :title="item.label">
+            <i :class="item.icon" aria-hidden="true" />
+            <span class="navbar-text">{{ item.label }}</span>
+          </RouterLink>
+        </li>
+      </ul>
+
       <button
         type="button"
-        class="navbar-item"
+        class="navbar-item navbar-download"
         aria-haspopup="menu"
         :title="t('nav.download')"
         @click="downloadMenu?.toggle($event)"
@@ -155,6 +204,7 @@ async function logOut() {
       </button>
       <Menu ref="downloadMenu" :model="downloadMenuItems" popup />
       <ConfigDialog v-model:visible="configDialogVisible" />
+      <HandlerDialog v-model:visible="handlerDialogVisible" />
     </div>
 
     <div class="navbar-user">
@@ -176,7 +226,7 @@ async function logOut() {
   position: sticky;
   top: 0;
   flex: none;
-  width: 15rem;
+  width: 17rem;
   height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -244,6 +294,10 @@ async function logOut() {
   background: light-dark(var(--p-blue-100), color-mix(in srgb, var(--p-blue-500) 24%, transparent));
 }
 
+.navbar-count {
+  margin-left: auto;
+}
+
 .navbar-devices-state {
   margin-left: auto;
   display: flex;
@@ -284,7 +338,20 @@ async function logOut() {
 }
 
 .navbar-secondary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
   margin-top: auto;
+}
+
+.navbar-download {
+  border: 1px solid light-dark(var(--p-green-200), var(--p-green-800));
+  background: light-dark(var(--p-green-50), color-mix(in srgb, var(--p-green-500) 16%, transparent));
+  color: light-dark(var(--p-green-700), var(--p-green-200));
+}
+
+.navbar-download:hover {
+  background: light-dark(var(--p-green-100), color-mix(in srgb, var(--p-green-500) 24%, transparent));
 }
 
 .navbar-user {

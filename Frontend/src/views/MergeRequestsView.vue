@@ -1,17 +1,18 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
+import Tab from 'primevue/tab'
+import TabList from 'primevue/tablist'
+import TabPanel from 'primevue/tabpanel'
+import TabPanels from 'primevue/tabpanels'
+import Tabs from 'primevue/tabs'
 import Tag from 'primevue/tag'
-import {
-  listPullRequestApprovals,
-  listPullRequests,
-  type ListPullRequestApprovalsResponse,
-  type ListPullRequestsResponse,
-} from '../client'
+import PullRequestTree from '../components/PullRequestTree.vue'
+import { usePullRequestsStore, type PullRequest } from '../stores/pullRequests'
 import { useWorkspaceStore } from '../stores/workspace'
 
-type PullRequest = ListPullRequestsResponse[number]
 type Row = { pullRequest: PullRequest; depth: number }
 
 const pipelineIcons: Record<string, string> = {
@@ -24,18 +25,10 @@ const pipelineIcons: Record<string, string> = {
 const { t } = useI18n()
 const workspace = useWorkspaceStore()
 
-const pullRequests = ref<ListPullRequestsResponse>([])
-const approvals = ref<ListPullRequestApprovalsResponse>([])
-const loaded = ref(false)
+const store = usePullRequestsStore()
+const { pullRequests, approvals, loaded } = storeToRefs(store)
 
-async function load() {
-  const [list, reviewers] = await Promise.all([listPullRequests(), listPullRequestApprovals()])
-  pullRequests.value = list.data ?? []
-  approvals.value = reviewers.data ?? []
-  loaded.value = true
-}
-
-watch(() => workspace.current?.id, (id) => { if (id) void load() }, { immediate: true })
+watch(() => workspace.current?.id, (id) => { if (id) void store.load() }, { immediate: true })
 
 /** A pull request is the child of the open one whose source branch it targets. */
 function toRows(open: PullRequest[]): Row[] {
@@ -61,13 +54,20 @@ function toRows(open: PullRequest[]): Row[] {
 }
 
 const repositories = computed(() => {
-  const open = pullRequests.value.filter(({ state }) => state === 'open')
-  const names = [...new Set(open.map(({ repository }) => repository))].sort()
+  const names = [...new Set(pullRequests.value.map(({ repository }) => repository))].sort()
 
-  return names.map((name) => ({ name, rows: toRows(open.filter(({ repository }) => repository === name)) }))
+  return names.map((name) => {
+    const ofRepository = pullRequests.value.filter(({ repository }) => repository === name)
+    const open = ofRepository.filter(({ state }) => state === 'open')
+    return { name, open, rows: toRows(open), closed: ofRepository.filter(({ state }) => state !== 'open') }
+  })
 })
 
-const closed = computed(() => pullRequests.value.filter(({ state }) => state !== 'open'))
+const selectedRepository = ref<string>('')
+// Keeps the open tab across reloads, and falls back to the first one when it disappears
+watch(repositories, (list) => {
+  if (!list.some(({ name }) => name === selectedRepository.value)) selectedRepository.value = list[0]?.name ?? ''
+}, { immediate: true })
 
 function reviewersOf(id: number) {
   return approvals.value.filter(({ pull_request }) => pull_request === id)
@@ -92,57 +92,72 @@ function reviewersTitle(id: number): string {
     <RouterLink :to="{ name: 'settings' }">{{ t('nav.settings') }}</RouterLink>
   </p>
 
-  <section v-for="repository in repositories" :key="repository.name" class="panel">
-    <h2>{{ repository.name }}</h2>
-    <ul class="pull-requests">
-      <li
-        v-for="{ pullRequest, depth } in repository.rows"
-        :key="pullRequest.id"
-        class="pull-request"
-        :data-depth="depth"
-        :style="{ '--depth': depth }"
-      >
-        <i v-if="depth" class="pi pi-angle-right pull-request-branch" aria-hidden="true" />
-        <div class="pull-request-main">
-          <a :href="pullRequest.url" target="_blank" rel="noopener noreferrer">{{ pullRequest.title }}</a>
-          <small>
-            <code>{{ pullRequest.source_branch }}</code> → <code>{{ pullRequest.target_branch }}</code>
-            · {{ pullRequest.author }}
-          </small>
-        </div>
-        <div class="pull-request-meta">
-          <Tag v-if="pullRequest.draft" :value="t('mergeRequests.draft')" severity="secondary" />
-          <span v-if="reviewersOf(pullRequest.id).length" class="meta-item" :title="reviewersTitle(pullRequest.id)">
-            <i class="pi pi-thumbs-up" aria-hidden="true" />
-            {{ approvedCount(pullRequest.id) }}/{{ reviewersOf(pullRequest.id).length }}
-          </span>
-          <span class="meta-item" :title="t('mergeRequests.comments')">
-            <i class="pi pi-comment" aria-hidden="true" /> {{ pullRequest.comment_count }}
-          </span>
-          <i
-            v-if="pipelineIcons[pullRequest.pipeline_status]"
-            :class="['pi', pipelineIcons[pullRequest.pipeline_status], `pipeline-${pullRequest.pipeline_status}`]"
-            role="img"
-            :aria-label="t(`mergeRequests.pipeline.${pullRequest.pipeline_status}`)"
-            :title="t(`mergeRequests.pipeline.${pullRequest.pipeline_status}`)"
-          />
-        </div>
-      </li>
-    </ul>
-  </section>
+  <Tabs v-if="repositories.length" v-model:value="selectedRepository" scrollable class="repository-tabs">
+    <TabList>
+      <Tab v-for="repository in repositories" :key="repository.name" :value="repository.name">
+        {{ repository.name }} <span class="tab-count">{{ repository.open.length }}</span>
+      </Tab>
+    </TabList>
+    <TabPanels>
+      <TabPanel v-for="repository in repositories" :key="repository.name" :value="repository.name">
+        <section v-if="repository.open.length" class="panel">
+          <PullRequestTree :pull-requests="repository.open" :approvals="approvals" />
+        </section>
 
-  <section v-if="closed.length" class="panel">
-    <h2>{{ t('mergeRequests.closedTitle') }}</h2>
-    <ul class="pull-requests">
-      <li v-for="pullRequest in closed" :key="pullRequest.id" class="pull-request closed-pull-request">
-        <div class="pull-request-main">
-          <a :href="pullRequest.url" target="_blank" rel="noopener noreferrer">{{ pullRequest.title }}</a>
-          <small>{{ pullRequest.repository }} · {{ pullRequest.author }}</small>
-        </div>
-        <Tag :value="t(`mergeRequests.state.${pullRequest.state}`)" :severity="pullRequest.state === 'merged' ? 'success' : 'secondary'" />
-      </li>
-    </ul>
-  </section>
+        <section v-if="repository.open.length" class="panel">
+          <ul class="pull-requests">
+            <li
+              v-for="{ pullRequest, depth } in repository.rows"
+              :key="pullRequest.id"
+              class="pull-request"
+              :data-depth="depth"
+              :style="{ '--depth': depth }"
+            >
+              <i v-if="depth" class="pi pi-angle-right pull-request-branch" aria-hidden="true" />
+              <div class="pull-request-main">
+                <a :href="pullRequest.url" target="_blank" rel="noopener noreferrer">{{ pullRequest.title }}</a>
+                <small>
+                  <code>{{ pullRequest.source_branch }}</code> → <code>{{ pullRequest.target_branch }}</code>
+                  · {{ pullRequest.author }}
+                </small>
+              </div>
+              <div class="pull-request-meta">
+                <Tag v-if="pullRequest.draft" :value="t('mergeRequests.draft')" severity="secondary" />
+                <span v-if="reviewersOf(pullRequest.id).length" class="meta-item" :title="reviewersTitle(pullRequest.id)">
+                  <i class="pi pi-thumbs-up" aria-hidden="true" />
+                  {{ approvedCount(pullRequest.id) }}/{{ reviewersOf(pullRequest.id).length }}
+                </span>
+                <span class="meta-item" :title="t('mergeRequests.comments')">
+                  <i class="pi pi-comment" aria-hidden="true" /> {{ pullRequest.comment_count }}
+                </span>
+                <i
+                  v-if="pipelineIcons[pullRequest.pipeline_status]"
+                  :class="['pi', pipelineIcons[pullRequest.pipeline_status], `pipeline-${pullRequest.pipeline_status}`]"
+                  role="img"
+                  :aria-label="t(`mergeRequests.pipeline.${pullRequest.pipeline_status}`)"
+                  :title="t(`mergeRequests.pipeline.${pullRequest.pipeline_status}`)"
+                />
+              </div>
+            </li>
+          </ul>
+        </section>
+        <p v-else class="empty">{{ t('mergeRequests.noOpen') }}</p>
+
+        <section v-if="repository.closed.length" class="panel">
+          <h2>{{ t('mergeRequests.closedTitle') }}</h2>
+          <ul class="pull-requests">
+            <li v-for="pullRequest in repository.closed" :key="pullRequest.id" class="pull-request closed-pull-request">
+              <div class="pull-request-main">
+                <a :href="pullRequest.url" target="_blank" rel="noopener noreferrer">{{ pullRequest.title }}</a>
+                <small>{{ pullRequest.author }}</small>
+              </div>
+              <Tag :value="t(`mergeRequests.state.${pullRequest.state}`)" :severity="pullRequest.state === 'merged' ? 'success' : 'secondary'" />
+            </li>
+          </ul>
+        </section>
+      </TabPanel>
+    </TabPanels>
+  </Tabs>
 </template>
 
 <style scoped>
@@ -150,6 +165,21 @@ function reviewersTitle(id: number): string {
   margin: 0 0 1.25rem;
   font-size: 1.5rem;
   font-weight: 600;
+}
+
+.repository-tabs {
+  min-width: 0;
+}
+
+.repository-tabs :deep(.p-tabpanels) {
+  padding: 1rem 0 0;
+  background: transparent;
+}
+
+.tab-count {
+  margin-left: 0.25rem;
+  color: var(--p-text-muted-color);
+  font-weight: 400;
 }
 
 .panel {

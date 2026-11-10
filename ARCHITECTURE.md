@@ -18,12 +18,12 @@ abordera.
                 │        │                 │                    │          │
                 │        ▼                 ▼                    ▼          │
                 │  Bus d'appareils    Intégrations         Agent IA        │
-                │  (événements,       (Bitbucket, diff)    (prévu)         │
+                │  (événements,       (Bitbucket, Jira)    (prévu)         │
                 │   livraisons)                                            │
                 └───────┬─────────────────┬────────────────────────────────┘
                         │ WebSocket        │ HTTPS (polling)
                         │ ouvert par       ▼
-                        │ l'appareil   Bitbucket Cloud (Jira, GitLab, GitHub prévus)
+                        │ l'appareil   Bitbucket, Jira Cloud (GitLab, GitHub prévus)
               ┌─────────┴─────────┐
               │ Connecteur Python │  (un par appareil, lancé à la main ou en service)
               └───────────────────┘
@@ -34,7 +34,7 @@ abordera.
 | Backend            | Cube                                       |
 | Front              | Vue.js, PrimeVue, client généré depuis l'OpenAPI |
 | Connecteur         | Script Python livré en zipapp `.pyz`       |
-| Intégrations       | Bitbucket Cloud ; Jira, GitLab, GitHub prévus |
+| Intégrations       | Bitbucket Cloud, Jira Cloud ; GitLab, GitHub prévus |
 | IA                 | Abstraction de provider, Claude en premier (prévu) |
 | Notifications      | Hors périmètre v1                          |
 
@@ -70,6 +70,11 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
   n'existe pour Tower qu'à travers ses connexions (voir § Connexions).
 - Un workspace peut avoir plusieurs membres, et un utilisateur peut être membre de plusieurs
   workspaces. Tous les membres ont les mêmes droits sur le workspace ; il n'y a pas de rôles.
+- Tout membre peut renommer le workspace, en ajouter un autre par l'e-mail de son compte Tower
+  (un compte existant et actif : il n'y a pas d'invitation), retirer un membre ou le quitter.
+  Un workspace créé depuis le front n'a que son créateur pour membre et n'est pas sélectionné.
+- Un workspace garde toujours au moins un membre : le dernier ne peut pas être retiré, puisqu'un
+  workspace ne se supprime pas. Quitter le workspace courant fait retomber sur un autre.
 - Un workspace ne peut pas être supprimé.
 
 ### Tâches et sprints
@@ -88,6 +93,7 @@ tâche, et c'est l'utilisateur qui déplace la tâche.
 | `status`       | voir ci-dessous                                         |
 | `position`     | ordre dans sa liste ; l'ordre tient lieu de priorité    |
 | `color`        | pastille de couleur (pas encore utilisée)               |
+| `jira_issue`   | ticket Jira d'origine, s'il y en a un (voir § Jira)     |
 | `done_at`      | renseigné quand la tâche passe à `done`, vidé sinon     |
 | `created_at`, `updated_at` |                                             |
 
@@ -121,13 +127,14 @@ y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les l
 | `task.sprint_changed`         | changement de sprint (noms, `null` pour le backlog) |
 | `sprint.created`, `sprint.opened`, `sprint.closed` |                                |
 | `event.triggered`             | événement lancé à la main ou par une quick-action   |
-| `pr.added`, `pr.changed`, `pr.removed` | différences vues par une intégration de forge |
+| `pr.*`                        | changements vus par une intégration de forge (voir § Synchronisation et diff) |
+| `jira.issue.*`                | changements vus par l'intégration Jira, et transitions faites depuis Tower |
 | `device.connected`, `device.disconnected` | connexions des appareils                |
 | `key.created`, `key.revoked`  | création et révocation d'une configuration          |
 
 Les lignes `task.*`, `sprint.*` et `event.triggered` sont aussi envoyées aux appareils
-connectés comme des événements du même type (voir § Événements). Les lignes `pr.*` ne le sont
-pas encore. Chaque tâche affiche son propre historique, avec l'auteur de chaque changement.
+connectés comme des événements du même type (voir § Événements), comme les lignes `pr.*` et
+`jira.issue.*`. Chaque tâche affiche son propre historique, avec l'auteur de chaque changement.
 
 L'historique a, à terme, un second consommateur : **(prévu)** l'agent IA, qui ne lira que les
 lignes postérieures à son dernier run.
@@ -161,7 +168,7 @@ statut et sa propre réponse : un événement en a autant que d'appareils contac
 
 ### Configurations
 
-Une configuration est créée dans le front (menu Download). Elle donne un `client_id`
+Une configuration est créée dans le front (menu Connecteur). Elle donne un `client_id`
 (`twr_…`) et un secret de 256 bits, affiché une seule fois ; Tower n'en garde que le SHA-256.
 Elle peut servir sur plusieurs appareils et se révoque depuis le front : les appareils qui
 l'utilisent sont déconnectés.
@@ -302,7 +309,7 @@ La connexion est supposée instable (veille, changement de réseau, redémarrage
 Le connecteur est livré en un seul fichier zipapp (`tower-connector.pyz`, module `zipapp` de
 la stdlib) qui embarque ses dépendances, et se lance avec `python3 tower-connector.pyz`, sans
 pip ni venv. Ça évite la PEP 668 (`externally-managed-environment`) sur les distributions
-récentes. Il est construit dans l'image Docker et se télécharge depuis le menu Download.
+récentes. Il est construit dans l'image Docker et se télécharge depuis le menu Connecteur.
 
 Contrainte : seules des dépendances en Python pur peuvent être embarquées, une extension
 compilée ne serait pas portable d'une architecture à l'autre. `websockets` est en Python pur.
@@ -359,6 +366,8 @@ commande ou une liste de commandes en valeur.
 Pour chaque commande :
 
 - elle est découpée comme le ferait un shell, mais exécutée sans shell ; `~` est développé ;
+- si elle commence par un fichier `.py` ou `.pyz`, elle est lancée avec le Python du
+  connecteur : `--handler ~/tower/tower-handler.pyz` suffit ;
 - le message complet arrive en JSON sur son entrée standard ; `TOWER_EVENT`, `TOWER_EVENT_ID`,
   `TOWER_DELIVERY` et `TOWER_WORKSPACE` sont dans son environnement ;
 - `--handler-timeout` (60 s par défaut) l'arrête si elle dure trop.
@@ -370,10 +379,51 @@ commandes : la sortie standard de chacune, ou sa sortie d'erreur si la première
 attendent, et le connecteur continue de recevoir. Sans aucun handler, le connecteur affiche
 les événements et répond `received`.
 
-**Affichage.** Chaque message entrant s'affiche derrière une flèche bleue `->`, chaque réponse
-sortante derrière une flèche orange `<-`, avec son code de sortie, suivie d'une ligne vide.
+**Affichage.** Chaque message entrant s'affiche derrière une flèche bleue `->`, son payload
+coupé à 100 caractères (`…` au-delà), chaque réponse sortante derrière une flèche orange `<-`,
+avec son code de sortie, suivie d'une ligne vide. Seul l'affichage est coupé : les handlers
+reçoivent le message entier. Quand une commande échoue, sa sortie s'affiche sous la réponse,
+comme elle part vers Tower.
 `--no-color` retire les couleurs pour les journaux système ; elles sont aussi retirées quand
 la sortie n'est pas un terminal ou que `NO_COLOR` est défini.
+
+### Handler de base
+
+Tower fournit un handler prêt à l'emploi, `tower-handler.pyz` (source dans `Handler/src`),
+construit dans l'image et téléchargeable depuis le menu Connecteur. Il n'utilise que la
+bibliothèque standard et se branche comme n'importe quel handler :
+
+```sh
+python3 tower-connector.pyz config.json --handler ~/tower/tower-handler.pyz
+```
+
+ou, dans la configuration : `"handlers": { "ai.discuss": "~/tower/tower-handler.pyz" }`.
+
+Options : `--cwd <dossier>`, le dossier où démarre Claude (le dossier personnel par défaut), et
+`--terminal "<commande>"`, le terminal à ouvrir (sinon `$TERMINAL`, puis le premier trouvé
+parmi wezterm, kitty, konsole, gnome-terminal, alacritty, foot, xfce4-terminal, xterm ; Terminal
+sur macOS, une nouvelle console sur Windows).
+
+**`ai.discuss`** (bouton Discuter d'un ticket Jira) ouvre une fenêtre de terminal qui lance
+Claude Code sur le ticket, puis rend la main au connecteur.
+
+- L'identifiant de session est dérivé du workspace et de la clé du ticket (UUID v5) : le premier
+  clic crée la session (`--session-id`), les suivants la reprennent (`--resume`). Une session
+  existe dès que Claude Code a écrit son fichier `~/.claude/projects/*/<id>.jsonl`.
+- Le ticket, relu dans Jira au moment du clic, est donné en **prompt système**
+  (`--append-system-prompt`), à la création comme à chaque reprise : Claude a le contexte à
+  jour, sans message d'instruction. Il est limité à 100 000 caractères, en retirant d'abord les
+  plus anciens commentaires (Linux refuse un argument de plus de 128 Kio).
+- Claude démarre toujours dans le même dossier, car une session ne se reprend que là où elle a
+  été créée. Le prompt lui donne le nom du projet Jira ; il cherche lui-même le dépôt.
+- Le contenu du ticket passe par un fichier (`~/.tower/discussions/<workspace>-<clé>.md`, lisible
+  par l'utilisateur seul), jamais par la commande donnée au terminal : seuls des valeurs sûres
+  (clé validée, numéro de workspace, dossier) y figurent.
+- La fenêtre est lancée détachée, sans les tubes du connecteur, qui attend leur fermeture pour
+  répondre. Sous Linux, il faut une session graphique (`DISPLAY` ou `WAYLAND_DISPLAY`) : un
+  connecteur lancé en service sans affichage répond `failed` avec l'explication.
+
+Les autres événements sont ignorés, avec une réponse `succeeded`.
 
 ## 3. Intégrations
 
@@ -386,7 +436,7 @@ l'outil d'origine.
 | Type        | Famille          | Écran                        | État     |
 |-------------|------------------|------------------------------|----------|
 | `bitbucket` | merge requests   | Merge Requests               | en place |
-| `jira`      | tickets          | Jira                         | prévu    |
+| `jira`      | tickets          | Jira                         | en place |
 | `gitlab`    | merge requests   | Merge Requests               | prévu    |
 | `github`    | merge requests   | Merge Requests               | prévu    |
 
@@ -404,12 +454,59 @@ de lancer une synchronisation. À chaque passage :
 3. chaque différence écrit une ligne d'historique d'`origin` `integration` ;
 4. le nouvel état remplace l'ancien, dans une transaction.
 
-| Type          | Quand                                                          |
-|---------------|----------------------------------------------------------------|
-| `pr.added`    | une merge request s'ouvre                                      |
-| `pr.changed`  | une merge request ouverte change ; le payload liste les champs modifiés |
-| `pr.removed`  | une merge request n'est plus ouverte (fusionnée, refusée…)     |
-| `jira.issue.added`, `jira.issue.changed`, `jira.issue.removed` | **(prévu)** mêmes règles pour les tickets |
+Chaque différence est un événement **précis**, avec ses valeurs avant et après, plutôt qu'un
+`changed` générique qui liste des champs. Les anciens types `pr.added`, `pr.changed`,
+`pr.removed`, `jira.issue.added`, `jira.issue.changed` et `jira.issue.removed` n'existent plus ;
+leurs lignes déjà écrites s'affichent sous leur type brut jusqu'à leur purge.
+
+Merge requests :
+
+| Type                        | Quand                                                          |
+|-----------------------------|----------------------------------------------------------------|
+| `pr.opened`                 | une merge request entre dans l'ensemble suivi                  |
+| `pr.merged`                 | elle en sort, fusionnée                                        |
+| `pr.declined`               | elle en sort autrement : refusée, remplacée, ou introuvable (`state` le précise, `null` si introuvable) |
+| `pr.pipeline.failed`        | son pipeline passe en échec                                    |
+| `pr.pipeline.succeeded`     | son pipeline passe en réussite                                 |
+| `pr.review.approved`        | un relecteur approuve (une ligne par relecteur)                |
+| `pr.review.changes_requested` | un relecteur demande des changements (une ligne par relecteur) |
+| `pr.commented`              | son nombre de commentaires augmente (`count` : les nouveaux)   |
+| `pr.pushed`                 | son commit source change                                       |
+| `pr.ready`                  | elle quitte l'état brouillon                                   |
+| `pr.retargeted`             | sa branche cible change                                        |
+
+Tickets Jira :
+
+| Type                        | Quand                                                          |
+|-----------------------------|----------------------------------------------------------------|
+| `jira.issue.assigned`       | un ticket entre dans l'ensemble suivi                          |
+| `jira.issue.done`           | il en sort, dans la catégorie « terminé »                      |
+| `jira.issue.unassigned`     | il en sort autrement : réassigné, sorti du board, ou supprimé (`status` à `null`) |
+| `jira.issue.status_changed` | son statut change (statuts et catégories avant et après)       |
+| `jira.issue.sprint_changed` | son sprint change (`null` : sans sprint)                       |
+| `jira.issue.priority_changed` | sa priorité change                                           |
+| `jira.issue.updated`        | son résumé ou son type change (`fields` les liste)             |
+
+Un passage de pipeline en cours ou en attente, un changement de titre de merge request ou une
+nouvelle approbation retirée n'émettent rien : l'état stocké est mis à jour sans événement. Les
+commentaires Jira ne sont pas suivis.
+
+**Payload.** Chaque payload se suffit à lui-même : un handler n'a pas à rappeler Tower ni
+l'outil externe.
+
+- Toujours : `source` (`bitbucket`, `jira`), `url`, et pour une merge request `id`,
+  `repository`, `title` ; pour un ticket `key`, `summary`.
+- Pour un changement de valeur : `from` et `to`, plus les champs propres au type (`reviewer`
+  pour une relecture, `count` pour les commentaires, `from_category` et `to_category` pour un
+  statut).
+
+**Détection.** Chaque type de changement est une petite classe qui implémente le
+contrat de sa famille (un pour les merge requests, un pour les tickets) : elle reçoit l'état
+stocké et l'état lu d'un même élément, et rend zéro, un ou plusieurs changements. La
+synchronisation les trouve par découverte (`Bunch::fromImplements`), sans liste à tenir :
+ajouter un type d'événement, c'est ajouter un fichier. L'entrée et la sortie de l'ensemble
+suivi (`pr.opened`, `pr.merged`, `jira.issue.assigned`, `jira.issue.done`…) restent décidées par
+la synchronisation, qui seule sait qu'un élément apparaît ou disparaît.
 
 - Le **premier passage** d'une intégration sert de référence et n'écrit rien, sinon il
   produirait une ligne par élément existant. Changer de compte ou de workspace externe efface
@@ -418,7 +515,15 @@ de lancer une synchronisation. À chaque passage :
   l'état stocké ; l'erreur est enregistrée sur l'intégration et visible dans les paramètres.
 - Les écrans lisent l'état stocké, pas l'API : l'affichage ne dépend pas de la disponibilité
   de l'outil externe.
-- **(prévu)** Envoyer les lignes `pr.*` aux appareils abonnés, comme les tâches.
+- Les lignes sont écrites dans la transaction du passage, puis envoyées aux
+  appareils une fois la transaction validée, comme les lignes `task.*` : le processus
+  WebSocket écrit les livraisons contre elles. Les abonnements filtrent comme pour les autres
+  événements (`pr.pipeline.*`, `jira.issue.status_changed`…).
+- « Au fil du temps », c'est l'historique : chaque changement y est une ligne datée, avec son
+  avant et son après, gardée 31 jours. L'état stocké sert d'« avant » au passage suivant ; il
+  n'y a pas d'instantanés.
+- Une action faite depuis Tower émet le même type qu'un changement vu par la synchronisation,
+  d'`origin` `user` : une transition Jira donne un `jira.issue.status_changed`.
 
 ### Merge requests
 
@@ -433,20 +538,54 @@ de lancer une synchronisation. À chaque passage :
 - Affichage en **arbre** : une merge request dont la branche cible est la branche source
   d'une autre merge request ouverte du même dépôt en est l'enfant. Les racines sont les merge
   requests qui visent une branche sans merge request ouverte (`main`, `develop`…).
+- Un onglet par dépôt. En tête, un graphique : chaque branche cible de base (`main`…) est un
+  nœud en pointillés, chaque merge request un cercle coloré selon son pipeline, avec ses
+  approbations et son nombre de commentaires. Une pile de merge requests reste sur une ligne, un
+  embranchement descend d'une ligne. Une boucle de branches qui se visent l'une l'autre est
+  coupée pour l'affichage.
 - Chaque merge request s'ouvre sur la forge, dans un nouvel onglet.
 
-### Jira (prévu)
+### Jira
 
-- Ensemble suivi : les tickets du board configuré dont le statut n'est pas dans la catégorie
-  « terminé » de Jira.
-- Les tickets sont regroupés par sprint, et chaque sprint s'affiche en kanban avec les
-  colonnes du board (API Jira Software).
-- Glisser un ticket d'une colonne à une autre déclenche la transition Jira correspondante.
-  Seules les transitions autorisées par le workflow sont proposées ; si une transition exige
-  des champs supplémentaires, Tower affiche l'erreur et propose d'ouvrir le ticket dans Jira.
-- Un ticket peut être transformé en tâche. Le lien est gardé, et la catégorie de statut Jira
-  (`statusCategory` : à faire, en cours, terminé) est affichée sur la tâche, sans
-  synchronisation des statuts.
+- **Jira Cloud**, authentifié par l'e-mail du compte Atlassian et un API token. L'adresse du
+  site doit être de la forme `https://<nom>.atlassian.net` : le token n'est envoyé qu'à un site
+  Jira Cloud.
+- Un **board** est configuré par son identifiant (le nombre de son adresse, `…/boards/42`).
+- Ensemble suivi : les tickets du board **assignés à l'utilisateur du token**, dont le statut
+  n'est pas dans la catégorie « terminé » de Jira (API Jira Software, `board/{id}/issue`).
+- Le kanban reprend les colonnes du board, dans son ordre, même vides, avec les statuts que
+  chacune regroupe (`board/{id}/configuration`). Elles sont relues à chaque synchronisation et
+  gardées dans les `settings` de l'intégration. Un ticket dont le statut n'est dans aucune
+  colonne, que Jira masque, est affiché dans une colonne à part, « hors des colonnes du board ».
+- Glisser un ticket dans une autre colonne lit les transitions autorisées par le workflow
+  depuis son statut actuel et garde celles qui mènent à un statut de la colonne. Une seule :
+  elle est appliquée. Plusieurs : Tower demande le statut d'arrivée. Aucune, ou une transition
+  refusée par Jira (champs obligatoires…) : le ticket revient à sa place, et Tower affiche
+  l'erreur avec un lien vers le ticket dans Jira.
+- Une transition faite depuis Tower met à jour le ticket stocké tout de suite et écrit une ligne
+  `jira.issue.status_changed` d'`origin` `user`, envoyée aux appareils ; la synchronisation
+  suivante n'y voit donc plus de différence. Un ticket passé en « terminé »
+  reste dans la colonne jusqu'à la synchronisation suivante, qui le sort de l'ensemble suivi.
+- Chaque ticket porte son sprint ouvert, s'il en a un (champ `sprint` de l'API Jira Software).
+  Une liste à cases à cocher choisit les sprints affichés, parmi ceux où l'utilisateur a des
+  tickets, plus « Sans sprint » ; les sprints actifs viennent en premier. Le choix est gardé
+  dans le navigateur, par workspace. Ce sont les sprints masqués qui sont retenus : un nouveau
+  sprint est affiché par défaut.
+- Chaque ticket s'ouvre dans Jira, dans un nouvel onglet.
+- Un ticket peut être transformé en tâche, à la fin du backlog : son titre est `<clé> <résumé>`,
+  sa description le lien du ticket. Un ticket a au plus une tâche. La tâche affiche le statut
+  Jira du ticket, sans synchronisation des statuts.
+- Un ticket qui sort de l'ensemble suivi est relu une dernière fois. S'il a une tâche, il est
+  gardé avec ce dernier statut, hors du kanban (`tracked` à faux) ; sinon il est supprimé.
+- Chaque carte porte des actions en icônes : créer la tâche, ou l'ouvrir si elle existe, et
+  **discuter**. Discuter relit le ticket dans Jira à ce moment-là et lance un événement
+  `ai.discuss` vers les appareils du workspace, comme un événement manuel (ligne
+  `event.triggered`). Son payload : `source` (`jira`), `key`, `url`, `summary`, `project`,
+  `issue_type`, `priority`, `status`, `sprint`, `assignee`, `reporter`, `labels`, `description`
+  et `comments` (les 20 derniers : `author`, `created`, `body`). La description et les
+  commentaires sont en texte wiki Jira (API v2), pas en document ADF.
+- Supprimer l'intégration supprime ses tickets ; leurs tâches restent, sans lien. Changer de
+  site, de compte ou de board fait de même et repart d'une nouvelle référence.
 
 ## 4. Agent IA (prévu)
 
@@ -518,11 +657,11 @@ icônes.
 | Accueil            |                                                                    |
 | Tâches             | tableau et backlog                                                 |
 | Événements         | lancement manuel et quick-actions                                  |
-| Jira               | **(prévu)** affiché si le workspace a une intégration Jira         |
+| Jira               | kanban des tickets assignés (**prévu** : affiché seulement avec une intégration Jira) |
 | Merge Requests     | **(prévu : affiché seulement avec une intégration de forge)**      |
 | Historique         |                                                                    |
 | Paramètres         |                                                                    |
-| Download           | menu : télécharger le client, créer et gérer les configurations    |
+| Connecteur         | menu : télécharger le client et le handler de base, créer et gérer les configurations |
 
 ### Indicateur Appareils
 
@@ -544,18 +683,21 @@ les jobs échoués récents.
 | Accueil            |                                                                      |
 | Tâches             | onglet Tableau (sprint actif, cinq colonnes, annulées à part) et onglet Backlog (sprints ouverts et planifiés, backlog, sprints clôturés repliés) ; fiche de tâche avec son historique |
 | Événements         | lancer un événement (type et payload JSON) ; créer, lancer et supprimer des quick-actions |
-| Merge Requests     | arbre des merge requests ouvertes par dépôt, approbations, commentaires, brouillon, pipeline ; section « Fermées récemment » |
+| Merge Requests     | un onglet par dépôt : graphique en arbre des merge requests ouvertes, puis leur liste (approbations, commentaires, brouillon, pipeline), puis celles du dépôt fermées récemment |
 | Historique         | lignes du workspace, les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |
-| Paramètres         | intégration Bitbucket : workspace, e-mail, token, synchronisation, état de la dernière synchronisation |
-| Jira               | **(prévu)** tickets non terminés regroupés par sprint, en kanban     |
-| Mes workspaces     | **(prévu)** liste, création, renommage ; membres, ajout par e-mail, retrait |
+| Paramètres         | intégrations Bitbucket et Jira : workspace ou site et board, e-mail, token, synchronisation, état de la dernière synchronisation |
+| Jira               | tickets non terminés du board assignés à l'utilisateur, en kanban avec les colonnes du board ; transition par glisser-déposer, ouverture dans Jira, création de tâche |
+| Mes workspaces     | modale ouverte par « Gérer mes workspaces » : liste, création, renommage, passage sur un workspace ; membres, ajout par e-mail, retrait, départ |
 
-### Download
+### Connecteur
 
 Un bouton menu en bas de la navbar :
 
 - **Télécharger le client** : `tower-connector.pyz`, à lancer avec un fichier de
   configuration.
+- **Télécharger le handler de base** : `tower-handler.pyz` (voir § Handler de base). Une modale
+  s'ouvre ensuite avec la commande pour le passer au connecteur et un exemple de section
+  `handlers`.
 - **Créer/Gérer les configurations** : une modale à deux onglets.
   - *Voir/Gérer* : les configurations du workspace, leur dernière utilisation, leurs
     abonnements (modifiables sur place) et un bouton de révocation.
@@ -582,9 +724,9 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `integration`     | `workspace`, `type`, `settings` (JSON), `credentials` (chiffré), `last_synced_at`, `last_error` |
 | `pull_request`    | `workspace`, `integration`, `external_id`, `repository`, branches source et cible, `source_commit`, `url`, `title`, `author`, `state`, `draft`, `comment_count`, `pipeline_status`, `synced_at` |
 | `pull_request_approvals` | `pull_request`, `external_user_id`, `display_name`, `status`        |
+| `jira_issue`      | `workspace`, `integration`, `external_id`, `issue_key`, `summary`, `url`, `project`, `issue_type`, `priority`, `status_id`, `status`, `status_category` (`todo`, `in_progress`, `done`), `sprint_id`, `sprint_name`, `sprint_state`, `tracked`, `synced_at` |
 
-**(prévu)** `job`, `device_connection`, `agent_run`, `agent_memory`, et une table de tickets
-pour Jira.
+**(prévu)** `job`, `device_connection`, `agent_run`, `agent_memory`.
 
 ## 7. API
 
@@ -600,7 +742,7 @@ pour Jira.
 1. ~~Comptes, workspaces, tâches, historique, API utilisateur, front avec navbar.~~
 2. ~~WebSocket, connecteur `.pyz`, configurations, appareils connectés, événements et
    quick-actions, abonnements, handler et réponses.~~
-3. Intégrations : ~~Bitbucket~~, Jira et tickets transformables en tâches, GitLab, GitHub.
+3. Intégrations : ~~Bitbucket~~, ~~Jira et tickets transformables en tâches~~, GitLab, GitHub.
 4. Jobs vers un appareil précis.
 5. Agent IA : abstraction, driver Claude, outils, déclenchement par historique, budget.
 6. Notifications.
@@ -639,6 +781,19 @@ rien à installer sur l'appareil. Les coupures sont gérées par la reconnexion 
 Alternatives écartées : SSE + POST (deux canaux à synchroniser) et long-polling (latence,
 requêtes à vide).
 
+**Jira : mes tickets d'un board, avec ses colonnes.** Les étapes d'un kanban Jira (leur ordre,
+les statuts de chaque colonne) sont définies par un board, pas par les tickets : suivre tous les
+tickets assignés, tous projets confondus, ne donnait que les trois catégories de statut, et une
+étape sans ticket n'avait pas de colonne. Le prix : un board à configurer, et les tickets
+assignés hors de ce board ne sont pas suivis.
+
+**Événements d'intégration précis.** Un type par changement (`pr.pipeline.failed`,
+`jira.issue.status_changed`…), avec l'avant et l'après, plutôt qu'un `changed` qui liste des
+champs : un appareil s'abonne exactement à ce qui l'intéresse, et un handler agit sans
+interpréter un diff. Les anciens types génériques sont supprimés, pas gardés en parallèle :
+aucun appareil ne s'y abonnait encore. Le rythme reste de 5 minutes ; les commentaires Jira ne
+sont pas suivis, pour ne pas alourdir chaque passage.
+
 **Intégrations par polling et diff.** Tower interroge les outils externes plutôt que de
 recevoir leurs webhooks : pas d'exposition à des appels entrants, et un seul mécanisme pour
 tous les outils.
@@ -648,7 +803,6 @@ tous les outils.
 - **Jobs** : envoi à un appareil précis, routage, politique d'émission pour l'agent, gardes
   côté appareil (`deny`, `ask`, `auto`), et signature HMAC des messages. À rapprocher des
   configurations et du handler actuels.
-- Envoyer les lignes `pr.*` aux appareils.
 - Suivre aussi, sur Bitbucket, les merge requests dont on est reviewer.
 - Valeurs par défaut du regroupement des runs de l'agent (période sans événement, délai
   maximal).
