@@ -29,6 +29,18 @@ class EventService
     }
 
     /**
+     * Same as an event launched by a user, but brought by a call to a webhook of the workspace.
+     */
+    public function triggerFromWebhook(int $workspace, string $webhook, string $type, string $payload): History
+    {
+        $line = $this->history->log($workspace, self::HISTORY_TYPE, ['event' => $type, 'payload' => json_decode($payload), 'webhook' => $webhook], HistoryService::ORIGIN_WEBHOOK);
+
+        $this->devices->sendEvent($workspace, $line->id, $type, $payload);
+
+        return $line;
+    }
+
+    /**
      * @return Bunch<int,QuickAction> Oldest first
      */
     public function listQuickActions(int $workspace): Bunch

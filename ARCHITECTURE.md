@@ -72,7 +72,7 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
   n'existe pour Tower qu'à travers ses connexions (voir § Connexions).
 - Un workspace peut avoir plusieurs membres, et un utilisateur peut être membre de plusieurs
   workspaces. Tous les membres ont les mêmes droits sur le workspace ; il n'y a pas de rôles.
-- Un workspace choisit ses **sections** parmi `tasks`, `jira`, `merge_requests` et `events`
+- Un workspace choisit ses **sections** parmi `tasks`, `jira`, `merge_requests`, `events` et `webhooks`
   (toutes pour un workspace jamais configuré). Une section décochée est seulement masquée : elle
   quitte la navbar et les Paramètres, et son adresse renvoie à l'accueil, mais ses données, ses
   synchronisations et ses événements continuent. Accueil, Historique, Paramètres et
@@ -125,7 +125,7 @@ listes et à l'intérieur d'une liste.
 ### Historique
 
 Toute action notable écrit une ligne dans la table `history` : `workspace`, `type`,
-`origin` (`user`, `device`, `integration`, plus tard `agent`), l'utilisateur à l'origine s'il
+`origin` (`user`, `device`, `integration`, `webhook`, plus tard `agent`), l'utilisateur à l'origine s'il
 y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les lignes sont
 écrites par `HistoryService::log()`.
 
@@ -140,6 +140,7 @@ y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les l
 | `jira.issue.*`                | changements vus par l'intégration Jira, et transitions faites depuis Tower |
 | `device.connected`, `device.disconnected` | connexions des appareils                |
 | `key.created`, `key.revoked`  | création et révocation d'une configuration          |
+| `webhook.created`, `webhook.enabled`, `webhook.disabled`, `webhook.deleted`, `webhook.secret_regenerated` | gestion des webhooks |
 
 Les lignes `task.*`, `sprint.*` et `event.triggered` sont aussi envoyées aux appareils
 connectés comme des événements du même type (voir § Événements), comme les lignes `pr.*` et
@@ -150,8 +151,8 @@ lignes postérieures à son dernier run.
 
 ### Rétention
 
-Une tâche planifiée quotidienne supprime les lignes d'historique et leurs livraisons plus
-anciennes que **31 jours** (configuration PHP, `HistoryConfiguration`). Une autre supprime
+Une tâche planifiée quotidienne supprime les lignes d'historique et leurs livraisons, ainsi que
+les traces d'appels des webhooks, plus anciennes que **31 jours** (configuration PHP, `HistoryConfiguration`). Une autre supprime
 les merge requests fermées depuis plus de **30 jours**. Les tâches, les sprints et l'état
 courant des intégrations ne sont jamais supprimés par ce nettoyage.
 
@@ -199,6 +200,7 @@ produit :
 
 - à la main, depuis l'écran Événements, ou par une **quick-action** (événement prédéfini du
   workspace, lancé en un clic) ;
+- par l'appel d'un **webhook** du workspace (voir § Webhooks) ;
 - par une ligne d'historique `task.*` ou `sprint.*`.
 
 L'événement est d'abord écrit dans l'historique, puis envoyé au processus WebSocket, qui le
@@ -209,6 +211,45 @@ hors ligne au moment de l'envoi ne le reçoit jamais.
 
 Un événement envoyé depuis une transaction ne part qu'une fois celle-ci validée : le processus
 WebSocket écrit la livraison contre la ligne d'historique, qui doit déjà être visible.
+
+### Webhooks
+
+Un webhook est une adresse qu'un service externe (CI, forge, domotique…) appelle pour lancer des
+événements vers les appareils du workspace. C'est la seule entrée de Tower appelée de l'extérieur
+sans session.
+
+- Il a un nom, un `uuid` (son adresse : `POST /api/hooks/<uuid>`), un secret et une liste de
+  types d'événements (1 à 20, types exacts, sans motif). Chaque appel accepté les lance tous, dans
+  l'ordre, avec le corps de l'appel pour payload : un objet JSON de 32 Kio au plus, `{}` si le
+  corps est vide.
+- Le secret (`whsec_…`, 256 bits) n'est affiché qu'à la création ou à sa régénération, qui
+  invalide l'ancien aussitôt. Il est **chiffré** en base avec `APP_KEY`, et non haché : vérifier
+  une signature demande le secret lui-même.
+- L'appel s'authentifie par l'en-tête `X-Tower-Secret`, ou par une signature HMAC-SHA256 du corps
+  dans `X-Hub-Signature-256` ou `X-Hub-Signature` (`sha256=<hex>`), comme l'envoient GitHub et
+  Bitbucket. Comparaison en temps constant.
+- Un webhook est **sécurisé** par défaut. On peut le créer sans secret, pour des tests ou pour un
+  service qui ne sait pas envoyer d'en-tête : l'adresse seule le déclenche alors, comme les
+  webhooks entrants de Slack ou Discord (l'uuid porte 122 bits aléatoires). Ce choix se fait à la
+  création et ne change plus ; un webhook non sécurisé n'a pas de secret à régénérer, et la liste
+  le signale par un cadenas ouvert.
+- Un webhook s'active et se désactive depuis le front. Désactivé, il garde son adresse et son
+  secret mais refuse les appels.
+- Chaque événement lancé est une ligne `event.triggered` d'`origin` `webhook`, avec le nom du
+  webhook dans ses `details`, envoyée aux appareils comme un événement manuel.
+- **Traces.** Chaque appel à une adresse connue est gardé (table `webhook_call`) : statut, IP,
+  `User-Agent`, date, et le corps, seulement pour un appel authentifié (un inconnu ne remplit pas
+  la base). Ils sont purgés avec l'historique (31 jours) et supprimés avec leur webhook ; les
+  événements déjà lancés restent dans l'historique.
+
+| Statut         | Réponse | Sens                                              |
+|----------------|---------|---------------------------------------------------|
+| `accepted`     | 204     | événements lancés                                 |
+| `unauthorized` | 401     | secret ou signature absent ou faux                |
+| `disabled`     | 403     | webhook désactivé (vérifié après l'authentification) |
+| `invalid`      | 422     | corps qui n'est pas un objet JSON, ou trop gros   |
+
+Une adresse inconnue répond 404 et n'est pas tracée.
 
 ### Livraisons et réponses
 
@@ -687,6 +728,7 @@ du sprint actif, tickets non terminés de l'utilisateur, merge requests ouvertes
 | Jira               | section `jira` : kanban du board                                   |
 | Merge Requests     | section `merge_requests`                                           |
 | Événements         | section `events` : lancement manuel et quick-actions               |
+| Webhooks           | section `webhooks`                                                 |
 | Historique         | en bas                                                             |
 | Documentation / API | en bas, voir § Écrans                                             |
 | Paramètres         | en bas                                                             |
@@ -711,6 +753,7 @@ les jobs échoués récents.
 | Accueil            |                                                                      |
 | Tâches             | onglet Tableau (sprint actif, cinq colonnes, annulées à part) et onglet Backlog (sprints ouverts et planifiés, backlog, sprints clôturés repliés) ; fiche de tâche avec son historique |
 | Événements         | lancer un événement (type et payload JSON) ; créer, lancer et supprimer des quick-actions |
+| Webhooks           | liste des webhooks : interrupteur actif/inactif, cadenas ouvert pour un webhook non sécurisé, adresse à copier, événements, dernier appel ; création (nom, événements, sécurisé ou non, avec un avertissement) et modification (nom, événements), régénération du secret, suppression ; secret affiché une fois avec un exemple `curl` ; modale des appels (statut, IP, `User-Agent`, corps), par pages de 50 |
 | Merge Requests     | un onglet par dépôt : graphique en arbre des merge requests ouvertes, puis leur liste (approbations, commentaires, brouillon, pipeline), puis celles du dépôt fermées récemment |
 | Historique         | lignes du workspace, les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |
 | Paramètres         | onglets verticaux à gauche, contenu à droite, onglet choisi dans l'adresse (`?tab=`) : **Compte** (changement de mot de passe) ; **Interface** (langue : auto, français ou anglais ; thème : auto, clair ou sombre ; gardés dans le navigateur, appliqués sans recharger) ; intégrations Bitbucket et Jira, chacune affichée si sa section est active : workspace ou site et board, e-mail, token, synchronisation, état de la dernière synchronisation ; bloc « Vider une section », toujours visible, qui supprime d'un coup l'intégration Jira ou Bitbucket et ses données |
@@ -751,6 +794,8 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `event_delivery`  | `history`, `access_key`, `connection_uuid`, `hostname`, `payload`, `status`, `exit_code`, `response`, `responded_at` |
 | `access_key`      | configurations : `workspace`, `name`, `client_id`, `secret_hash`, `listen`, `created_at`, `last_used_at`, `revoked_at` |
 | `quick_action`    | `workspace`, `name`, `type`, `payload`, `created_at`                      |
+| `webhook`         | `workspace`, `name`, `uuid`, `secured`, `secret` (chiffré, nul si non sécurisé), `events` (JSON), `enabled`, `created_at`, `last_called_at` |
+| `webhook_call`    | `webhook`, `status`, `ip`, `user_agent`, `payload`, `created_at`          |
 | `integration`     | `workspace`, `type`, `settings` (JSON), `credentials` (chiffré), `last_synced_at`, `last_error` |
 | `pull_request`    | `workspace`, `integration`, `external_id`, `repository`, branches source et cible, `source_commit`, `url`, `title`, `author`, `state`, `draft`, `comment_count`, `pipeline_status`, `synced_at` |
 | `pull_request_approvals` | `pull_request`, `external_user_id`, `display_name`, `status`        |
@@ -766,6 +811,8 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
   (`npm run api:generate`). Chaque requête est limitée au workspace courant de
   l'utilisateur.
 - **API appareil** : la connexion WebSocket `/devices`, authentifiée par la configuration.
+- **Webhooks** : `POST /api/hooks/<uuid>`, authentifié par le secret du webhook, ou par son
+  adresse seule pour un webhook non sécurisé.
 
 ## 8. Feuille de route
 
@@ -828,7 +875,8 @@ sont pas suivis, pour ne pas alourdir chaque passage.
 
 **Intégrations par polling et diff.** Tower interroge les outils externes plutôt que de
 recevoir leurs webhooks : pas d'exposition à des appels entrants, et un seul mécanisme pour
-tous les outils.
+tous les outils. Les webhooks de Tower sont une entrée générique, définie par l'utilisateur, qui
+ne fait que lancer des événements : ils ne remplacent pas ce polling.
 
 ### Ouvertes
 

@@ -3913,6 +3913,697 @@
                 }
             }
         },
+        "\/api\/webhooks": {
+            "get": {
+                "summary": "List webhooks",
+                "description": "The webhooks of the current workspace, oldest first",
+                "operationId": "listWebhooks",
+                "responses": {
+                    "200": {
+                        "description": "The webhooks",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "uuid": {
+                                                "type": "string"
+                                            },
+                                            "events": {
+                                                "type": "array"
+                                            },
+                                            "enabled": {
+                                                "type": "boolean"
+                                            },
+                                            "secured": {
+                                                "type": "boolean"
+                                            },
+                                            "created_at": {
+                                                "type": "string"
+                                            },
+                                            "last_called_at": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "name",
+                                            "uuid",
+                                            "events",
+                                            "enabled",
+                                            "secured",
+                                            "created_at",
+                                            "last_called_at"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 787,
+                                        "name": "rerum non eum",
+                                        "uuid": "aut sed nihil",
+                                        "events": [],
+                                        "enabled": true,
+                                        "secured": true,
+                                        "created_at": "2012-05-02T00:00:00+00:00",
+                                        "last_called_at": "2026-12-09T00:00:00+00:00"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create webhook",
+                "description": "Creates an enabled webhook in the current workspace, secured unless `secured` is false : this choice cannot change. The secret is only given by this answer, null for an unsecured webhook",
+                "operationId": "createWebhook",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "events": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "secured": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "events"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The webhook and its secret",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "webhook": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "uuid": {
+                                                    "type": "string"
+                                                },
+                                                "events": {
+                                                    "type": "array"
+                                                },
+                                                "enabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "secured": {
+                                                    "type": "boolean"
+                                                },
+                                                "created_at": {
+                                                    "type": "string"
+                                                },
+                                                "last_called_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "name",
+                                                "uuid",
+                                                "events",
+                                                "enabled",
+                                                "secured",
+                                                "created_at",
+                                                "last_called_at"
+                                            ]
+                                        },
+                                        "secret": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/webhooks\/{webhook}": {
+            "put": {
+                "summary": "Update webhook",
+                "description": "Changes the name, the triggered events and the state of a webhook of the current workspace",
+                "operationId": "updateWebhook",
+                "parameters": [
+                    {
+                        "name": "webhook",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "events": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "enabled": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "events",
+                                    "enabled"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The webhook",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "uuid": {
+                                            "type": "string"
+                                        },
+                                        "events": {
+                                            "type": "array"
+                                        },
+                                        "enabled": {
+                                            "type": "boolean"
+                                        },
+                                        "secured": {
+                                            "type": "boolean"
+                                        },
+                                        "created_at": {
+                                            "type": "string"
+                                        },
+                                        "last_called_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "uuid",
+                                        "events",
+                                        "enabled",
+                                        "secured",
+                                        "created_at",
+                                        "last_called_at"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 787,
+                                    "name": "rerum non eum",
+                                    "uuid": "aut sed nihil",
+                                    "events": [],
+                                    "enabled": true,
+                                    "secured": true,
+                                    "created_at": "2012-05-02T00:00:00+00:00",
+                                    "last_called_at": "2026-12-09T00:00:00+00:00"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such webhook in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete webhook",
+                "description": "Deletes a webhook of the current workspace and the trace of its calls. The events it triggered stay in the history",
+                "operationId": "deleteWebhook",
+                "parameters": [
+                    {
+                        "name": "webhook",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such webhook in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The webhook is deleted"
+                    }
+                }
+            }
+        },
+        "\/api\/webhooks\/{webhook}\/secret": {
+            "post": {
+                "summary": "Regenerate webhook secret",
+                "description": "Gives a webhook of the current workspace a new secret : the previous one stops working at once",
+                "operationId": "regenerateWebhookSecret",
+                "parameters": [
+                    {
+                        "name": "webhook",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The new secret, only given by this answer",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "secret": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such webhook in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The webhook was created without a secret",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/webhooks\/{webhook}\/calls": {
+            "get": {
+                "summary": "List webhook calls",
+                "description": "The calls received by a webhook of the current workspace, newest first, by pages of 50",
+                "operationId": "listWebhookCalls",
+                "parameters": [
+                    {
+                        "name": "webhook",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "before",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The calls older than `before`, or the latest ones",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            },
+                                            "ip": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "user_agent": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "payload": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "created_at": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "status",
+                                            "ip",
+                                            "user_agent",
+                                            "payload",
+                                            "created_at"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 88,
+                                        "status": "eveniet facere commodi",
+                                        "ip": "eum natus minus",
+                                        "user_agent": "non fugiat commodi",
+                                        "payload": "enim accusamus ipsa",
+                                        "created_at": "2004-03-20T00:00:00+00:00"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such webhook in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/hooks\/{uuid}": {
+            "post": {
+                "summary": "Call webhook",
+                "description": "Triggers the events of a webhook, with the body as payload. Authenticated by the secret in X-Tower-Secret, or by a signature of the body in X-Hub-Signature-256 or X-Hub-Signature (sha256=<HMAC-SHA256>). An unsecured webhook needs neither",
+                "operationId": "callWebhook",
+                "parameters": [
+                    {
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "Missing or wrong secret or signature",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The webhook is disabled",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such webhook",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid body",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The events are triggered"
+                    }
+                }
+            }
+        },
         "\/api\/workspaces": {
             "get": {
                 "summary": "List workspaces",
@@ -3957,13 +4648,14 @@
                                 },
                                 "example": [
                                     {
-                                        "id": 275,
-                                        "name": "voluptate cupiditate dolores",
-                                        "accent_color": "#c8cbd5",
+                                        "id": 97,
+                                        "name": "cupiditate dolores ab",
+                                        "accent_color": "#62bbd2",
                                         "sections": [
-                                            "events",
+                                            "webhooks",
                                             "jira",
-                                            "merge_requests"
+                                            "events",
+                                            "tasks"
                                         ]
                                     }
                                 ]
@@ -4054,13 +4746,14 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 275,
-                                    "name": "voluptate cupiditate dolores",
-                                    "accent_color": "#c8cbd5",
+                                    "id": 97,
+                                    "name": "cupiditate dolores ab",
+                                    "accent_color": "#62bbd2",
                                     "sections": [
-                                        "events",
+                                        "webhooks",
                                         "jira",
-                                        "merge_requests"
+                                        "events",
+                                        "tasks"
                                     ]
                                 }
                             }
@@ -4124,13 +4817,14 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 275,
-                                    "name": "voluptate cupiditate dolores",
-                                    "accent_color": "#c8cbd5",
+                                    "id": 97,
+                                    "name": "cupiditate dolores ab",
+                                    "accent_color": "#62bbd2",
                                     "sections": [
-                                        "events",
+                                        "webhooks",
                                         "jira",
-                                        "merge_requests"
+                                        "events",
+                                        "tasks"
                                     ]
                                 }
                             }
@@ -4235,13 +4929,14 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 275,
-                                    "name": "voluptate cupiditate dolores",
-                                    "accent_color": "#c8cbd5",
+                                    "id": 97,
+                                    "name": "cupiditate dolores ab",
+                                    "accent_color": "#62bbd2",
                                     "sections": [
-                                        "events",
+                                        "webhooks",
                                         "jira",
-                                        "merge_requests"
+                                        "events",
+                                        "tasks"
                                     ]
                                 }
                             }
@@ -4373,7 +5068,8 @@
                                                 "tasks",
                                                 "jira",
                                                 "merge_requests",
-                                                "events"
+                                                "events",
+                                                "webhooks"
                                             ]
                                         }
                                     }
@@ -4431,13 +5127,14 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 275,
-                                    "name": "voluptate cupiditate dolores",
-                                    "accent_color": "#c8cbd5",
+                                    "id": 97,
+                                    "name": "cupiditate dolores ab",
+                                    "accent_color": "#62bbd2",
                                     "sections": [
-                                        "events",
+                                        "webhooks",
                                         "jira",
-                                        "merge_requests"
+                                        "events",
+                                        "tasks"
                                     ]
                                 }
                             }
@@ -4736,21 +5433,6 @@
                         "description": "The member is removed"
                     }
                 }
-            }
-        },
-        "\/{any}": {
-            "get": {
-                "summary": "serveIndexFile",
-                "description": "StaticServer.serveIndexFile",
-                "operationId": "serveIndexFile",
-                "parameters": [
-                    {
-                        "name": "any",
-                        "in": "path",
-                        "required": true,
-                        "schema": {}
-                    }
-                ]
             }
         }
     },

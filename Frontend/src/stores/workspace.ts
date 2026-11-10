@@ -8,8 +8,8 @@ import {
   type ListWorkspacesResponse,
 } from '../client'
 
-export type WorkspaceSection = 'tasks' | 'jira' | 'merge_requests' | 'events'
-export const WORKSPACE_SECTIONS: WorkspaceSection[] = ['tasks', 'jira', 'merge_requests', 'events']
+export type WorkspaceSection = 'tasks' | 'jira' | 'merge_requests' | 'events' | 'webhooks'
+export const WORKSPACE_SECTIONS: WorkspaceSection[] = ['tasks', 'jira', 'merge_requests', 'events', 'webhooks']
 
 export const useWorkspaceStore = defineStore('workspace', () => {
   const current = ref<GetCurrentWorkspaceResponse | null>(null)

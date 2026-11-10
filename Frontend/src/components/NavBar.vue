@@ -71,6 +71,7 @@ const mainItems = computed<NavItem[]>(() =>
     { label: t('nav.jira'), icon: 'pi pi-objects-column', to: { name: 'jira' }, count: openIssues.value, section: 'jira' as const },
     { label: t('nav.mergeRequests'), icon: PULL_REQUEST_ICON, to: { name: 'merge-requests' }, count: pullRequests.open.length, section: 'merge_requests' as const },
     { label: t('nav.events'), icon: 'pi pi-bolt', to: { name: 'events' }, section: 'events' as const },
+    { label: t('nav.webhooks'), icon: 'pi pi-globe', to: { name: 'webhooks' }, section: 'webhooks' as const },
   ].filter(({ section }) => !section || workspace.hasSection(section)),
 )
 

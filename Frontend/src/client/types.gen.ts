@@ -1775,6 +1775,314 @@ export type CloseSprintResponses = {
 
 export type CloseSprintResponse = CloseSprintResponses[keyof CloseSprintResponses];
 
+export type ListWebhooksData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/webhooks';
+};
+
+export type ListWebhooksErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListWebhooksError = ListWebhooksErrors[keyof ListWebhooksErrors];
+
+export type ListWebhooksResponses = {
+    /**
+     * The webhooks
+     */
+    200: Array<{
+        id: number;
+        name: string;
+        uuid: string;
+        events: Array<unknown>;
+        enabled: boolean;
+        secured: boolean;
+        created_at: string;
+        last_called_at: string | null;
+    }>;
+};
+
+export type ListWebhooksResponse = ListWebhooksResponses[keyof ListWebhooksResponses];
+
+export type CreateWebhookData = {
+    body: {
+        name: string;
+        events: Array<string>;
+        secured?: boolean;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/webhooks';
+};
+
+export type CreateWebhookErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type CreateWebhookError = CreateWebhookErrors[keyof CreateWebhookErrors];
+
+export type CreateWebhookResponses = {
+    /**
+     * The webhook and its secret
+     */
+    201: {
+        webhook?: {
+            id: number;
+            name: string;
+            uuid: string;
+            events: Array<unknown>;
+            enabled: boolean;
+            secured: boolean;
+            created_at: string;
+            last_called_at: string | null;
+        };
+        secret?: string;
+    };
+};
+
+export type CreateWebhookResponse = CreateWebhookResponses[keyof CreateWebhookResponses];
+
+export type DeleteWebhookData = {
+    body?: never;
+    path: {
+        webhook: number;
+    };
+    query?: never;
+    url: '/api/webhooks/{webhook}';
+};
+
+export type DeleteWebhookErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such webhook in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type DeleteWebhookError = DeleteWebhookErrors[keyof DeleteWebhookErrors];
+
+export type DeleteWebhookResponses = {
+    /**
+     * The webhook is deleted
+     */
+    204: void;
+};
+
+export type DeleteWebhookResponse = DeleteWebhookResponses[keyof DeleteWebhookResponses];
+
+export type UpdateWebhookData = {
+    body: {
+        name: string;
+        events: Array<string>;
+        enabled: boolean;
+    };
+    path: {
+        webhook: number;
+    };
+    query?: never;
+    url: '/api/webhooks/{webhook}';
+};
+
+export type UpdateWebhookErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such webhook in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type UpdateWebhookError = UpdateWebhookErrors[keyof UpdateWebhookErrors];
+
+export type UpdateWebhookResponses = {
+    /**
+     * The webhook
+     */
+    200: {
+        id: number;
+        name: string;
+        uuid: string;
+        events: Array<unknown>;
+        enabled: boolean;
+        secured: boolean;
+        created_at: string;
+        last_called_at: string | null;
+    };
+};
+
+export type UpdateWebhookResponse = UpdateWebhookResponses[keyof UpdateWebhookResponses];
+
+export type RegenerateWebhookSecretData = {
+    body?: never;
+    path: {
+        webhook: number;
+    };
+    query?: never;
+    url: '/api/webhooks/{webhook}/secret';
+};
+
+export type RegenerateWebhookSecretErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such webhook in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The webhook was created without a secret
+     */
+    409: {
+        error?: string;
+    };
+};
+
+export type RegenerateWebhookSecretError = RegenerateWebhookSecretErrors[keyof RegenerateWebhookSecretErrors];
+
+export type RegenerateWebhookSecretResponses = {
+    /**
+     * The new secret, only given by this answer
+     */
+    200: {
+        secret?: string;
+    };
+};
+
+export type RegenerateWebhookSecretResponse = RegenerateWebhookSecretResponses[keyof RegenerateWebhookSecretResponses];
+
+export type ListWebhookCallsData = {
+    body?: never;
+    path: {
+        webhook: number;
+    };
+    query?: {
+        before?: number;
+    };
+    url: '/api/webhooks/{webhook}/calls';
+};
+
+export type ListWebhookCallsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such webhook in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type ListWebhookCallsError = ListWebhookCallsErrors[keyof ListWebhookCallsErrors];
+
+export type ListWebhookCallsResponses = {
+    /**
+     * The calls older than `before`, or the latest ones
+     */
+    200: Array<{
+        id: number;
+        status: string;
+        ip: string | null;
+        user_agent: string | null;
+        payload: string | null;
+        created_at: string;
+    }>;
+};
+
+export type ListWebhookCallsResponse = ListWebhookCallsResponses[keyof ListWebhookCallsResponses];
+
+export type CallWebhookData = {
+    body?: never;
+    path: {
+        uuid: string;
+    };
+    query?: never;
+    url: '/api/hooks/{uuid}';
+};
+
+export type CallWebhookErrors = {
+    /**
+     * Missing or wrong secret or signature
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The webhook is disabled
+     */
+    403: {
+        error?: string;
+    };
+    /**
+     * No such webhook
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * Invalid body
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type CallWebhookError = CallWebhookErrors[keyof CallWebhookErrors];
+
+export type CallWebhookResponses = {
+    /**
+     * The events are triggered
+     */
+    204: void;
+};
+
+export type CallWebhookResponse = CallWebhookResponses[keyof CallWebhookResponses];
+
 export type ListWorkspacesData = {
     body?: never;
     path?: never;
@@ -1966,7 +2274,7 @@ export type UpdateWorkspaceData = {
     body: {
         name: string;
         accent_color: string | null;
-        sections?: Array<'tasks' | 'jira' | 'merge_requests' | 'events'>;
+        sections?: Array<'tasks' | 'jira' | 'merge_requests' | 'events' | 'webhooks'>;
     };
     path: {
         workspace: number;
@@ -2135,12 +2443,3 @@ export type RemoveWorkspaceMemberResponses = {
 };
 
 export type RemoveWorkspaceMemberResponse = RemoveWorkspaceMemberResponses[keyof RemoveWorkspaceMemberResponses];
-
-export type ServeIndexFileData = {
-    body?: never;
-    path: {
-        any: unknown;
-    };
-    query?: never;
-    url: '/{any}';
-};

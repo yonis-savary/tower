@@ -24,6 +24,7 @@ use Cube\Utils\Attributes\Generated;
  * @property QuickAction[] $quickActions
  * @property Sprint[] $sprints
  * @property Task[] $tasks
+ * @property Webhook[] $webhooks
  * @property WorkspaceMember[] $members
  */
 class Workspace extends Model
@@ -111,6 +112,12 @@ class Workspace extends Model
     }
 
     #[Generated]
+    public function webhooks(): HasMany
+    {
+        return $this->hasMany('webhooks', Webhook::class, 'workspace', 'id');
+    }
+
+    #[Generated]
     public function members(): HasMany
     {
         return $this->hasMany('members', WorkspaceMember::class, 'workspace', 'id');
@@ -128,6 +135,7 @@ class Workspace extends Model
             "quickActions",
             "sprints",
             "tasks",
+            "webhooks",
             "members",
             "_author",
         ];

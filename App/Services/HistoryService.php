@@ -12,6 +12,7 @@ class HistoryService
     public const ORIGIN_USER = 'user';
     public const ORIGIN_DEVICE = 'device';
     public const ORIGIN_INTEGRATION = 'integration';
+    public const ORIGIN_WEBHOOK = 'webhook';
 
     public const DELIVERY_PENDING = 'pending';
     public const DELIVERY_RUNNING = 'running';
@@ -111,6 +112,7 @@ class HistoryService
 
         $database->exec('DELETE FROM event_delivery WHERE history IN (SELECT id FROM history WHERE created_at < {})', [$limit]);
         $database->exec('DELETE FROM history WHERE created_at < {}', [$limit]);
+        $database->exec('DELETE FROM webhook_call WHERE created_at < {}', [$limit]);
     }
 
     private function encode(array $details): string

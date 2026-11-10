@@ -11,6 +11,7 @@ import MergeRequestsView from './views/MergeRequestsView.vue'
 import RegisterView from './views/RegisterView.vue'
 import SettingsView from './views/SettingsView.vue'
 import TasksView from './views/TasksView.vue'
+import WebhooksView from './views/WebhooksView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -22,6 +23,7 @@ const router = createRouter({
         { path: '', name: 'home', component: HomeView, meta: { title: 'nav.home' } },
         { path: 'tasks', name: 'tasks', component: TasksView, meta: { title: 'nav.tasks', section: 'tasks' } },
         { path: 'events', name: 'events', component: EventsView, meta: { title: 'nav.events', section: 'events' } },
+        { path: 'webhooks', name: 'webhooks', component: WebhooksView, meta: { title: 'nav.webhooks', section: 'webhooks' } },
         { path: 'history', name: 'history', component: HistoryView, meta: { title: 'nav.history' } },
         { path: 'jira', name: 'jira', component: JiraView, meta: { title: 'nav.jira', section: 'jira' } },
         { path: 'merge-requests', name: 'merge-requests', component: MergeRequestsView, meta: { title: 'nav.mergeRequests', section: 'merge_requests' } },

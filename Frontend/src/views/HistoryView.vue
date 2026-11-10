@@ -25,6 +25,11 @@ const icons: Record<string, string> = {
   [EVENT_TYPE]: 'pi pi-bolt',
   'key.created': 'pi pi-key',
   'key.revoked': 'pi pi-ban',
+  'webhook.created': 'pi pi-globe',
+  'webhook.enabled': 'pi pi-play',
+  'webhook.disabled': 'pi pi-pause',
+  'webhook.deleted': 'pi pi-trash',
+  'webhook.secret_regenerated': 'pi pi-key',
   'pr.opened': PULL_REQUEST_ICON,
   'pr.merged': 'pi pi-check-circle',
   'pr.declined': 'pi pi-times-circle',
@@ -123,7 +128,7 @@ function detail(line: Line): string {
 
   switch (line.type) {
     case EVENT_TYPE:
-      return parsed.event
+      return parsed.webhook ? `${parsed.event} · ${t('history.viaWebhook', { name: parsed.webhook })}` : parsed.event
     case 'device.connected':
       return `${parsed.hostname ?? t('devices.unknownHost')} · ${parsed.access_key}`
     case 'device.disconnected': {
