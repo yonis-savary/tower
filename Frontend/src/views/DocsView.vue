@@ -5,7 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import SideTabs from '../components/SideTabs.vue'
 import { DOC_PAGES, type DocPage } from './docs/pages'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
@@ -17,7 +17,10 @@ const page = computed<DocPage>({
   set: (value) => void router.replace({ query: { ...route.query, page: value } }),
 })
 
-const content = computed(() => DOC_PAGES.find(({ value }) => value === page.value)!.component)
+const content = computed(() => {
+  const { versions } = DOC_PAGES.find(({ value }) => value === page.value)!
+  return versions[locale.value as keyof typeof versions] ?? versions.fr
+})
 </script>
 
 <template>
@@ -72,6 +75,32 @@ const content = computed(() => DOC_PAGES.find(({ value }) => value === page.valu
   background: var(--p-content-hover-background);
   border-radius: 0.25rem;
   font-size: 0.875em;
+}
+
+.doc :deep(table) {
+  display: block;
+  max-width: 100%;
+  margin: 0.75rem 0;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.doc :deep(th),
+.doc :deep(td) {
+  padding: 0.375rem 0.5rem;
+  border-bottom: 1px solid var(--p-content-border-color);
+  text-align: left;
+  vertical-align: top;
+}
+
+.doc :deep(th) {
+  color: var(--p-text-muted-color);
+  font-weight: 500;
+}
+
+.doc :deep(td:first-child) {
+  white-space: nowrap;
 }
 
 .doc :deep(.note) {

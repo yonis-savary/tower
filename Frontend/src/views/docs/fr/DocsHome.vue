@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { DocPage } from './pages'
+import type { DocPage } from '../pages'
 
 defineEmits<{ open: [page: DocPage] }>()
 </script>

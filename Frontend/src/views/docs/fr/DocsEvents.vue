@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CodeBlock from '../../components/CodeBlock.vue'
+import CodeBlock from '../../../components/CodeBlock.vue'
 
 const envelope = `
 {
@@ -192,30 +192,3 @@ const discussExample = `
   </p>
 </template>
 
-<style scoped>
-table {
-  display: block;
-  max-width: 100%;
-  margin: 0.75rem 0;
-  overflow-x: auto;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-
-th,
-td {
-  padding: 0.375rem 0.5rem;
-  border-bottom: 1px solid var(--p-content-border-color);
-  text-align: left;
-  vertical-align: top;
-}
-
-th {
-  color: var(--p-text-muted-color);
-  font-weight: 500;
-}
-
-td:first-child {
-  white-space: nowrap;
-}
-</style>

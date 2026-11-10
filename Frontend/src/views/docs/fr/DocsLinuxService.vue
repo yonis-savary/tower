@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CodeBlock from '../../components/CodeBlock.vue'
+import CodeBlock from '../../../components/CodeBlock.vue'
 
 const unit = `
 [Unit]
