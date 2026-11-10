@@ -60,24 +60,27 @@ class JiraIssueSync
     }
 
     /**
-     * @return array{columns: list<JiraColumn>, stored: array<string,JiraIssue>, assigned: list<JiraIssueData>, left: list<array{0: JiraIssue, 1: ?JiraIssueData}>}
+     * @return array{account: JiraUser, columns: list<JiraColumn>, stored: array<string,JiraIssue>, board: list<JiraIssueData>, left: list<array{0: JiraIssue, 1: ?JiraIssueData}>}
      */
     private function read(Integration $integration, JiraProvider $provider): array
     {
+        $account = $provider->myself();
         $stored = [];
         foreach (JiraIssue::select()->where('integration', $integration->id)->fetch() as $row)
             $stored[$row->external_id] = $row;
 
-        $assigned = $provider->assignedIssues();
-        $seen = array_flip(array_map(fn (JiraIssueData $issue) => $issue->externalId, $assigned));
+        $board = $provider->boardIssues();
+        $seen = array_flip(array_map(fn (JiraIssueData $issue) => $issue->externalId, $board));
 
         $left = [];
         foreach ($stored as $externalId => $row) {
-            if ($row->tracked && !isset($seen[$externalId]))
-                $left[] = [$row, $provider->issue($row->issue_key)];
+            if (!$row->tracked || isset($seen[$externalId]))
+                continue;
+            // Only the issues of the account are announced : the others need no last reading
+            $left[] = [$row, $row->assignee_id === $account->accountId ? $provider->issue($row->issue_key) : null];
         }
 
-        return ['columns' => $provider->boardColumns(), 'stored' => $stored, 'assigned' => $assigned, 'left' => $left];
+        return ['account' => $account, 'columns' => $provider->boardColumns(), 'stored' => $stored, 'board' => $board, 'left' => $left];
     }
 
     /**
@@ -85,14 +88,15 @@ class JiraIssueSync
      */
     private function apply(Integration $integration, array $changes): array
     {
-        // The first run is the reference : it would otherwise log every existing issue
-        $logChanges = null !== $integration->last_synced_at;
-        $this->storeColumns($integration, $changes['columns']);
+        // The first run is the reference, and so is the first one knowing the account : it would otherwise log every existing issue
+        $logChanges = null !== $integration->last_synced_at && isset($this->integrations->settingsOf($integration)['account']);
+        $account = $changes['account']->accountId;
+        $this->storeBoard($integration, $changes['columns'], $account);
         $lines = [];
 
-        foreach ($changes['assigned'] as $issue) {
+        foreach ($changes['board'] as $issue) {
             $row = $changes['stored'][$issue->externalId] ?? null;
-            $found = $row && $row->tracked ? $this->detect($row->toData(), $issue) : [new IntegrationChange('jira.issue.assigned')];
+            $found = $this->changesOf($row && $row->tracked ? $row->toData() : null, $issue, $account);
 
             $row ??= new JiraIssue(['workspace' => $integration->workspace, 'integration' => $integration->id]);
             $row->copyFrom($issue);
@@ -104,10 +108,11 @@ class JiraIssueSync
         }
 
         foreach ($changes['left'] as [$row, $final]) {
+            $wasMine = $row->assignee_id === $account;
             if ($final)
                 $row->copyFrom($final);
 
-            if ($logChanges)
+            if ($logChanges && $wasMine)
                 $lines[] = $this->events->logIssue($row, $this->leaving($final));
 
             // A task keeps showing the status of its issue : the row stays, only out of the board
@@ -121,6 +126,23 @@ class JiraIssueSync
         }
 
         return $lines;
+    }
+
+    /**
+     * @return list<IntegrationChange>
+     */
+    private function changesOf(?JiraIssueData $before, JiraIssueData $after, string $account): array
+    {
+        // The other issues of the board are shown, never announced
+        $wasMine = $before?->assignee?->accountId === $account;
+        $isMine = $after->assignee?->accountId === $account;
+
+        return match (true) {
+            $isMine && !$wasMine => [new IntegrationChange('jira.issue.assigned')],
+            $wasMine && !$isMine => [new IntegrationChange('jira.issue.unassigned', ['status' => $after->status, 'assignee' => $after->assignee?->name])],
+            $isMine => $this->detect($before, $after),
+            default => [],
+        };
     }
 
     /**
@@ -147,11 +169,12 @@ class JiraIssueSync
     /**
      * @param list<JiraColumn> $columns
      */
-    private function storeColumns(Integration $integration, array $columns): void
+    private function storeBoard(Integration $integration, array $columns, string $account): void
     {
         $integration->settings = json_encode([
             ...$this->integrations->settingsOf($integration),
             'columns' => array_map(fn (JiraColumn $column) => ['name' => $column->name, 'statuses' => $column->statusIds], $columns),
+            'account' => $account,
         ], JSON_THROW_ON_ERROR);
     }
 }

@@ -70,7 +70,9 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
   n'existe pour Tower qu'à travers ses connexions (voir § Connexions).
 - Un workspace peut avoir plusieurs membres, et un utilisateur peut être membre de plusieurs
   workspaces. Tous les membres ont les mêmes droits sur le workspace ; il n'y a pas de rôles.
-- Tout membre peut renommer le workspace, en ajouter un autre par l'e-mail de son compte Tower
+- Un workspace peut avoir une couleur (`accent_color`, `#rrggbb`) : quand il est le workspace
+  courant, la page porte une bordure de cette couleur à gauche ; sans couleur, rien.
+- Tout membre peut renommer le workspace, changer sa couleur, en ajouter un autre par l'e-mail de son compte Tower
   (un compte existant et actif : il n'y a pas d'invitation), retirer un membre ou le quitter.
   Un workspace créé depuis le front n'a que son créateur pour membre et n'est pas sélectionné.
 - Un workspace garde toujours au moins un membre : le dernier ne peut pas être retiré, puisqu'un
@@ -475,13 +477,14 @@ Merge requests :
 | `pr.ready`                  | elle quitte l'état brouillon                                   |
 | `pr.retargeted`             | sa branche cible change                                        |
 
-Tickets Jira :
+Tickets Jira, seulement pour ceux de l'utilisateur du token : les autres tickets du board
+s'affichent, mais n'émettent rien.
 
 | Type                        | Quand                                                          |
 |-----------------------------|----------------------------------------------------------------|
-| `jira.issue.assigned`       | un ticket entre dans l'ensemble suivi                          |
-| `jira.issue.done`           | il en sort, dans la catégorie « terminé »                      |
-| `jira.issue.unassigned`     | il en sort autrement : réassigné, sorti du board, ou supprimé (`status` à `null`) |
+| `jira.issue.assigned`       | un ticket du board devient le sien : nouveau, ou réassigné à lui |
+| `jira.issue.done`           | un des siens sort du board non terminé, dans la catégorie « terminé » |
+| `jira.issue.unassigned`     | un des siens ne l'est plus : réassigné (`assignee`, `null` si plus personne), sorti du board, ou supprimé (`status` à `null`) |
 | `jira.issue.status_changed` | son statut change (statuts et catégories avant et après)       |
 | `jira.issue.sprint_changed` | son sprint change (`null` : sans sprint)                       |
 | `jira.issue.priority_changed` | sa priorité change                                           |
@@ -551,8 +554,16 @@ la synchronisation, qui seule sait qu'un élément apparaît ou disparaît.
   site doit être de la forme `https://<nom>.atlassian.net` : le token n'est envoyé qu'à un site
   Jira Cloud.
 - Un **board** est configuré par son identifiant (le nombre de son adresse, `…/boards/42`).
-- Ensemble suivi : les tickets du board **assignés à l'utilisateur du token**, dont le statut
-  n'est pas dans la catégorie « terminé » de Jira (API Jira Software, `board/{id}/issue`).
+- Ensemble suivi : **tous** les tickets du board dont le statut n'est pas dans la catégorie
+  « terminé » de Jira (API Jira Software, `board/{id}/issue`), avec leur assigné (identifiant,
+  nom, avatar). Chaque passage lit aussi le compte du token (`/myself`), gardé dans les
+  `settings` : c'est « moi » pour le filtre, le compteur et les événements. Le premier passage
+  qui connaît le compte sert de nouvelle référence.
+- Chaque carte porte la pastille de son assigné : son avatar Jira, ses initiales si l'avatar ne
+  se charge pas, une silhouette s'il n'y a personne. La case « Mes tickets seulement », avant le
+  choix des sprints, ne garde que les tickets du compte et masque alors les pastilles ; elle est
+  décochée par défaut et gardée dans le navigateur, par workspace. Le compteur de la navbar ne
+  compte que les tickets du compte.
 - Le kanban reprend les colonnes du board, dans son ordre, même vides, avec les statuts que
   chacune regroupe (`board/{id}/configuration`). Elles sont relues à chaque synchronisation et
   gardées dans les `settings` de l'intégration. Un ticket dont le statut n'est dans aucune
@@ -562,9 +573,9 @@ la synchronisation, qui seule sait qu'un élément apparaît ou disparaît.
   elle est appliquée. Plusieurs : Tower demande le statut d'arrivée. Aucune, ou une transition
   refusée par Jira (champs obligatoires…) : le ticket revient à sa place, et Tower affiche
   l'erreur avec un lien vers le ticket dans Jira.
-- Une transition faite depuis Tower met à jour le ticket stocké tout de suite et écrit une ligne
-  `jira.issue.status_changed` d'`origin` `user`, envoyée aux appareils ; la synchronisation
-  suivante n'y voit donc plus de différence. Un ticket passé en « terminé »
+- Une transition faite depuis Tower met à jour le ticket stocké tout de suite et, si c'est un
+  ticket de l'utilisateur, écrit une ligne `jira.issue.status_changed` d'`origin` `user`,
+  envoyée aux appareils ; la synchronisation suivante n'y voit donc plus de différence. Un ticket passé en « terminé »
   reste dans la colonne jusqu'à la synchronisation suivante, qui le sort de l'ensemble suivi.
 - Chaque ticket porte son sprint ouvert, s'il en a un (champ `sprint` de l'API Jira Software).
   Une liste à cases à cocher choisit les sprints affichés, parmi ceux où l'utilisateur a des
@@ -686,8 +697,8 @@ les jobs échoués récents.
 | Merge Requests     | un onglet par dépôt : graphique en arbre des merge requests ouvertes, puis leur liste (approbations, commentaires, brouillon, pipeline), puis celles du dépôt fermées récemment |
 | Historique         | lignes du workspace, les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |
 | Paramètres         | intégrations Bitbucket et Jira : workspace ou site et board, e-mail, token, synchronisation, état de la dernière synchronisation |
-| Jira               | tickets non terminés du board assignés à l'utilisateur, en kanban avec les colonnes du board ; transition par glisser-déposer, ouverture dans Jira, création de tâche |
-| Mes workspaces     | modale ouverte par « Gérer mes workspaces » : liste, création, renommage, passage sur un workspace ; membres, ajout par e-mail, retrait, départ |
+| Jira               | tickets non terminés du board, avec la pastille de leur assigné, ou seulement les siens, en kanban avec les colonnes du board ; transition par glisser-déposer, ouverture dans Jira, création de tâche |
+| Mes workspaces     | modale ouverte par « Gérer mes workspaces » : liste, création, renommage, couleur, passage sur un workspace ; membres, ajout par e-mail, retrait, départ |
 
 ### Connecteur
 
@@ -724,7 +735,7 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `integration`     | `workspace`, `type`, `settings` (JSON), `credentials` (chiffré), `last_synced_at`, `last_error` |
 | `pull_request`    | `workspace`, `integration`, `external_id`, `repository`, branches source et cible, `source_commit`, `url`, `title`, `author`, `state`, `draft`, `comment_count`, `pipeline_status`, `synced_at` |
 | `pull_request_approvals` | `pull_request`, `external_user_id`, `display_name`, `status`        |
-| `jira_issue`      | `workspace`, `integration`, `external_id`, `issue_key`, `summary`, `url`, `project`, `issue_type`, `priority`, `status_id`, `status`, `status_category` (`todo`, `in_progress`, `done`), `sprint_id`, `sprint_name`, `sprint_state`, `tracked`, `synced_at` |
+| `jira_issue`      | `workspace`, `integration`, `external_id`, `issue_key`, `summary`, `url`, `project`, `issue_type`, `priority`, `status_id`, `status`, `status_category` (`todo`, `in_progress`, `done`), `sprint_id`, `sprint_name`, `sprint_state`, `assignee_id`, `assignee_name`, `assignee_avatar`, `tracked`, `synced_at` |
 
 **(prévu)** `job`, `device_connection`, `agent_run`, `agent_memory`.
 
@@ -781,11 +792,13 @@ rien à installer sur l'appareil. Les coupures sont gérées par la reconnexion 
 Alternatives écartées : SSE + POST (deux canaux à synchroniser) et long-polling (latence,
 requêtes à vide).
 
-**Jira : mes tickets d'un board, avec ses colonnes.** Les étapes d'un kanban Jira (leur ordre,
-les statuts de chaque colonne) sont définies par un board, pas par les tickets : suivre tous les
+**Jira : tout un board, avec ses colonnes.** Les étapes d'un kanban Jira (leur ordre, les
+statuts de chaque colonne) sont définies par un board, pas par les tickets : suivre tous les
 tickets assignés, tous projets confondus, ne donnait que les trois catégories de statut, et une
 étape sans ticket n'avait pas de colonne. Le prix : un board à configurer, et les tickets
-assignés hors de ce board ne sont pas suivis.
+assignés hors de ce board ne sont pas suivis. Tout le board est affiché, pour voir qui fait
+quoi, mais seuls les tickets de l'utilisateur émettent des événements : l'activité de l'équipe
+noierait les appareils et l'historique.
 
 **Événements d'intégration précis.** Un type par changement (`pr.pipeline.failed`,
 `jira.issue.status_changed`…), avec l'avant et l'après, plutôt qu'un `changed` qui liste des

@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import {
   createTaskFromJiraIssue,
   discussJiraIssue,
-  listJiraColumns,
+  getJiraBoard,
   listJiraIssues,
   listJiraIssueTransitions,
   transitionJiraIssue,
@@ -19,16 +19,20 @@ export const JIRA_SEVERITIES: Record<JiraCategory, string> = { todo: 'secondary'
 export const useJiraStore = defineStore('jira', () => {
   const issues = ref<JiraIssue[]>([])
   const columns = ref<JiraColumn[]>([])
+  const accountId = ref<string | null>(null)
   const failed = ref(false)
 
   const byId = computed(() => new Map(issues.value.map((issue) => [issue.id, issue])))
   const tracked = computed(() => issues.value.filter(({ tracked }) => tracked))
+  const mine = computed(() => tracked.value.filter(({ assignee_id }) => assignee_id !== null && assignee_id === accountId.value))
 
   async function load(): Promise<void> {
-    const [issueList, columnList] = await Promise.all([listJiraIssues(), listJiraColumns()])
-    failed.value = !issueList.data || !columnList.data
+    const [issueList, board] = await Promise.all([listJiraIssues(), getJiraBoard()])
+    failed.value = !issueList.data || !board.data
     if (issueList.data) issues.value = issueList.data as JiraIssue[]
-    if (columnList.data) columns.value = columnList.data as JiraColumn[]
+    if (!board.data) return
+    columns.value = (board.data.columns ?? []) as JiraColumn[]
+    accountId.value = board.data.account_id ?? null
   }
 
   async function transitionsOf(issue: number): Promise<JiraTransition[] | null> {
@@ -53,5 +57,5 @@ export const useJiraStore = defineStore('jira', () => {
     return !!response?.ok
   }
 
-  return { issues, columns, failed, byId, tracked, load, transitionsOf, transition, createTask, discuss }
+  return { issues, columns, accountId, failed, byId, tracked, mine, load, transitionsOf, transition, createTask, discuss }
 })

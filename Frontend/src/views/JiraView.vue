@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 import Button from 'primevue/button'
+import Checkbox from 'primevue/checkbox'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
 import MultiSelect from 'primevue/multiselect'
@@ -40,6 +41,27 @@ const unmapped = ref<JiraIssue[]>([])
 
 const taskOf = computed(() => new Map(tasks.tasks.filter(({ jira_issue }) => jira_issue !== null).map(({ id, jira_issue }) => [jira_issue!, id])))
 
+const onlyMineKey = computed(() => `tower.jira.onlyMine.${workspace.current?.id}`)
+const onlyMine = ref(false)
+
+watch(onlyMineKey, (key) => {
+  try {
+    onlyMine.value = localStorage.getItem(key) === '1'
+  } catch {
+    onlyMine.value = false
+  }
+}, { immediate: true })
+
+watch(onlyMine, (value) => {
+  try {
+    localStorage.setItem(onlyMineKey.value, value ? '1' : '0')
+  } catch {
+    // Private browsing or blocked storage : the choice only lasts for this page
+  }
+})
+
+const boardIssues = computed(() => (onlyMine.value ? store.mine : store.tracked))
+
 // The hidden sprints are kept rather than the shown ones, so that a new sprint shows up
 const hiddenSprints = ref<string[]>([])
 const hiddenSprintsKey = computed(() => `tower.jira.hiddenSprints.${workspace.current?.id}`)
@@ -50,14 +72,14 @@ function sprintOf(issue: JiraIssue): string {
 
 const sprintOptions = computed<SprintOption[]>(() => {
   const sprints = new Map<string, JiraIssue>()
-  store.tracked.forEach((issue) => { if (issue.sprint_id) sprints.set(issue.sprint_id, issue) })
+  boardIssues.value.forEach((issue) => { if (issue.sprint_id) sprints.set(issue.sprint_id, issue) })
 
   const ordered = [...sprints.values()].sort((a, b) =>
     (SPRINT_STATE_ORDER[a.sprint_state ?? ''] ?? 2) - (SPRINT_STATE_ORDER[b.sprint_state ?? ''] ?? 2) || Number(a.sprint_id) - Number(b.sprint_id))
 
   return [
     ...ordered.map(({ sprint_id, sprint_name }) => ({ value: sprint_id!, label: sprint_name ?? sprint_id! })),
-    ...(store.tracked.some(({ sprint_id }) => !sprint_id) ? [{ value: NO_SPRINT, label: t('jira.noSprint') }] : []),
+    ...(boardIssues.value.some(({ sprint_id }) => !sprint_id) ? [{ value: NO_SPRINT, label: t('jira.noSprint') }] : []),
   ]
 })
 
@@ -81,7 +103,7 @@ watch(hiddenSprintsKey, (key) => {
   }
 }, { immediate: true })
 
-const shownIssues = computed(() => store.tracked.filter((issue) => !hiddenSprints.value.includes(sprintOf(issue))))
+const shownIssues = computed(() => boardIssues.value.filter((issue) => !hiddenSprints.value.includes(sprintOf(issue))))
 
 async function load() {
   await Promise.all([store.load(), tasks.load()])
@@ -184,6 +206,10 @@ async function discuss(issue: JiraIssue) {
 <template>
   <header class="page-header">
     <h1 class="page-title">{{ t('nav.jira') }}</h1>
+    <label class="only-mine">
+      <Checkbox v-model="onlyMine" binary />
+      {{ t('jira.onlyMine') }}
+    </label>
     <MultiSelect
       v-if="sprintOptions.length"
       v-model="shownSprints"
@@ -232,6 +258,7 @@ async function discuss(issue: JiraIssue) {
           :key="issue.id"
           :issue="issue"
           :task-id="taskOf.get(issue.id) ?? null"
+          :show-assignee="!onlyMine"
           :creating-task="creatingTask === issue.id"
           :discussing="discussing === issue.id"
           @create-task="createTask(issue)"
@@ -260,6 +287,7 @@ async function discuss(issue: JiraIssue) {
           :key="issue.id"
           :issue="issue"
           :task-id="taskOf.get(issue.id) ?? null"
+          :show-assignee="!onlyMine"
           :creating-task="creatingTask === issue.id"
           :discussing="discussing === issue.id"
           @create-task="createTask(issue)"
@@ -306,6 +334,13 @@ async function discuss(issue: JiraIssue) {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
+}
+
+.only-mine {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
 }
 
 .sprint-select {

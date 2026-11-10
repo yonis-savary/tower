@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Button from 'primevue/button'
 import Tag from 'primevue/tag'
 import { useToast } from 'primevue/usetoast'
 import { useJiraStore } from '../stores/jira'
@@ -17,17 +16,6 @@ const jira = useJiraStore()
 const discussing = ref(false)
 
 const issue = computed(() => (props.task.jira_issue === null ? undefined : jira.byId.get(props.task.jira_issue)))
-
-// The key becomes the link to the issue where the title has it, or is put in front of the title
-const title = computed(() => {
-  const { title } = props.task
-  if (!issue.value) return null
-
-  const index = title.indexOf(issue.value.key)
-  return index === -1
-    ? { before: '', after: ` ${title}` }
-    : { before: title.slice(0, index), after: title.slice(index + issue.value.key.length) }
-})
 
 async function discuss() {
   if (!issue.value) return
@@ -45,30 +33,28 @@ async function discuss() {
 <template>
   <div class="task-card" role="button" tabindex="0" @click="$emit('open')" @keydown.enter="$emit('open')">
     <div class="task-card-main">
-      <span class="task-card-title">
-        <template v-if="issue && title">
-          {{ title.before }}<a :href="issue.url" target="_blank" rel="noopener noreferrer" :title="t('jira.openInJira')" @click.stop @keydown.enter.stop>{{ issue.key }}</a>{{ title.after }}
-        </template>
-        <template v-else>{{ task.title }}</template>
-      </span>
+      <span class="task-card-title">{{ task.title }}</span>
       <Tag v-if="showStatus" :value="t(`tasks.status.${task.status}`)" severity="secondary" />
     </div>
 
     <footer v-if="issue" class="task-card-footer">
-      <small :title="t('tasks.issueStatus', { key: issue.key })">{{ issue.status }}</small>
-      <Button
-        icon="pi pi-comments"
-        size="small"
-        rounded
-        outlined
-        severity="secondary"
-        class="task-card-action"
-        :aria-label="t('jira.discuss')"
-        :title="t('jira.discuss')"
-        :loading="discussing"
-        @click.stop="discuss"
-        @keydown.enter.stop
-      />
+      <span class="task-card-issue">
+        <a :href="issue.url" target="_blank" rel="noopener noreferrer" :title="t('jira.openInJira')" @click.stop @keydown.enter.stop>{{ issue.key }}</a>
+        <small :title="t('tasks.issueStatus', { key: issue.key })">({{ issue.status }})</small>
+      </span>
+      <span class="task-card-actions">
+        <button
+          type="button"
+          class="card-action"
+          :aria-label="t('jira.discuss')"
+          :title="t('jira.discuss')"
+          :disabled="discussing"
+          @click.stop="discuss"
+          @keydown.enter.stop
+        >
+          <i :class="['pi', discussing ? 'pi-spin pi-spinner' : 'pi-comments']" aria-hidden="true" />
+        </button>
+      </span>
     </footer>
   </div>
 </template>
@@ -107,7 +93,19 @@ async function discuss() {
   align-items: center;
 }
 
-.task-card-footer small {
+.task-card-footer:not(:empty) {
+  margin-top: .5em;
+}
+
+.task-card-issue {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  min-width: 0;
+  font-size: 0.875rem;
+}
+
+.task-card-issue small {
   min-width: 0;
   overflow: hidden;
   color: var(--p-text-muted-color);
@@ -115,17 +113,15 @@ async function discuss() {
   white-space: nowrap;
 }
 
+.task-card-actions {
+  display: flex;
+  gap: 0.375rem;
+  margin-left: auto;
+}
+
 .task-card-title {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.task-card-title a {
-  font-weight: 600;
-}
-
-.task-card-action {
-  width: 1.75rem;
-  height: 1.75rem;
-}
 </style>

@@ -47,9 +47,10 @@ class WorkspaceService
         return $workspace;
     }
 
-    public function rename(Workspace $workspace, string $name): Workspace
+    public function update(Workspace $workspace, string $name, ?string $accentColor): Workspace
     {
         $workspace->name = $name;
+        $workspace->accent_color = null === $accentColor ? null : strtolower($accentColor);
 
         return $workspace->save();
     }

@@ -1014,14 +1014,14 @@ export type SyncJiraIntegrationResponses = {
 
 export type SyncJiraIntegrationResponse = SyncJiraIntegrationResponses[keyof SyncJiraIntegrationResponses];
 
-export type ListJiraColumnsData = {
+export type GetJiraBoardData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/jira/columns';
+    url: '/api/jira/board';
 };
 
-export type ListJiraColumnsErrors = {
+export type GetJiraBoardErrors = {
     /**
      * No active session
      */
@@ -1030,19 +1030,22 @@ export type ListJiraColumnsErrors = {
     };
 };
 
-export type ListJiraColumnsError = ListJiraColumnsErrors[keyof ListJiraColumnsErrors];
+export type GetJiraBoardError = GetJiraBoardErrors[keyof GetJiraBoardErrors];
 
-export type ListJiraColumnsResponses = {
+export type GetJiraBoardResponses = {
     /**
-     * The columns, empty before the first sync
+     * The board, empty before the first sync
      */
-    200: Array<{
-        name?: string;
-        statuses?: Array<string>;
-    }>;
+    200: {
+        account_id?: string;
+        columns?: Array<{
+            name?: string;
+            statuses?: Array<string>;
+        }>;
+    };
 };
 
-export type ListJiraColumnsResponse = ListJiraColumnsResponses[keyof ListJiraColumnsResponses];
+export type GetJiraBoardResponse = GetJiraBoardResponses[keyof GetJiraBoardResponses];
 
 export type ListJiraIssuesData = {
     body?: never;
@@ -1080,6 +1083,9 @@ export type ListJiraIssuesResponses = {
         sprint_id: string | null;
         sprint_name: string | null;
         sprint_state: string | null;
+        assignee_id: string | null;
+        assignee_name: string | null;
+        assignee_avatar: string | null;
         tracked: boolean;
     }>;
 };
@@ -1179,6 +1185,9 @@ export type TransitionJiraIssueResponses = {
         sprint_id: string | null;
         sprint_name: string | null;
         sprint_state: string | null;
+        assignee_id: string | null;
+        assignee_name: string | null;
+        assignee_avatar: string | null;
         tracked: boolean;
     };
 };
@@ -1755,6 +1764,7 @@ export type ListWorkspacesResponses = {
     200: Array<{
         id: number;
         name: string;
+        accent_color: string | null;
     }>;
 };
 
@@ -1791,6 +1801,7 @@ export type CreateWorkspaceResponses = {
     201: {
         id: number;
         name: string;
+        accent_color: string | null;
     };
 };
 
@@ -1827,6 +1838,7 @@ export type GetCurrentWorkspaceResponses = {
     200: {
         id: number;
         name: string;
+        accent_color: string | null;
     };
 };
 
@@ -1869,6 +1881,7 @@ export type SelectWorkspaceResponses = {
     200: {
         id: number;
         name: string;
+        accent_color: string | null;
     };
 };
 
@@ -1909,9 +1922,10 @@ export type GetWorkspaceSocketResponses = {
 
 export type GetWorkspaceSocketResponse = GetWorkspaceSocketResponses[keyof GetWorkspaceSocketResponses];
 
-export type RenameWorkspaceData = {
+export type UpdateWorkspaceData = {
     body: {
         name: string;
+        accent_color: string | null;
     };
     path: {
         workspace: number;
@@ -1920,7 +1934,7 @@ export type RenameWorkspaceData = {
     url: '/api/workspaces/{workspace}';
 };
 
-export type RenameWorkspaceErrors = {
+export type UpdateWorkspaceErrors = {
     /**
      * No active session
      */
@@ -1939,19 +1953,20 @@ export type RenameWorkspaceErrors = {
     422: ValidationErrors;
 };
 
-export type RenameWorkspaceError = RenameWorkspaceErrors[keyof RenameWorkspaceErrors];
+export type UpdateWorkspaceError = UpdateWorkspaceErrors[keyof UpdateWorkspaceErrors];
 
-export type RenameWorkspaceResponses = {
+export type UpdateWorkspaceResponses = {
     /**
      * The workspace
      */
     200: {
         id: number;
         name: string;
+        accent_color: string | null;
     };
 };
 
-export type RenameWorkspaceResponse = RenameWorkspaceResponses[keyof RenameWorkspaceResponses];
+export type UpdateWorkspaceResponse = UpdateWorkspaceResponses[keyof UpdateWorkspaceResponses];
 
 export type ListWorkspaceMembersData = {
     body?: never;

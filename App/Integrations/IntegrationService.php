@@ -112,6 +112,11 @@ class IntegrationService
         return json_decode($integration->settings, true) ?? [];
     }
 
+    public function jiraAccountOf(Integration $integration): ?string
+    {
+        return $this->settingsOf($integration)['account'] ?? null;
+    }
+
     public function jiraProviderFor(Integration $integration): JiraProvider
     {
         $settings = $this->settingsOf($integration);

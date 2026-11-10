@@ -5,10 +5,10 @@ namespace App\Integrations\Jira;
 class JiraProvider
 {
     private const PAGE_LENGTH = 100;
-    private const FIELDS = 'summary,status,issuetype,priority,project,sprint';
+    private const FIELDS = 'summary,status,issuetype,priority,project,sprint,assignee';
     private const CONTENT_FIELDS = self::FIELDS.',description,assignee,reporter,labels,comment';
     private const CONTENT_COMMENTS = 20;
-    private const ASSIGNED_JQL = 'assignee = currentUser() AND statusCategory != Done ORDER BY updated DESC';
+    private const BOARD_JQL = 'statusCategory != Done ORDER BY updated DESC';
 
     private const CATEGORIES = [
         'new' => JiraIssueData::CATEGORY_TODO,
@@ -24,11 +24,11 @@ class JiraProvider
     /**
      * @return list<JiraIssueData>
      */
-    public function assignedIssues(): array
+    public function boardIssues(): array
     {
         $path = "/rest/agile/1.0/board/{$this->board}/issue";
         $issues = [];
-        $parameters = ['jql' => self::ASSIGNED_JQL, 'fields' => self::FIELDS, 'maxResults' => self::PAGE_LENGTH, 'startAt' => 0];
+        $parameters = ['jql' => self::BOARD_JQL, 'fields' => self::FIELDS, 'maxResults' => self::PAGE_LENGTH, 'startAt' => 0];
 
         while (true) {
             $page = $this->client->read($path, $parameters) ?? throw new \RuntimeException("Jira does not know the board {$this->board}");
@@ -39,6 +39,13 @@ class JiraProvider
             if ([] === $values || $parameters['startAt'] >= ($page['total'] ?? 0))
                 return $issues;
         }
+    }
+
+    public function myself(): JiraUser
+    {
+        $user = $this->client->read('/rest/api/3/myself') ?? throw new \RuntimeException('Jira does not know the account of this token');
+
+        return $this->toUser($user);
     }
 
     /**
@@ -145,6 +152,16 @@ class JiraProvider
                 name: (string) ($fields['sprint']['name'] ?? ''),
                 state: (string) ($fields['sprint']['state'] ?? ''),
             ) : null,
+            assignee: isset($fields['assignee']['accountId']) ? $this->toUser($fields['assignee']) : null,
+        );
+    }
+
+    private function toUser(array $user): JiraUser
+    {
+        return new JiraUser(
+            accountId: (string) $user['accountId'],
+            name: (string) ($user['displayName'] ?? ''),
+            avatar: $user['avatarUrls']['24x24'] ?? null,
         );
     }
 

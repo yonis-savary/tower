@@ -61,6 +61,8 @@ class JiraTest extends CubeTestCase
     }
 
     private const BOARD = 7;
+    private const ME = ['accountId' => 'me-123', 'displayName' => 'Alice', 'avatarUrls' => ['24x24' => 'https://avatars.example/alice.png']];
+    private const BOB = ['accountId' => 'bob-456', 'displayName' => 'Bob'];
     private const STATUSES = [
         '11' => ['id' => '11', 'name' => 'To Do', 'statusCategory' => ['key' => 'new']],
         '21' => ['id' => '21', 'name' => 'In Progress', 'statusCategory' => ['key' => 'indeterminate']],
@@ -72,6 +74,7 @@ class JiraTest extends CubeTestCase
     private function fakeJira(): HttpMockServer
     {
         return HttpMockServer::fromArray([
+            '/rest/api/3/myself' => fn () => Response::json(self::ME),
             '/rest/agile/1.0/board/{int:board}/issue' => function (Request $request, int $board) {
                 if (200 !== $this->searchStatus || self::BOARD !== $board)
                     return Response::json([], 200 === $this->searchStatus ? 404 : $this->searchStatus);
@@ -125,6 +128,7 @@ class JiraTest extends CubeTestCase
                 'issuetype' => ['name' => 'Story'],
                 'priority' => ['name' => 'Medium'],
                 'project' => ['name' => 'Platform'],
+                'assignee' => self::ME,
                 ...$fields,
             ],
         ];
@@ -202,7 +206,7 @@ class JiraTest extends CubeTestCase
         $this->assertSame(self::SITE.'/browse/PLAT-2', $second->url);
         $this->assertNull($this->stored('PLAT-1')->priority);
 
-        $columns = $this->get('/api/jira/columns')->assertOk()->json();
+        $columns = $this->get('/api/jira/board')->assertOk()->json()['columns'];
         $this->assertSame(['Backlog', 'In Progress', 'Review', 'Done'], array_column($columns, 'name'));
         $this->assertSame(['22', '23'], $columns[2]['statuses']);
     }
@@ -217,7 +221,7 @@ class JiraTest extends CubeTestCase
 
         $this->putJson('/api/integrations/jira', ['site' => self::SITE, 'email' => 'me@example.com', 'board' => 8])->assertOk();
         $this->assertSame([], $this->get('/api/jira/issues')->assertOk()->json());
-        $this->assertSame([], $this->get('/api/jira/columns')->assertOk()->json());
+        $this->assertSame([], $this->get('/api/jira/board')->assertOk()->json()['columns']);
 
         $this->sync();
         $this->assertSame('Jira does not know the board 8', $this->integration()->last_error);
@@ -280,6 +284,58 @@ class JiraTest extends CubeTestCase
         ], json_decode($lines['jira.issue.status_changed'], true));
         $this->assertSame(['from' => null, 'to' => 'Sprint 12'], array_intersect_key(json_decode($lines['jira.issue.sprint_changed'], true), ['from' => 0, 'to' => 0]));
         $this->assertEqualsCanonicalizing($this->historyTypes(), array_column($this->broadcast->emitted, 'event'));
+    }
+
+    public function testTheWholeBoardIsShownButOnlyTheIssuesOfTheAccountAreAnnounced()
+    {
+        $this->register();
+        $this->save();
+        $this->issue('100', 'PLAT-1');
+        $this->issue('101', 'PLAT-2', ['assignee' => self::BOB]);
+        $this->issue('102', 'PLAT-3', ['assignee' => null]);
+        $this->assigned = ['PLAT-1', 'PLAT-2', 'PLAT-3'];
+        $this->sync();
+
+        $this->assertSame('me-123', $this->get('/api/jira/board')->assertOk()->json()['account_id']);
+        $issues = array_column($this->get('/api/jira/issues')->assertOk()->json(), null, 'key');
+        $this->assertSame(['me-123', 'Alice', 'https://avatars.example/alice.png'], [$issues['PLAT-1']['assignee_id'], $issues['PLAT-1']['assignee_name'], $issues['PLAT-1']['assignee_avatar']]);
+        $this->assertSame('Bob', $issues['PLAT-2']['assignee_name']);
+        $this->assertNull($issues['PLAT-3']['assignee_id']);
+
+        $this->issue('101', 'PLAT-2', ['assignee' => self::BOB, 'status' => self::STATUSES['22'], 'summary' => 'Changed by Bob']);
+        $this->issue('102', 'PLAT-3', ['assignee' => self::ME]);
+        $this->issue('100', 'PLAT-1', ['assignee' => self::BOB]);
+        $this->sync();
+
+        $this->assertEqualsCanonicalizing(['jira.issue.assigned', 'jira.issue.unassigned'], $this->historyTypes());
+        $unassigned = json_decode(History::findWhere(['type' => 'jira.issue.unassigned'])->details, true);
+        $this->assertSame(['PLAT-1', 'Bob'], [$unassigned['key'], $unassigned['assignee']]);
+
+        $this->assigned = ['PLAT-1', 'PLAT-3'];
+        $this->sync();
+        $this->assertCount(2, $this->historyTypes());
+        $this->assertNull($this->stored('PLAT-2'));
+    }
+
+    public function testTheFirstSyncKnowingTheAccountIsANewReference()
+    {
+        $this->register();
+        $this->save();
+        $this->issue('100', 'PLAT-1');
+        $this->assigned = ['PLAT-1'];
+        $this->sync();
+
+        $integration = $this->integration();
+        $settings = json_decode($integration->settings, true);
+        unset($settings['account']);
+        $integration->settings = json_encode($settings);
+        $integration->save();
+        $row = $this->stored('PLAT-1');
+        $row->assignee_id = null;
+        $row->save();
+
+        $this->sync();
+        $this->assertSame([], $this->historyTypes());
     }
 
     public function testAnIssueWithATaskIsKeptOffTheBoard()

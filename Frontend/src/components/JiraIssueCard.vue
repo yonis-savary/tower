@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import Button from 'primevue/button'
-import Tag from 'primevue/tag'
 import { useToast } from 'primevue/usetoast'
-import { JIRA_SEVERITIES, type JiraIssue } from '../stores/jira'
+import JiraAssignee from './JiraAssignee.vue'
+import type { JiraIssue } from '../stores/jira'
 
-const props = defineProps<{ issue: JiraIssue; taskId: number | null; creatingTask: boolean; discussing: boolean }>()
+const props = defineProps<{ issue: JiraIssue; taskId: number | null; creatingTask: boolean; discussing: boolean; showAssignee: boolean }>()
 defineEmits<{ createTask: []; openTask: []; discuss: [] }>()
 
 const { t } = useI18n()
@@ -23,57 +22,34 @@ async function copyKey() {
 
 <template>
   <article class="issue-card">
-    <header class="issue-card-header">
-      <span class="issue-key-group">
-        <a :href="issue.url" target="_blank" rel="noopener noreferrer" class="issue-key" :title="t('jira.openInJira')">
-          {{ issue.key }} <i class="pi pi-external-link" aria-hidden="true" />
-        </a>
-        <button type="button" class="copy-key" :aria-label="t('jira.copyKey')" :title="t('jira.copyKey')" @click="copyKey">
-          <i class="pi pi-copy" aria-hidden="true" />
-        </button>
-      </span>
-      <Tag :value="issue.status" :severity="JIRA_SEVERITIES[issue.status_category]" />
-    </header>
-
     <span class="issue-summary">{{ issue.summary }}</span>
 
     <footer class="issue-card-footer">
-      <small>{{ issue.project }} · {{ issue.issue_type }}<template v-if="issue.priority"> · {{ issue.priority }}</template></small>
+      <a :href="issue.url" target="_blank" rel="noopener noreferrer" class="issue-key" :title="t('jira.openInJira')">
+        {{ issue.key }}
+      </a>
       <span class="issue-actions">
-        <Button
+        <button type="button" class="card-action" :aria-label="t('jira.copyKey')" :title="t('jira.copyKey')" @click="copyKey">
+          <i class="pi pi-copy" aria-hidden="true" />
+        </button>
+        <button
           v-if="taskId === null"
-          icon="pi pi-plus"
-          size="small"
-          rounded
-          outlined
-          severity="secondary"
+          type="button"
+          class="card-action"
           :aria-label="t('jira.createTask')"
           :title="t('jira.createTask')"
-          :loading="creatingTask"
+          :disabled="creatingTask"
           @click="$emit('createTask')"
-        />
-        <Button
-          v-else
-          icon="pi pi-check-square"
-          size="small"
-          rounded
-          outlined
-          severity="secondary"
-          :aria-label="t('jira.openTask')"
-          :title="t('jira.openTask')"
-          @click="$emit('openTask')"
-        />
-        <Button
-          icon="pi pi-comments"
-          size="small"
-          rounded
-          outlined
-          severity="secondary"
-          :aria-label="t('jira.discuss')"
-          :title="t('jira.discuss')"
-          :loading="discussing"
-          @click="$emit('discuss')"
-        />
+        >
+          <i :class="['pi', creatingTask ? 'pi-spin pi-spinner' : 'pi-plus']" aria-hidden="true" />
+        </button>
+        <button v-else type="button" class="card-action" :aria-label="t('jira.openTask')" :title="t('jira.openTask')" @click="$emit('openTask')">
+          <i class="pi pi-check-square" aria-hidden="true" />
+        </button>
+        <button type="button" class="card-action" :aria-label="t('jira.discuss')" :title="t('jira.discuss')" :disabled="discussing" @click="$emit('discuss')">
+          <i :class="['pi', discussing ? 'pi-spin pi-spinner' : 'pi-comments']" aria-hidden="true" />
+        </button>
+        <JiraAssignee v-if="showAssignee" :name="issue.assignee_name" :avatar="issue.assignee_avatar" />
       </span>
     </footer>
   </article>
@@ -92,50 +68,18 @@ async function copyKey() {
   user-select: none;
 }
 
-.issue-card-header,
 .issue-card-footer {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.25rem 0.5rem;
-}
-
-.issue-card-footer {
-  align-items: flex-end;
-}
-
-.issue-key-group {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.copy-key {
-  display: inline-flex;
-  padding: 0.125rem;
-  color: var(--p-text-muted-color);
-  background: none;
-  border: 0;
-  border-radius: var(--p-content-border-radius);
-  cursor: pointer;
-}
-
-.copy-key:hover {
-  color: var(--p-text-color);
-}
-
-.copy-key:focus-visible {
-  outline: 2px solid var(--p-primary-color);
-}
-
-.copy-key .pi {
-  font-size: 0.8125rem;
+  margin-top: .5em;
 }
 
 .issue-key {
   font-size: 0.875rem;
-  font-weight: 600;
+  opacity: 0.9;
 }
 
 .issue-key .pi {
@@ -144,22 +88,15 @@ async function copyKey() {
 
 .issue-summary {
   min-width: 0;
+  font-size: 0.9em;
   overflow-wrap: anywhere;
-}
-
-.issue-card-footer small {
-  flex: 1 1 8rem;
-  color: var(--p-text-muted-color);
+  font-weight: 500;
 }
 
 .issue-actions {
   display: flex;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 0.375rem;
   margin-left: auto;
-}
-
-.issue-actions :deep(.p-button) {
-  width: 2rem;
-  height: 2rem;
 }
 </style>

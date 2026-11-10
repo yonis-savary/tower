@@ -37,13 +37,16 @@ class JiraIssueService
     }
 
     /**
-     * @return list<array{name: string, statuses: list<string>}>
+     * @return array{account_id: ?string, columns: list<array{name: string, statuses: list<string>}>}
      */
-    public function boardColumns(int $workspace): array
+    public function board(int $workspace): array
     {
         $integration = $this->integrations->findJira($workspace);
 
-        return $integration ? $this->integrations->settingsOf($integration)['columns'] ?? [] : [];
+        return [
+            'account_id' => $integration ? $this->integrations->jiraAccountOf($integration) : null,
+            'columns' => $integration ? $this->integrations->settingsOf($integration)['columns'] ?? [] : [],
+        ];
     }
 
     public function findIssue(int $workspace, int $id): ?JiraIssue
@@ -78,6 +81,9 @@ class JiraIssueService
         $before = $issue->toData();
         // Stored right away, so the next sync sees no change and does not announce it a second time
         $issue->copyFrom($current)->save();
+
+        if ($issue->assignee_id !== $this->integrations->jiraAccountOf(Integration::find($issue->integration)))
+            return null;
 
         $this->integrationEvents->announce(array_map(
             fn (IntegrationChange $change) => $this->integrationEvents->logIssue($issue, $change, HistoryService::ORIGIN_USER, $user),

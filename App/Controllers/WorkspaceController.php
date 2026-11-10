@@ -7,6 +7,7 @@ use App\Middlewares\IsAuthenticated;
 use App\Models\Workspace;
 use App\Requests\AddWorkspaceMemberRequest;
 use App\Requests\SelectWorkspaceRequest;
+use App\Requests\UpdateWorkspaceRequest;
 use App\Requests\WorkspaceNameRequest;
 use App\Resources\UserResource;
 use App\Resources\WorkspaceResource;
@@ -42,7 +43,7 @@ class WorkspaceController extends Controller
             Route::put('/current', [self::class, 'select']),
             Route::get('/current/socket', [self::class, 'socket']),
             Route::post('/', [self::class, 'create']),
-            Route::put('/{int:workspace}', [self::class, 'rename']),
+            Route::put('/{int:workspace}', [self::class, 'update']),
             Route::get('/{int:workspace}/members', [self::class, 'members']),
             Route::post('/{int:workspace}/members', [self::class, 'addMember']),
             Route::delete('/{int:workspace}/members/{int:user}', [self::class, 'removeMember']),
@@ -109,17 +110,19 @@ class WorkspaceController extends Controller
         return Response::json(WorkspaceResource::of($workspace), StatusCode::CREATED);
     }
 
-    #[Endpoint('Rename workspace', 'Changes the name of a workspace the current user is a member of', 'renameWorkspace')]
+    #[Endpoint('Update workspace', 'Changes the name and the accent color of a workspace the current user is a member of', 'updateWorkspace')]
     #[ResourceResponse(WorkspaceResource::class, description: 'The workspace')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
-    public function rename(WorkspaceNameRequest $request, int $workspace): Response
+    public function update(UpdateWorkspaceRequest $request, int $workspace): Response
     {
         $found = $this->workspaceOfUser($workspace);
         if (!$found)
             return $this->workspaceNotFound();
 
-        return Response::json(WorkspaceResource::of($this->workspaces->rename($found, trim($request->validated('name')))));
+        $updated = $this->workspaces->update($found, trim($request->validated('name')), $request->validated('accent_color'));
+
+        return Response::json(WorkspaceResource::of($updated));
     }
 
     #[Endpoint('List workspace members', 'The members of a workspace the current user is a member of, oldest first', 'listWorkspaceMembers')]

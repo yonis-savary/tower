@@ -28,3 +28,29 @@ a {
 .auth-field small {
   color: var(--p-text-muted-color);
 }
+
+.card-action {
+  display: inline-flex;
+  padding: 0.125rem;
+  color: var(--p-text-muted-color);
+  background: none;
+  border: 0;
+  border-radius: var(--p-content-border-radius);
+  cursor: pointer;
+}
+
+.card-action:hover:not(:disabled) {
+  color: var(--p-text-color);
+}
+
+.card-action:disabled {
+  cursor: progress;
+}
+
+.card-action:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+}
+
+.card-action .pi {
+  font-size: 0.9rem;
+}

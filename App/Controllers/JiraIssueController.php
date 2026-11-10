@@ -32,7 +32,7 @@ class JiraIssueController extends Controller
     public function routes(Router $router): void
     {
         $router->group('/api', middlewares: [IsAuthenticated::class], routes: [
-            Route::get('/jira/columns', [self::class, 'columns']),
+            Route::get('/jira/board', [self::class, 'board']),
             Route::get('/jira/issues', [self::class, 'list']),
             Route::get('/jira/issues/{int:issue}/transitions', [self::class, 'transitions']),
             Route::post('/jira/issues/{int:issue}/transitions', [self::class, 'transition']),
@@ -41,7 +41,7 @@ class JiraIssueController extends Controller
         ]);
     }
 
-    #[Endpoint('List Jira issues', 'The unfinished issues assigned to the Jira account (`tracked`), and the issues kept because a task is linked to them', 'listJiraIssues')]
+    #[Endpoint('List Jira issues', 'The unfinished issues of the board (`tracked`), whoever they are assigned to, and the issues kept because a task is linked to them', 'listJiraIssues')]
     #[ResourceResponse(JiraIssueResource::class, isArray: true, description: 'The stored issues')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function list(Request $request): Response
@@ -49,12 +49,12 @@ class JiraIssueController extends Controller
         return Response::json(JiraIssueResource::of($this->issues->listIssues($this->workspace())));
     }
 
-    #[Endpoint('List Jira board columns', 'The columns of the configured board, in its order, with the ids of the statuses each one holds. Read on each sync', 'listJiraColumns')]
-    #[RawResponse([['name' => 'In Review', 'statuses' => ['10002', '10007']]], description: 'The columns, empty before the first sync')]
+    #[Endpoint('Get Jira board', 'The Jira account of the token, and the columns of the configured board in its order, with the ids of the statuses each one holds. Read on each sync', 'getJiraBoard')]
+    #[RawResponse(['account_id' => '5b10a2844c20165700ede21g', 'columns' => [['name' => 'In Review', 'statuses' => ['10002', '10007']]]], description: 'The board, empty before the first sync')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
-    public function columns(Request $request): Response
+    public function board(Request $request): Response
     {
-        return Response::json($this->issues->boardColumns($this->workspace()));
+        return Response::json($this->issues->board($this->workspace()));
     }
 
     #[Endpoint('List Jira issue transitions', 'The transitions the Jira workflow allows from the current status of the issue, read from Jira', 'listJiraIssueTransitions')]

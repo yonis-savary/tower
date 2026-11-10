@@ -2031,28 +2031,36 @@
                 }
             }
         },
-        "\/api\/jira\/columns": {
+        "\/api\/jira\/board": {
             "get": {
-                "summary": "List Jira board columns",
-                "description": "The columns of the configured board, in its order, with the ids of the statuses each one holds. Read on each sync",
-                "operationId": "listJiraColumns",
+                "summary": "Get Jira board",
+                "description": "The Jira account of the token, and the columns of the configured board in its order, with the ids of the statuses each one holds. Read on each sync",
+                "operationId": "getJiraBoard",
                 "responses": {
                     "200": {
-                        "description": "The columns, empty before the first sync",
+                        "description": "The board, empty before the first sync",
                         "content": {
                             "application\/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "name": {
-                                                "type": "string"
-                                            },
-                                            "statuses": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string"
+                                    "type": "object",
+                                    "properties": {
+                                        "account_id": {
+                                            "type": "string"
+                                        },
+                                        "columns": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "statuses": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -2082,7 +2090,7 @@
         "\/api\/jira\/issues": {
             "get": {
                 "summary": "List Jira issues",
-                "description": "The unfinished issues assigned to the Jira account (`tracked`), and the issues kept because a task is linked to them",
+                "description": "The unfinished issues of the board (`tracked`), whoever they are assigned to, and the issues kept because a task is linked to them",
                 "operationId": "listJiraIssues",
                 "responses": {
                     "200": {
@@ -2145,6 +2153,24 @@
                                                     "null"
                                                 ]
                                             },
+                                            "assignee_id": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "assignee_name": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "assignee_avatar": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
                                             "tracked": {
                                                 "type": "boolean"
                                             }
@@ -2163,6 +2189,9 @@
                                             "sprint_id",
                                             "sprint_name",
                                             "sprint_state",
+                                            "assignee_id",
+                                            "assignee_name",
+                                            "assignee_avatar",
                                             "tracked"
                                         ]
                                     }
@@ -2182,6 +2211,9 @@
                                         "sprint_id": "dolores repellat nisi",
                                         "sprint_name": "eum nesciunt nulla",
                                         "sprint_state": "voluptate quia ab",
+                                        "assignee_id": "fugit voluptatem molestias",
+                                        "assignee_name": "atque nihil non",
+                                        "assignee_avatar": "magnam deleniti ratione",
                                         "tracked": true
                                     }
                                 ]
@@ -2390,6 +2422,24 @@
                                                 "null"
                                             ]
                                         },
+                                        "assignee_id": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "assignee_name": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "assignee_avatar": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
                                         "tracked": {
                                             "type": "boolean"
                                         }
@@ -2408,6 +2458,9 @@
                                         "sprint_id",
                                         "sprint_name",
                                         "sprint_state",
+                                        "assignee_id",
+                                        "assignee_name",
+                                        "assignee_avatar",
                                         "tracked"
                                     ]
                                 },
@@ -2425,6 +2478,9 @@
                                     "sprint_id": "dolores repellat nisi",
                                     "sprint_name": "eum nesciunt nulla",
                                     "sprint_state": "voluptate quia ab",
+                                    "assignee_id": "fugit voluptatem molestias",
+                                    "assignee_name": "atque nihil non",
+                                    "assignee_avatar": "magnam deleniti ratione",
                                     "tracked": true
                                 }
                             }
@@ -3813,18 +3869,26 @@
                                             },
                                             "name": {
                                                 "type": "string"
+                                            },
+                                            "accent_color": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
                                             }
                                         },
                                         "required": [
                                             "id",
-                                            "name"
+                                            "name",
+                                            "accent_color"
                                         ]
                                     }
                                 },
                                 "example": [
                                     {
                                         "id": 959,
-                                        "name": "aut aspernatur sed"
+                                        "name": "aut aspernatur sed",
+                                        "accent_color": "voluptatibus adipisci sapiente"
                                     }
                                 ]
                             }
@@ -3892,16 +3956,24 @@
                                         },
                                         "name": {
                                             "type": "string"
+                                        },
+                                        "accent_color": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
                                         "id",
-                                        "name"
+                                        "name",
+                                        "accent_color"
                                     ]
                                 },
                                 "example": {
                                     "id": 959,
-                                    "name": "aut aspernatur sed"
+                                    "name": "aut aspernatur sed",
+                                    "accent_color": "voluptatibus adipisci sapiente"
                                 }
                             }
                         }
@@ -3942,16 +4014,24 @@
                                         },
                                         "name": {
                                             "type": "string"
+                                        },
+                                        "accent_color": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
                                         "id",
-                                        "name"
+                                        "name",
+                                        "accent_color"
                                     ]
                                 },
                                 "example": {
                                     "id": 959,
-                                    "name": "aut aspernatur sed"
+                                    "name": "aut aspernatur sed",
+                                    "accent_color": "voluptatibus adipisci sapiente"
                                 }
                             }
                         }
@@ -4033,16 +4113,24 @@
                                         },
                                         "name": {
                                             "type": "string"
+                                        },
+                                        "accent_color": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
                                         "id",
-                                        "name"
+                                        "name",
+                                        "accent_color"
                                     ]
                                 },
                                 "example": {
                                     "id": 959,
-                                    "name": "aut aspernatur sed"
+                                    "name": "aut aspernatur sed",
+                                    "accent_color": "voluptatibus adipisci sapiente"
                                 }
                             }
                         }
@@ -4136,9 +4224,9 @@
         },
         "\/api\/workspaces\/{workspace}": {
             "put": {
-                "summary": "Rename workspace",
-                "description": "Changes the name of a workspace the current user is a member of",
-                "operationId": "renameWorkspace",
+                "summary": "Update workspace",
+                "description": "Changes the name and the accent color of a workspace the current user is a member of",
+                "operationId": "updateWorkspace",
                 "parameters": [
                     {
                         "name": "workspace",
@@ -4158,10 +4246,17 @@
                                 "properties": {
                                     "name": {
                                         "type": "string"
+                                    },
+                                    "accent_color": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
                                     }
                                 },
                                 "required": [
-                                    "name"
+                                    "name",
+                                    "accent_color"
                                 ]
                             }
                         }
@@ -4190,16 +4285,24 @@
                                         },
                                         "name": {
                                             "type": "string"
+                                        },
+                                        "accent_color": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
                                         "id",
-                                        "name"
+                                        "name",
+                                        "accent_color"
                                     ]
                                 },
                                 "example": {
                                     "id": 959,
-                                    "name": "aut aspernatur sed"
+                                    "name": "aut aspernatur sed",
+                                    "accent_color": "voluptatibus adipisci sapiente"
                                 }
                             }
                         }

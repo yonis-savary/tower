@@ -21,5 +21,6 @@ final class JiraIssueData
         public readonly string $status,
         public readonly string $statusCategory,
         public readonly ?JiraSprint $sprint,
+        public readonly ?JiraUser $assignee,
     ) {}
 }

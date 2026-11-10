@@ -12,6 +12,7 @@ import { saveFile } from '../utils/saveFile'
 import ConfigDialog from './ConfigDialog.vue'
 import DevicesDialog from './DevicesDialog.vue'
 import HandlerDialog from './HandlerDialog.vue'
+import TowerLogo from './TowerLogo.vue'
 import WorkspacesDialog from './WorkspacesDialog.vue'
 import { useAuthStore } from '../stores/auth'
 import { useDeviceSocketStore } from '../stores/deviceSocket'
@@ -55,7 +56,7 @@ onMounted(workspace.loadCurrent)
 const remainingTasks = computed(
   () => tasks.tasks.filter(({ sprint, status }) => sprint !== null && sprint === tasks.activeSprint?.id && status !== 'done' && status !== 'cancelled').length,
 )
-const openIssues = computed(() => jira.tracked.filter(({ status_category }) => status_category !== 'done').length)
+const openIssues = computed(() => jira.mine.filter(({ status_category }) => status_category !== 'done').length)
 
 // Loaded with the page rather than with each screen, for the counters of the menu
 watch(
@@ -139,7 +140,7 @@ async function logOut() {
       :title="workspaceLabel"
       @click="workspaceMenu?.toggle($event)"
     >
-      <img src="/favicon.svg" alt="" width="28" height="28" />
+      <TowerLogo :color="workspace.current?.accent_color" />
       <span class="navbar-text">{{ workspaceLabel }}</span>
       <i class="pi pi-angle-down navbar-text" aria-hidden="true" />
     </button>
@@ -258,11 +259,6 @@ async function logOut() {
 .navbar-workspace {
   padding: 0.5rem;
   font-weight: 600;
-}
-
-.navbar-workspace img {
-  flex: none;
-  border-radius: 0.375rem;
 }
 
 .navbar-workspace span.navbar-text {

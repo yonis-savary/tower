@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
+import ColorPicker from 'primevue/colorpicker'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
@@ -11,7 +12,7 @@ import {
   createWorkspace,
   listWorkspaceMembers,
   removeWorkspaceMember,
-  renameWorkspace,
+  updateWorkspace,
   type ListWorkspaceMembersResponse,
 } from '../client'
 import { useAuthStore } from '../stores/auth'
@@ -26,12 +27,20 @@ const store = useWorkspaceStore()
 const selectedId = ref<number | null>(null)
 const members = ref<ListWorkspaceMembersResponse>([])
 const name = ref('')
+const color = ref<string | null>(null)
 const newWorkspace = ref('')
 const newMember = ref('')
 const busy = ref(false)
 const error = ref<string | null>(null)
 
 const selected = computed(() => store.workspaces?.find(({ id }) => id === selectedId.value) ?? null)
+const unchanged = computed(() => name.value.trim() === selected.value?.name && color.value === selected.value?.accent_color)
+
+// The picker works without the leading #, the API with it
+const pickerColor = computed({
+  get: () => color.value?.slice(1) ?? '',
+  set: (value: string) => (color.value = `#${value}`),
+})
 
 watch(visible, async (shown) => {
   if (!shown) return
@@ -43,6 +52,7 @@ watch(visible, async (shown) => {
 
 watch(selected, async (workspace) => {
   name.value = workspace?.name ?? ''
+  color.value = workspace?.accent_color ?? null
   newMember.value = ''
   members.value = []
   if (!workspace) return
@@ -71,17 +81,17 @@ function create() {
   }, t('workspaces.createError'))
 }
 
-function rename() {
+function save() {
   const workspace = selected.value
   if (!workspace) return
 
   return run(async () => {
-    const { data } = await renameWorkspace({ path: { workspace: workspace.id }, body: { name: name.value.trim() } })
+    const { data } = await updateWorkspace({ path: { workspace: workspace.id }, body: { name: name.value.trim(), accent_color: color.value } })
     if (!data) return false
 
     await Promise.all([store.loadWorkspaces(), store.loadCurrent()])
     return true
-  }, t('workspaces.renameError'))
+  }, t('workspaces.saveError'))
 }
 
 function addMember() {
@@ -144,12 +154,22 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
       </aside>
 
       <section v-if="selected" class="workspace-detail">
-        <form class="field" @submit.prevent="rename">
-          <label for="workspace-name">{{ t('workspaces.name') }}</label>
-          <div class="inline-form">
+        <form class="settings" @submit.prevent="save">
+          <div class="field">
+            <label for="workspace-name">{{ t('workspaces.name') }}</label>
             <InputText id="workspace-name" v-model="name" maxlength="100" required fluid />
-            <Button type="submit" :label="t('workspaces.rename')" severity="secondary" :disabled="name.trim() === selected.name" :loading="busy" />
           </div>
+          <div class="field">
+            <span class="label">{{ t('workspaces.color') }}</span>
+            <div class="color-row">
+              <ColorPicker v-model="pickerColor" format="hex" :aria-label="t('workspaces.color')" />
+              <code v-if="color">{{ color }}</code>
+              <small v-else>{{ t('workspaces.noColor') }}</small>
+              <Button v-if="color" :label="t('workspaces.removeColor')" severity="secondary" text size="small" @click="color = null" />
+            </div>
+            <small class="hint">{{ t('workspaces.colorHint') }}</small>
+          </div>
+          <Button type="submit" :label="t('workspaces.save')" severity="secondary" class="save" :disabled="unchanged" :loading="busy" />
         </form>
 
         <Button
@@ -282,8 +302,26 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
   gap: 0.5rem;
 }
 
-.switch {
+.switch,
+.save {
   align-self: flex-start;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.color-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.color-row small {
+  color: var(--p-text-muted-color);
 }
 
 .members li {

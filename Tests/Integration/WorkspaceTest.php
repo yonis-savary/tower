@@ -75,11 +75,11 @@ class WorkspaceTest extends CubeTestCase
         $this->assertNotContains($bobWorkspace, $ids);
     }
 
-    public function testResponseOnlyExposesIdAndName()
+    public function testResponseOnlyExposesIdNameAndColor()
     {
         $this->register('alice@example.com');
 
-        $this->assertEquals(['id', 'name'], array_keys($this->get('/api/workspaces')->assertOk()->json()[0]));
+        $this->assertEquals(['id', 'name', 'accent_color'], array_keys($this->get('/api/workspaces')->assertOk()->json()[0]));
     }
 
     public function testRegisterSelectsDefaultWorkspace()
@@ -151,11 +151,16 @@ class WorkspaceTest extends CubeTestCase
         $this->assertEquals($this->defaultWorkspaceId($alice), $this->get('/api/workspaces/current')->assertOk()->json()['id']);
         $this->assertCount(2, $this->get('/api/workspaces')->assertOk()->json());
 
-        $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Personnel'])->assertOk();
-        $this->assertSame('Personnel', Workspace::find($created['id'])->name);
+        $updated = $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Personnel', 'accent_color' => '#3B82F6'])->assertOk()->json();
+        $this->assertSame(['Personnel', '#3b82f6'], [$updated['name'], $updated['accent_color']]);
+        $this->assertSame('#3b82f6', Workspace::find($created['id'])->accent_color);
+
+        $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Personnel', 'accent_color' => null])->assertOk();
+        $this->assertNull(Workspace::find($created['id'])->accent_color);
 
         $this->postJson('/api/workspaces', ['name' => '   '])->assertUnprocessableContent();
-        $this->putJson("/api/workspaces/{$created['id']}", ['name' => str_repeat('x', 101)])->assertUnprocessableContent();
+        $this->putJson("/api/workspaces/{$created['id']}", ['name' => str_repeat('x', 101), 'accent_color' => null])->assertUnprocessableContent();
+        $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Personnel', 'accent_color' => 'red'])->assertUnprocessableContent();
     }
 
     public function testMembersAreAddedByEmailAndRemoved()
@@ -188,7 +193,7 @@ class WorkspaceTest extends CubeTestCase
         $this->logOut();
         $this->logIn('bob@example.com');
 
-        $this->putJson("/api/workspaces/{$workspace}", ['name' => 'Taken'])->assertNotFound();
+        $this->putJson("/api/workspaces/{$workspace}", ['name' => 'Taken', 'accent_color' => null])->assertNotFound();
         $this->get("/api/workspaces/{$workspace}/members")->assertNotFound();
         $this->postJson("/api/workspaces/{$workspace}/members", ['email' => 'bob@example.com'])->assertNotFound();
         $this->delete("/api/workspaces/{$workspace}/members/{$alice}")->assertNotFound();
