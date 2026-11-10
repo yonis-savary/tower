@@ -8,6 +8,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [vue()],
+    build: {
+      // Browsers with light-dark() : below them, the build rewrites it to follow prefers-color-scheme,
+      // which ignores the theme chosen in Tower (light theme on a dark system : dark backgrounds)
+      cssTarget: ['chrome123', 'edge123', 'firefox120', 'safari17.5'],
+    },
     server: {
       // The websocket server only accepts this origin : a silent fallback port would be refused
       port: Number(projectEnv.TOWER_VITE_DEV_PORT ?? 5173),
