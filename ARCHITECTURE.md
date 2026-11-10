@@ -75,8 +75,8 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
 - Un workspace choisit ses **sections** parmi `tasks`, `jira`, `merge_requests` et `events`
   (toutes pour un workspace jamais configuré). Une section décochée est seulement masquée : elle
   quitte la navbar et les Paramètres, et son adresse renvoie à l'accueil, mais ses données, ses
-  synchronisations et ses événements continuent. Accueil, Historique, Paramètres, le menu
-  Connecteur et les appareils sont toujours là.
+  synchronisations et ses événements continuent. Accueil, Historique, Paramètres et
+  les appareils sont toujours là.
 - Un workspace peut avoir une couleur (`accent_color`, `#rrggbb`) : quand il est le workspace
   courant, la page porte une bordure de cette couleur à gauche ; sans couleur, rien.
 - Tout membre peut renommer le workspace, changer sa couleur, en ajouter un autre par l'e-mail de son compte Tower
@@ -177,7 +177,8 @@ statut et sa propre réponse : un événement en a autant que d'appareils contac
 
 ### Configurations
 
-Une configuration est créée dans le front (menu Connecteur). Elle donne un `client_id`
+Une configuration est créée dans le front (modale des appareils, onglet « Connecter un
+appareil »). Elle donne un `client_id`
 (`twr_…`) et un secret de 256 bits, affiché une seule fois ; Tower n'en garde que le SHA-256.
 Elle peut servir sur plusieurs appareils et se révoque depuis le front : les appareils qui
 l'utilisent sont déconnectés.
@@ -318,7 +319,7 @@ La connexion est supposée instable (veille, changement de réseau, redémarrage
 Le connecteur est livré en un seul fichier zipapp (`tower-connector.pyz`, module `zipapp` de
 la stdlib) qui embarque ses dépendances, et se lance avec `python3 tower-connector.pyz`, sans
 pip ni venv. Ça évite la PEP 668 (`externally-managed-environment`) sur les distributions
-récentes. Il est construit dans l'image Docker et se télécharge depuis le menu Connecteur.
+récentes. Il est construit dans l'image Docker et se télécharge depuis la modale des appareils.
 
 Contrainte : seules des dépendances en Python pur peuvent être embarquées, une extension
 compilée ne serait pas portable d'une architecture à l'autre. `websockets` est en Python pur.
@@ -399,7 +400,7 @@ la sortie n'est pas un terminal ou que `NO_COLOR` est défini.
 ### Handler de base
 
 Tower fournit un handler prêt à l'emploi, `tower-handler.pyz` (source dans `Handler/src`),
-construit dans l'image et téléchargeable depuis le menu Connecteur. Il n'utilise que la
+construit dans l'image et téléchargeable depuis la modale des appareils. Il n'utilise que la
 bibliothèque standard et se branche comme n'importe quel handler :
 
 ```sh
@@ -684,16 +685,15 @@ du sprint actif, tickets non terminés de l'utilisateur, merge requests ouvertes
 | Événements         | section `events` : lancement manuel et quick-actions               |
 | Historique         | en bas                                                             |
 | Paramètres         | en bas                                                             |
-| Connecteur         | en bas, encadré en vert : télécharger le client et le handler de base, créer et gérer les configurations |
 
 ### Indicateur Appareils
 
 Toujours présent dans la navbar. Il affiche l'état de la connexion temps réel du navigateur
 et le nombre d'appareils connectés au workspace, mis à jour en direct.
 
-Un clic ouvre la **modale des appareils** : pour chaque appareil connecté, une icône de son
-type, son nom de machine, sa configuration, son système, l'heure de connexion et un bouton
-**Déconnecter**.
+Un clic ouvre la **modale des appareils**, à deux onglets. *Appareils connectés* : pour chaque
+appareil, une icône de son type, son nom de machine, sa configuration, son système, l'heure de
+connexion et un bouton **Déconnecter**. *Connecter un appareil* : voir ci-dessous.
 
 **(prévu, avec les jobs)** Une couleur selon l'état du workspace (job en attente d'un choix
 d'appareil, job échoué, job en cours), et dans la modale les jobs en attente d'un choix et
@@ -712,21 +712,22 @@ les jobs échoués récents.
 | Jira               | tickets non terminés du board, avec la pastille de leur assigné, ou seulement les siens, en kanban avec les colonnes du board ; transition par glisser-déposer, ouverture dans Jira, création de tâche |
 | Mes workspaces     | modale ouverte par « Gérer mes workspaces » : liste, création, renommage, couleur, sections, passage sur un workspace ; membres, ajout par e-mail, retrait, départ |
 
-### Connecteur
+### Connecter un appareil
 
-Un bouton menu en bas de la navbar :
+Second onglet de la modale des appareils :
 
-- **Télécharger le client** : `tower-connector.pyz`, à lancer avec un fichier de
-  configuration.
-- **Télécharger le handler de base** : `tower-handler.pyz` (voir § Handler de base). Une modale
-  s'ouvre ensuite avec la commande pour le passer au connecteur et un exemple de section
-  `handlers`.
-- **Créer/Gérer les configurations** : une modale à deux onglets.
-  - *Voir/Gérer* : les configurations du workspace, leur dernière utilisation, leurs
-    abonnements (modifiables sur place) et un bouton de révocation.
-  - *Créer une configuration* : nom et abonnements. Le secret n'est affiché qu'une fois ; la
-    modale ne se ferme pas tant que l'utilisateur ne l'a pas confirmé, et propose le fichier
-    de configuration ou le **client préconfiguré** (`tower-<configuration>-<workspace>.pyz`).
+- trois boutons :
+  - **Télécharger le connecteur** : `tower-connector.pyz`, à lancer avec un fichier de
+    configuration ;
+  - **Télécharger le handler de base** : `tower-handler.pyz` (voir § Handler de base). Une
+    modale s'ouvre ensuite avec la commande pour le passer au connecteur et un exemple de
+    section `handlers` ;
+  - **Créer une configuration** : une sous-modale, avec un nom et des abonnements. Le secret
+    n'est affiché qu'une fois ; la sous-modale ne se ferme pas tant que l'utilisateur ne l'a pas
+    confirmé, et propose le fichier de configuration ou le **client préconfiguré**
+    (`tower-<configuration>-<workspace>.pyz`) ;
+- en dessous, les configurations du workspace : leur dernière utilisation, leurs abonnements
+  (modifiables sur place) et un bouton de révocation.
 
 ## 6. Modèle de données
 

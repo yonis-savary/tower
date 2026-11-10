@@ -4,6 +4,12 @@ import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
+import Tab from 'primevue/tab'
+import TabList from 'primevue/tablist'
+import TabPanel from 'primevue/tabpanel'
+import TabPanels from 'primevue/tabpanels'
+import Tabs from 'primevue/tabs'
+import ConnectDevicePanel from './ConnectDevicePanel.vue'
 import { disconnectDevice } from '../client'
 import { useDeviceSocketStore, type ConnectedDevice } from '../stores/deviceSocket'
 
@@ -12,10 +18,14 @@ const visible = defineModel<boolean>('visible', { required: true })
 const { t, d } = useI18n()
 const deviceSocket = useDeviceSocketStore()
 const error = ref<string | null>(null)
+const tab = ref('connected')
 
 const icons = { desktop: 'pi-desktop', mobile: 'pi-mobile', unknown: 'pi-question-circle' }
 
-watch(visible, () => (error.value = null))
+watch(visible, () => {
+  error.value = null
+  tab.value = 'connected'
+})
 
 function hostname(device: ConnectedDevice): string {
   return device.hostname ?? t('devices.unknownHost')
@@ -35,57 +45,74 @@ async function disconnect(device: ConnectedDevice) {
     v-model:visible="visible"
     modal
     :header="t('devices.title')"
-    :style="{ width: '36rem', maxWidth: 'calc(100vw - 2rem)' }"
+    :style="{ width: '40rem', maxWidth: 'calc(100vw - 2rem)' }"
   >
-    <Message v-if="error" class="dialog-error" severity="error" :closable="false">{{ error }}</Message>
+    <Tabs v-model:value="tab" class="devices-tabs">
+      <TabList>
+        <Tab value="connected">{{ t('devices.connectedTab') }}</Tab>
+        <Tab value="connect">{{ t('devices.connectTab') }}</Tab>
+      </TabList>
+      <TabPanels>
+        <TabPanel value="connected">
+          <Message v-if="error" class="dialog-error" severity="error" :closable="false">{{ error }}</Message>
 
-    <Message v-if="deviceSocket.status === 'disconnected'" severity="warn" :closable="false">
-      {{ t('nav.socketDisconnected') }}
-    </Message>
+          <Message v-if="deviceSocket.status === 'disconnected'" severity="warn" :closable="false">
+            {{ t('nav.socketDisconnected') }}
+          </Message>
 
-    <ul v-else-if="deviceSocket.devices.length" class="devices">
-      <li v-for="device in deviceSocket.devices" :key="device.uuid">
-        <span class="device-icon" role="img" :aria-label="t(`devices.type.${device.type}`)" :title="t(`devices.type.${device.type}`)">
-          <!-- PrimeIcons has no laptop -->
-          <svg v-if="device.type === 'laptop'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="4.5" y="5" width="15" height="10.5" rx="1.25" />
-            <path d="M2 19h20" />
-          </svg>
-          <i v-else :class="['pi', icons[device.type]]" aria-hidden="true" />
-        </span>
+          <ul v-else-if="deviceSocket.devices.length" class="devices">
+            <li v-for="device in deviceSocket.devices" :key="device.uuid">
+              <span class="device-icon" role="img" :aria-label="t(`devices.type.${device.type}`)" :title="t(`devices.type.${device.type}`)">
+                <!-- PrimeIcons has no laptop -->
+                <svg v-if="device.type === 'laptop'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="4.5" y="5" width="15" height="10.5" rx="1.25" />
+                  <path d="M2 19h20" />
+                </svg>
+                <i v-else :class="['pi', icons[device.type]]" aria-hidden="true" />
+              </span>
 
-        <div class="device-details">
-          <strong>{{ hostname(device) }}</strong>
-          <dl>
-            <dt>{{ t('devices.field.type') }}</dt>
-            <dd>{{ t(`devices.type.${device.type}`) }}</dd>
-            <dt>{{ t('devices.field.config') }}</dt>
-            <dd>{{ device.access_key }}</dd>
-            <template v-if="device.user_agent">
-              <dt>{{ t('devices.field.system') }}</dt>
-              <dd>{{ device.user_agent }}</dd>
-            </template>
-            <dt>{{ t('devices.field.connectedAt') }}</dt>
-            <dd>{{ d(new Date(device.connected_at), 'short') }}</dd>
-          </dl>
-        </div>
+              <div class="device-details">
+                <strong>{{ hostname(device) }}</strong>
+                <dl>
+                  <dt>{{ t('devices.field.type') }}</dt>
+                  <dd>{{ t(`devices.type.${device.type}`) }}</dd>
+                  <dt>{{ t('devices.field.config') }}</dt>
+                  <dd>{{ device.access_key }}</dd>
+                  <template v-if="device.user_agent">
+                    <dt>{{ t('devices.field.system') }}</dt>
+                    <dd>{{ device.user_agent }}</dd>
+                  </template>
+                  <dt>{{ t('devices.field.connectedAt') }}</dt>
+                  <dd>{{ d(new Date(device.connected_at), 'short') }}</dd>
+                </dl>
+              </div>
 
-        <Button
-          class="device-disconnect"
-          :label="t('devices.disconnectButton')"
-          severity="danger"
-          text
-          size="small"
-          @click="disconnect(device)"
-        />
-      </li>
-    </ul>
+              <Button
+                class="device-disconnect"
+                :label="t('devices.disconnectButton')"
+                severity="danger"
+                text
+                size="small"
+                @click="disconnect(device)"
+              />
+            </li>
+          </ul>
 
-    <p v-else class="empty">{{ t('devices.empty') }}</p>
+          <p v-else class="empty">{{ t('devices.empty') }}</p>
+        </TabPanel>
+        <TabPanel value="connect">
+          <ConnectDevicePanel />
+        </TabPanel>
+      </TabPanels>
+    </Tabs>
   </Dialog>
 </template>
 
 <style scoped>
+.devices-tabs :deep(.p-tabpanels) {
+  padding: 1rem 0 0;
+}
+
 .dialog-error {
   margin-bottom: 1rem;
 }

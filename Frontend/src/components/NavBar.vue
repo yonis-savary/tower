@@ -6,12 +6,7 @@ import Badge from 'primevue/badge'
 import Button from 'primevue/button'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
-import { useToast } from 'primevue/usetoast'
-import { downloadConnector, downloadHandler } from '../client'
-import { saveFile } from '../utils/saveFile'
-import ConfigDialog from './ConfigDialog.vue'
 import DevicesDialog from './DevicesDialog.vue'
-import HandlerDialog from './HandlerDialog.vue'
 import TowerLogo from './TowerLogo.vue'
 import WorkspacesDialog from './WorkspacesDialog.vue'
 import { useAuthStore } from '../stores/auth'
@@ -30,7 +25,6 @@ const deviceSocket = useDeviceSocketStore()
 const tasks = useTasksStore()
 const jira = useJiraStore()
 const pullRequests = usePullRequestsStore()
-const toast = useToast()
 const router = useRouter()
 const { t } = useI18n()
 
@@ -85,34 +79,6 @@ const secondaryItems = computed<NavItem[]>(() => [
 
 const devicesDialogVisible = ref(false)
 const workspacesDialogVisible = ref(false)
-const configDialogVisible = ref(false)
-const handlerDialogVisible = ref(false)
-const downloadMenu = useTemplateRef<InstanceType<typeof Menu>>('downloadMenu')
-const downloadMenuItems = computed<MenuItem[]>(() => [
-  { label: t('nav.downloadClient'), icon: 'pi pi-fw pi-download', command: downloadClient },
-  { label: t('nav.downloadHandler'), icon: 'pi pi-fw pi-comments', command: downloadBasicHandler },
-  { label: t('nav.manageConfigs'), icon: 'pi pi-fw pi-cog', command: () => (configDialogVisible.value = true) },
-])
-
-async function downloadClient() {
-  const { data } = await downloadConnector({ parseAs: 'blob' })
-
-  if (data instanceof Blob) saveFile(data, 'tower-connector.pyz')
-  else toast.add({ severity: 'error', summary: t('download.connectorError'), life: 5000 })
-}
-
-async function downloadBasicHandler() {
-  const { data } = await downloadHandler({ parseAs: 'blob' })
-
-  if (!(data instanceof Blob)) {
-    toast.add({ severity: 'error', summary: t('download.handlerError'), life: 5000 })
-    return
-  }
-
-  saveFile(data, 'tower-handler.pyz')
-  handlerDialogVisible.value = true
-}
-
 const socketIndicator = computed(
   () =>
     ({
@@ -197,20 +163,6 @@ async function logOut() {
           </RouterLink>
         </li>
       </ul>
-
-      <button
-        type="button"
-        class="navbar-item navbar-download"
-        aria-haspopup="menu"
-        :title="t('nav.download')"
-        @click="downloadMenu?.toggle($event)"
-      >
-        <i class="pi pi-download" aria-hidden="true" />
-        <span class="navbar-text">{{ t('nav.download') }}</span>
-      </button>
-      <Menu ref="downloadMenu" :model="downloadMenuItems" popup />
-      <ConfigDialog v-model:visible="configDialogVisible" />
-      <HandlerDialog v-model:visible="handlerDialogVisible" />
     </div>
 
     <div class="navbar-user">
@@ -343,16 +295,6 @@ async function logOut() {
   flex-direction: column;
   gap: 0.375rem;
   margin-top: auto;
-}
-
-.navbar-download {
-  border: 1px solid light-dark(var(--p-green-200), var(--p-green-800));
-  background: light-dark(var(--p-green-50), color-mix(in srgb, var(--p-green-500) 16%, transparent));
-  color: light-dark(var(--p-green-700), var(--p-green-200));
-}
-
-.navbar-download:hover {
-  background: light-dark(var(--p-green-100), color-mix(in srgb, var(--p-green-500) 24%, transparent));
 }
 
 .navbar-user {
