@@ -4,10 +4,8 @@ import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import Password from 'primevue/password'
-import SelectButton from 'primevue/selectbutton'
 import { changePassword } from '../client'
 import { useAuthStore } from '../stores/auth'
-import { THEME_MODES, themeMode } from '../utils/theme'
 
 const { t } = useI18n()
 const auth = useAuthStore()
@@ -16,7 +14,6 @@ const form = ref({ current: '', next: '', confirmation: '' })
 const busy = ref(false)
 const result = ref<{ severity: 'success' | 'error'; text: string } | null>(null)
 
-const themeOptions = computed(() => THEME_MODES.map((value) => ({ value, label: t(`settings.account.theme.${value}`) })))
 const mismatch = computed(() => form.value.confirmation !== '' && form.value.confirmation !== form.value.next)
 
 async function submit() {
@@ -41,12 +38,6 @@ async function submit() {
   <section class="panel">
     <h2>{{ t('settings.account.title') }}</h2>
     <p class="description">{{ auth.user?.email }}</p>
-
-    <div class="field">
-      <span class="label" id="theme-label">{{ t('settings.account.themeLabel') }}</span>
-      <SelectButton v-model="themeMode" :options="themeOptions" option-label="label" option-value="value" :allow-empty="false" aria-labelledby="theme-label" />
-      <small>{{ t('settings.account.themeHint') }}</small>
-    </div>
   </section>
 
   <section class="panel">

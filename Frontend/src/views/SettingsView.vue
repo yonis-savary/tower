@@ -20,6 +20,7 @@ import {
   type GetJiraIntegrationResponse,
 } from '../client'
 import AccountSettings from '../components/AccountSettings.vue'
+import InterfaceSettings from '../components/InterfaceSettings.vue'
 import { PULL_REQUEST_ICON } from '../components/AppIcon.vue'
 import SideTabs from '../components/SideTabs.vue'
 import { useJiraStore } from '../stores/jira'
@@ -31,11 +32,12 @@ const workspace = useWorkspaceStore()
 const route = useRoute()
 const router = useRouter()
 
-type SettingsTab = 'account' | 'bitbucket' | 'jira' | 'clear'
+type SettingsTab = 'account' | 'interface' | 'bitbucket' | 'jira' | 'clear'
 
 const tabs = computed(() =>
   [
     { value: 'account' as const, icon: 'pi pi-user', label: t('settings.tabs.account') },
+    { value: 'interface' as const, icon: 'pi pi-palette', label: t('settings.tabs.interface') },
     { value: 'bitbucket' as const, icon: PULL_REQUEST_ICON, label: t('settings.tabs.bitbucket'), shown: workspace.hasSection('merge_requests') },
     { value: 'jira' as const, icon: 'pi pi-objects-column', label: t('settings.tabs.jira'), shown: workspace.hasSection('jira') },
     { value: 'clear' as const, icon: 'pi pi-trash', label: t('settings.tabs.clear') },
@@ -185,6 +187,7 @@ async function removeJira() {
 
   <SideTabs v-model="tab" :items="tabs" :label="t('nav.settings')">
     <AccountSettings v-if="tab === 'account'" />
+    <InterfaceSettings v-if="tab === 'interface'" />
 
     <section v-if="tab === 'bitbucket'" class="panel">
       <h2>{{ t('settings.bitbucket.title') }}</h2>

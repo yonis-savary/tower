@@ -9,11 +9,11 @@ import { useWorkspaceStore, type WorkspaceSection } from '../stores/workspace'
 const workspace = useWorkspaceStore()
 const route = useRoute()
 const router = useRouter()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // The logo already says it is Tower : the tab names the workspace and the screen
 watch(
-  () => [workspace.current?.name, route.meta.title as string | undefined] as const,
+  () => [workspace.current?.name, route.meta.title as string | undefined, locale.value] as const,
   ([name, title]) => {
     document.title = [name, title && t(title)].filter(Boolean).join(' - ') || 'Tower'
   },

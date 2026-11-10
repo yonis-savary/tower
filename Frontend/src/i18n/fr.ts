@@ -121,19 +121,13 @@ export default {
   settings: {
     tabs: {
       account: 'Compte',
+      interface: 'Interface',
       bitbucket: 'Bitbucket',
       jira: 'Jira',
       clear: 'Vider une section',
     },
     account: {
       title: 'Compte',
-      themeLabel: 'Thème',
-      themeHint: 'Gardé dans ce navigateur. Auto suit le réglage du système.',
-      theme: {
-        auto: 'Auto',
-        light: 'Clair',
-        dark: 'Sombre',
-      },
       passwordTitle: 'Mot de passe',
       currentPassword: 'Mot de passe actuel',
       newPassword: 'Nouveau mot de passe',
@@ -143,6 +137,23 @@ export default {
       changePassword: 'Changer le mot de passe',
       passwordChanged: 'Mot de passe changé.',
       passwordError: 'Vérifie le mot de passe actuel. Le nouveau doit contenir au moins 8 caractères.',
+    },
+    interface: {
+      title: 'Interface',
+      description: 'Gardés dans ce navigateur.',
+      languageLabel: 'Langue',
+      language: {
+        auto: 'Auto (langue du navigateur)',
+        fr: 'Français',
+        en: 'English',
+      },
+      themeLabel: 'Thème',
+      themeHint: 'Auto suit le réglage du système.',
+      theme: {
+        auto: 'Auto',
+        light: 'Clair',
+        dark: 'Sombre',
+      },
     },
     clear: {
       title: 'Vider une section',
@@ -304,6 +315,7 @@ export default {
     copied: 'Copié',
     pages: {
       home: 'Accueil',
+      events: 'Événements',
       linuxService: 'Service Linux',
     },
   },

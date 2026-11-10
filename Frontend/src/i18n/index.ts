@@ -1,3 +1,4 @@
+import { ref, watch } from 'vue'
 import { createI18n } from 'vue-i18n'
 import en from './en'
 import fr from './fr'
@@ -5,14 +6,32 @@ import fr from './fr'
 const messages = { fr, en }
 type Locale = keyof typeof messages
 
-const browserLanguage = navigator.language.split('-')[0]
-const locale: Locale = browserLanguage in messages ? (browserLanguage as Locale) : 'fr'
+export type LanguageChoice = 'auto' | Locale
+export const LANGUAGE_CHOICES: LanguageChoice[] = ['auto', 'fr', 'en']
 
-document.documentElement.lang = locale
+const STORAGE_KEY = 'tower.language'
 
-export default createI18n<[typeof fr], Locale, false>({
+function storedChoice(): LanguageChoice {
+  try {
+    const value = localStorage.getItem(STORAGE_KEY)
+    return LANGUAGE_CHOICES.find((choice) => choice === value) ?? 'auto'
+  } catch {
+    return 'auto'
+  }
+}
+
+function resolve(choice: LanguageChoice): Locale {
+  if (choice !== 'auto') return choice
+
+  const browserLanguage = navigator.language.split('-')[0]
+  return browserLanguage in messages ? (browserLanguage as Locale) : 'fr'
+}
+
+export const languageChoice = ref<LanguageChoice>(storedChoice())
+
+const i18n = createI18n<[typeof fr], Locale, false>({
   legacy: false,
-  locale,
+  locale: resolve(languageChoice.value),
   fallbackLocale: 'fr',
   messages,
   datetimeFormats: {
@@ -20,3 +39,17 @@ export default createI18n<[typeof fr], Locale, false>({
     en: { short: { dateStyle: 'short', timeStyle: 'short' } },
   },
 })
+
+document.documentElement.lang = i18n.global.locale.value
+
+watch(languageChoice, (choice) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, choice)
+  } catch {
+    // Private browsing or blocked storage : the choice only lasts for this page
+  }
+  i18n.global.locale.value = resolve(choice)
+  document.documentElement.lang = i18n.global.locale.value
+})
+
+export default i18n

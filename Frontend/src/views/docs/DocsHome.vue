@@ -30,6 +30,10 @@ defineEmits<{ open: [page: DocPage] }>()
   <h3>Pages</h3>
   <ul>
     <li>
+      <a href="#" @click.prevent="$emit('open', 'events')">Événements</a> : tout ce que Tower envoie aux appareils, quand, et
+      avec quelles données.
+    </li>
+    <li>
       <a href="#" @click.prevent="$emit('open', 'linux-service')">Lancer le connecteur en service sous Linux</a> : le relancer
       automatiquement à chaque session, avec systemd.
     </li>

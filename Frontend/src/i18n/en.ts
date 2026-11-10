@@ -123,19 +123,13 @@ export default {
   settings: {
     tabs: {
       account: 'Account',
+      interface: 'Interface',
       bitbucket: 'Bitbucket',
       jira: 'Jira',
       clear: 'Clear a section',
     },
     account: {
       title: 'Account',
-      themeLabel: 'Theme',
-      themeHint: 'Kept in this browser. Auto follows the system setting.',
-      theme: {
-        auto: 'Auto',
-        light: 'Light',
-        dark: 'Dark',
-      },
       passwordTitle: 'Password',
       currentPassword: 'Current password',
       newPassword: 'New password',
@@ -145,6 +139,23 @@ export default {
       changePassword: 'Change the password',
       passwordChanged: 'Password changed.',
       passwordError: 'Check the current password. The new one needs at least 8 characters.',
+    },
+    interface: {
+      title: 'Interface',
+      description: 'Kept in this browser.',
+      languageLabel: 'Language',
+      language: {
+        auto: 'Auto (browser language)',
+        fr: 'Français',
+        en: 'English',
+      },
+      themeLabel: 'Theme',
+      themeHint: 'Auto follows the system setting.',
+      theme: {
+        auto: 'Auto',
+        light: 'Light',
+        dark: 'Dark',
+      },
     },
     clear: {
       title: 'Clear a section',
@@ -306,6 +317,7 @@ export default {
     copied: 'Copied',
     pages: {
       home: 'Home',
+      events: 'Events',
       linuxService: 'Linux service',
     },
   },
