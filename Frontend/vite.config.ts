@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
       port: Number(projectEnv.TOWER_VITE_DEV_PORT ?? 5173),
       strictPort: true,
       // Same origin as the frontend : the session cookie needs no CORS setup
-      proxy: { '/api': 'http://localhost:8081' },
+      proxy: { '/api': `http://localhost:${projectEnv.TOWER_HTTP_PORT ?? 8081}` },
     },
   }
 })

@@ -22,7 +22,7 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "8081:80"
+      - "${TOWER_HTTP_PORT:-8081}:80" # Host port of the application, see .env.example
     volumes_from:
       - php-fpm # Two `- /var/www` lines would create two distinct volumes, leaving nginx's empty
     volumes:
@@ -50,7 +50,7 @@ services:
     command: ["php", "do", "app:serve-websocket", "-l"]
     restart: unless-stopped
     ports:
-      - "8088:8088"
+      - "${TOWER_WEBSOCKET_PORT:-8088}:8088" # Host port the devices and browsers connect to, see .env.example
     expose:
       - "8089" # Broadcast side, reached by the other services only
     volumes:

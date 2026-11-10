@@ -15,6 +15,12 @@ use Cube\Web\Websocket\Servers\WebsocketConfiguration;
 
 use function Cube\env;
 
+// The address devices and browsers open the websocket on : the public one behind a reverse proxy,
+// the published port of the websocket container otherwise
+$websocketUrl = parse_url(env('TOWER_WEBSOCKET_URL') ?: 'ws://localhost:' . env('TOWER_WEBSOCKET_PORT', '8088'));
+if (!in_array($websocketUrl['scheme'] ?? null, ['ws', 'wss'], true) || !isset($websocketUrl['host']) || isset($websocketUrl['path']) && '/' !== $websocketUrl['path'])
+    throw new InvalidArgumentException('TOWER_WEBSOCKET_URL must look like wss://tower.example.com, without a path');
+
 return [
     // The list of your applications to load
     new Applications('App'),
@@ -31,10 +37,12 @@ return [
     new WebsocketConfiguration(
         httpHost: '0.0.0.0',
         broadcastSecret: env('WEBSOCKET_SECRET'),
-        allowedOrigins: explode(',', env('WEBSOCKET_ALLOWED_ORIGINS', 'http://localhost:' . env('TOWER_VITE_DEV_PORT', '5173') . ',http://localhost:8081')),
+        allowedOrigins: explode(',', env('WEBSOCKET_ALLOWED_ORIGINS', 'http://localhost:' . env('TOWER_VITE_DEV_PORT', '5173') . ',http://localhost:' . env('TOWER_HTTP_PORT', '8081'))),
     ),
 
     new BroadcastConfiguration(
+        socketHost: $websocketUrl['scheme'] . '://' . $websocketUrl['host'],
+        socketPort: $websocketUrl['port'] ?? ('wss' === $websocketUrl['scheme'] ? 443 : 80),
         httpHost: 'websocket',
     ),
 
