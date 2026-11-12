@@ -45,11 +45,12 @@ watch(
   { immediate: true },
 )
 
-async function drop(target: Section, event: { data: Task }) {
+// vue-draggable-plus keeps the handlers of its first render : the section is looked up again, by its sprint
+async function drop(sprint: number | null, event: { data: Task }) {
   await nextTick()
 
-  const ordered = target.tasks.map(({ id }) => id)
-  if (!(await store.move(event.data.id, target.sprint?.id ?? null, event.data.status, ordered))) toast.add({ severity: 'error', summary: t('tasks.moveError'), life: 5000 })
+  const ordered = sections.value.find((item) => (item.sprint?.id ?? null) === sprint)!.tasks.map(({ id }) => id)
+  if (!(await store.move(event.data.id, sprint, event.data.status, ordered))) toast.add({ severity: 'error', summary: t('tasks.moveError'), life: 5000 })
 }
 
 async function addSprint() {
@@ -100,8 +101,8 @@ function notifySprintError() {
       filter="a, button"
       :prevent-on-filter="false"
       ghost-class="task-ghost"
-      @add="drop(item, $event)"
-      @update="drop(item, $event)"
+      @add="drop(item.sprint?.id ?? null, $event)"
+      @update="drop(item.sprint?.id ?? null, $event)"
     >
       <TaskCard v-for="task in item.tasks" :key="task.id" :task="task" show-status @open="emit('open', task)" />
     </VueDraggable>
