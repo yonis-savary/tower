@@ -80,6 +80,8 @@ export default {
     discuss: 'Discuss with the AI',
     discussSent: '{key} sent to the devices for a discussion',
     discussError: 'The issue could not be read from Jira or sent.',
+    openPullRequest: 'Open the PR',
+    openPullRequests: 'Open one of the {count} PRs',
     taskCreated: 'Task created for {key}, in the backlog',
     taskError: 'The task could not be created.',
     chooseStatus: 'New status of {key}',

@@ -51,6 +51,7 @@ a {
   outline: 2px solid var(--p-primary-color);
 }
 
-.card-action .pi {
+.card-action .pi,
+.card-action .app-icon {
   font-size: 0.9rem;
 }

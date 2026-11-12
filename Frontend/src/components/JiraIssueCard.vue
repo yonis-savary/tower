@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import JiraAssignee from './JiraAssignee.vue'
+import PullRequestButton from './PullRequestButton.vue'
 import type { JiraIssue } from '../stores/jira'
 
 const props = defineProps<{ issue: JiraIssue; taskId: number | null; creatingTask: boolean; discussing: boolean; showAssignee: boolean }>()
@@ -46,6 +47,7 @@ async function copyKey() {
         <button v-else type="button" class="card-action" :aria-label="t('jira.openTask')" :title="t('jira.openTask')" @click="$emit('openTask')">
           <i class="pi pi-check-square" aria-hidden="true" />
         </button>
+        <PullRequestButton :issue-key="issue.key" />
         <button type="button" class="card-action" :aria-label="t('jira.discuss')" :title="t('jira.discuss')" :disabled="discussing" @click="$emit('discuss')">
           <i :class="['pi', discussing ? 'pi-spin pi-spinner' : 'pi-comments']" aria-hidden="true" />
         </button>

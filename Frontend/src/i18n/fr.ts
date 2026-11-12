@@ -78,6 +78,8 @@ export default {
     discuss: 'Discuter avec l’IA',
     discussSent: '{key} envoyé aux appareils pour en discuter',
     discussError: "Le ticket n'a pas pu être lu dans Jira ou envoyé.",
+    openPullRequest: 'Ouvrir la PR',
+    openPullRequests: 'Ouvrir une des {count} PR',
     taskCreated: 'Tâche créée pour {key}, dans le backlog',
     taskError: "La tâche n'a pas pu être créée.",
     chooseStatus: 'Nouveau statut de {key}',

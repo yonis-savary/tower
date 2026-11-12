@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Tag from 'primevue/tag'
 import { useToast } from 'primevue/usetoast'
+import PullRequestButton from './PullRequestButton.vue'
 import { useJiraStore } from '../stores/jira'
 import type { Task } from '../stores/tasks'
 
@@ -43,6 +44,7 @@ async function discuss() {
         <small :title="t('tasks.issueStatus', { key: issue.key })">({{ issue.status }})</small>
       </span>
       <span class="task-card-actions">
+        <PullRequestButton :issue-key="issue.key" />
         <button
           type="button"
           class="card-action"
