@@ -363,6 +363,7 @@ export default {
     typeLabel: "Type de l'évènement",
     payloadLabel: 'Données (objet JSON, facultatif)',
     nameLabel: 'Nom',
+    descriptionLabel: 'Description (facultative)',
     launchButton: 'Lancer',
     saveButton: 'Créer',
     deleteButton: 'Supprimer',

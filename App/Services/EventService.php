@@ -53,12 +53,13 @@ class EventService
         );
     }
 
-    public function createQuickAction(int $workspace, string $name, string $type, string $payload): QuickAction
+    public function createQuickAction(int $workspace, string $name, ?string $description, string $type, string $payload): QuickAction
     {
         // created_at as a string : generated models type a DATETIME column as DATE, which drops the time
         return (new QuickAction([
             'workspace' => $workspace,
             'name' => $name,
+            'description' => '' === trim((string) $description) ? null : trim($description),
             'type' => $type,
             'payload' => $payload,
             'created_at' => date('Y-m-d H:i:s'),

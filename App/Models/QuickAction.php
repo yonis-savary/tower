@@ -16,6 +16,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $type
  * @property string $payload
  * @property \DateTime $created_at
+ * @property string $description
  * @property Workspace $_workspace
  */
 class QuickAction extends Model
@@ -45,7 +46,8 @@ class QuickAction extends Model
             'name' => (new ModelField('name'))->type('STRING')->notNull()->hasDefault(false),
             'type' => (new ModelField('type'))->type('STRING')->notNull()->hasDefault(false),
             'payload' => (new ModelField('payload'))->type('STRING')->notNull()->hasDefault(false),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false)
+            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
+            'description' => (new ModelField('description'))->type('STRING')->nullable()->default(NULL)
         ];
     }
 

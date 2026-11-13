@@ -107,6 +107,21 @@ class EventTest extends CubeTestCase
         $this->assertSame([], $this->get('/api/quick-actions')->assertOk()->json());
     }
 
+    public function testQuickActionDescription()
+    {
+        $this->register('alice@example.com');
+
+        $this->assertNull($this->createAction()['description']);
+
+        $described = $this->postJson('/api/quick-actions', ['name' => 'Deploy', 'description' => 'Ships main to production', 'type' => 'deploy.start', 'payload' => '{}'])->assertCreated()->json();
+        $this->assertSame('Ships main to production', $described['description']);
+
+        $blank = $this->postJson('/api/quick-actions', ['name' => 'Blank', 'description' => '  ', 'type' => 'a.b', 'payload' => '{}'])->assertCreated()->json();
+        $this->assertNull($blank['description']);
+
+        $this->postJson('/api/quick-actions', ['name' => 'Long', 'description' => str_repeat('a', 256), 'type' => 'a.b', 'payload' => '{}'])->assertUnprocessableContent();
+    }
+
     public function testQuickActionsStayInTheirWorkspace()
     {
         $this->register('alice@example.com');

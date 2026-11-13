@@ -65,6 +65,7 @@ class EventController extends Controller
         $action = $this->events->createQuickAction(
             $this->currentWorkspaceId(),
             $request->validated('name'),
+            $request->validated('description'),
             $request->validated('type'),
             $request->validated('payload'),
         );

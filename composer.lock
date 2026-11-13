@@ -1654,12 +1654,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/yonis-savary/cube.git",
-                "reference": "5cffa63431880505be0cf1327cfe6945a078c5c3"
+                "reference": "c4264e13eec612bcfba70b28d29944b225ec0994"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/yonis-savary/cube/zipball/5cffa63431880505be0cf1327cfe6945a078c5c3",
-                "reference": "5cffa63431880505be0cf1327cfe6945a078c5c3",
+                "url": "https://api.github.com/repos/yonis-savary/cube/zipball/c4264e13eec612bcfba70b28d29944b225ec0994",
+                "reference": "c4264e13eec612bcfba70b28d29944b225ec0994",
                 "shasum": ""
             },
             "require": {
@@ -1708,7 +1708,7 @@
                 "issues": "https://github.com/yonis-savary/cube/issues",
                 "source": "https://github.com/yonis-savary/cube/tree/main"
             },
-            "time": "2026-11-09T18:29:57+00:00"
+            "time": "2026-11-13T13:17:52+00:00"
         }
     ],
     "packages-dev": [

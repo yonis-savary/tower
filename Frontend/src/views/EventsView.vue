@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
+import Textarea from 'primevue/textarea'
 import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
 import {
@@ -52,7 +53,7 @@ function toggleManual() {
 }
 
 const dialogVisible = ref(false)
-const newAction = ref({ name: '', type: '', payload: '' })
+const newAction = ref({ name: '', description: '', type: '', payload: '' })
 const saving = ref(false)
 const saveError = ref<string | null>(null)
 
@@ -100,7 +101,7 @@ async function remove(action: QuickAction) {
 }
 
 function openDialog() {
-  newAction.value = { name: '', type: '', payload: '' }
+  newAction.value = { name: '', description: '', type: '', payload: '' }
   saveError.value = null
   dialogVisible.value = true
 }
@@ -109,9 +110,14 @@ async function save() {
   saving.value = true
   saveError.value = null
 
-  const { name, type: eventType, payload: eventPayload } = newAction.value
+  const { name, description, type: eventType, payload: eventPayload } = newAction.value
   const { response } = await createQuickAction({
-    body: { name: name.trim(), type: eventType.trim(), payload: eventPayload.trim() || '{}' },
+    body: {
+      name: name.trim(),
+      description: description.trim() || null,
+      type: eventType.trim(),
+      payload: eventPayload.trim() || '{}',
+    },
   })
   saving.value = false
 
@@ -157,6 +163,7 @@ async function save() {
       <li v-for="action in actions" :key="action.id" class="quick-action">
         <div class="quick-action-identity">
           <strong>{{ action.name }}</strong>
+          <span v-if="action.description" class="quick-action-description">{{ action.description }}</span>
           <code>{{ action.type }}</code>
         </div>
         <div class="quick-action-buttons">
@@ -188,6 +195,10 @@ async function save() {
       <div class="dialog-field">
         <label for="quick-action-name">{{ t('events.nameLabel') }}</label>
         <InputText id="quick-action-name" v-model="newAction.name" maxlength="100" required autofocus fluid />
+      </div>
+      <div class="dialog-field">
+        <label for="quick-action-description">{{ t('events.descriptionLabel') }}</label>
+        <Textarea id="quick-action-description" v-model="newAction.description" maxlength="255" rows="2" auto-resize fluid />
       </div>
       <EventFields v-model:type="newAction.type" v-model:payload="newAction.payload" />
       <Button class="event-submit" type="submit" :label="t('events.saveButton')" :loading="saving" />
@@ -304,6 +315,11 @@ async function save() {
   gap: 0.125rem;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.quick-action-description {
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
 }
 
 .quick-action-identity code {

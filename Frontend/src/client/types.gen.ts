@@ -544,6 +544,7 @@ export type ListQuickActionsResponses = {
     200: Array<{
         id: number;
         name: string;
+        description: string | null;
         type: string;
         payload: string;
     }>;
@@ -554,6 +555,7 @@ export type ListQuickActionsResponse = ListQuickActionsResponses[keyof ListQuick
 export type CreateQuickActionData = {
     body: {
         name: string;
+        description?: string | null;
         type: string;
         payload: string;
     };
@@ -584,6 +586,7 @@ export type CreateQuickActionResponses = {
     201: {
         id: number;
         name: string;
+        description: string | null;
         type: string;
         payload: string;
     };
