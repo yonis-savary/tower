@@ -180,52 +180,68 @@ async function toggle(line: Line) {
   <section class="panel">
     <Message v-if="error" class="panel-error" severity="error" :closable="false">{{ error }}</Message>
 
-    <ul v-if="lines.length" class="lines">
-      <li v-for="line in lines" :key="line.id" class="line">
-        <div class="line-row">
-          <span class="line-icon"><AppIcon :icon="icons[line.type] ?? 'pi pi-circle'" /></span>
-          <div class="line-text">
-            <strong>{{ label(line) }}</strong>
-            <span v-if="detail(line)">{{ detail(line) }}</span>
-          </div>
-          <time class="line-date" :datetime="line.created_at">{{ d(new Date(line.created_at), 'short') }}</time>
-          <Button
-            v-if="isSent(line)"
-            :icon="openLine === line.id ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
-            severity="secondary"
-            text
-            size="small"
-            :aria-label="t('history.deliveriesToggle')"
-            :aria-expanded="openLine === line.id"
-            :title="t('history.deliveriesToggle')"
-            @click="toggle(line)"
-          />
-        </div>
+    <div v-if="lines.length" class="table-wrapper">
+      <table class="lines">
+        <thead>
+          <tr>
+            <th colspan="2">{{ t('history.eventColumn') }}</th>
+            <th>{{ t('history.detailColumn') }}</th>
+            <th>{{ t('history.dateColumn') }}</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="line in lines" :key="line.id">
+            <tr class="line" :class="{ 'line-open': openLine === line.id }">
+              <td class="line-icon"><AppIcon :icon="icons[line.type] ?? 'pi pi-circle'" /></td>
+              <td class="line-label">{{ label(line) }}</td>
+              <td class="line-detail" :title="detail(line)">{{ detail(line) }}</td>
+              <td class="line-date"><time :datetime="line.created_at">{{ d(new Date(line.created_at), 'short') }}</time></td>
+              <td class="line-toggle">
+                <Button
+                  v-if="isSent(line)"
+                  :icon="openLine === line.id ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+                  severity="secondary"
+                  text
+                  size="small"
+                  :aria-label="t('history.deliveriesToggle')"
+                  :aria-expanded="openLine === line.id"
+                  :title="t('history.deliveriesToggle')"
+                  @click="toggle(line)"
+                />
+              </td>
+            </tr>
 
-        <div v-if="openLine === line.id && deliveries" class="deliveries">
-          <p v-if="!deliveries.length" class="empty">{{ t('history.noDelivery') }}</p>
-          <article v-for="delivery in deliveries" :key="delivery.id" class="delivery">
-            <div class="delivery-head">
-              <strong>{{ delivery.hostname ?? t('devices.unknownHost') }}</strong>
-              <Tag :value="t(`history.delivery.${delivery.status}`)" :severity="deliverySeverity[delivery.status] ?? 'secondary'" />
-            </div>
-            <dl>
-              <dt>{{ t('history.payload') }}</dt>
-              <dd><code>{{ delivery.payload }}</code></dd>
-              <template v-if="delivery.exit_code !== null">
-                <dt>{{ t('history.exitCode') }}</dt>
-                <dd><code>{{ delivery.exit_code }}</code></dd>
-              </template>
-              <dt>{{ t('history.response') }}</dt>
-              <dd>
-                <code v-if="delivery.response">{{ delivery.response }}</code>
-                <span v-else class="empty">{{ t('history.noResponse') }}</span>
-              </dd>
-            </dl>
-          </article>
-        </div>
-      </li>
-    </ul>
+            <tr v-if="openLine === line.id && deliveries" class="deliveries-row">
+              <td colspan="5">
+                <div class="deliveries">
+                  <p v-if="!deliveries.length" class="empty">{{ t('history.noDelivery') }}</p>
+                  <article v-for="delivery in deliveries" :key="delivery.id" class="delivery">
+                    <div class="delivery-head">
+                      <strong>{{ delivery.hostname ?? t('devices.unknownHost') }}</strong>
+                      <Tag :value="t(`history.delivery.${delivery.status}`)" :severity="deliverySeverity[delivery.status] ?? 'secondary'" />
+                    </div>
+                    <dl>
+                      <dt>{{ t('history.payload') }}</dt>
+                      <dd><code>{{ delivery.payload }}</code></dd>
+                      <template v-if="delivery.exit_code !== null">
+                        <dt>{{ t('history.exitCode') }}</dt>
+                        <dd><code>{{ delivery.exit_code }}</code></dd>
+                      </template>
+                      <dt>{{ t('history.response') }}</dt>
+                      <dd>
+                        <code v-if="delivery.response">{{ delivery.response }}</code>
+                        <span v-else class="empty">{{ t('history.noResponse') }}</span>
+                      </dd>
+                    </dl>
+                  </article>
+                </div>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
     <p v-else-if="!loading" class="empty">{{ t('history.empty') }}</p>
 
     <Button
@@ -249,7 +265,7 @@ async function toggle(line: Line) {
 }
 
 .panel {
-  max-width: 48rem;
+  max-width: 72rem;
   padding: 1.25rem;
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
@@ -260,67 +276,72 @@ async function toggle(line: Line) {
   margin-bottom: 0.75rem;
 }
 
+.table-wrapper {
+  overflow-x: auto;
+}
+
 .lines {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.line {
-  padding: 0.75rem 0;
-  border-top: 1px solid var(--p-content-border-color);
-}
-
-.line:first-child {
-  padding-top: 0;
-  border-top: 0;
-}
-
-.line:last-child {
-  padding-bottom: 0;
-}
-
-.line-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 0.75rem;
-}
-
-.line-icon {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--p-content-border-radius);
-  background: var(--p-content-hover-background);
-  color: var(--p-text-muted-color);
-}
-
-.line-text {
-  flex: 1 1 12rem;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.line-text span {
-  color: var(--p-text-muted-color);
+  width: 100%;
+  border-collapse: collapse;
   font-size: 0.875rem;
 }
 
+.lines th,
+.lines td {
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--p-content-border-color);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.lines th {
+  color: var(--p-text-muted-color);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.lines tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.line-open td {
+  border-bottom: 0;
+}
+
+.lines .line-icon {
+  width: 1.5rem;
+  padding-right: 0;
+  color: var(--p-text-muted-color);
+  text-align: center;
+}
+
+.line-label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.line-detail {
+  max-width: 0;
+  width: 100%;
+  overflow: hidden;
+  color: var(--p-text-muted-color);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .line-date {
-  margin-left: auto;
   color: var(--p-text-muted-color);
   font-size: 0.8125rem;
   white-space: nowrap;
 }
 
+.lines .line-toggle {
+  width: 2.5rem;
+  padding: 0;
+}
+
 .deliveries {
-  margin: 0.625rem 0 0 2.75rem;
+  margin: 0 0 0.5rem 2rem;
   padding-left: 0.75rem;
   border-left: 2px solid var(--p-content-border-color);
 }

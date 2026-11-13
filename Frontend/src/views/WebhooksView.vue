@@ -161,48 +161,64 @@ function showCalls(webhook: Webhook) {
 
     <Message v-if="listError" class="panel-error" severity="error" :closable="false">{{ listError }}</Message>
 
-    <ul v-if="webhooks.length" class="webhooks">
-      <li v-for="webhook in webhooks" :key="webhook.id" class="webhook" :class="{ 'webhook-disabled': !webhook.enabled }">
-        <div class="webhook-head">
-          <ToggleSwitch
-            :model-value="webhook.enabled"
-            :aria-label="webhook.enabled ? t('webhooks.disable') : t('webhooks.enable')"
-            :title="webhook.enabled ? t('webhooks.enabled') : t('webhooks.disabled')"
-            @update:model-value="setEnabled(webhook, $event)"
-          />
-          <strong class="webhook-name">
-            {{ webhook.name }}
-            <i
-              v-if="!webhook.secured"
-              class="pi pi-lock-open webhook-unsecured"
-              role="img"
-              :aria-label="t('webhooks.unsecured')"
-              :title="t('webhooks.unsecuredHint')"
-            />
-          </strong>
-          <div class="webhook-buttons">
-            <Button icon="pi pi-list" severity="secondary" text size="small" :aria-label="t('webhooks.calls')" :title="t('webhooks.calls')" @click="showCalls(webhook)" />
-            <Button icon="pi pi-pencil" severity="secondary" text size="small" :aria-label="t('webhooks.edit')" :title="t('webhooks.edit')" @click="openForm(webhook)" />
-            <Button v-if="webhook.secured" icon="pi pi-key" severity="secondary" text size="small" :aria-label="t('webhooks.regenerate')" :title="t('webhooks.regenerate')" @click="regenerate(webhook)" />
-            <Button icon="pi pi-trash" severity="secondary" text size="small" :aria-label="t('webhooks.deleteButton')" :title="t('webhooks.deleteButton')" @click="remove(webhook)" />
-          </div>
-        </div>
-
-        <div class="webhook-url">
-          <code>{{ urlOf(webhook) }}</code>
-          <Button icon="pi pi-copy" severity="secondary" text size="small" :aria-label="t('webhooks.copy')" :title="t('webhooks.copy')" @click="copyUrl(webhook)" />
-        </div>
-
-        <div class="webhook-meta">
-          <span class="webhook-events">
-            <code v-for="event in eventsOf(webhook)" :key="event">{{ event }}</code>
-          </span>
-          <span class="webhook-last-call">
-            {{ webhook.last_called_at ? t('webhooks.lastCall', { date: d(new Date(webhook.last_called_at), 'short') }) : t('webhooks.neverCalled') }}
-          </span>
-        </div>
-      </li>
-    </ul>
+    <div v-if="webhooks.length" class="table-wrapper">
+      <table class="webhooks">
+        <thead>
+          <tr>
+            <th>{{ t('webhooks.enabled') }}</th>
+            <th>{{ t('webhooks.nameLabel') }}</th>
+            <th>{{ t('webhooks.url') }}</th>
+            <th>{{ t('webhooks.eventsLabel') }}</th>
+            <th>{{ t('webhooks.lastCall') }}</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="webhook in webhooks" :key="webhook.id" :class="{ 'webhook-disabled': !webhook.enabled }">
+            <td>
+              <ToggleSwitch
+                :model-value="webhook.enabled"
+                :aria-label="webhook.enabled ? t('webhooks.disable') : t('webhooks.enable')"
+                :title="webhook.enabled ? t('webhooks.enabled') : t('webhooks.disabled')"
+                @update:model-value="setEnabled(webhook, $event)"
+              />
+            </td>
+            <td class="webhook-name">
+              <strong>{{ webhook.name }}</strong>
+              <i
+                v-if="!webhook.secured"
+                class="pi pi-lock-open webhook-unsecured"
+                role="img"
+                :aria-label="t('webhooks.unsecured')"
+                :title="t('webhooks.unsecuredHint')"
+              />
+            </td>
+            <td>
+              <div class="webhook-url">
+                <code :title="urlOf(webhook)">{{ urlOf(webhook) }}</code>
+                <Button icon="pi pi-copy" severity="secondary" text size="small" :aria-label="t('webhooks.copy')" :title="t('webhooks.copy')" @click="copyUrl(webhook)" />
+              </div>
+            </td>
+            <td>
+              <span class="webhook-events">
+                <code v-for="event in eventsOf(webhook)" :key="event">{{ event }}</code>
+              </span>
+            </td>
+            <td class="webhook-last-call">
+              {{ webhook.last_called_at ? d(new Date(webhook.last_called_at), 'short') : t('webhooks.neverCalled') }}
+            </td>
+            <td>
+              <div class="webhook-buttons">
+                <Button icon="pi pi-list" severity="secondary" text size="small" :aria-label="t('webhooks.calls')" :title="t('webhooks.calls')" @click="showCalls(webhook)" />
+                <Button icon="pi pi-pencil" severity="secondary" text size="small" :aria-label="t('webhooks.edit')" :title="t('webhooks.edit')" @click="openForm(webhook)" />
+                <Button v-if="webhook.secured" icon="pi pi-key" severity="secondary" text size="small" :aria-label="t('webhooks.regenerate')" :title="t('webhooks.regenerate')" @click="regenerate(webhook)" />
+                <Button icon="pi pi-trash" severity="secondary" text size="small" :aria-label="t('webhooks.deleteButton')" :title="t('webhooks.deleteButton')" @click="remove(webhook)" />
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     <p v-else-if="!listError" class="empty">{{ t('webhooks.empty') }}</p>
   </section>
 
@@ -265,7 +281,7 @@ function showCalls(webhook: Webhook) {
 }
 
 .panel {
-  max-width: 48rem;
+  max-width: 72rem;
   margin-bottom: 1.25rem;
   padding: 1.25rem;
   background: var(--p-content-background);
@@ -295,39 +311,39 @@ function showCalls(webhook: Webhook) {
   color: var(--p-text-muted-color);
 }
 
+.table-wrapper {
+  overflow-x: auto;
+}
+
 .webhooks {
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
 }
 
-.webhook {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.875rem 0;
-  border-top: 1px solid var(--p-content-border-color);
+.webhooks th,
+.webhooks td {
+  padding: 0.375rem 0.5rem;
+  border-bottom: 1px solid var(--p-content-border-color);
+  text-align: left;
+  vertical-align: middle;
 }
 
-.webhook:last-child {
-  padding-bottom: 0;
+.webhooks th {
+  color: var(--p-text-muted-color);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.webhook-disabled .webhook-name,
-.webhook-disabled .webhook-url,
-.webhook-disabled .webhook-meta {
+.webhooks tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.webhook-disabled td:not(:first-child):not(:last-child) {
   opacity: 0.6;
 }
 
-.webhook-head {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
 .webhook-name {
-  flex: 1;
-  min-width: 0;
   overflow-wrap: anywhere;
 }
 
@@ -345,6 +361,7 @@ function showCalls(webhook: Webhook) {
 
 .webhook-buttons {
   display: flex;
+  justify-content: flex-end;
   gap: 0.125rem;
 }
 
@@ -355,38 +372,32 @@ function showCalls(webhook: Webhook) {
 }
 
 .webhook-url code {
-  min-width: 0;
-  padding: 0.25rem 0.5rem;
-  overflow-x: auto;
+  max-width: 16rem;
+  padding: 0.125rem 0.375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
   background: var(--p-content-hover-background);
   border-radius: var(--p-content-border-radius);
   font-size: 0.8125rem;
 }
 
-.webhook-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-  font-size: 0.8125rem;
-}
-
 .webhook-events {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem;
+  gap: 0.25rem;
 }
 
 .webhook-events code {
-  padding: 0.125rem 0.375rem;
+  padding: 0.0625rem 0.3125rem;
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius);
+  font-size: 0.8125rem;
 }
 
 .webhook-last-call {
   color: var(--p-text-muted-color);
+  white-space: nowrap;
 }
 
 .webhook-form,
