@@ -1,14 +1,97 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="112" fill="#2190FF"/>
-  <g fill="#FFFFFF">
-    <rect x="128" y="108" width="52" height="70" rx="12"/>
-    <rect x="230" y="108" width="52" height="70" rx="12"/>
-    <rect x="332" y="108" width="52" height="70" rx="12"/>
-    <rect x="128" y="150" width="256" height="72" rx="16"/>
-    <rect x="196" y="200" width="120" height="208" rx="16"/>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 512 512"
+   width="512"
+   height="512"
+   version="1.1"
+   id="svg7"
+   sodipodi:docname="logo.svg"
+   inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs7" />
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     showgrid="false"
+     inkscape:zoom="1.1145218"
+     inkscape:cx="211.75"
+     inkscape:cy="197.84269"
+     inkscape:window-width="1920"
+     inkscape:window-height="1016"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g6" />
+  <rect
+     width="512"
+     height="512"
+     rx="112"
+     fill="#2190FF"
+     id="rect1" />
+  <g
+     fill="#FFFFFF"
+     id="g6">
+    <rect
+       x="128"
+       y="108"
+       width="52"
+       height="70"
+       rx="12"
+       id="rect2" />
+    <rect
+       x="230"
+       y="108"
+       width="52"
+       height="70"
+       rx="12"
+       id="rect3" />
+    <rect
+       x="332"
+       y="108"
+       width="52"
+       height="70"
+       rx="12"
+       id="rect4" />
+    <rect
+       x="128"
+       y="150"
+       width="256"
+       height="63.752167"
+       rx="16"
+       id="rect5"
+       style="stroke-width:0.940982" />
+    <rect
+       x="188.00002"
+       y="186"
+       width="136"
+       height="228"
+       rx="18.133333"
+       id="rect6"
+       style="stroke-width:1.11459" />
   </g>
-  <g fill="#2190FF">
-    <rect x="248" y="250" width="16" height="44" rx="8"/>
-    <path d="M228 408 V364 a28 28 0 0 1 56 0 V408 Z"/>
+  <g
+     fill="#2190ff"
+     id="g7"
+     transform="matrix(1.1333333,0,0,1,-34.133325,6)">
+    <rect
+       x="248"
+       y="250"
+       width="16"
+       height="44"
+       rx="8"
+       id="rect7" />
+    <path
+       d="m 228,408 v -44 a 28,28 0 0 1 56,0 v 44 z"
+       id="path7" />
   </g>
 </svg>
