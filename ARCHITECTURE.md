@@ -752,7 +752,7 @@ les jobs échoués récents.
 |--------------------|----------------------------------------------------------------------|
 | Accueil            |                                                                      |
 | Tâches             | onglet Tableau (sprint actif, cinq colonnes, annulées à part) et onglet Backlog (sprints ouverts et planifiés, backlog, sprints clôturés repliés) ; fiche de tâche avec son historique |
-| Événements         | lancer un événement (type et payload JSON) ; créer, lancer et supprimer des quick-actions |
+| Événements         | lancer un événement (type et payload JSON), en premier, dans un bloc repliable (replié par défaut, choix gardé dans le navigateur) ; créer, lancer et supprimer des quick-actions |
 | Webhooks           | liste des webhooks : interrupteur actif/inactif, cadenas ouvert pour un webhook non sécurisé, adresse à copier, événements, dernier appel ; création (nom, événements, sécurisé ou non, avec un avertissement) et modification (nom, événements), régénération du secret, suppression ; secret affiché une fois avec un exemple `curl` ; modale des appels (statut, IP, `User-Agent`, corps), par pages de 50 |
 | Merge Requests     | un onglet par dépôt : graphique en arbre des merge requests ouvertes, puis leur liste (approbations, commentaires, brouillon, pipeline), puis celles du dépôt fermées récemment |
 | Historique         | lignes du workspace, les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |
