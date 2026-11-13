@@ -102,23 +102,26 @@ class TaskTest extends CubeTestCase
         $this->assertSame(['A', 'B'], $this->titles());
     }
 
-    public function testOnlyOneActiveSprintAndClosingKeepsTheTasks()
+    public function testSeveralActiveSprintsAndClosingKeepsTheTasks()
     {
         $this->register();
         $first = $this->sprint('One');
         $second = $this->sprint('Two');
+        $planned = $this->sprint('Three');
         $task = $this->task('Unfinished', $first['id']);
 
         $this->assertSame('active', $this->postJson("/api/sprints/{$first['id']}/open", [])->assertOk()->json()['state']);
-        $this->postJson("/api/sprints/{$second['id']}/open", [])->assertConflict();
+        $this->assertSame('active', $this->postJson("/api/sprints/{$second['id']}/open", [])->assertOk()->json()['state']);
+        $this->postJson("/api/sprints/{$first['id']}/open", [])->assertOk();
 
-        $this->postJson("/api/sprints/{$second['id']}/close", [])->assertConflict();
+        $this->postJson("/api/sprints/{$planned['id']}/close", [])->assertConflict();
         $this->assertSame('closed', $this->postJson("/api/sprints/{$first['id']}/close", [])->assertOk()->json()['state']);
 
         $stored = $this->get('/api/tasks')->assertOk()->json()[0];
         $this->assertSame($first['id'], $stored['sprint']);
         $this->assertSame('todo', $stored['status']);
 
+        $this->assertSame(['closed', 'active', 'planned'], array_column($this->get('/api/sprints')->assertOk()->json(), 'state'));
         $this->move($task, $second['id'], 'todo')->assertOk();
         $this->move($task, $first['id'], 'todo')->assertUnprocessableContent();
         $this->postJson('/api/tasks', ['title' => 'Late', 'sprint' => $first['id']])->assertUnprocessableContent();

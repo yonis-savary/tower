@@ -87,7 +87,7 @@ function notifySprintError() {
       <Tag v-if="item.sprint" :value="t(stateLabels[item.sprint.state] ?? '')" :severity="item.sprint.state === 'active' ? 'success' : 'secondary'" />
       <span class="count">{{ item.tasks.length }}</span>
       <span class="section-actions">
-        <Button v-if="item.sprint?.state === 'planned' && !store.activeSprint" :label="t('tasks.openSprint')" icon="pi pi-play" severity="secondary" text size="small" @click="open(item.sprint)" />
+        <Button v-if="item.sprint?.state === 'planned'" :label="t('tasks.openSprint')" icon="pi pi-play" severity="secondary" text size="small" @click="open(item.sprint)" />
         <Button v-if="item.sprint?.state === 'active'" :label="t('tasks.closeSprint')" icon="pi pi-flag" severity="secondary" text size="small" @click="close(item.sprint)" />
         <Button icon="pi pi-plus" severity="secondary" text size="small" :aria-label="t('tasks.newTask')" :title="t('tasks.newTask')" @click="emit('create', item.sprint?.id ?? null)" />
       </span>

@@ -65,7 +65,7 @@ function createTask(sprint: number | null) {
     </TabList>
     <TabPanels>
       <TabPanel value="board">
-        <TaskBoard @open="openTask" @create="createTask(store.activeSprint?.id ?? null)" @backlog="tab = 'backlog'" />
+        <TaskBoard @open="openTask" @create="createTask" @backlog="tab = 'backlog'" />
       </TabPanel>
       <TabPanel value="backlog">
         <TaskBacklog @open="openTask" @create="createTask" />

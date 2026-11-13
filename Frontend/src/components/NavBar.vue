@@ -47,9 +47,9 @@ const workspaceMenuItems = computed<MenuItem[]>(() => [
 
 onMounted(workspace.loadCurrent)
 
-// What is left to do in the active sprint
+// What is left to do in the active sprints
 const remainingTasks = computed(
-  () => tasks.tasks.filter(({ sprint, status }) => sprint !== null && sprint === tasks.activeSprint?.id && status !== 'done' && status !== 'cancelled').length,
+  () => tasks.tasks.filter(({ sprint, status }) => sprint !== null && tasks.activeSprints.some(({ id }) => id === sprint) && status !== 'done' && status !== 'cancelled').length,
 )
 const openIssues = computed(() => jira.mine.filter((issue) => !jira.isDone(issue)).length)
 

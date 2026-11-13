@@ -3694,7 +3694,7 @@
         "\/api\/sprints\/{sprint}\/open": {
             "post": {
                 "summary": "Open sprint",
-                "description": "Makes a sprint the active one of the current workspace",
+                "description": "Makes a sprint active, alongside the other active sprints of the current workspace",
                 "operationId": "openSprint",
                 "parameters": [
                     {
@@ -3783,21 +3783,6 @@
                                 }
                             }
                         }
-                    },
-                    "409": {
-                        "description": "A workspace has one active sprint at most",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -3805,7 +3790,7 @@
         "\/api\/sprints\/{sprint}\/close": {
             "post": {
                 "summary": "Close sprint",
-                "description": "Marks the active sprint as finished. Its tasks stay where they are",
+                "description": "Marks an active sprint as finished. Its tasks stay where they are",
                 "operationId": "closeSprint",
                 "parameters": [
                     {
@@ -3896,7 +3881,7 @@
                         }
                     },
                     "409": {
-                        "description": "Only the active sprint can be closed",
+                        "description": "Only an active sprint can be closed",
                         "content": {
                             "application\/json": {
                                 "schema": {

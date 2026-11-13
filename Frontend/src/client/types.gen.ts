@@ -1703,12 +1703,6 @@ export type OpenSprintErrors = {
     404: {
         error?: string;
     };
-    /**
-     * A workspace has one active sprint at most
-     */
-    409: {
-        error?: string;
-    };
 };
 
 export type OpenSprintError = OpenSprintErrors[keyof OpenSprintErrors];
@@ -1751,7 +1745,7 @@ export type CloseSprintErrors = {
         error?: string;
     };
     /**
-     * Only the active sprint can be closed
+     * Only an active sprint can be closed
      */
     409: {
         error?: string;

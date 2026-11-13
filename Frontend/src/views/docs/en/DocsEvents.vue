@@ -121,7 +121,7 @@ const discussExample = `
     <thead><tr><th>Event</th><th>When</th></tr></thead>
     <tbody>
       <tr><td><code>sprint.created</code></td><td>a sprint is planned</td></tr>
-      <tr><td><code>sprint.opened</code></td><td>it becomes the active sprint</td></tr>
+      <tr><td><code>sprint.opened</code></td><td>it becomes active, alongside the other active sprints</td></tr>
       <tr><td><code>sprint.closed</code></td><td>it is closed</td></tr>
     </tbody>
   </table>

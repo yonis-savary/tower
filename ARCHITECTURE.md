@@ -112,13 +112,13 @@ statut à part qui n'a pas de colonne sur le tableau.
 **Sprints.** Un sprint a un nom et un état `planned`, `active` ou `closed`. Il n'a pas de
 durée : il s'ouvre et se clôture à la main.
 
-- Un seul sprint `active` par workspace.
+- Plusieurs sprints peuvent être `active` en même temps ; rouvrir un sprint déjà actif ne fait rien.
 - Clôturer un sprint le marque seulement comme terminé : ses tâches restent à leur place, avec
   leur statut. On peut en retirer une tâche (pour la reprendre ailleurs), pas en ajouter.
 - L'API permet de rouvrir un sprint clôturé ; le front ne le propose pas encore.
 - Pas de suppression : une tâche abandonnée passe en `cancelled`.
 
-Le tableau montre le sprint actif en cinq colonnes ; le backlog montre les sprints ouverts et
+Le tableau montre chaque sprint actif en cinq colonnes, du plus ancien au plus récent ; le backlog montre les sprints ouverts et
 planifiés puis les tâches sans sprint. Les tâches se déplacent par glisser-déposer, entre les
 listes et à l'intérieur d'une liste.
 
@@ -717,7 +717,7 @@ icônes.
 En haut, les éléments principaux ; en bas, les secondaires, puis l'e-mail et la déconnexion.
 Tâches, Jira, Merge Requests et Événements n'apparaissent que si le workspace courant a cette
 section (voir § Workspace). Tâches, Jira et Merge Requests portent un compteur : tâches restantes
-du sprint actif, tickets non terminés de l'utilisateur, merge requests ouvertes.
+des sprints actifs, tickets non terminés de l'utilisateur, merge requests ouvertes.
 
 | Élément            | Contenu                                                            |
 |--------------------|--------------------------------------------------------------------|
@@ -751,7 +751,7 @@ les jobs échoués récents.
 | Écran              | Contenu                                                              |
 |--------------------|----------------------------------------------------------------------|
 | Accueil            |                                                                      |
-| Tâches             | onglet Tableau (sprint actif, cinq colonnes, annulées à part) et onglet Backlog (sprints ouverts et planifiés, backlog, sprints clôturés repliés) ; fiche de tâche avec son historique |
+| Tâches             | onglet Tableau (un kanban de cinq colonnes par sprint actif, repliable, choix gardé dans le navigateur par workspace ; une tâche se glisse d'un sprint actif à l'autre ; annulées à part) et onglet Backlog (sprints ouverts et planifiés, backlog, sprints clôturés repliés) ; fiche de tâche avec son historique |
 | Événements         | lancer un événement (type et payload JSON), en premier, dans un bloc repliable (replié par défaut, choix gardé dans le navigateur) ; créer, lancer et supprimer des quick-actions |
 | Webhooks           | tableau des webhooks : interrupteur actif/inactif, cadenas ouvert pour un webhook non sécurisé, adresse à copier, événements, dernier appel ; création (nom, événements, sécurisé ou non, avec un avertissement) et modification (nom, événements), régénération du secret, suppression ; secret affiché une fois avec un exemple `curl` ; modale des appels (statut, IP, `User-Agent`, corps), par pages de 50 |
 | Merge Requests     | un onglet par dépôt : graphique en arbre des merge requests ouvertes, puis leur liste (approbations, commentaires, brouillon, pipeline), puis celles du dépôt fermées récemment |

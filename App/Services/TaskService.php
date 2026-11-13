@@ -185,14 +185,10 @@ class TaskService
         return $sprint;
     }
 
-    /**
-     * @return bool false when another sprint is already active
-     */
-    public function openSprint(Sprint $sprint, int $user): bool
+    public function openSprint(Sprint $sprint, int $user): void
     {
-        $active = Sprint::findWhere(['workspace' => $sprint->workspace, 'state' => self::SPRINT_ACTIVE]);
-        if ($active)
-            return $active->id === $sprint->id;
+        if (self::SPRINT_ACTIVE === $sprint->state)
+            return;
 
         $sprint->state = self::SPRINT_ACTIVE;
         $sprint->opened_at = date('Y-m-d H:i:s');
@@ -200,8 +196,6 @@ class TaskService
         $sprint->save();
 
         $this->announceSprint($sprint, 'sprint.opened', $user);
-
-        return true;
     }
 
     /**

@@ -427,14 +427,14 @@ export const createSprint = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Open sprint
  *
- * Makes a sprint the active one of the current workspace
+ * Makes a sprint active, alongside the other active sprints of the current workspace
  */
 export const openSprint = <ThrowOnError extends boolean = false>(options: Options<OpenSprintData, ThrowOnError>): RequestResult<OpenSprintResponses, OpenSprintErrors, ThrowOnError> => (options.client ?? client).post<OpenSprintResponses, OpenSprintErrors, ThrowOnError>({ url: '/api/sprints/{sprint}/open', ...options });
 
 /**
  * Close sprint
  *
- * Marks the active sprint as finished. Its tasks stay where they are
+ * Marks an active sprint as finished. Its tasks stay where they are
  */
 export const closeSprint = <ThrowOnError extends boolean = false>(options: Options<CloseSprintData, ThrowOnError>): RequestResult<CloseSprintResponses, CloseSprintErrors, ThrowOnError> => (options.client ?? client).post<CloseSprintResponses, CloseSprintErrors, ThrowOnError>({ url: '/api/sprints/{sprint}/close', ...options });
 

@@ -133,27 +133,26 @@ class TaskController extends Controller
         return Response::json(SprintResource::of($sprint), StatusCode::CREATED);
     }
 
-    #[Endpoint('Open sprint', 'Makes a sprint the active one of the current workspace', 'openSprint')]
+    #[Endpoint('Open sprint', 'Makes a sprint active, alongside the other active sprints of the current workspace', 'openSprint')]
     #[ResourceResponse(SprintResource::class, description: 'The sprint')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Sprint not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such sprint in the current workspace')]
-    #[RawResponse(['error' => 'Another sprint is active'], responseCode: StatusCode::CONFLICT, description: 'A workspace has one active sprint at most')]
     public function openSprint(Request $request, int $sprint): Response
     {
         $found = $this->tasks->findSprint($this->workspace(), $sprint);
         if (!$found)
             return $this->sprintNotFound();
 
-        return $this->tasks->openSprint($found, $this->authentication->userId())
-            ? Response::json(SprintResource::of($found))
-            : Response::json(['error' => 'Another sprint is active'], StatusCode::CONFLICT);
+        $this->tasks->openSprint($found, $this->authentication->userId());
+
+        return Response::json(SprintResource::of($found));
     }
 
-    #[Endpoint('Close sprint', 'Marks the active sprint as finished. Its tasks stay where they are', 'closeSprint')]
+    #[Endpoint('Close sprint', 'Marks an active sprint as finished. Its tasks stay where they are', 'closeSprint')]
     #[ResourceResponse(SprintResource::class, description: 'The sprint')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Sprint not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such sprint in the current workspace')]
-    #[RawResponse(['error' => 'This sprint is not active'], responseCode: StatusCode::CONFLICT, description: 'Only the active sprint can be closed')]
+    #[RawResponse(['error' => 'This sprint is not active'], responseCode: StatusCode::CONFLICT, description: 'Only an active sprint can be closed')]
     public function closeSprint(Request $request, int $sprint): Response
     {
         $found = $this->tasks->findSprint($this->workspace(), $sprint);

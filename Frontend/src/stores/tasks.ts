@@ -24,7 +24,7 @@ export const useTasksStore = defineStore('tasks', () => {
   const sprints = ref<Sprint[]>([])
   const failed = ref(false)
 
-  const activeSprint = computed(() => sprints.value.find(({ state }) => state === 'active') ?? null)
+  const activeSprints = computed(() => sprints.value.filter(({ state }) => state === 'active'))
 
   async function load(): Promise<void> {
     const [taskList, sprintList] = await Promise.all([listTasks(), listSprints()])
@@ -58,5 +58,5 @@ export const useTasksStore = defineStore('tasks', () => {
     return !!response?.ok
   }
 
-  return { tasks, sprints, failed, activeSprint, load, move, addSprint, open, close }
+  return { tasks, sprints, failed, activeSprints, load, move, addSprint, open, close }
 })

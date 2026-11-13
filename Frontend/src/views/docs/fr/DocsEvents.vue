@@ -123,7 +123,7 @@ const discussExample = `
     <thead><tr><th>Événement</th><th>Quand</th></tr></thead>
     <tbody>
       <tr><td><code>sprint.created</code></td><td>un sprint est planifié</td></tr>
-      <tr><td><code>sprint.opened</code></td><td>il devient le sprint actif</td></tr>
+      <tr><td><code>sprint.opened</code></td><td>il devient actif, à côté des autres sprints actifs</td></tr>
       <tr><td><code>sprint.closed</code></td><td>il est clôturé</td></tr>
     </tbody>
   </table>
