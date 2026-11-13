@@ -26,6 +26,13 @@ class HistoryService
 
     private const PAGE_SIZE = 50;
 
+    protected WorkspaceSignals $signals;
+
+    public function __construct(?WorkspaceSignals $signals = null)
+    {
+        $this->signals = $signals ?? WorkspaceSignals::getInstance();
+    }
+
     /**
      * @param string               $type What happened, translated by the frontend (`device.connected`, `key.revoked`...)
      * @param array<string,mixed> $details Values shown with the line
@@ -33,7 +40,7 @@ class HistoryService
     public function log(int $workspace, string $type, array $details = [], string $origin = self::ORIGIN_USER, ?int $user = null, ?int $task = null): History
     {
         // created_at as a string : generated models type a DATETIME column as DATE, which drops the time
-        return (new History([
+        $line = (new History([
             'workspace' => $workspace,
             'type' => $type,
             'origin' => $origin,
@@ -42,6 +49,10 @@ class HistoryService
             'details' => $this->encode($details),
             'created_at' => date('Y-m-d H:i:s'),
         ]))->save();
+
+        $this->signals->send($workspace, WorkspaceSignals::HISTORY_CREATED, ['history_type' => $type]);
+
+        return $line;
     }
 
     /**
@@ -51,7 +62,7 @@ class HistoryService
      */
     public function logDelivery(int $history, string $connectionUuid, ?string $hostname, string $payload, ?int $accessKey = null): EventDelivery
     {
-        return (new EventDelivery([
+        $delivery = (new EventDelivery([
             'history' => $history,
             'connection_uuid' => $connectionUuid,
             'hostname' => $hostname,
@@ -59,6 +70,10 @@ class HistoryService
             'status' => self::DELIVERY_PENDING,
             'access_key' => $accessKey,
         ]))->save();
+
+        $this->signalDelivery($history);
+
+        return $delivery;
     }
 
     /**
@@ -81,7 +96,15 @@ class HistoryService
         }
         $found->save();
 
+        $this->signalDelivery($found->history);
+
         return true;
+    }
+
+    private function signalDelivery(int $history): void
+    {
+        if ($line = History::find($history))
+            $this->signals->send($line->workspace, WorkspaceSignals::DELIVERY_UPDATED, ['history' => $history]);
     }
 
     public function page(int $workspace, ?int $before = null): Bunch
@@ -91,6 +114,25 @@ class HistoryService
             $query->where('id', $before, '<');
 
         return Bunch::wrap($query->order('id', 'DESC')->limit(self::PAGE_SIZE)->fetch());
+    }
+
+    /**
+     * @return Bunch<int,History> The events sent to the devices of a workspace : launched by hand, by a
+     *                            quick action or a webhook, or brought by an integration. Newest first, with their deliveries
+     */
+    public function recentEvents(int $workspace, int $limit): Bunch
+    {
+        return Bunch::wrap(
+            History::select(['eventDeliveries'])
+                ->where('workspace', $workspace)
+                ->whereGroup(fn ($query) => $query
+                    ->where('type', EventService::HISTORY_TYPE)
+                    ->or()->where('type', 'pr.%', 'LIKE')
+                    ->or()->where('type', 'jira.%', 'LIKE'))
+                ->order('id', 'DESC')
+                ->limit($limit)
+                ->fetch()
+        );
     }
 
     public function find(int $workspace, int $id): ?History

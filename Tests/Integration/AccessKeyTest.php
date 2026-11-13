@@ -8,6 +8,7 @@ use App\Connector\ConnectorPackager;
 use App\Models\AccessKey;
 use App\Services\AccessKeyService;
 use App\Services\HistoryService;
+use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Env\Configuration;
 use Cube\Security\Authentication;
@@ -32,8 +33,16 @@ class AccessKeyTest extends CubeTestCase
         $this->broadcast = new class(new BroadcastConfiguration()) extends Broadcast {
             public array $emitted = [];
 
+            public array $signals = [];
+
             public function emit(string $event, array $data): bool
             {
+                // Signals to the browsers are kept apart from what the devices receive
+                if (in_array($data['type'] ?? null, WorkspaceSignals::SIGNALS, true)) {
+                    $this->signals[] = $data;
+                    return true;
+                }
+
                 $this->emitted[] = $data;
                 return true;
             }

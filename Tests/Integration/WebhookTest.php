@@ -4,6 +4,7 @@ namespace Tests\Integration;
 
 use App\Models\History;
 use App\Models\WebhookCall;
+use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
@@ -26,8 +27,16 @@ class WebhookTest extends CubeTestCase
         $this->broadcast = new class(new BroadcastConfiguration()) extends Broadcast {
             public array $emitted = [];
 
+            public array $signals = [];
+
             public function emit(string $event, array $data): bool
             {
+                // Signals to the browsers are kept apart from what the devices receive
+                if (in_array($data['type'] ?? null, WorkspaceSignals::SIGNALS, true)) {
+                    $this->signals[] = $data;
+                    return true;
+                }
+
                 $this->emitted[] = $data;
                 return true;
             }
@@ -159,6 +168,32 @@ class WebhookTest extends CubeTestCase
         // The body of an unauthenticated call is not kept
         $this->assertNull($calls[3]['payload']);
         $this->assertNotNull(History::findWhere(['type' => 'webhook.disabled']));
+    }
+
+    public function testRefusedCallsAreListedForTheWorkspace()
+    {
+        $this->get('/api/webhooks/refused-calls')->assertUnauthorized();
+
+        $this->register('alice@example.com');
+        $created = $this->createWebhook();
+        $uuid = $created['webhook']['uuid'];
+
+        $refusals = fn () => count(array_filter($this->broadcast->signals, fn (array $signal) => WorkspaceSignals::WEBHOOK_REFUSED === $signal['type']));
+
+        $this->call($uuid, '{}', ['X-Tower-Secret' => $created['secret']])->assertNoContent();
+        $this->assertSame(0, $refusals());
+
+        $this->call($uuid, '{}')->assertUnauthorized();
+        $this->call($uuid, '[1]', ['X-Tower-Secret' => $created['secret']])->assertUnprocessableContent();
+
+        $refused = $this->get('/api/webhooks/refused-calls')->assertOk()->json();
+        $this->assertSame(['invalid', 'unauthorized'], array_column($refused, 'status'));
+        $this->assertSame('CI', $refused[0]['webhook_name']);
+        $this->assertSame(2, $refusals());
+
+        $this->logOut();
+        $this->register('bob@example.com');
+        $this->assertSame([], $this->get('/api/webhooks/refused-calls')->assertOk()->json());
     }
 
     public function testUnsecuredWebhookNeedsNoSecret()

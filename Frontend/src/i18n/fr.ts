@@ -353,6 +353,15 @@ export default {
       invalid: 'Corps invalide',
     },
   },
+  home: {
+    tasksTitle: 'Sprints en cours',
+    noSprintShown: 'Aucun sprint affiché',
+    sprintsShown: '{count} sprints',
+    manage: 'Gérer',
+    activityTitle: 'Derniers events & webhooks',
+    deliveriesTitle: 'Appareils : réussis, en échec, en attente',
+    refusedCall: 'Appel refusé · {name}',
+  },
   events: {
     title: 'Évènements',
     quickActionsTitle: 'Quick-actions',

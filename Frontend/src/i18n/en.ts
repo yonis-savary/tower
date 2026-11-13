@@ -355,6 +355,15 @@ export default {
       invalid: 'Invalid body',
     },
   },
+  home: {
+    tasksTitle: 'Current sprints',
+    noSprintShown: 'No sprint shown',
+    sprintsShown: '{count} sprints',
+    manage: 'Manage',
+    activityTitle: 'Latest events & webhooks',
+    deliveriesTitle: 'Devices: succeeded, failed, waiting',
+    refusedCall: 'Refused call · {name}',
+  },
   events: {
     title: 'Events',
     quickActionsTitle: 'Quick actions',

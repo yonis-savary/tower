@@ -1362,6 +1362,101 @@
                 }
             }
         },
+        "\/api\/history\/events": {
+            "get": {
+                "summary": "List recent events",
+                "description": "The last events sent to the devices of the current workspace, newest first, with how their deliveries went",
+                "operationId": "listRecentEvents",
+                "responses": {
+                    "200": {
+                        "description": "The last 15 events",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "origin": {
+                                                "type": "string"
+                                            },
+                                            "details": {
+                                                "type": "string"
+                                            },
+                                            "created_at": {
+                                                "type": "string"
+                                            },
+                                            "deliveries": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "succeeded": {
+                                                        "type": "integer"
+                                                    },
+                                                    "failed": {
+                                                        "type": "integer"
+                                                    },
+                                                    "waiting": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "succeeded",
+                                                    "failed",
+                                                    "waiting"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "type",
+                                            "origin",
+                                            "details",
+                                            "created_at",
+                                            "deliveries"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 103,
+                                        "type": "corporis ut et",
+                                        "origin": "eius molestiae nemo",
+                                        "details": "explicabo dolores ipsam",
+                                        "created_at": "2028-04-10T00:00:00+00:00",
+                                        "deliveries": {
+                                            "succeeded": 0,
+                                            "failed": 0,
+                                            "waiting": 0
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/api\/history\/{line}\/deliveries": {
             "get": {
                 "summary": "List event deliveries",
@@ -4104,6 +4199,76 @@
                                         }
                                     }
                                 }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/webhooks\/refused-calls": {
+            "get": {
+                "summary": "List refused webhook calls",
+                "description": "The last calls refused by the webhooks of the current workspace, newest first",
+                "operationId": "listRefusedWebhookCalls",
+                "responses": {
+                    "200": {
+                        "description": "The last 15 refused calls",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "webhook": {
+                                                "type": "integer"
+                                            },
+                                            "webhook_name": {
+                                                "type": "string"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            },
+                                            "created_at": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "webhook",
+                                            "webhook_name",
+                                            "status",
+                                            "created_at"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 88,
+                                        "webhook": 261,
+                                        "webhook_name": "",
+                                        "status": "eveniet facere commodi",
+                                        "created_at": "2004-03-20T00:00:00+00:00"
+                                    }
+                                ]
                             }
                         }
                     },

@@ -6,6 +6,7 @@ use App\Middlewares\IsAuthenticated;
 use App\Requests\CreateWebhookRequest;
 use App\Requests\HistoryRequest;
 use App\Requests\UpdateWebhookRequest;
+use App\Resources\RefusedWebhookCallResource;
 use App\Resources\WebhookCallResource;
 use App\Resources\WebhookResource;
 use App\Services\HistoryService;
@@ -26,6 +27,8 @@ use Cube\Web\Router\Router;
 
 class WebhookController extends Controller
 {
+    private const RECENT_LIMIT = 15;
+
     private const CALL_RESPONSES = [
         WebhookService::CALL_ACCEPTED => [StatusCode::NO_CONTENT, null],
         WebhookService::CALL_UNAUTHORIZED => [StatusCode::UNAUTHORIZED, 'Invalid secret or signature'],
@@ -44,6 +47,7 @@ class WebhookController extends Controller
     {
         $router->group('/api', middlewares: [IsAuthenticated::class], routes: [
             Route::get('/webhooks', [self::class, 'list']),
+            Route::get('/webhooks/refused-calls', [self::class, 'refusedCalls']),
             Route::post('/webhooks', [self::class, 'create']),
             Route::put('/webhooks/{int:webhook}', [self::class, 'update']),
             Route::delete('/webhooks/{int:webhook}', [self::class, 'delete']),
@@ -144,6 +148,14 @@ class WebhookController extends Controller
             return $this->notFound();
 
         return Response::json(WebhookCallResource::of($this->webhooks->calls($found, $request->validated('before'))));
+    }
+
+    #[Endpoint('List refused webhook calls', 'The last calls refused by the webhooks of the current workspace, newest first', 'listRefusedWebhookCalls')]
+    #[ResourceResponse(RefusedWebhookCallResource::class, isArray: true, description: 'The last 15 refused calls')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    public function refusedCalls(Request $request): Response
+    {
+        return Response::json(RefusedWebhookCallResource::of($this->webhooks->refusedCalls($this->currentWorkspaceId(), self::RECENT_LIMIT)));
     }
 
     #[Endpoint('Call webhook', 'Triggers the events of a webhook, with the body as payload. Authenticated by the secret in X-Tower-Secret, or by a signature of the body in X-Hub-Signature-256 or X-Hub-Signature (sha256=<HMAC-SHA256>). An unsecured webhook needs neither', 'callWebhook')]

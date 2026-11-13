@@ -6,6 +6,7 @@ use App\Middlewares\IsAuthenticated;
 use App\Requests\HistoryRequest;
 use App\Resources\EventDeliveryResource;
 use App\Resources\HistoryResource;
+use App\Resources\RecentEventResource;
 use App\Services\HistoryService;
 use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
@@ -21,6 +22,8 @@ use Cube\Web\Router\Router;
 
 class HistoryController extends Controller
 {
+    private const RECENT_LIMIT = 15;
+
     public function __construct(
         protected Authentication $authentication,
         protected WorkspaceService $workspaces,
@@ -31,6 +34,7 @@ class HistoryController extends Controller
     {
         $router->group('/api', middlewares: [IsAuthenticated::class], routes: [
             Route::get('/history', [self::class, 'list']),
+            Route::get('/history/events', [self::class, 'recentEvents']),
             Route::get('/history/{int:line}/deliveries', [self::class, 'deliveries']),
         ]);
     }
@@ -41,6 +45,14 @@ class HistoryController extends Controller
     public function list(HistoryRequest $request): Response
     {
         return Response::json(HistoryResource::of($this->history->page($this->currentWorkspaceId(), $request->validated('before'))));
+    }
+
+    #[Endpoint('List recent events', 'The last events sent to the devices of the current workspace, newest first, with how their deliveries went', 'listRecentEvents')]
+    #[ResourceResponse(RecentEventResource::class, isArray: true, description: 'The last 15 events')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    public function recentEvents(Request $request): Response
+    {
+        return Response::json(RecentEventResource::of($this->history->recentEvents($this->currentWorkspaceId(), self::RECENT_LIMIT)));
     }
 
     #[Endpoint('List event deliveries', 'The devices an event of the history was sent to, with their response', 'listEventDeliveries')]

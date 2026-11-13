@@ -3,6 +3,7 @@
 namespace Tests\Integration;
 
 use App\Models\History;
+use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
@@ -24,8 +25,16 @@ class EventTest extends CubeTestCase
         $this->broadcast = new class(new BroadcastConfiguration()) extends Broadcast {
             public array $emitted = [];
 
+            public array $signals = [];
+
             public function emit(string $event, array $data): bool
             {
+                // Signals to the browsers are kept apart from what the devices receive
+                if (in_array($data['type'] ?? null, WorkspaceSignals::SIGNALS, true)) {
+                    $this->signals[] = $data;
+                    return true;
+                }
+
                 $this->emitted[] = $data;
                 return true;
             }

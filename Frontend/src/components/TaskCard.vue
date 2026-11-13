@@ -7,7 +7,7 @@ import PullRequestButton from './PullRequestButton.vue'
 import { useJiraStore } from '../stores/jira'
 import type { Task } from '../stores/tasks'
 
-const props = defineProps<{ task: Task; showStatus?: boolean }>()
+const props = defineProps<{ task: Task; showStatus?: boolean; sprintName?: string }>()
 defineEmits<{ open: [] }>()
 
 const { t } = useI18n()
@@ -37,6 +37,7 @@ async function discuss() {
       <span class="task-card-title">{{ task.title }}</span>
       <Tag v-if="showStatus" :value="t(`tasks.status.${task.status}`)" severity="secondary" />
     </div>
+    <small v-if="sprintName" class="task-card-sprint">{{ sprintName }}</small>
 
     <footer v-if="issue" class="task-card-footer">
       <span class="task-card-issue">
@@ -62,6 +63,11 @@ async function discuss() {
 </template>
 
 <style scoped>
+.task-card-sprint {
+  color: var(--p-text-muted-color);
+  font-size: 0.75rem;
+}
+
 .task-card {
   display: flex;
   flex-direction: column;

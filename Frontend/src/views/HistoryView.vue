@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import Tag from 'primevue/tag'
@@ -10,57 +11,19 @@ import {
   type ListEventDeliveriesResponse,
   type ListHistoryResponse,
 } from '../client'
-import AppIcon, { PULL_REQUEST_ICON } from '../components/AppIcon.vue'
+import AppIcon from '../components/AppIcon.vue'
 import { useWorkspaceStore } from '../stores/workspace'
-import { taskChange } from '../utils/taskChange'
+import { DELIVERY_SEVERITY, HISTORY_ICONS, historyDetail, historyLabel, isSent, parseDetails } from '../utils/historyLine'
 
 type Line = ListHistoryResponse[number] & { parsed: Record<string, any> }
 
 const PAGE_SIZE = 50
-const EVENT_TYPE = 'event.triggered'
-
-const icons: Record<string, string> = {
-  'device.connected': 'pi pi-link',
-  'device.disconnected': 'pi pi-times-circle',
-  [EVENT_TYPE]: 'pi pi-bolt',
-  'key.created': 'pi pi-key',
-  'key.revoked': 'pi pi-ban',
-  'webhook.created': 'pi pi-globe',
-  'webhook.enabled': 'pi pi-play',
-  'webhook.disabled': 'pi pi-pause',
-  'webhook.deleted': 'pi pi-trash',
-  'webhook.secret_regenerated': 'pi pi-key',
-  'pr.opened': PULL_REQUEST_ICON,
-  'pr.merged': 'pi pi-check-circle',
-  'pr.declined': 'pi pi-times-circle',
-  'pr.pipeline.failed': 'pi pi-times',
-  'pr.pipeline.succeeded': 'pi pi-check',
-  'pr.review.approved': 'pi pi-thumbs-up',
-  'pr.review.changes_requested': 'pi pi-thumbs-down',
-  'pr.commented': 'pi pi-comment',
-  'pr.pushed': 'pi pi-upload',
-  'pr.ready': 'pi pi-eye',
-  'pr.retargeted': 'pi pi-directions',
-  'jira.issue.assigned': 'pi pi-objects-column',
-  'jira.issue.done': 'pi pi-check-square',
-  'jira.issue.unassigned': 'pi pi-user-minus',
-  'jira.issue.status_changed': 'pi pi-arrow-right',
-  'jira.issue.sprint_changed': 'pi pi-calendar',
-  'jira.issue.priority_changed': 'pi pi-sort-amount-up',
-  'jira.issue.updated': 'pi pi-pencil',
-  'task.created': 'pi pi-plus',
-  'task.updated': 'pi pi-pencil',
-  'task.status_changed': 'pi pi-arrow-right',
-  'task.sprint_changed': 'pi pi-calendar',
-  'sprint.created': 'pi pi-calendar-plus',
-  'sprint.opened': 'pi pi-play',
-  'sprint.closed': 'pi pi-flag',
-}
-
-const deliverySeverity: Record<string, string> = { succeeded: 'success', received: 'success', failed: 'danger', running: 'info', pending: 'warn' }
 
 const { t, te, d } = useI18n()
+const i18n = { t, te }
 const workspace = useWorkspaceStore()
+const route = useRoute()
+const router = useRouter()
 
 const lines = ref<Line[]>([])
 const hasMore = ref(false)
@@ -68,14 +31,6 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const openLine = ref<number | null>(null)
 const deliveries = ref<ListEventDeliveriesResponse | null>(null)
-
-function parse(details: string): Record<string, any> {
-  try {
-    return JSON.parse(details)
-  } catch {
-    return {}
-  }
-}
 
 async function load(reset: boolean) {
   loading.value = true
@@ -90,75 +45,38 @@ async function load(reset: boolean) {
     return
   }
 
-  const page = data.map((line) => ({ ...line, parsed: parse(line.details) }))
+  const page = data.map((line) => ({ ...line, parsed: parseDetails(line.details) }))
   lines.value = reset ? page : [...lines.value, ...page]
   hasMore.value = data.length === PAGE_SIZE
 }
 
 watch(
   () => workspace.current?.id,
-  (id) => {
+  async (id) => {
     openLine.value = null
-    if (id) void load(true)
+    if (!id) return
+
+    await load(true)
+    openRequestedLine()
   },
   { immediate: true },
 )
 
-// The lines sent to the devices : the others have no delivery
-function isSent(line: Line): boolean {
-  return [EVENT_TYPE, 'task.', 'sprint.', 'pr.', 'jira.issue.'].some((prefix) => line.type.startsWith(prefix))
+// Opened from another screen through ?line=<id>, when the line is on the first page
+function openRequestedLine() {
+  if (!route.query.line) return
+
+  const line = lines.value.find(({ id }) => id === Number(route.query.line))
+  void router.replace({ query: {} })
+  if (line && isSent(line.type)) void toggle(line)
 }
 
 function label(line: Line): string {
-  // A dot in a message key would read as one more level
-  const key = `history.type.${line.type.replaceAll('.', '_')}`
-  return te(key) ? t(key) : line.type
+  return historyLabel(i18n, line.type)
 }
 
 function detail(line: Line): string {
-  const { parsed } = line
-
-  if (line.type.startsWith('pr.')) return `${parsed.title} · ${parsed.repository}${integrationChange(line.type, parsed)}`
-  if (line.type.startsWith('jira.issue.')) return `${parsed.key} · ${parsed.summary}${integrationChange(line.type, parsed)}`
-
-  if (line.type.startsWith('task.')) {
-    const change = taskChange(t, line.type, parsed)
-    return change ? `${parsed.title} · ${change}` : parsed.title
-  }
-
-  switch (line.type) {
-    case EVENT_TYPE:
-      return parsed.webhook ? `${parsed.event} · ${t('history.viaWebhook', { name: parsed.webhook })}` : parsed.event
-    case 'device.connected':
-      return `${parsed.hostname ?? t('devices.unknownHost')} · ${parsed.access_key}`
-    case 'device.disconnected': {
-      const reason = `history.reason.${parsed.reason}`
-      return `${parsed.hostname ?? t('devices.unknownHost')} · ${te(reason) ? t(reason) : parsed.reason}`
-    }
-    default:
-      return parsed.name ?? ''
-  }
-}
-
-const transition = (parsed: Record<string, any>) => ` · ${parsed.from ?? '∅'} → ${parsed.to ?? '∅'}`
-const outcome = (parsed: Record<string, any>) => (parsed.state ?? parsed.status ? ` · ${parsed.state ?? parsed.status}` : '')
-
-const integrationChanges: Record<string, (parsed: Record<string, any>) => string> = {
-  'pr.declined': outcome,
-  'pr.review.approved': (parsed) => ` · ${parsed.reviewer}`,
-  'pr.review.changes_requested': (parsed) => ` · ${parsed.reviewer}`,
-  'pr.commented': (parsed) => ` · +${parsed.count}`,
-  'pr.pushed': (parsed) => ` · ${parsed.branch} ${String(parsed.to).slice(0, 7)}`,
-  'pr.retargeted': transition,
-  'jira.issue.done': outcome,
-  'jira.issue.unassigned': outcome,
-  'jira.issue.status_changed': transition,
-  'jira.issue.sprint_changed': transition,
-  'jira.issue.priority_changed': transition,
-}
-
-function integrationChange(type: string, parsed: Record<string, any>): string {
-  return integrationChanges[type]?.(parsed) ?? ''
+  return historyDetail(i18n, line.type, line.parsed)
 }
 
 async function toggle(line: Line) {
@@ -193,13 +111,13 @@ async function toggle(line: Line) {
         <tbody>
           <template v-for="line in lines" :key="line.id">
             <tr class="line" :class="{ 'line-open': openLine === line.id }">
-              <td class="line-icon"><AppIcon :icon="icons[line.type] ?? 'pi pi-circle'" /></td>
+              <td class="line-icon"><AppIcon :icon="HISTORY_ICONS[line.type] ?? 'pi pi-circle'" /></td>
               <td class="line-label">{{ label(line) }}</td>
               <td class="line-detail" :title="detail(line)">{{ detail(line) }}</td>
               <td class="line-date"><time :datetime="line.created_at">{{ d(new Date(line.created_at), 'short') }}</time></td>
               <td class="line-toggle">
                 <Button
-                  v-if="isSent(line)"
+                  v-if="isSent(line.type)"
                   :icon="openLine === line.id ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
                   severity="secondary"
                   text
@@ -219,7 +137,7 @@ async function toggle(line: Line) {
                   <article v-for="delivery in deliveries" :key="delivery.id" class="delivery">
                     <div class="delivery-head">
                       <strong>{{ delivery.hostname ?? t('devices.unknownHost') }}</strong>
-                      <Tag :value="t(`history.delivery.${delivery.status}`)" :severity="deliverySeverity[delivery.status] ?? 'secondary'" />
+                      <Tag :value="t(`history.delivery.${delivery.status}`)" :severity="DELIVERY_SEVERITY[delivery.status] ?? 'secondary'" />
                     </div>
                     <dl>
                       <dt>{{ t('history.payload') }}</dt>

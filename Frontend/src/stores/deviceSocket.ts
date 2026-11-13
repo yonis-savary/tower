@@ -13,6 +13,13 @@ export type ConnectedDevice = {
   connected_at: string
 }
 
+/** Sent when some data of the workspace changed : it carries no data, the API gives it */
+export type WorkspaceSignal =
+  | { type: 'history.created'; history_type: string }
+  | { type: 'delivery.updated'; history: number }
+  | { type: 'webhook.refused' }
+
+const SIGNALS: string[] = ['history.created', 'delivery.updated', 'webhook.refused']
 const MAX_RETRY_DELAY_MS = 30_000
 
 export const useDeviceSocketStore = defineStore('deviceSocket', () => {
@@ -25,6 +32,13 @@ export const useDeviceSocketStore = defineStore('deviceSocket', () => {
   let retries = 0
   // Bumped on each connect/disconnect : what an older attempt still has running must be ignored
   let generation = 0
+  const listeners = new Set<(signal: WorkspaceSignal) => void>()
+
+  /** @returns What stops listening */
+  function onSignal(listener: (signal: WorkspaceSignal) => void): () => void {
+    listeners.add(listener)
+    return () => listeners.delete(listener)
+  }
 
   function teardown(): void {
     generation++
@@ -54,6 +68,10 @@ export const useDeviceSocketStore = defineStore('deviceSocket', () => {
       if (attempt !== generation) return
 
       const message = JSON.parse(frame)
+      if (SIGNALS.includes(message.type)) {
+        listeners.forEach((listener) => listener(message))
+        return
+      }
       if (message.type !== 'devices.list') return
 
       devices.value = message.devices
@@ -81,5 +99,5 @@ export const useDeviceSocketStore = defineStore('deviceSocket', () => {
     status.value = 'disconnected'
   }
 
-  return { status, devices, activeDevices, connect, disconnect }
+  return { status, devices, activeDevices, connect, disconnect, onSignal }
 })

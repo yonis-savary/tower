@@ -6,6 +6,7 @@ use App\Models\EventDelivery;
 use App\Models\History;
 use App\Services\HistoryConfiguration;
 use App\Services\HistoryService;
+use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
@@ -27,8 +28,16 @@ class HistoryTest extends CubeTestCase
         $this->broadcast = new class(new BroadcastConfiguration()) extends Broadcast {
             public array $emitted = [];
 
+            public array $signals = [];
+
             public function emit(string $event, array $data): bool
             {
+                // Signals to the browsers are kept apart from what the devices receive
+                if (in_array($data['type'] ?? null, WorkspaceSignals::SIGNALS, true)) {
+                    $this->signals[] = $data;
+                    return true;
+                }
+
                 $this->emitted[] = $data;
                 return true;
             }
@@ -108,6 +117,50 @@ class HistoryTest extends CubeTestCase
         $this->register('bob@example.com');
         $this->assertSame([], $this->lines());
         $this->get('/api/history/'.$line['id'].'/deliveries')->assertNotFound();
+    }
+
+    public function testRecentEventsKeepOnlyEventsWithTheirDeliveries()
+    {
+        $this->get('/api/history/events')->assertUnauthorized();
+
+        $this->register('alice@example.com');
+        $this->postJson('/api/access-keys', ['name' => 'PC'])->assertCreated();
+        $this->postJson('/api/events', ['type' => 'deploy.start', 'payload' => '{}'])->assertNoContent();
+        $this->postJson('/api/tasks', ['title' => 'Write the docs'])->assertCreated();
+        $event = History::findWhere(['type' => 'event.triggered']);
+        $history = new HistoryService();
+        $integration = $history->log($event->workspace, 'pr.pipeline.failed', ['title' => 'Fix'], HistoryService::ORIGIN_INTEGRATION);
+        $history->logDelivery($event->id, 'uuid-1', 'pc', '{}');
+        $history->logDelivery($event->id, 'uuid-2', 'laptop', '{}');
+        $failed = EventDelivery::findWhere(['connection_uuid' => 'uuid-2']);
+        $failed->status = HistoryService::DELIVERY_FAILED;
+        $failed->save();
+
+        $events = $this->get('/api/history/events')->assertOk()->json();
+        $this->assertSame([$integration->id, $event->id], array_column($events, 'id'));
+        $this->assertSame(['succeeded' => 0, 'failed' => 0, 'waiting' => 0], $events[0]['deliveries']);
+        $this->assertSame(['succeeded' => 0, 'failed' => 1, 'waiting' => 1], $events[1]['deliveries']);
+
+        $this->logOut();
+        $this->register('bob@example.com');
+        $this->assertSame([], $this->get('/api/history/events')->assertOk()->json());
+    }
+
+    public function testBrowsersAreToldWhatChanged()
+    {
+        $this->register('alice@example.com');
+        $this->postJson('/api/events', ['type' => 'deploy.start', 'payload' => '{}'])->assertNoContent();
+        $line = History::findWhere(['type' => 'event.triggered']);
+
+        $this->assertContains(['type' => WorkspaceSignals::HISTORY_CREATED, 'history_type' => 'event.triggered'], array_map(
+            fn (array $signal) => array_diff_key($signal, ['__class' => true]),
+            $this->broadcast->signals,
+        ));
+
+        $this->broadcast->signals = [];
+        (new HistoryService())->logDelivery($line->id, 'uuid-1', 'pc', '{}');
+        $this->assertSame(WorkspaceSignals::DELIVERY_UPDATED, $this->broadcast->signals[0]['type']);
+        $this->assertSame($line->id, $this->broadcast->signals[0]['history']);
     }
 
     public function testPurgeRemovesOnlyExpiredLinesAndTheirDeliveries()

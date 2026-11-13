@@ -30,6 +30,7 @@ class WebhookService
 
     public function __construct(
         protected EventService $events,
+        protected WorkspaceSignals $signals,
     ) {}
 
     /**
@@ -164,6 +165,23 @@ class WebhookService
     }
 
     /**
+     * @return Bunch<int,WebhookCall> The calls refused by the webhooks of a workspace, newest first, with their webhook
+     */
+    public function refusedCalls(int $workspace, int $limit): Bunch
+    {
+        $webhooks = Bunch::wrap(Webhook::select()->where('workspace', $workspace)->fetch())->map(fn (Webhook $webhook) => $webhook->id);
+
+        return Bunch::wrap(
+            WebhookCall::select(['_webhook'])
+                ->whereIn('webhook', $webhooks)
+                ->where('status', self::CALL_ACCEPTED, '<>')
+                ->order('id', 'DESC')
+                ->limit($limit)
+                ->fetch()
+        );
+    }
+
+    /**
      * The secret as is in `X-Tower-Secret`, or a signature of the body made with it. An unsecured
      * webhook accepts any call to its address.
      */
@@ -206,7 +224,7 @@ class WebhookService
     {
         $userAgent = $request->getHeader('User-Agent');
 
-        return (new WebhookCall([
+        $call = (new WebhookCall([
             'webhook' => $webhook->id,
             'status' => $status,
             'ip' => $request->getIp(),
@@ -214,6 +232,12 @@ class WebhookService
             'payload' => null === $body || '' === $body ? null : mb_scrub(mb_strcut($body, 0, self::MAX_PAYLOAD_BYTES, 'UTF-8'), 'UTF-8'),
             'created_at' => date('Y-m-d H:i:s'),
         ]))->save();
+
+        // An accepted call signals through the events it triggers
+        if (self::CALL_ACCEPTED !== $status)
+            $this->signals->send($webhook->workspace, WorkspaceSignals::WEBHOOK_REFUSED);
+
+        return $call;
     }
 
     private function encodeEvents(array $events): string

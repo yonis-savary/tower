@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Services;
+
+use App\Channels\WorkspaceDevicesChannel;
+use Cube\Core\Component;
+
+/**
+ * Tells the browsers following a workspace that some of its data changed, so that they load it
+ * again. A signal carries no data : the browser reads it through the API, with its own rights.
+ */
+class WorkspaceSignals
+{
+    use Component;
+
+    /** A line was added to the history (`history_type` : its type) */
+    public const HISTORY_CREATED = 'history.created';
+    /** A device was sent an event, or answered it (`history` : the line of the event) */
+    public const DELIVERY_UPDATED = 'delivery.updated';
+    /** A call to a webhook was refused */
+    public const WEBHOOK_REFUSED = 'webhook.refused';
+    public const SIGNALS = [self::HISTORY_CREATED, self::DELIVERY_UPDATED, self::WEBHOOK_REFUSED];
+
+    public function __construct(
+        protected WorkspaceDevicesChannel $channel,
+    ) {}
+
+    /**
+     * @param array<string,scalar|null> $details
+     */
+    public function send(int $workspace, string $signal, array $details = []): void
+    {
+        $this->channel->emit(['type' => $signal, ...$details], ['workspace' => $workspace]);
+    }
+}

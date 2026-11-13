@@ -703,6 +703,44 @@ export type ListHistoryResponses = {
 
 export type ListHistoryResponse = ListHistoryResponses[keyof ListHistoryResponses];
 
+export type ListRecentEventsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/history/events';
+};
+
+export type ListRecentEventsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListRecentEventsError = ListRecentEventsErrors[keyof ListRecentEventsErrors];
+
+export type ListRecentEventsResponses = {
+    /**
+     * The last 15 events
+     */
+    200: Array<{
+        id: number;
+        type: string;
+        origin: string;
+        details: string;
+        created_at: string;
+        deliveries: {
+            succeeded: number;
+            failed: number;
+            waiting: number;
+        };
+    }>;
+};
+
+export type ListRecentEventsResponse = ListRecentEventsResponses[keyof ListRecentEventsResponses];
+
 export type ListEventDeliveriesData = {
     body?: never;
     path: {
@@ -1854,6 +1892,39 @@ export type CreateWebhookResponses = {
 };
 
 export type CreateWebhookResponse = CreateWebhookResponses[keyof CreateWebhookResponses];
+
+export type ListRefusedWebhookCallsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/webhooks/refused-calls';
+};
+
+export type ListRefusedWebhookCallsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListRefusedWebhookCallsError = ListRefusedWebhookCallsErrors[keyof ListRefusedWebhookCallsErrors];
+
+export type ListRefusedWebhookCallsResponses = {
+    /**
+     * The last 15 refused calls
+     */
+    200: Array<{
+        id: number;
+        webhook: number;
+        webhook_name: string;
+        status: string;
+        created_at: string;
+    }>;
+};
+
+export type ListRefusedWebhookCallsResponse = ListRefusedWebhookCallsResponses[keyof ListRefusedWebhookCallsResponses];
 
 export type DeleteWebhookData = {
     body?: never;
