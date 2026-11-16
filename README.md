@@ -5,7 +5,7 @@
 <h1 align="center">Tower</h1>
 
 <p align="center">
-  <strong>A self-hosted control tower for your work and your machines.</strong><br />
+  <strong>A self-hosted device and automation mediator.</strong><br />
   Tasks, Jira tickets and merge requests in one place, and every device you own reacting to them.
 </p>
 
@@ -31,66 +31,39 @@ behind any NAT.
 
 ## Features
 
-### Tasks and sprints
-- A board with five columns and a backlog, sprints you open and close yourself, drag and drop everywhere.
-- Every change is kept in the task's own history, with who made it.
+Everything below is scoped to a **workspace**: separate *work* from *home*, each with its own data, devices and members.
 
-### Jira
-- Your Jira board with **its own columns**, in its order, even the empty ones.
-- **Who does what**: every ticket shows its assignee's avatar, or keep only yours with *My issues only*.
-- Drag a ticket to another column to run the matching Jira transition. When several statuses fit, Tower asks which one.
-- Filter by sprint, copy a key, open a ticket in Jira, or turn it into a Tower task.
-- **Discuss**: one click sends the ticket to your devices, and the basic handler opens a Claude Code session about it,
-  resumed the next time you click.
+- Tasks and sprints, on a board and a backlog
+- Your Jira board, with transitions by drag and drop
+- Your Bitbucket merge requests, as a tree of stacked branches
+- Events launched by hand or as quick actions
+- Automation: events scheduled at intervals or at a given date
+- Webhooks for external services
+- A history of everything, with what each device answered
+- Members, sections and a color per workspace
+- Light and dark themes, English and French
 
-### Merge requests
-- Your open Bitbucket merge requests, one tab per repository.
-- A **tree graph** of stacked merge requests, with pipeline status, approvals and comments at a glance.
+## Connection
 
-### Devices and events
-- A tiny Python connector, a single file with no installation, connects each device to a workspace.
-- Each device chooses which events it listens to (`task.*`, `pr.pipeline.failed`, `jira.issue.status_changed`…) and
-  what to run for each of them.
-- Every delivery is tracked: which devices received an event, whether their handler succeeded, and what it answered.
-- Trigger events by hand, or save them as one-click **quick actions**.
+A device joins a workspace with the **connector**: a single Python file (3.10 or later, nothing to install) that opens a
+WebSocket to Tower, so no port has to be opened on the device. Its configuration, created in Tower under **Devices**,
+says which events it listens to and which command to run for each:
 
-### Precise integration events
-Tower compares your tools with what it last saw every five minutes, and turns each difference into an event your
-devices can subscribe to:
-
-| Merge requests | Jira |
-|---|---|
-| `pr.opened`, `pr.merged`, `pr.declined` | `jira.issue.assigned`, `jira.issue.done`, `jira.issue.unassigned` |
-| `pr.pipeline.failed`, `pr.pipeline.succeeded` | `jira.issue.status_changed` |
-| `pr.review.approved`, `pr.review.changes_requested` | `jira.issue.sprint_changed`, `jira.issue.priority_changed` |
-| `pr.commented`, `pr.pushed`, `pr.ready`, `pr.retargeted` | `jira.issue.updated` |
-
-Each event carries the before and after values, so a handler can act without calling anything back.
-
-### Workspaces
-- Separate *work* from *home*: each workspace has its own tasks, integrations, devices and history.
-- Pick the sections a workspace uses (tasks, Jira, merge requests, events) and give it a color.
-- Share a workspace with other accounts; every member has the same rights.
-
-### And also
-- A full **history** of what happened, with the device deliveries of each event.
-- Built-in **documentation**, light and dark themes, English and French.
-
-## How it works
-
-```
-   Browser ──► Tower (PHP, MySQL) ◄── polls ── Jira Cloud, Bitbucket Cloud
-                    │
-                    │ WebSocket, opened by each device
-                    ▼
-        Connector on your laptop, desktop, server…
-                    │
-                    ▼
-        Your handlers: scripts, notifications, Claude Code…
+```json
+"handlers": {
+  "pr.pipeline.failed": "notify-send 'Pipeline failed' '{payload.title}'",
+  "deploy.*": ["git -C ~/projects/api pull", "make -C ~/projects/api deploy"]
+}
 ```
 
-When an event reaches a device, the connector runs the matching command **without a shell**, with the event as JSON on
-its standard input. Tower can only trigger what a device agreed to run: it never sends a command to execute.
+```sh
+python3 tower-connector.pyz config.json --handler tower-handler.pyz
+```
+
+Commands run without a shell, with the event as JSON on their standard input, and their result comes back to the
+history. Tower only triggers what a device agreed to run: it never sends a command to execute. The optional **basic
+handler** opens a Claude Code session on a Jira ticket. To run the connector as a service, see *Documentation → Linux
+service* in the app.
 
 ## Getting started
 
@@ -120,53 +93,9 @@ In production, put both behind a TLS reverse proxy, on one domain if you like (t
 address in `WEBSOCKET_ALLOWED_ORIGINS`. Later
 updates are a single `make deploy`.
 
-## Connecting a device
-
-1. In Tower, open **Devices**, then *Connect a device*.
-2. Download the connector, and the basic handler if you want Claude Code discussions.
-3. Create a configuration: it gives the file that identifies the device.
-4. Run it:
-
-```sh
-python3 tower-connector.pyz config.json --handler tower-handler.pyz
-```
-
-Python 3.10 or later is all it needs. To start it with your session and restart it after a crash, see
-*Documentation → Linux service* in the app.
-
-Write your own handlers by mapping event patterns to commands in the configuration:
-
-```json
-"handlers": {
-  "pr.pipeline.failed": "notify-send 'Pipeline failed' '{payload.title}'",
-  "deploy.*": ["git -C ~/projects/api pull", "make -C ~/projects/api deploy"]
-}
-```
-
 ## Development
 
-```sh
-make dev   # the stack with your code mounted, plus the Vite dev server
-docker compose exec php-fpm vendor/bin/phpunit
-make sdk   # regenerate the OpenAPI document and the frontend client
-```
-
-The backend is built on [Cube](https://github.com/yonis-savary/cube), a typed PHP 8 framework. The architecture, the
-decisions behind it and what is planned are described in [ARCHITECTURE.md](ARCHITECTURE.md) (in French).
-
-| Part | Stack |
-|---|---|
-| Backend | PHP 8.5, Cube, MySQL |
-| Frontend | Vue 3, PrimeVue, a client generated from the OpenAPI document |
-| Connector | Python, shipped as a single zipapp |
-| Real time | WebSocket |
-
-## Roadmap
-
-- GitLab and GitHub merge requests
-- Jobs sent to one chosen device
-- An AI agent that keeps tasks up to date from the history
-- Notifications
+The stack, the development commands and the architecture are described in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## License
 
