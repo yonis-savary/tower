@@ -26,7 +26,7 @@ const dialogTask = ref<Task | null>(null)
 
 const showTasks = computed(() => workspace.hasSection('tasks'))
 const showQuickActions = computed(() => workspace.hasSection('events'))
-const showActivity = computed(() => workspace.hasSection('events') || workspace.hasSection('webhooks'))
+const showActivity = computed(() => workspace.hasSection('events') || workspace.hasSection('webhooks') || workspace.hasSection('automation'))
 
 function loadTasks() {
   if (!showTasks.value) return

@@ -183,6 +183,14 @@ const discussExample = `
     they show as <em>Event launched</em>.
   </p>
 
+  <h3>Scheduled events</h3>
+  <p>
+    From the Automation screen, Schedules tab: the same type and payload, launched every minute, every N minutes, every hour, day, week
+    or month, or once at a given date. Times are the server ones, to the minute. A run missed while the server was down is
+    not caught up: a one-time schedule whose date passed is simply disabled. In the History, they show as
+    <em>Event launched</em>, by the schedule.
+  </p>
+
   <h3>What is not sent</h3>
   <p>
     Device connections and disconnections, and the creation or revocation of configurations, are only written in the

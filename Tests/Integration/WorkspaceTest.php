@@ -158,7 +158,7 @@ class WorkspaceTest extends CubeTestCase
         $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Personnel', 'accent_color' => null])->assertOk();
         $this->assertNull(Workspace::find($created['id'])->accent_color);
 
-        $this->assertSame(['tasks', 'jira', 'merge_requests', 'events', 'webhooks'], $updated['sections']);
+        $this->assertSame(['tasks', 'jira', 'merge_requests', 'events', 'automation', 'webhooks'], $updated['sections']);
         $sections = $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Personnel', 'accent_color' => null, 'sections' => ['events', 'tasks']])->assertOk()->json()['sections'];
         $this->assertSame(['tasks', 'events'], $sections);
         $this->assertSame(['tasks', 'events'], $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Perso', 'accent_color' => null])->assertOk()->json()['sections']);

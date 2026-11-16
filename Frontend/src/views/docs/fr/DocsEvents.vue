@@ -185,6 +185,15 @@ const discussExample = `
     l'Historique, ils apparaissent comme <em>Évènement lancé</em>.
   </p>
 
+  <h3>Événements planifiés</h3>
+  <p>
+    Depuis l'écran Automation, onglet Planifications : un type et un payload, lancés chaque minute, toutes les N minutes, chaque heure, jour,
+    semaine ou mois, ou une seule fois à une date donnée. Les heures sont celles du serveur, à la minute près. Un
+    déclenchement manqué pendant un arrêt du serveur n'est pas rattrapé : une planification ponctuelle dont la date est
+    passée est simplement désactivée. Dans l'Historique, ils apparaissent comme <em>Évènement lancé</em>, par la
+    planification.
+  </p>
+
   <h3>Ce qui n'est pas envoyé</h3>
   <p>
     Les connexions et déconnexions d'appareils, et la création ou la révocation des configurations, sont seulement écrites

@@ -9,7 +9,7 @@ export type HistoryI18n = {
 
 export type Details = Record<string, any>
 
-/** An event launched by hand, by a quick action or by a webhook */
+/** An event launched by hand, by a quick action, by a webhook or by a schedule */
 export const EVENT_TYPE = 'event.triggered'
 
 export const HISTORY_ICONS: Record<string, string> = {
@@ -23,6 +23,10 @@ export const HISTORY_ICONS: Record<string, string> = {
   'webhook.disabled': 'pi pi-pause',
   'webhook.deleted': 'pi pi-trash',
   'webhook.secret_regenerated': 'pi pi-key',
+  'schedule.created': 'pi pi-clock',
+  'schedule.enabled': 'pi pi-play',
+  'schedule.disabled': 'pi pi-pause',
+  'schedule.deleted': 'pi pi-trash',
   'pr.opened': PULL_REQUEST_ICON,
   'pr.merged': 'pi pi-check-circle',
   'pr.declined': 'pi pi-times-circle',
@@ -82,7 +86,9 @@ export function historyDetail({ t, te }: HistoryI18n, type: string, parsed: Deta
 
   switch (type) {
     case EVENT_TYPE:
-      return parsed.webhook ? `${parsed.event} · ${t('history.viaWebhook', { name: parsed.webhook })}` : parsed.event
+      if (parsed.webhook) return `${parsed.event} · ${t('history.viaWebhook', { name: parsed.webhook })}`
+      if (parsed.schedule) return `${parsed.event} · ${t('history.viaSchedule', { name: parsed.schedule })}`
+      return parsed.event
     case 'device.connected':
       return `${parsed.hostname ?? t('devices.unknownHost')} · ${parsed.access_key}`
     case 'device.disconnected': {

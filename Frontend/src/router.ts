@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from './components/AppLayout.vue'
+import AutomationView from './views/AutomationView.vue'
 import { useAuthStore } from './stores/auth'
 import DocsView from './views/DocsView.vue'
 import EventsView from './views/EventsView.vue'
@@ -23,6 +24,7 @@ const router = createRouter({
         { path: '', name: 'home', component: HomeView, meta: { title: 'nav.home' } },
         { path: 'tasks', name: 'tasks', component: TasksView, meta: { title: 'nav.tasks', section: 'tasks' } },
         { path: 'events', name: 'events', component: EventsView, meta: { title: 'nav.events', section: 'events' } },
+        { path: 'automation', name: 'automation', component: AutomationView, meta: { title: 'nav.automation', section: 'automation' } },
         { path: 'webhooks', name: 'webhooks', component: WebhooksView, meta: { title: 'nav.webhooks', section: 'webhooks' } },
         { path: 'history', name: 'history', component: HistoryView, meta: { title: 'nav.history' } },
         { path: 'jira', name: 'jira', component: JiraView, meta: { title: 'nav.jira', section: 'jira' } },

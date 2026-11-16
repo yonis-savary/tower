@@ -11,6 +11,11 @@ class TriggerEventRequest extends Request
 
     public function getRules(): array
     {
+        return self::eventRules();
+    }
+
+    public static function eventRules(): array
+    {
         return [
             'type' => Param::string()->withValueCondition(
                 fn ($type) => strlen((string) $type) <= 100 && 1 === preg_match('/^[a-z0-9_-]+(\.[a-z0-9_-]+)*$/', (string) $type),

@@ -22,6 +22,7 @@ use Cube\Utils\Attributes\Generated;
  * @property JiraIssue[] $jiraIssues
  * @property PullRequest[] $pullRequests
  * @property QuickAction[] $quickActions
+ * @property ScheduledEvent[] $scheduledEvents
  * @property Sprint[] $sprints
  * @property Task[] $tasks
  * @property Webhook[] $webhooks
@@ -100,6 +101,12 @@ class Workspace extends Model
     }
 
     #[Generated]
+    public function scheduledEvents(): HasMany
+    {
+        return $this->hasMany('scheduledEvents', ScheduledEvent::class, 'workspace', 'id');
+    }
+
+    #[Generated]
     public function sprints(): HasMany
     {
         return $this->hasMany('sprints', Sprint::class, 'workspace', 'id');
@@ -133,6 +140,7 @@ class Workspace extends Model
             "jiraIssues",
             "pullRequests",
             "quickActions",
+            "scheduledEvents",
             "sprints",
             "tasks",
             "webhooks",

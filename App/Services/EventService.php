@@ -40,6 +40,15 @@ class EventService
         return $line;
     }
 
+    public function triggerFromSchedule(int $workspace, string $schedule, string $type, string $payload): History
+    {
+        $line = $this->history->log($workspace, self::HISTORY_TYPE, ['event' => $type, 'payload' => json_decode($payload), 'schedule' => $schedule], HistoryService::ORIGIN_SCHEDULE);
+
+        $this->devices->sendEvent($workspace, $line->id, $type, $payload);
+
+        return $line;
+    }
+
     /**
      * @return Bunch<int,QuickAction> Oldest first
      */

@@ -72,9 +72,9 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
   n'existe pour Tower qu'à travers ses connexions (voir § Connexions).
 - Un workspace peut avoir plusieurs membres, et un utilisateur peut être membre de plusieurs
   workspaces. Tous les membres ont les mêmes droits sur le workspace ; il n'y a pas de rôles.
-- Un workspace choisit ses **sections** parmi `tasks`, `jira`, `merge_requests`, `events` et `webhooks`
-  (toutes pour un workspace jamais configuré). Une section décochée est seulement masquée : elle
-  quitte la navbar et les Paramètres, et son adresse renvoie à l'accueil, mais ses données, ses
+- Un workspace choisit ses **sections** parmi `tasks`, `jira`, `merge_requests`, `events`, `automation`
+  et `webhooks` (toutes pour un workspace jamais configuré). Une section décochée est seulement
+  masquée : elle quitte la navbar et les Paramètres, et son adresse renvoie à l'accueil, mais ses données, ses
   synchronisations et ses événements continuent. Accueil, Historique, Paramètres et
   les appareils sont toujours là.
 - Un workspace peut avoir une couleur (`accent_color`, `#rrggbb`) : quand il est le workspace
@@ -125,7 +125,7 @@ listes et à l'intérieur d'une liste.
 ### Historique
 
 Toute action notable écrit une ligne dans la table `history` : `workspace`, `type`,
-`origin` (`user`, `device`, `integration`, `webhook`, plus tard `agent`), l'utilisateur à l'origine s'il
+`origin` (`user`, `device`, `integration`, `webhook`, `schedule`, plus tard `agent`), l'utilisateur à l'origine s'il
 y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les lignes sont
 écrites par `HistoryService::log()`.
 
@@ -135,12 +135,13 @@ y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les l
 | `task.status_changed`         | changement de statut (`from`, `to`)                 |
 | `task.sprint_changed`         | changement de sprint (noms, `null` pour le backlog) |
 | `sprint.created`, `sprint.opened`, `sprint.closed` |                                |
-| `event.triggered`             | événement lancé à la main ou par une quick-action   |
+| `event.triggered`             | événement lancé à la main, par une quick-action, un webhook ou une planification |
 | `pr.*`                        | changements vus par une intégration de forge (voir § Synchronisation et diff) |
 | `jira.issue.*`                | changements vus par l'intégration Jira, et transitions faites depuis Tower |
 | `device.connected`, `device.disconnected` | connexions des appareils                |
 | `key.created`, `key.revoked`  | création et révocation d'une configuration          |
 | `webhook.created`, `webhook.enabled`, `webhook.disabled`, `webhook.deleted`, `webhook.secret_regenerated` | gestion des webhooks |
+| `schedule.created`, `schedule.enabled`, `schedule.disabled`, `schedule.deleted` | gestion des planifications |
 
 Les lignes `task.*`, `sprint.*` et `event.triggered` sont aussi envoyées aux appareils
 connectés comme des événements du même type (voir § Événements), comme les lignes `pr.*` et
@@ -201,6 +202,7 @@ produit :
 - à la main, depuis l'écran Événements, ou par une **quick-action** (événement prédéfini du
   workspace, lancé en un clic) ;
 - par l'appel d'un **webhook** du workspace (voir § Webhooks) ;
+- par une **planification** du workspace (voir § Planifications) ;
 - par une ligne d'historique `task.*` ou `sprint.*`.
 
 L'événement est d'abord écrit dans l'historique, puis envoyé au processus WebSocket, qui le
@@ -250,6 +252,26 @@ sans session.
 | `invalid`      | 422     | corps qui n'est pas un objet JSON, ou trop gros   |
 
 Une adresse inconnue répond 404 et n'est pas tracée.
+
+### Planifications
+
+Une planification lance un événement (type et payload, comme une quick-action) à heure fixe.
+
+- Elle est **régulière** (chaque minute, toutes les N minutes, chaque heure, chaque jour, certains
+  jours de la semaine, chaque mois) ou **ponctuelle** (une date et une heure). Le front traduit ce choix en expression cron, seule
+  stockée (`cron`) et seule lue pour la relire en formulaire ; une expression donnée par l'API sous
+  une autre forme s'édite telle quelle.
+- Un cron n'a pas d'année : une planification ponctuelle garde aussi sa date complète (`run_at`),
+  donnée par l'API à la place du cron, qui en est déduit. Elle doit être à venir.
+- Une tâche Cube tourne **chaque minute** (`App/Schedules/scheduled-events.php`) et lance les
+  planifications actives dont le cron correspond à la minute courante (`CronExpression::matches`),
+  à l'heure du serveur. Une ponctuelle ne part qu'à sa minute exacte puis se désactive.
+- **Rien n'est rattrapé.** Un déclenchement manqué (scheduler arrêté, run précédent encore en
+  cours) est perdu ; une ponctuelle dont la date est passée sans déclenchement est désactivée. Une
+  ponctuelle passée ne se réactive qu'en lui donnant une nouvelle date.
+- Chaque événement lancé est une ligne `event.triggered` d'`origin` `schedule`, avec le nom de la
+  planification dans ses `details`. « Lancer maintenant » part comme un événement manuel et ne
+  touche pas à la planification.
 
 ### Livraisons et réponses
 
@@ -728,6 +750,7 @@ des sprints actifs, tickets non terminés de l'utilisateur, merge requests ouver
 | Jira               | section `jira` : kanban du board                                   |
 | Merge Requests     | section `merge_requests`                                           |
 | Événements         | section `events` : lancement manuel et quick-actions               |
+| Automation         | section `automation` : planifications                              |
 | Webhooks           | section `webhooks`                                                 |
 | Historique         | en bas                                                             |
 | Documentation / API | en bas, voir § Écrans                                             |
@@ -753,6 +776,7 @@ les jobs échoués récents.
 | Accueil            |                                                                      |
 | Tâches             | onglet Tableau (un kanban de cinq colonnes par sprint actif, repliable, choix gardé dans le navigateur par workspace ; une tâche se glisse d'un sprint actif à l'autre ; annulées à part) et onglet Backlog (sprints ouverts et planifiés, backlog, sprints clôturés repliés) ; fiche de tâche avec son historique |
 | Événements         | lancer un événement (type et payload JSON), en premier, dans un bloc repliable (replié par défaut, choix gardé dans le navigateur) ; créer, lancer et supprimer des quick-actions |
+| Automation         | onglets, choisi dans l'adresse (`?tab=`) ; onglet **Planifications** : tableau des planifications : interrupteur actif/inactif (bloqué pour une ponctuelle passée), nom, événement, fréquence en clair, dernier déclenchement ; création et modification (nom, événement, régulière avec sa fréquence ou ponctuelle avec sa date), lancement immédiat, suppression ; rechargé quand un événement est lancé |
 | Webhooks           | tableau des webhooks : interrupteur actif/inactif, cadenas ouvert pour un webhook non sécurisé, adresse à copier, événements, dernier appel ; création (nom, événements, sécurisé ou non, avec un avertissement) et modification (nom, événements), régénération du secret, suppression ; secret affiché une fois avec un exemple `curl` ; modale des appels (statut, IP, `User-Agent`, corps), par pages de 50 |
 | Merge Requests     | un onglet par dépôt : graphique en arbre des merge requests ouvertes, puis leur liste (approbations, commentaires, brouillon, pipeline), puis celles du dépôt fermées récemment |
 | Historique         | tableau compact des lignes du workspace (une ligne chacune : type, détail tronqué, date), les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |
@@ -796,6 +820,7 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `quick_action`    | `workspace`, `name`, `type`, `payload`, `created_at`                      |
 | `webhook`         | `workspace`, `name`, `uuid`, `secured`, `secret` (chiffré, nul si non sécurisé), `events` (JSON), `enabled`, `created_at`, `last_called_at` |
 | `webhook_call`    | `webhook`, `status`, `ip`, `user_agent`, `payload`, `created_at`          |
+| `scheduled_event` | `workspace`, `name`, `type`, `payload`, `cron`, `run_at` (ponctuelle seulement), `enabled`, `last_run_at`, `created_at` |
 | `integration`     | `workspace`, `type`, `settings` (JSON), `credentials` (chiffré), `last_synced_at`, `last_error` |
 | `pull_request`    | `workspace`, `integration`, `external_id`, `repository`, branches source et cible, `source_commit`, `url`, `title`, `author`, `state`, `draft`, `comment_count`, `pipeline_status`, `synced_at` |
 | `pull_request_approvals` | `pull_request`, `external_user_id`, `display_name`, `status`        |
@@ -806,7 +831,7 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 ## 7. API
 
 - **API utilisateur** (consommée par le front Vue) : inscription et connexion, workspaces,
-  tâches et sprints, configurations, appareils, événements et quick-actions, intégrations,
+  tâches et sprints, configurations, appareils, événements, quick-actions et planifications, intégrations,
   merge requests, historique. Décrite en OpenAPI (`php do make:openapi`), client front généré
   (`npm run api:generate`). Chaque requête est limitée au workspace courant de
   l'utilisateur.

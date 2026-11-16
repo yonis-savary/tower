@@ -7,7 +7,7 @@ import Button from 'primevue/button'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
 import DevicesDialog from './DevicesDialog.vue'
-import AppIcon, { PULL_REQUEST_ICON } from './AppIcon.vue'
+import AppIcon, { PLUG_ICON, PULL_REQUEST_ICON } from './AppIcon.vue'
 import TowerLogo from './TowerLogo.vue'
 import WorkspacesDialog from './WorkspacesDialog.vue'
 import { useAuthStore } from '../stores/auth'
@@ -71,6 +71,7 @@ const mainItems = computed<NavItem[]>(() =>
     { label: t('nav.jira'), icon: 'pi pi-objects-column', to: { name: 'jira' }, count: openIssues.value, section: 'jira' as const },
     { label: t('nav.mergeRequests'), icon: PULL_REQUEST_ICON, to: { name: 'merge-requests' }, count: pullRequests.open.length, section: 'merge_requests' as const },
     { label: t('nav.events'), icon: 'pi pi-bolt', to: { name: 'events' }, section: 'events' as const },
+    { label: t('nav.automation'), icon: PLUG_ICON, to: { name: 'automation' }, section: 'automation' as const },
     { label: t('nav.webhooks'), icon: 'pi pi-globe', to: { name: 'webhooks' }, section: 'webhooks' as const },
   ].filter(({ section }) => !section || workspace.hasSection(section)),
 )

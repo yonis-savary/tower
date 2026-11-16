@@ -1426,6 +1426,216 @@ export type ListPullRequestApprovalsResponses = {
 
 export type ListPullRequestApprovalsResponse = ListPullRequestApprovalsResponses[keyof ListPullRequestApprovalsResponses];
 
+export type ListScheduledEventsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/scheduled-events';
+};
+
+export type ListScheduledEventsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListScheduledEventsError = ListScheduledEventsErrors[keyof ListScheduledEventsErrors];
+
+export type ListScheduledEventsResponses = {
+    /**
+     * The scheduled events
+     */
+    200: Array<{
+        id: number;
+        name: string;
+        type: string;
+        payload: string;
+        cron: string;
+        run_at: string | null;
+        enabled: boolean;
+        created_at: string;
+        last_run_at: string | null;
+    }>;
+};
+
+export type ListScheduledEventsResponse = ListScheduledEventsResponses[keyof ListScheduledEventsResponses];
+
+export type CreateScheduledEventData = {
+    body: {
+        name: string;
+        type: string;
+        payload: string;
+        cron?: string | null;
+        run_at?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/scheduled-events';
+};
+
+export type CreateScheduledEventErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type CreateScheduledEventError = CreateScheduledEventErrors[keyof CreateScheduledEventErrors];
+
+export type CreateScheduledEventResponses = {
+    /**
+     * The scheduled event
+     */
+    201: {
+        id: number;
+        name: string;
+        type: string;
+        payload: string;
+        cron: string;
+        run_at: string | null;
+        enabled: boolean;
+        created_at: string;
+        last_run_at: string | null;
+    };
+};
+
+export type CreateScheduledEventResponse = CreateScheduledEventResponses[keyof CreateScheduledEventResponses];
+
+export type DeleteScheduledEventData = {
+    body?: never;
+    path: {
+        schedule: number;
+    };
+    query?: never;
+    url: '/api/scheduled-events/{schedule}';
+};
+
+export type DeleteScheduledEventErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such scheduled event in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type DeleteScheduledEventError = DeleteScheduledEventErrors[keyof DeleteScheduledEventErrors];
+
+export type DeleteScheduledEventResponses = {
+    /**
+     * The scheduled event is deleted
+     */
+    204: void;
+};
+
+export type DeleteScheduledEventResponse = DeleteScheduledEventResponses[keyof DeleteScheduledEventResponses];
+
+export type UpdateScheduledEventData = {
+    body: {
+        name: string;
+        type: string;
+        payload: string;
+        cron?: string | null;
+        run_at?: string | null;
+        enabled: boolean;
+    };
+    path: {
+        schedule: number;
+    };
+    query?: never;
+    url: '/api/scheduled-events/{schedule}';
+};
+
+export type UpdateScheduledEventErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such scheduled event in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type UpdateScheduledEventError = UpdateScheduledEventErrors[keyof UpdateScheduledEventErrors];
+
+export type UpdateScheduledEventResponses = {
+    /**
+     * The scheduled event
+     */
+    200: {
+        id: number;
+        name: string;
+        type: string;
+        payload: string;
+        cron: string;
+        run_at: string | null;
+        enabled: boolean;
+        created_at: string;
+        last_run_at: string | null;
+    };
+};
+
+export type UpdateScheduledEventResponse = UpdateScheduledEventResponses[keyof UpdateScheduledEventResponses];
+
+export type TriggerScheduledEventData = {
+    body?: never;
+    path: {
+        schedule: number;
+    };
+    query?: never;
+    url: '/api/scheduled-events/{schedule}/trigger';
+};
+
+export type TriggerScheduledEventErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such scheduled event in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type TriggerScheduledEventError = TriggerScheduledEventErrors[keyof TriggerScheduledEventErrors];
+
+export type TriggerScheduledEventResponses = {
+    /**
+     * The event is launched
+     */
+    204: void;
+};
+
+export type TriggerScheduledEventResponse = TriggerScheduledEventResponses[keyof TriggerScheduledEventResponses];
+
 export type ListTasksData = {
     body?: never;
     path?: never;
@@ -2342,7 +2552,7 @@ export type UpdateWorkspaceData = {
     body: {
         name: string;
         accent_color: string | null;
-        sections?: Array<'tasks' | 'jira' | 'merge_requests' | 'events' | 'webhooks'>;
+        sections?: Array<'tasks' | 'jira' | 'merge_requests' | 'events' | 'automation' | 'webhooks'>;
     };
     path: {
         workspace: number;
@@ -2511,3 +2721,12 @@ export type RemoveWorkspaceMemberResponses = {
 };
 
 export type RemoveWorkspaceMemberResponse = RemoveWorkspaceMemberResponses[keyof RemoveWorkspaceMemberResponses];
+
+export type ServeIndexFileData = {
+    body?: never;
+    path: {
+        any: unknown;
+    };
+    query?: never;
+    url: '/{any}';
+};

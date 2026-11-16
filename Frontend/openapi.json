@@ -3038,6 +3038,511 @@
                 }
             }
         },
+        "\/api\/scheduled-events": {
+            "get": {
+                "summary": "List scheduled events",
+                "description": "The scheduled events of the current workspace, oldest first",
+                "operationId": "listScheduledEvents",
+                "responses": {
+                    "200": {
+                        "description": "The scheduled events",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "payload": {
+                                                "type": "string"
+                                            },
+                                            "cron": {
+                                                "type": "string"
+                                            },
+                                            "run_at": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "enabled": {
+                                                "type": "boolean"
+                                            },
+                                            "created_at": {
+                                                "type": "string"
+                                            },
+                                            "last_run_at": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "name",
+                                            "type",
+                                            "payload",
+                                            "cron",
+                                            "run_at",
+                                            "enabled",
+                                            "created_at",
+                                            "last_run_at"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 613,
+                                        "name": "ut qui veritatis",
+                                        "type": "error et autem",
+                                        "payload": "vero animi incidunt",
+                                        "cron": "accusamus rerum hic",
+                                        "run_at": "2007-02-27T00:00:00+00:00",
+                                        "enabled": true,
+                                        "created_at": "2015-01-29T00:00:00+00:00",
+                                        "last_run_at": "2008-07-20T00:00:00+00:00"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create scheduled event",
+                "description": "Schedules an enabled event in the current workspace : recurring with `cron`, or once at `run_at` (server time), to the minute",
+                "operationId": "createScheduledEvent",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string"
+                                    },
+                                    "payload": {
+                                        "type": "string"
+                                    },
+                                    "cron": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "run_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "\\d{4}\\-\\d{2}\\-\\d{2} \\d{2}\\:\\d{2}\\:\\d{2}"
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "type",
+                                    "payload"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The scheduled event",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "payload": {
+                                            "type": "string"
+                                        },
+                                        "cron": {
+                                            "type": "string"
+                                        },
+                                        "run_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "enabled": {
+                                            "type": "boolean"
+                                        },
+                                        "created_at": {
+                                            "type": "string"
+                                        },
+                                        "last_run_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "type",
+                                        "payload",
+                                        "cron",
+                                        "run_at",
+                                        "enabled",
+                                        "created_at",
+                                        "last_run_at"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 613,
+                                    "name": "ut qui veritatis",
+                                    "type": "error et autem",
+                                    "payload": "vero animi incidunt",
+                                    "cron": "accusamus rerum hic",
+                                    "run_at": "2007-02-27T00:00:00+00:00",
+                                    "enabled": true,
+                                    "created_at": "2015-01-29T00:00:00+00:00",
+                                    "last_run_at": "2008-07-20T00:00:00+00:00"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/scheduled-events\/{schedule}": {
+            "put": {
+                "summary": "Update scheduled event",
+                "description": "Changes the event, the timing and the state of a scheduled event of the current workspace",
+                "operationId": "updateScheduledEvent",
+                "parameters": [
+                    {
+                        "name": "schedule",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string"
+                                    },
+                                    "payload": {
+                                        "type": "string"
+                                    },
+                                    "cron": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "run_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "pattern": "\\d{4}\\-\\d{2}\\-\\d{2} \\d{2}\\:\\d{2}\\:\\d{2}"
+                                    },
+                                    "enabled": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "type",
+                                    "payload",
+                                    "enabled"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The scheduled event",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "payload": {
+                                            "type": "string"
+                                        },
+                                        "cron": {
+                                            "type": "string"
+                                        },
+                                        "run_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "enabled": {
+                                            "type": "boolean"
+                                        },
+                                        "created_at": {
+                                            "type": "string"
+                                        },
+                                        "last_run_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "type",
+                                        "payload",
+                                        "cron",
+                                        "run_at",
+                                        "enabled",
+                                        "created_at",
+                                        "last_run_at"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 613,
+                                    "name": "ut qui veritatis",
+                                    "type": "error et autem",
+                                    "payload": "vero animi incidunt",
+                                    "cron": "accusamus rerum hic",
+                                    "run_at": "2007-02-27T00:00:00+00:00",
+                                    "enabled": true,
+                                    "created_at": "2015-01-29T00:00:00+00:00",
+                                    "last_run_at": "2008-07-20T00:00:00+00:00"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such scheduled event in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete scheduled event",
+                "description": "Deletes a scheduled event of the current workspace. The events it triggered stay in the history",
+                "operationId": "deleteScheduledEvent",
+                "parameters": [
+                    {
+                        "name": "schedule",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such scheduled event in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The scheduled event is deleted"
+                    }
+                }
+            }
+        },
+        "\/api\/scheduled-events\/{schedule}\/trigger": {
+            "post": {
+                "summary": "Trigger scheduled event",
+                "description": "Launches the event of a scheduled event of the current workspace now, without changing its schedule",
+                "operationId": "triggerScheduledEvent",
+                "parameters": [
+                    {
+                        "name": "schedule",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such scheduled event in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The event is launched"
+                    }
+                }
+            }
+        },
         "\/api\/tasks": {
             "get": {
                 "summary": "List tasks",
@@ -4820,14 +5325,11 @@
                                 },
                                 "example": [
                                     {
-                                        "id": 97,
-                                        "name": "cupiditate dolores ab",
-                                        "accent_color": "#62bbd2",
+                                        "id": 432,
+                                        "name": "voluptatibus adipisci sapiente",
+                                        "accent_color": "#9e881c",
                                         "sections": [
-                                            "webhooks",
-                                            "jira",
-                                            "events",
-                                            "tasks"
+                                            "webhooks"
                                         ]
                                     }
                                 ]
@@ -4918,14 +5420,11 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 97,
-                                    "name": "cupiditate dolores ab",
-                                    "accent_color": "#62bbd2",
+                                    "id": 432,
+                                    "name": "voluptatibus adipisci sapiente",
+                                    "accent_color": "#9e881c",
                                     "sections": [
-                                        "webhooks",
-                                        "jira",
-                                        "events",
-                                        "tasks"
+                                        "webhooks"
                                     ]
                                 }
                             }
@@ -4989,14 +5488,11 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 97,
-                                    "name": "cupiditate dolores ab",
-                                    "accent_color": "#62bbd2",
+                                    "id": 432,
+                                    "name": "voluptatibus adipisci sapiente",
+                                    "accent_color": "#9e881c",
                                     "sections": [
-                                        "webhooks",
-                                        "jira",
-                                        "events",
-                                        "tasks"
+                                        "webhooks"
                                     ]
                                 }
                             }
@@ -5101,14 +5597,11 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 97,
-                                    "name": "cupiditate dolores ab",
-                                    "accent_color": "#62bbd2",
+                                    "id": 432,
+                                    "name": "voluptatibus adipisci sapiente",
+                                    "accent_color": "#9e881c",
                                     "sections": [
-                                        "webhooks",
-                                        "jira",
-                                        "events",
-                                        "tasks"
+                                        "webhooks"
                                     ]
                                 }
                             }
@@ -5241,6 +5734,7 @@
                                                 "jira",
                                                 "merge_requests",
                                                 "events",
+                                                "automation",
                                                 "webhooks"
                                             ]
                                         }
@@ -5299,14 +5793,11 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 97,
-                                    "name": "cupiditate dolores ab",
-                                    "accent_color": "#62bbd2",
+                                    "id": 432,
+                                    "name": "voluptatibus adipisci sapiente",
+                                    "accent_color": "#9e881c",
                                     "sections": [
-                                        "webhooks",
-                                        "jira",
-                                        "events",
-                                        "tasks"
+                                        "webhooks"
                                     ]
                                 }
                             }
@@ -5605,6 +6096,21 @@
                         "description": "The member is removed"
                     }
                 }
+            }
+        },
+        "\/{any}": {
+            "get": {
+                "summary": "serveIndexFile",
+                "description": "FrontendServer.serveIndexFile",
+                "operationId": "serveIndexFile",
+                "parameters": [
+                    {
+                        "name": "any",
+                        "in": "path",
+                        "required": true,
+                        "schema": {}
+                    }
+                ]
             }
         }
     },

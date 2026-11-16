@@ -12,7 +12,7 @@ use Cube\Data\Database\Query;
 
 class WorkspaceService
 {
-    public const SECTIONS = ['tasks', 'jira', 'merge_requests', 'events', 'webhooks'];
+    public const SECTIONS = ['tasks', 'jira', 'merge_requests', 'events', 'automation', 'webhooks'];
 
     public function __construct(
         protected Database $database,

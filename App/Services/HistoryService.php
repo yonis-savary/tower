@@ -13,6 +13,7 @@ class HistoryService
     public const ORIGIN_DEVICE = 'device';
     public const ORIGIN_INTEGRATION = 'integration';
     public const ORIGIN_WEBHOOK = 'webhook';
+    public const ORIGIN_SCHEDULE = 'schedule';
 
     public const DELIVERY_PENDING = 'pending';
     public const DELIVERY_RUNNING = 'running';
@@ -118,7 +119,7 @@ class HistoryService
 
     /**
      * @return Bunch<int,History> The events sent to the devices of a workspace : launched by hand, by a
-     *                            quick action or a webhook, or brought by an integration. Newest first, with their deliveries
+     *                            quick action, a webhook or a schedule, or brought by an integration. Newest first, with their deliveries
      */
     public function recentEvents(int $workspace, int $limit): Bunch
     {
