@@ -1,34 +1,8 @@
 <script setup lang="ts">
 import CodeBlock from '../../../components/CodeBlock.vue'
+import type { DocPage } from '../pages'
 
-const envelope = `
-{
-  "type": "event",
-  "id": 1842,
-  "delivery": 3307,
-  "workspace": 1,
-  "event": "pr.pipeline.failed",
-  "payload": {
-    "source": "bitbucket",
-    "id": "128",
-    "repository": "team/api",
-    "title": "Add the login page",
-    "url": "https://bitbucket.org/team/api/pull-requests/128",
-    "from": "running",
-    "to": "failed"
-  }
-}
-`
-
-const handlers = `
-{
-  "handlers": {
-    "task.status_changed": "notify-send Tower \\"{payload.title}: {payload.to}\\"",
-    "pr.pipeline.failed": "notify-send \\"Pipeline failed\\" \\"{payload.title}\\"",
-    "jira.issue.*": "python3 ~/tower/jira.py"
-  }
-}
-`
+defineEmits<{ open: [page: DocPage] }>()
 
 const taskExample = `
 {
@@ -80,23 +54,13 @@ const discussExample = `
 
   <h3>Receiving an event</h3>
   <p>
-    A configuration only sends its devices the events it <strong>listens</strong> to: patterns set in the Devices dialog,
-    <code>*</code> by default. <code>*</code> matches any sequence of characters, dots included: <code>task.*</code>,
-    <code>pr.pipeline.*</code>, <code>jira.issue.status_changed</code>.
+    A device receives the events its configuration <strong>listens</strong> to, and the connector runs the commands of its
+    handlers for each of them, with the whole message as JSON on their standard input: <code>type</code>,
+    <code>id</code> (history line), <code>delivery</code>, <code>workspace</code>, <code>event</code> and
+    <code>payload</code>. Everything is detailed in
+    <a href="#" @click.prevent="$emit('open', 'connector')">Connector</a>; this page describes the <code>payload</code> of
+    each event.
   </p>
-  <p>
-    For each event received, the connector runs the handler whose pattern matches, without a shell. The handler gets the
-    whole message as JSON on its <strong>standard input</strong>:
-  </p>
-  <CodeBlock :code="envelope" language="json" />
-  <p>
-    <code>id</code> is the history line of the event, <code>delivery</code> its delivery to this device. The handler also
-    finds <code>TOWER_EVENT</code>, <code>TOWER_EVENT_ID</code>, <code>TOWER_DELIVERY</code> and <code>TOWER_WORKSPACE</code>
-    in its environment. In the command of a handler, <code>{event}</code> and <code>{payload.field}</code> are replaced by
-    their value, nested fields with dots:
-  </p>
-  <CodeBlock :code="handlers" language="json" filename="config.json" />
-  <p>The exit code and the output of the handler go back to Tower: they show in the History, under the event.</p>
 
   <h3>Tasks</h3>
   <p>

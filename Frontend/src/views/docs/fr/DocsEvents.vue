@@ -1,34 +1,8 @@
 <script setup lang="ts">
 import CodeBlock from '../../../components/CodeBlock.vue'
+import type { DocPage } from '../pages'
 
-const envelope = `
-{
-  "type": "event",
-  "id": 1842,
-  "delivery": 3307,
-  "workspace": 1,
-  "event": "pr.pipeline.failed",
-  "payload": {
-    "source": "bitbucket",
-    "id": "128",
-    "repository": "team/api",
-    "title": "Add the login page",
-    "url": "https://bitbucket.org/team/api/pull-requests/128",
-    "from": "running",
-    "to": "failed"
-  }
-}
-`
-
-const handlers = `
-{
-  "handlers": {
-    "task.status_changed": "notify-send Tower \\"{payload.title} : {payload.to}\\"",
-    "pr.pipeline.failed": "notify-send \\"Pipeline en échec\\" \\"{payload.title}\\"",
-    "jira.issue.*": "python3 ~/tower/jira.py"
-  }
-}
-`
+defineEmits<{ open: [page: DocPage] }>()
 
 const taskExample = `
 {
@@ -80,24 +54,12 @@ const discussExample = `
 
   <h3>Recevoir un événement</h3>
   <p>
-    Une configuration n'envoie à ses appareils que les événements qu'elle <strong>écoute</strong> : des motifs réglés dans
-    la modale Appareils, <code>*</code> par défaut. <code>*</code> correspond à n'importe quelle suite de caractères, points
-    compris : <code>task.*</code>, <code>pr.pipeline.*</code>, <code>jira.issue.status_changed</code>.
-  </p>
-  <p>
-    Pour chaque événement reçu, le connecteur lance le handler dont le motif correspond, sans shell. Le handler reçoit le
-    message complet en JSON sur son <strong>entrée standard</strong> :
-  </p>
-  <CodeBlock :code="envelope" language="json" />
-  <p>
-    <code>id</code> est la ligne d'historique de l'événement, <code>delivery</code> sa livraison à cet appareil. Le handler
-    trouve aussi <code>TOWER_EVENT</code>, <code>TOWER_EVENT_ID</code>, <code>TOWER_DELIVERY</code> et
-    <code>TOWER_WORKSPACE</code> dans son environnement. Dans la commande d'un handler, <code>{event}</code> et
-    <code>{payload.champ}</code> sont remplacés par leur valeur, champs imbriqués avec des points :
-  </p>
-  <CodeBlock :code="handlers" language="json" filename="config.json" />
-  <p>
-    Le code de sortie et la sortie du handler reviennent à Tower : ils s'affichent dans l'Historique, sous l'événement.
+    Un appareil reçoit les événements que sa configuration <strong>écoute</strong>, et le connecteur lance pour chacun les
+    commandes de ses handlers, avec le message complet en JSON sur leur entrée standard :
+    <code>type</code>, <code>id</code> (ligne d'historique), <code>delivery</code>, <code>workspace</code>,
+    <code>event</code> et <code>payload</code>. Tout est détaillé dans
+    <a href="#" @click.prevent="$emit('open', 'connector')">Connecteur</a> ; cette page décrit le <code>payload</code> de
+    chaque événement.
   </p>
 
   <h3>Tâches</h3>

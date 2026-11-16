@@ -457,7 +457,10 @@ export default {
     copied: 'Copié',
     pages: {
       home: 'Accueil',
+      connector: 'Connecteur',
       events: 'Événements',
+      webhooks: 'Webhooks',
+      integrations: 'Intégrations',
       linuxService: 'Service Linux',
       linuxServer: 'Serveur sans écran',
     },

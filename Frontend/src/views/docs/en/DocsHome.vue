@@ -30,8 +30,20 @@ defineEmits<{ open: [page: DocPage] }>()
   <h3>Pages</h3>
   <ul>
     <li>
+      <a href="#" @click.prevent="$emit('open', 'connector')">Connector</a>: running it, choosing the events it receives,
+      writing handlers and what they receive.
+    </li>
+    <li>
       <a href="#" @click.prevent="$emit('open', 'events')">Events</a>: everything Tower sends to the devices, when, and with
       which data.
+    </li>
+    <li>
+      <a href="#" @click.prevent="$emit('open', 'webhooks')">Webhooks</a>: have GitHub, Bitbucket, your CI or a script
+      launch events, with a secret or a signature.
+    </li>
+    <li>
+      <a href="#" @click.prevent="$emit('open', 'integrations')">Integrations</a>: plugging in Jira and Bitbucket, which token
+      to create and what Tower reads.
     </li>
     <li>
       <a href="#" @click.prevent="$emit('open', 'linux-service')">Run the connector as a Linux service</a>: restart it
