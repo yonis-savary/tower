@@ -59,6 +59,18 @@ services:
     depends_on:
       - php-fpm # builds the image
 
+  push:
+    image: ${COMPOSE_PROJECT_NAME}-php
+    pull_policy: never # Built by php-fpm, it exists in no registry
+    # Sends the push notifications, out of the requests and the scheduler
+    command: ["php", "do", "cube:queue", "--queue=App\\Queues\\PushQueue", "-l"]
+    restart: unless-stopped
+    volumes:
+      - ./Storage:/var/www/Storage
+      - ./.env:/var/www/.env:ro
+    depends_on:
+      - php-fpm # builds the image
+
   mysql:
     image: mysql:8.4
     restart: unless-stopped

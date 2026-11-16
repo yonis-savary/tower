@@ -2,17 +2,17 @@
 
 namespace App\Integrations;
 
-use App\Channels\DevicesChannel;
 use App\Models\History;
 use App\Models\JiraIssue;
 use App\Models\PullRequest;
+use App\Services\EventAnnouncer;
 use App\Services\HistoryService;
 
 class IntegrationEvents
 {
     public function __construct(
         protected HistoryService $history,
-        protected DevicesChannel $devices,
+        protected EventAnnouncer $announcer,
     ) {}
 
     public function logPullRequest(PullRequest $row, IntegrationChange $change): History
@@ -46,6 +46,6 @@ class IntegrationEvents
     public function announce(array $lines): void
     {
         foreach ($lines as $line)
-            $this->devices->sendEvent($line->workspace, $line->id, $line->type, $line->details);
+            $this->announcer->announce($line->workspace, $line->id, $line->type, $line->details);
     }
 }

@@ -8,8 +8,8 @@ RUN pecl install apcu \
     && docker-php-ext-enable apcu
 
 RUN apt-get update \
-    && apt-get install -y unzip git libzip-dev libpng-dev \
-    && docker-php-ext-install zip pcntl pdo_mysql \
+    && apt-get install -y unzip git libzip-dev libpng-dev libgmp-dev \
+    && docker-php-ext-install zip pcntl pdo_mysql gmp \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 RUN echo "apc.enable_cli=1" > /usr/local/etc/php/conf.d/apcu.ini \

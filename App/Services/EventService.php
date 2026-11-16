@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Channels\DevicesChannel;
 use App\Models\History;
 use App\Models\QuickAction;
 use Cube\Data\Bunch;
@@ -12,18 +11,18 @@ class EventService
     public const HISTORY_TYPE = 'event.triggered';
 
     public function __construct(
-        protected DevicesChannel $devices,
+        protected EventAnnouncer $announcer,
         protected HistoryService $history,
     ) {}
 
     /**
-     * Writes an event launched by a user in the history and sends it to the connected devices of the workspace.
+     * Writes an event launched by a user in the history and announces it to the devices and the browsers of the workspace.
      */
     public function triggerAsUser(int $workspace, int $user, string $type, string $payload): History
     {
         $line = $this->history->log($workspace, self::HISTORY_TYPE, ['event' => $type, 'payload' => json_decode($payload)], user: $user);
 
-        $this->devices->sendEvent($workspace, $line->id, $type, $payload);
+        $this->announcer->announce($workspace, $line->id, $type, $payload);
 
         return $line;
     }
@@ -35,7 +34,7 @@ class EventService
     {
         $line = $this->history->log($workspace, self::HISTORY_TYPE, ['event' => $type, 'payload' => json_decode($payload), 'webhook' => $webhook], HistoryService::ORIGIN_WEBHOOK);
 
-        $this->devices->sendEvent($workspace, $line->id, $type, $payload);
+        $this->announcer->announce($workspace, $line->id, $type, $payload);
 
         return $line;
     }
@@ -44,7 +43,7 @@ class EventService
     {
         $line = $this->history->log($workspace, self::HISTORY_TYPE, ['event' => $type, 'payload' => json_decode($payload), 'schedule' => $schedule], HistoryService::ORIGIN_SCHEDULE);
 
-        $this->devices->sendEvent($workspace, $line->id, $type, $payload);
+        $this->announcer->announce($workspace, $line->id, $type, $payload);
 
         return $line;
     }

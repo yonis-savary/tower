@@ -1355,6 +1355,444 @@ export type DiscussJiraIssueResponses = {
 
 export type DiscussJiraIssueResponse = DiscussJiraIssueResponses[keyof DiscussJiraIssueResponses];
 
+export type GetPushConfigurationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/push';
+};
+
+export type GetPushConfigurationErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type GetPushConfigurationError = GetPushConfigurationErrors[keyof GetPushConfigurationErrors];
+
+export type GetPushConfigurationResponses = {
+    /**
+     * public_key is null when push notifications are not set up
+     */
+    200: {
+        enabled?: boolean;
+        public_key?: string;
+    };
+};
+
+export type GetPushConfigurationResponse = GetPushConfigurationResponses[keyof GetPushConfigurationResponses];
+
+export type ListPushSubscriptionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/push/subscriptions';
+};
+
+export type ListPushSubscriptionsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListPushSubscriptionsError = ListPushSubscriptionsErrors[keyof ListPushSubscriptionsErrors];
+
+export type ListPushSubscriptionsResponses = {
+    /**
+     * The subscriptions
+     */
+    200: Array<{
+        id: number;
+        endpoint: string;
+        user_agent: string | null;
+        created_at: string;
+        last_success_at: string | null;
+    }>;
+};
+
+export type ListPushSubscriptionsResponse = ListPushSubscriptionsResponses[keyof ListPushSubscriptionsResponses];
+
+export type SavePushSubscriptionData = {
+    body: {
+        endpoint: string;
+        keys: {
+            p256dh: string;
+            auth: string;
+        };
+        content_encoding: 'aes128gcm' | 'aesgcm';
+    };
+    path?: never;
+    query?: never;
+    url: '/api/push/subscriptions';
+};
+
+export type SavePushSubscriptionErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No VAPID keys on this server
+     */
+    409: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type SavePushSubscriptionError = SavePushSubscriptionErrors[keyof SavePushSubscriptionErrors];
+
+export type SavePushSubscriptionResponses = {
+    /**
+     * The subscription
+     */
+    200: {
+        id: number;
+        endpoint: string;
+        user_agent: string | null;
+        created_at: string;
+        last_success_at: string | null;
+    };
+};
+
+export type SavePushSubscriptionResponse = SavePushSubscriptionResponses[keyof SavePushSubscriptionResponses];
+
+export type DeletePushSubscriptionData = {
+    body?: never;
+    path: {
+        subscription: number;
+    };
+    query?: never;
+    url: '/api/push/subscriptions/{subscription}';
+};
+
+export type DeletePushSubscriptionErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such subscription for this user
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type DeletePushSubscriptionError = DeletePushSubscriptionErrors[keyof DeletePushSubscriptionErrors];
+
+export type DeletePushSubscriptionResponses = {
+    /**
+     * The subscription is deleted
+     */
+    204: void;
+};
+
+export type DeletePushSubscriptionResponse = DeletePushSubscriptionResponses[keyof DeletePushSubscriptionResponses];
+
+export type TestPushSubscriptionData = {
+    body: {
+        title: string;
+        body: string;
+    };
+    path: {
+        subscription: number;
+    };
+    query?: never;
+    url: '/api/push/subscriptions/{subscription}/test';
+};
+
+export type TestPushSubscriptionErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such subscription for this user
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+    /**
+     * The push service of the browser refused it
+     */
+    502: {
+        error?: string;
+    };
+};
+
+export type TestPushSubscriptionError = TestPushSubscriptionErrors[keyof TestPushSubscriptionErrors];
+
+export type TestPushSubscriptionResponses = {
+    /**
+     * The browser accepted the notification
+     */
+    204: void;
+};
+
+export type TestPushSubscriptionResponse = TestPushSubscriptionResponses[keyof TestPushSubscriptionResponses];
+
+export type ListNotificationRulesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/notification-rules';
+};
+
+export type ListNotificationRulesErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListNotificationRulesError = ListNotificationRulesErrors[keyof ListNotificationRulesErrors];
+
+export type ListNotificationRulesResponses = {
+    /**
+     * The rules
+     */
+    200: Array<{
+        id: number;
+        name: string;
+        listen: Array<string>;
+        title: {
+            mode: string;
+            value: string;
+        } | null;
+        body: {
+            mode: string;
+            value: string;
+        } | null;
+        enabled: boolean;
+        created_at: string;
+    }>;
+};
+
+export type ListNotificationRulesResponse = ListNotificationRulesResponses[keyof ListNotificationRulesResponses];
+
+export type CreateNotificationRuleData = {
+    body: {
+        name: string;
+        listen: Array<string>;
+        title?: {
+            mode: 'raw' | 'key';
+            value: string;
+        } | null;
+        body?: {
+            mode: 'raw' | 'key';
+            value: string;
+        } | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/notification-rules';
+};
+
+export type CreateNotificationRuleErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type CreateNotificationRuleError = CreateNotificationRuleErrors[keyof CreateNotificationRuleErrors];
+
+export type CreateNotificationRuleResponses = {
+    /**
+     * The rule
+     */
+    201: {
+        id: number;
+        name: string;
+        listen: Array<string>;
+        title: {
+            mode: string;
+            value: string;
+        } | null;
+        body: {
+            mode: string;
+            value: string;
+        } | null;
+        enabled: boolean;
+        created_at: string;
+    };
+};
+
+export type CreateNotificationRuleResponse = CreateNotificationRuleResponses[keyof CreateNotificationRuleResponses];
+
+export type PreviewNotificationData = {
+    body: {
+        title?: {
+            mode: 'raw' | 'key';
+            value: string;
+        } | null;
+        body?: {
+            mode: 'raw' | 'key';
+            value: string;
+        } | null;
+        type: string;
+        payload: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/notification-rules/preview';
+};
+
+export type PreviewNotificationErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type PreviewNotificationError = PreviewNotificationErrors[keyof PreviewNotificationErrors];
+
+export type PreviewNotificationResponses = {
+    /**
+     * The text of the notification
+     */
+    200: {
+        title?: string;
+        body?: string;
+    };
+};
+
+export type PreviewNotificationResponse = PreviewNotificationResponses[keyof PreviewNotificationResponses];
+
+export type DeleteNotificationRuleData = {
+    body?: never;
+    path: {
+        rule: number;
+    };
+    query?: never;
+    url: '/api/notification-rules/{rule}';
+};
+
+export type DeleteNotificationRuleErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such rule of the user in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type DeleteNotificationRuleError = DeleteNotificationRuleErrors[keyof DeleteNotificationRuleErrors];
+
+export type DeleteNotificationRuleResponses = {
+    /**
+     * The rule is deleted
+     */
+    204: void;
+};
+
+export type DeleteNotificationRuleResponse = DeleteNotificationRuleResponses[keyof DeleteNotificationRuleResponses];
+
+export type UpdateNotificationRuleData = {
+    body: {
+        name: string;
+        listen: Array<string>;
+        title?: {
+            mode: 'raw' | 'key';
+            value: string;
+        } | null;
+        body?: {
+            mode: 'raw' | 'key';
+            value: string;
+        } | null;
+        enabled: boolean;
+    };
+    path: {
+        rule: number;
+    };
+    query?: never;
+    url: '/api/notification-rules/{rule}';
+};
+
+export type UpdateNotificationRuleErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such rule of the user in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type UpdateNotificationRuleError = UpdateNotificationRuleErrors[keyof UpdateNotificationRuleErrors];
+
+export type UpdateNotificationRuleResponses = {
+    /**
+     * The rule
+     */
+    200: {
+        id: number;
+        name: string;
+        listen: Array<string>;
+        title: {
+            mode: string;
+            value: string;
+        } | null;
+        body: {
+            mode: string;
+            value: string;
+        } | null;
+        enabled: boolean;
+        created_at: string;
+    };
+};
+
+export type UpdateNotificationRuleResponse = UpdateNotificationRuleResponses[keyof UpdateNotificationRuleResponses];
+
 export type ListPullRequestsData = {
     body?: never;
     path?: never;

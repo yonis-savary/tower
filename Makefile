@@ -33,7 +33,7 @@ deploy: Storage
 	git pull
 	$(MAKE) build
 	$(DO) migrate:migrate
-	$(PROD) stop php-fpm scheduler websocket
+	$(PROD) stop php-fpm scheduler websocket push
 	$(DO) cube:dispatch --event PostDeployment
 	$(DO) configuration:cache
 	$(PROD) up -d

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Channels\DevicesChannel;
 use App\Models\History;
 use App\Models\Sprint;
 use App\Models\Task;
@@ -21,7 +20,7 @@ class TaskService
 
     public function __construct(
         protected HistoryService $history,
-        protected DevicesChannel $devices,
+        protected EventAnnouncer $announcer,
     ) {}
 
     /**
@@ -272,10 +271,10 @@ class TaskService
     }
 
     /**
-     * Sends the history line to the connected devices of the workspace, as an event of the same type.
+     * Announces the history line to the devices and the browsers of the workspace, as an event of the same type.
      */
     private function announce(History $line, array $payload): void
     {
-        $this->devices->sendEvent($line->workspace, $line->id, $line->type, json_encode((object) $payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $this->announcer->announce($line->workspace, $line->id, $line->type, json_encode((object) $payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 }

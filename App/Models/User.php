@@ -16,6 +16,8 @@ use Cube\Utils\Attributes\Generated;
  * @property \DateTime $created_at
  * @property \DateTime $disabled_at
  * @property History[] $histories
+ * @property NotificationRule[] $notificationRules
+ * @property PushSubscription[] $pushSubscriptions
  * @property Workspace[] $workspaces
  * @property WorkspaceMember[] $workspaceMembers
  */
@@ -56,6 +58,18 @@ class User extends Model
     }
 
     #[Generated]
+    public function notificationRules(): HasMany
+    {
+        return $this->hasMany('notificationRules', NotificationRule::class, 'user', 'id');
+    }
+
+    #[Generated]
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany('pushSubscriptions', PushSubscription::class, 'user', 'id');
+    }
+
+    #[Generated]
     public function workspaces(): HasMany
     {
         return $this->hasMany('workspaces', Workspace::class, 'author', 'id');
@@ -72,6 +86,8 @@ class User extends Model
     {
         return [
             "histories",
+            "notificationRules",
+            "pushSubscriptions",
             "workspaces",
             "workspaceMembers",
         ];

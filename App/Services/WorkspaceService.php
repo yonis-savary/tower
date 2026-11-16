@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\NotificationRule;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
@@ -105,6 +106,8 @@ class WorkspaceService
             return false;
 
         WorkspaceMember::deleteWhere(['workspace' => $workspace->id, 'user' => $userId]);
+        // What they asked to be notified of here is theirs only
+        NotificationRule::deleteWhere(['workspace' => $workspace->id, 'user' => $userId]);
 
         return true;
     }

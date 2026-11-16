@@ -20,6 +20,7 @@ use Cube\Utils\Attributes\Generated;
  * @property History[] $histories
  * @property Integration[] $integrations
  * @property JiraIssue[] $jiraIssues
+ * @property NotificationRule[] $notificationRules
  * @property PullRequest[] $pullRequests
  * @property QuickAction[] $quickActions
  * @property ScheduledEvent[] $scheduledEvents
@@ -89,6 +90,12 @@ class Workspace extends Model
     }
 
     #[Generated]
+    public function notificationRules(): HasMany
+    {
+        return $this->hasMany('notificationRules', NotificationRule::class, 'workspace', 'id');
+    }
+
+    #[Generated]
     public function pullRequests(): HasMany
     {
         return $this->hasMany('pullRequests', PullRequest::class, 'workspace', 'id');
@@ -138,6 +145,7 @@ class Workspace extends Model
             "histories",
             "integrations",
             "jiraIssues",
+            "notificationRules",
             "pullRequests",
             "quickActions",
             "scheduledEvents",

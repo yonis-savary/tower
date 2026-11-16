@@ -37,7 +37,7 @@ Everything below is scoped to a **workspace**: separate *work* from *home*, each
 - Your Jira board, with transitions by drag and drop
 - Your Bitbucket merge requests, as a tree of stacked branches
 - Events launched by hand or as quick actions
-- Automation: events scheduled at intervals or at a given date
+- Automation: events scheduled at intervals or at a given date, and push notifications on your phone or computer
 - Webhooks for external services
 - A history of everything, with what each device answered
 - Members, sections and a color per workspace

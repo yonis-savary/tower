@@ -4,9 +4,11 @@ import { useI18n } from 'vue-i18n'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import Toast from 'primevue/toast'
 import NavBar from './NavBar.vue'
+import { usePushStore } from '../stores/push'
 import { useWorkspaceStore, type WorkspaceSection } from '../stores/workspace'
 
 const workspace = useWorkspaceStore()
+const push = usePushStore()
 const route = useRoute()
 const router = useRouter()
 const { t, locale } = useI18n()
@@ -29,6 +31,9 @@ watch(
   },
   { immediate: true },
 )
+
+// The subscription of this browser goes to the user logged in ; a click on a notification opens its screen
+void push.start((url) => void router.push(url))
 </script>
 
 <template>

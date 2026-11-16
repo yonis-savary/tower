@@ -36,7 +36,7 @@ abordera.
 | Connecteur         | Script Python livré en zipapp `.pyz`       |
 | Intégrations       | Bitbucket Cloud, Jira Cloud ; GitLab, GitHub prévus |
 | IA                 | Abstraction de provider, Claude en premier (prévu) |
-| Notifications      | Hors périmètre v1                          |
+| Notifications      | Web Push vers les navigateurs (PWA), `minishlink/web-push` |
 
 Vocabulaire :
 
@@ -272,6 +272,26 @@ Une planification lance un événement (type et payload, comme une quick-action)
 - Chaque événement lancé est une ligne `event.triggered` d'`origin` `schedule`, avec le nom de la
   planification dans ses `details`. « Lancer maintenant » part comme un événement manuel et ne
   touche pas à la planification.
+
+### Notifications push
+
+Tower envoie lui-même des notifications natives (téléphone, ordinateur) par Web Push, sans
+connecteur. Le périmètre détaillé est dans `ROADMAP/notification.md`.
+
+- Un utilisateur active les notifications sur chaque navigateur (`push_subscription`, une ligne
+  par endpoint, au dernier utilisateur connecté dessus). Le navigateur renvoie son abonnement à
+  chaque ouverture de Tower. Sur iOS, seulement dans la PWA ajoutée à l'écran d'accueil.
+- Une **règle** (`notification_rule`) appartient à un membre dans un workspace : un nom, des motifs
+  (syntaxe des configurations), un titre et un corps, chacun valeur brute ou clé du payload
+  (`{"mode": "raw"|"key", "value": …}`, nul pour le texte par défaut). Une notification par
+  règle qui correspond, à tous les navigateurs de son utilisateur.
+- Tout événement passe par `EventAnnouncer::announce()` : envoi aux appareils, et
+  `PushQueue` quand une règle active existe dans le workspace. Le worker `push`
+  (`cube:queue`) relit les règles, vérifie l'adhésion, et envoie (`TTL` 1 h, `Urgency: high`,
+  `tag` par règle et type d'événement). `404`/`410` supprime l'abonnement ; `429`, `5xx` et
+  une erreur réseau sont réessayés 3 fois au plus.
+- Clés VAPID dans `.env` (`php do app:push-keys`) ; sans elles, l'onglet est masqué et rien
+  n'est mis en file. Retirer un membre supprime ses règles du workspace.
 
 ### Livraisons et réponses
 
@@ -820,6 +840,8 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `quick_action`    | `workspace`, `name`, `type`, `payload`, `created_at`                      |
 | `webhook`         | `workspace`, `name`, `uuid`, `secured`, `secret` (chiffré, nul si non sécurisé), `events` (JSON), `enabled`, `created_at`, `last_called_at` |
 | `webhook_call`    | `webhook`, `status`, `ip`, `user_agent`, `payload`, `created_at`          |
+| `push_subscription` | `user`, `endpoint` (unique), `p256dh`, `auth`, `content_encoding`, `user_agent`, `created_at`, `last_success_at` |
+| `notification_rule` | `workspace`, `user`, `name`, `listen` (JSON), `title` et `body` (JSON `{mode, value}`, nuls : texte par défaut), `enabled`, `created_at` |
 | `scheduled_event` | `workspace`, `name`, `type`, `payload`, `cron`, `run_at` (ponctuelle seulement), `enabled`, `last_run_at`, `created_at` |
 | `integration`     | `workspace`, `type`, `settings` (JSON), `credentials` (chiffré), `last_synced_at`, `last_error` |
 | `pull_request`    | `workspace`, `integration`, `external_id`, `repository`, branches source et cible, `source_commit`, `url`, `title`, `author`, `state`, `draft`, `comment_count`, `pipeline_status`, `synced_at` |
@@ -847,7 +869,7 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 3. Intégrations : ~~Bitbucket~~, ~~Jira et tickets transformables en tâches~~, GitLab, GitHub.
 4. Jobs vers un appareil précis.
 5. Agent IA : abstraction, driver Claude, outils, déclenchement par historique, budget.
-6. Notifications.
+6. ~~Notifications push.~~
 
 ## 9. Décisions
 

@@ -55,13 +55,38 @@ watch(
   () => workspace.current?.id,
   async (id) => {
     openLine.value = null
-    if (!id) return
+    if (!id || (await switchToRequestedWorkspace(id))) return
 
     await load(true)
     openRequestedLine()
   },
   { immediate: true },
 )
+
+// Opened again while already on this screen, by a click on a notification
+watch(
+  () => route.query.line,
+  async (line) => {
+    const id = workspace.current?.id
+    if (!line || !id || (await switchToRequestedWorkspace(id))) return
+
+    await load(true)
+    openRequestedLine()
+  },
+)
+
+// A notification links to the line in the workspace of its event, through ?workspace=<id>
+async function switchToRequestedWorkspace(current: number): Promise<boolean> {
+  const requested = Number(route.query.workspace)
+  if (!requested || requested === current) return false
+
+  await workspace.select(requested)
+  if (workspace.current?.id === requested) return true
+
+  // No longer a member of it : the line stays out of reach
+  void router.replace({ query: {} })
+  return false
+}
 
 // Opened from another screen through ?line=<id>, when the line is on the first page
 function openRequestedLine() {

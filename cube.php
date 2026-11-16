@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Push\PushConfiguration;
 use App\Security\ActiveUserAuthentication;
 use App\Security\RegistrationConfiguration;
 use Cube\Core\Autoloader\Applications;
@@ -61,6 +62,13 @@ return [
 
     // Close public registration here
     new RegistrationConfiguration(open: true),
+
+    // Push notifications : hidden in the front while a key is missing, see `php do app:push-keys`
+    new PushConfiguration(
+        publicKey: env('VAPID_PUBLIC_KEY'),
+        privateKey: env('VAPID_PRIVATE_KEY'),
+        subject: env('VAPID_SUBJECT'),
+    ),
 
     new OpenAPIConfiguration(
         outputFile: 'Frontend/openapi.json',
