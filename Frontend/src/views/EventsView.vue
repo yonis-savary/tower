@@ -32,26 +32,6 @@ const payload = ref('')
 const sending = ref(false)
 const sendError = ref<string | null>(null)
 
-const MANUAL_OPEN_KEY = 'tower.events.manualOpen'
-const manualOpen = ref(readManualOpen())
-
-function readManualOpen(): boolean {
-  try {
-    return localStorage.getItem(MANUAL_OPEN_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-
-function toggleManual() {
-  manualOpen.value = !manualOpen.value
-  try {
-    localStorage.setItem(MANUAL_OPEN_KEY, manualOpen.value ? '1' : '0')
-  } catch {
-    // Private browsing or blocked storage : the choice only lasts for this page
-  }
-}
-
 const dialogVisible = ref(false)
 const newAction = ref({ name: '', description: '', type: '', payload: '' })
 const saving = ref(false)
@@ -134,55 +114,52 @@ async function save() {
 <template>
   <h1 class="page-title">{{ t('events.title') }}</h1>
 
-  <section class="panel">
-    <button type="button" class="panel-toggle" :aria-expanded="manualOpen" @click="toggleManual">
-      <i :class="['pi', manualOpen ? 'pi-chevron-down' : 'pi-chevron-right']" aria-hidden="true" />
-      <h2>{{ t('events.manualTitle') }}</h2>
-    </button>
-
-    <template v-if="manualOpen">
-      <p class="description manual-description">{{ t('events.manualDescription') }}</p>
+  <div class="panels">
+    <section class="panel">
+      <header class="panel-header">
+        <h2>{{ t('events.manualTitle') }}</h2>
+      </header>
+      <p class="description">{{ t('events.manualDescription') }}</p>
 
       <form class="event-form manual-form" @submit.prevent="send">
         <Message v-if="sendError" severity="error" :closable="false">{{ sendError }}</Message>
         <EventFields v-model:type="type" v-model:payload="payload" />
         <Button class="event-submit" type="submit" :label="t('events.launchButton')" icon="pi pi-bolt" :loading="sending" />
       </form>
-    </template>
-  </section>
+    </section>
 
-  <section class="panel">
-    <header class="panel-header">
-      <h2>{{ t('events.quickActionsTitle') }}</h2>
-      <Button :label="t('events.newQuickAction')" icon="pi pi-plus" size="small" @click="openDialog" />
-    </header>
+    <section class="panel">
+      <header class="panel-header">
+        <h2>{{ t('events.quickActionsTitle') }}</h2>
+        <Button :label="t('events.newQuickAction')" icon="pi pi-plus" size="small" @click="openDialog" />
+      </header>
 
-    <Message v-if="actionsError" class="panel-error" severity="error" :closable="false">{{ actionsError }}</Message>
+      <Message v-if="actionsError" class="panel-error" severity="error" :closable="false">{{ actionsError }}</Message>
 
-    <ul v-if="actions.length" class="quick-actions">
-      <li v-for="action in actions" :key="action.id" class="quick-action">
-        <div class="quick-action-identity">
-          <strong>{{ action.name }}</strong>
-          <span v-if="action.description" class="quick-action-description">{{ action.description }}</span>
-          <code>{{ action.type }}</code>
-        </div>
-        <div class="quick-action-buttons">
-          <Button
-            icon="pi pi-trash"
-            severity="secondary"
-            text
-            size="small"
-            :aria-label="t('events.deleteButton')"
-            :title="t('events.deleteButton')"
-            @click="remove(action)"
-          />
-          <Button :label="t('events.launchButton')" icon="pi pi-bolt" size="small" @click="launch(action)" />
-        </div>
-      </li>
-    </ul>
-    <p v-else class="empty">{{ t('events.noQuickAction') }}</p>
-  </section>
-
+      <ul v-if="actions.length" class="quick-actions">
+        <li v-for="action in actions" :key="action.id" class="quick-action">
+          <div class="quick-action-identity">
+            <strong>{{ action.name }}</strong>
+            <span v-if="action.description" class="quick-action-description">{{ action.description }}</span>
+            <code>{{ action.type }}</code>
+          </div>
+          <div class="quick-action-buttons">
+            <Button
+              icon="pi pi-trash"
+              severity="secondary"
+              text
+              size="small"
+              :aria-label="t('events.deleteButton')"
+              :title="t('events.deleteButton')"
+              @click="remove(action)"
+            />
+            <Button :label="t('events.launchButton')" icon="pi pi-bolt" size="small" @click="launch(action)" />
+          </div>
+        </li>
+      </ul>
+      <p v-else class="empty">{{ t('events.noQuickAction') }}</p>
+    </section>
+  </div>
 
   <Dialog
     v-model:visible="dialogVisible"
@@ -213,9 +190,16 @@ async function save() {
   font-weight: 600;
 }
 
+.panels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  max-width: 72rem;
+}
+
 .panel {
-  max-width: 48rem;
-  margin-bottom: 1.25rem;
+  flex: 1 1 22rem;
+  min-width: 0;
   padding: 1.25rem;
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
@@ -234,40 +218,6 @@ async function save() {
   margin: 0;
   font-size: 1.0625rem;
   font-weight: 600;
-}
-
-.panel-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0;
-  color: inherit;
-  background: none;
-  border: 0;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.panel-toggle:focus-visible {
-  outline: 2px solid var(--p-primary-color);
-  border-radius: var(--p-content-border-radius);
-}
-
-.panel-toggle .pi {
-  color: var(--p-text-muted-color);
-  font-size: 0.875rem;
-}
-
-.panel-toggle h2 {
-  margin: 0;
-  font-size: 1.0625rem;
-  font-weight: 600;
-}
-
-.manual-description {
-  margin-top: 0.75rem;
 }
 
 .panel-error {
