@@ -463,6 +463,11 @@ export default {
     },
   },
   workspaces: {
+    tabs: {
+      general: 'Général',
+      features: 'Fonctionnalités',
+      members: 'Membres',
+    },
     title: 'Mes workspaces',
     current: 'Courant',
     newPlaceholder: 'Nouveau workspace',
@@ -484,7 +489,6 @@ export default {
       webhooks: 'Webhooks',
     },
     switch: 'Passer sur ce workspace',
-    members: 'Membres',
     membersHint: 'Tous les membres ont les mêmes droits. Un workspace garde toujours au moins un membre.',
     you: '(toi)',
     remove: 'Retirer du workspace',

@@ -7,6 +7,11 @@ import ColorPicker from 'primevue/colorpicker'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
+import Tab from 'primevue/tab'
+import TabList from 'primevue/tablist'
+import TabPanel from 'primevue/tabpanel'
+import TabPanels from 'primevue/tabpanels'
+import Tabs from 'primevue/tabs'
 import Tag from 'primevue/tag'
 import {
   addWorkspaceMember,
@@ -26,6 +31,7 @@ const auth = useAuthStore()
 const store = useWorkspaceStore()
 
 const selectedId = ref<number | null>(null)
+const tab = ref<'general' | 'features' | 'members'>('general')
 const members = ref<ListWorkspaceMembersResponse>([])
 const name = ref('')
 const color = ref<string | null>(null)
@@ -36,11 +42,9 @@ const busy = ref(false)
 const error = ref<string | null>(null)
 
 const selected = computed(() => store.workspaces?.find(({ id }) => id === selectedId.value) ?? null)
-const unchanged = computed(
-  () =>
-    name.value.trim() === selected.value?.name &&
-    color.value === selected.value?.accent_color &&
-    WORKSPACE_SECTIONS.every((section) => sections.value.includes(section) === selected.value?.sections.includes(section)),
+const generalUnchanged = computed(() => name.value.trim() === selected.value?.name && color.value === selected.value?.accent_color)
+const featuresUnchanged = computed(() =>
+  WORKSPACE_SECTIONS.every((section) => sections.value.includes(section) === selected.value?.sections.includes(section)),
 )
 
 // The picker works without the leading #, the API with it
@@ -53,6 +57,7 @@ watch(visible, async (shown) => {
   if (!shown) return
 
   error.value = null
+  tab.value = 'general'
   await store.loadWorkspaces()
   selectedId.value = store.current?.id ?? store.workspaces?.[0]?.id ?? null
 })
@@ -89,12 +94,21 @@ function create() {
   }, t('workspaces.createError'))
 }
 
-function save() {
+// Each tab saves its own fields only : an edit left in the other one is not sent behind the user's back
+function saveGeneral() {
+  return save(() => ({ name: name.value.trim(), accent_color: color.value }))
+}
+
+function saveFeatures() {
+  return save((workspace) => ({ name: workspace.name, accent_color: workspace.accent_color, sections: sections.value }))
+}
+
+function save(bodyOf: (workspace: NonNullable<typeof selected.value>) => { name: string; accent_color: string | null; sections?: WorkspaceSection[] }) {
   const workspace = selected.value
   if (!workspace) return
 
   return run(async () => {
-    const { data } = await updateWorkspace({ path: { workspace: workspace.id }, body: { name: name.value.trim(), accent_color: color.value, sections: sections.value } })
+    const { data } = await updateWorkspace({ path: { workspace: workspace.id }, body: bodyOf(workspace) })
     if (!data) return false
 
     await Promise.all([store.loadWorkspaces(), store.loadCurrent()])
@@ -141,11 +155,16 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
 </script>
 
 <template>
-  <Dialog v-model:visible="visible" modal :header="t('workspaces.title')" :style="{ width: 'min(52rem, calc(100vw - 2rem))' }">
+  <Dialog v-model:visible="visible" modal :header="t('workspaces.title')" :style="{ width: 'min(68rem, calc(100vw - 2rem))' }">
     <Message v-if="error" class="dialog-message" severity="error" :closable="false">{{ error }}</Message>
 
     <div class="layout">
       <aside class="workspace-list">
+        <form class="inline-form workspace-create" @submit.prevent="create">
+          <InputText v-model="newWorkspace" :placeholder="t('workspaces.newPlaceholder')" :aria-label="t('workspaces.newPlaceholder')" maxlength="100" required fluid />
+          <Button type="submit" icon="pi pi-plus" :aria-label="t('workspaces.create')" :title="t('workspaces.create')" :loading="busy" />
+        </form>
+
         <ul>
           <li v-for="workspace in store.workspaces ?? []" :key="workspace.id">
             <button type="button" :class="['workspace-item', { selected: workspace.id === selectedId }]" @click="selectedId = workspace.id">
@@ -154,80 +173,94 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
             </button>
           </li>
         </ul>
-
-        <form class="inline-form" @submit.prevent="create">
-          <InputText v-model="newWorkspace" :placeholder="t('workspaces.newPlaceholder')" :aria-label="t('workspaces.newPlaceholder')" maxlength="100" required fluid />
-          <Button type="submit" icon="pi pi-plus" :aria-label="t('workspaces.create')" :title="t('workspaces.create')" :loading="busy" />
-        </form>
       </aside>
 
       <section v-if="selected" class="workspace-detail">
-        <form class="settings" @submit.prevent="save">
-          <div class="field">
-            <label for="workspace-name">{{ t('workspaces.name') }}</label>
-            <InputText id="workspace-name" v-model="name" maxlength="100" required fluid />
-          </div>
-          <div class="field">
-            <span class="label">{{ t('workspaces.color') }}</span>
-            <div class="color-row">
-              <ColorPicker v-model="pickerColor" format="hex" :aria-label="t('workspaces.color')" />
-              <code v-if="color">{{ color }}</code>
-              <small v-else>{{ t('workspaces.noColor') }}</small>
-              <Button v-if="color" :label="t('workspaces.removeColor')" severity="secondary" text size="small" @click="color = null" />
-            </div>
-            <small class="hint">{{ t('workspaces.colorHint') }}</small>
-          </div>
-          <fieldset class="field sections">
-            <legend class="label">{{ t('workspaces.sections') }}</legend>
-            <label v-for="section in WORKSPACE_SECTIONS" :key="section" class="section-option">
-              <Checkbox v-model="sections" :value="section" />
-              {{ t(`workspaces.section.${section}`) }}
-            </label>
-            <small class="hint">{{ t('workspaces.sectionsHint') }}</small>
-          </fieldset>
-          <Button type="submit" :label="t('workspaces.save')" severity="secondary" class="save" :disabled="unchanged" :loading="busy" />
-        </form>
+        <Tabs v-model:value="tab" class="workspace-tabs">
+          <TabList>
+            <Tab value="general">{{ t('workspaces.tabs.general') }}</Tab>
+            <Tab value="features">{{ t('workspaces.tabs.features') }}</Tab>
+            <Tab value="members">{{ t('workspaces.tabs.members') }}</Tab>
+          </TabList>
+          <TabPanels>
+            <TabPanel value="general" class="tab-panel">
+              <form class="settings" @submit.prevent="saveGeneral">
+                <div class="field">
+                  <label for="workspace-name">{{ t('workspaces.name') }}</label>
+                  <InputText id="workspace-name" v-model="name" maxlength="100" required fluid />
+                </div>
+                <div class="field">
+                  <span class="label">{{ t('workspaces.color') }}</span>
+                  <div class="color-row">
+                    <ColorPicker v-model="pickerColor" format="hex" :aria-label="t('workspaces.color')" />
+                    <code v-if="color">{{ color }}</code>
+                    <small v-else>{{ t('workspaces.noColor') }}</small>
+                    <Button v-if="color" :label="t('workspaces.removeColor')" severity="secondary" text size="small" @click="color = null" />
+                  </div>
+                  <small class="hint">{{ t('workspaces.colorHint') }}</small>
+                </div>
+                <Button type="submit" :label="t('workspaces.save')" severity="secondary" class="save" :disabled="generalUnchanged" :loading="busy" />
+              </form>
 
-        <Button
-          v-if="selected.id !== store.current?.id"
-          :label="t('workspaces.switch')"
-          icon="pi pi-arrow-right-arrow-left"
-          severity="secondary"
-          outlined
-          size="small"
-          class="switch"
-          @click="store.select(selected.id)"
-        />
-
-        <div class="field">
-          <span class="label">{{ t('workspaces.members') }}</span>
-          <ul class="members">
-            <li v-for="member in members" :key="member.id">
-              <span class="member-email">{{ member.email }}</span>
-              <small v-if="member.id === auth.user?.id">{{ t('workspaces.you') }}</small>
               <Button
-                icon="pi pi-times"
+                v-if="selected.id !== store.current?.id"
+                :label="t('workspaces.switch')"
+                icon="pi pi-arrow-right-arrow-left"
                 severity="secondary"
-                text
-                rounded
+                outlined
                 size="small"
-                :disabled="members.length <= 1"
-                :aria-label="t(member.id === auth.user?.id ? 'workspaces.leave' : 'workspaces.remove')"
-                :title="t(member.id === auth.user?.id ? 'workspaces.leave' : 'workspaces.remove')"
-                @click="removeMember(member)"
+                class="switch"
+                @click="store.select(selected.id)"
               />
-            </li>
-          </ul>
-          <small class="hint">{{ t('workspaces.membersHint') }}</small>
-        </div>
+            </TabPanel>
 
-        <form class="field" @submit.prevent="addMember">
-          <label for="workspace-member">{{ t('workspaces.addMember') }}</label>
-          <div class="inline-form">
-            <InputText id="workspace-member" v-model="newMember" type="email" autocomplete="off" :placeholder="t('workspaces.memberPlaceholder')" required fluid />
-            <Button type="submit" :label="t('workspaces.add')" :loading="busy" />
-          </div>
-        </form>
+            <TabPanel value="features" class="tab-panel">
+              <form class="settings" @submit.prevent="saveFeatures">
+                <fieldset class="field sections">
+                  <legend class="label">{{ t('workspaces.sections') }}</legend>
+                  <label v-for="section in WORKSPACE_SECTIONS" :key="section" class="section-option">
+                    <Checkbox v-model="sections" :value="section" />
+                    {{ t(`workspaces.section.${section}`) }}
+                  </label>
+                  <small class="hint">{{ t('workspaces.sectionsHint') }}</small>
+                </fieldset>
+                <Button type="submit" :label="t('workspaces.save')" severity="secondary" class="save" :disabled="featuresUnchanged" :loading="busy" />
+              </form>
+            </TabPanel>
+
+            <TabPanel value="members" class="tab-panel">
+              <form class="field member-add" @submit.prevent="addMember">
+                <label for="workspace-member">{{ t('workspaces.addMember') }}</label>
+                <div class="inline-form">
+                  <InputText id="workspace-member" v-model="newMember" type="email" autocomplete="off" :placeholder="t('workspaces.memberPlaceholder')" required fluid />
+                  <Button type="submit" :label="t('workspaces.add')" :loading="busy" />
+                </div>
+              </form>
+
+              <div class="field">
+                <ul class="members">
+                  <li v-for="member in members" :key="member.id">
+                    <i class="pi pi-user member-icon" aria-hidden="true" />
+                    <span class="member-email">{{ member.email }}</span>
+                    <small v-if="member.id === auth.user?.id">{{ t('workspaces.you') }}</small>
+                    <Button
+                      icon="pi pi-times"
+                      severity="secondary"
+                      text
+                      rounded
+                      size="small"
+                      :disabled="members.length <= 1"
+                      :aria-label="t(member.id === auth.user?.id ? 'workspaces.leave' : 'workspaces.remove')"
+                      :title="t(member.id === auth.user?.id ? 'workspaces.leave' : 'workspaces.remove')"
+                      @click="removeMember(member)"
+                    />
+                  </li>
+                </ul>
+                <small class="hint">{{ t('workspaces.membersHint') }}</small>
+              </div>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
       </section>
     </div>
   </Dialog>
@@ -241,7 +274,8 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
 .layout {
   display: grid;
   grid-template-columns: minmax(12rem, 16rem) 1fr;
-  gap: 1.25rem;
+  gap: 2rem;
+  min-height: 28rem;
 }
 
 @media (max-width: 40rem) {
@@ -254,6 +288,11 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.workspace-create {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--p-content-border-color);
 }
 
 .workspace-list ul,
@@ -297,10 +336,18 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
 }
 
 .workspace-detail {
+  min-width: 0;
+}
+
+.workspace-tabs :deep(.p-tabpanels) {
+  padding: 1rem 0 0;
+  background: transparent;
+}
+
+.tab-panel {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-width: 0;
 }
 
 .field {
@@ -357,6 +404,23 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
   align-items: center;
   gap: 0.5rem;
   padding: 0.25rem 0;
+}
+
+.member-add {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.member-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--p-content-hover-background);
+  color: var(--p-text-muted-color);
+  font-size: 0.8125rem;
 }
 
 .member-email {

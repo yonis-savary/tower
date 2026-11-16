@@ -465,6 +465,11 @@ export default {
     },
   },
   workspaces: {
+    tabs: {
+      general: 'General',
+      features: 'Features',
+      members: 'Members',
+    },
     title: 'My workspaces',
     current: 'Current',
     newPlaceholder: 'New workspace',
@@ -486,7 +491,6 @@ export default {
       webhooks: 'Webhooks',
     },
     switch: 'Switch to this workspace',
-    members: 'Members',
     membersHint: 'Every member has the same rights. A workspace always keeps at least one member.',
     you: '(you)',
     remove: 'Remove from the workspace',
