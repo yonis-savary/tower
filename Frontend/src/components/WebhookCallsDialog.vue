@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
+import EmptyState from './EmptyState.vue'
 import Tag from 'primevue/tag'
 import { listWebhookCalls, type ListWebhookCallsResponse, type ListWebhooksResponse } from '../client'
 
@@ -88,7 +89,7 @@ function prettyPayload(payload: string): string {
         </div>
       </li>
     </ul>
-    <p v-else-if="!loading" class="empty">{{ t('webhooks.noCall') }}</p>
+    <EmptyState v-else-if="!loading" icon="pi pi-list" :title="t('webhooks.noCallTitle')" :hint="t('webhooks.noCallHint')" compact />
 
     <Button
       v-if="hasMore"

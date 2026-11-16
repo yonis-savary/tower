@@ -12,6 +12,8 @@ import { useWorkspaceStore } from '../stores/workspace'
 const HOME_STATUSES: TaskStatus[] = ['todo', 'in_progress', 'in_review', 'finalizing']
 
 const emit = defineEmits<{ open: [task: Task] }>()
+// null until the tasks are loaded
+const filled = defineModel<boolean | null>('filled', { default: null })
 
 const { t } = useI18n()
 const toast = useToast()
@@ -53,6 +55,8 @@ const columns = ref<Record<string, Task[]>>({})
 // Hidden while there is nothing to finish. Counted before the sprint filter : hiding every sprint keeps the filter at hand
 const hasContent = computed(() => store.tasks.some((task) =>
   HOME_STATUSES.includes(task.status) && store.activeSprints.some(({ id }) => id === task.sprint)))
+
+watch([() => store.loaded, hasContent], ([loaded, content]) => (filled.value = loaded ? content : null), { immediate: true })
 
 // The lists are copies : the drag library writes into them before the server has answered
 watch([() => store.tasks, shownSprints], () => {

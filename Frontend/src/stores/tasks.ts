@@ -23,6 +23,7 @@ export const useTasksStore = defineStore('tasks', () => {
   const tasks = ref<Task[]>([])
   const sprints = ref<Sprint[]>([])
   const failed = ref(false)
+  const loaded = ref(false)
 
   const activeSprints = computed(() => sprints.value.filter(({ state }) => state === 'active'))
 
@@ -31,6 +32,7 @@ export const useTasksStore = defineStore('tasks', () => {
     failed.value = !taskList.data || !sprintList.data
     if (taskList.data) tasks.value = taskList.data as Task[]
     if (sprintList.data) sprints.value = sprintList.data
+    loaded.value = true
   }
 
   /** The server decides the final state : a refused move puts the task back too */
@@ -58,5 +60,5 @@ export const useTasksStore = defineStore('tasks', () => {
     return !!response?.ok
   }
 
-  return { tasks, sprints, failed, activeSprints, load, move, addSprint, open, close }
+  return { tasks, sprints, failed, loaded, activeSprints, load, move, addSprint, open, close }
 })

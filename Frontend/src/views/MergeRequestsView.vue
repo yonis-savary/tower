@@ -3,12 +3,15 @@ import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
+import Button from 'primevue/button'
 import Tab from 'primevue/tab'
 import TabList from 'primevue/tablist'
 import TabPanel from 'primevue/tabpanel'
 import TabPanels from 'primevue/tabpanels'
 import Tabs from 'primevue/tabs'
 import Tag from 'primevue/tag'
+import { PULL_REQUEST_ICON } from '../components/AppIcon.vue'
+import EmptyState from '../components/EmptyState.vue'
 import PullRequestTree from '../components/PullRequestTree.vue'
 import { usePullRequestsStore, type PullRequest } from '../stores/pullRequests'
 import { useWorkspaceStore } from '../stores/workspace'
@@ -87,10 +90,11 @@ function reviewersTitle(id: number): string {
 <template>
   <h1 class="page-title">{{ t('nav.mergeRequests') }}</h1>
 
-  <p v-if="loaded && !pullRequests.length" class="empty">
-    {{ t('mergeRequests.empty') }}
-    <RouterLink :to="{ name: 'settings' }">{{ t('nav.settings') }}</RouterLink>
-  </p>
+  <EmptyState v-if="loaded && !pullRequests.length" :icon="PULL_REQUEST_ICON" :title="t('mergeRequests.emptyTitle')" :hint="t('mergeRequests.emptyHint')">
+    <RouterLink v-slot="{ navigate }" :to="{ name: 'settings', query: { tab: 'bitbucket' } }" custom>
+      <Button :label="t('mergeRequests.emptyAction')" icon="pi pi-cog" @click="navigate" />
+    </RouterLink>
+  </EmptyState>
 
   <Tabs v-if="repositories.length" v-model:value="selectedRepository" scrollable class="repository-tabs">
     <TabList>

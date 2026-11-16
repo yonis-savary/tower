@@ -12,6 +12,7 @@ import {
   type ListHistoryResponse,
 } from '../client'
 import AppIcon from '../components/AppIcon.vue'
+import EmptyState from '../components/EmptyState.vue'
 import { useWorkspaceStore } from '../stores/workspace'
 import { DELIVERY_SEVERITY, HISTORY_ICONS, historyDetail, historyLabel, isSent, parseDetails } from '../utils/historyLine'
 
@@ -95,7 +96,9 @@ async function toggle(line: Line) {
 <template>
   <h1 class="page-title">{{ t('history.title') }}</h1>
 
-  <section class="panel">
+  <EmptyState v-if="!lines.length && !loading && !error" icon="pi pi-history" :title="t('history.emptyTitle')" :hint="t('history.emptyHint')" />
+
+  <section v-else class="panel">
     <Message v-if="error" class="panel-error" severity="error" :closable="false">{{ error }}</Message>
 
     <div v-if="lines.length" class="table-wrapper">
@@ -160,7 +163,6 @@ async function toggle(line: Line) {
         </tbody>
       </table>
     </div>
-    <p v-else-if="!loading" class="empty">{{ t('history.empty') }}</p>
 
     <Button
       v-if="hasMore"

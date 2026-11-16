@@ -54,7 +54,10 @@ watch(
   border-left: 4px solid var(--workspace-accent);
 }
 
+/* A column : an empty state can grow to the bottom of the page and center itself in it */
 .app-content {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
   padding: 1.5rem;

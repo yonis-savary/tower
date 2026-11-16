@@ -14,6 +14,7 @@ import {
 } from '../client'
 import { saveFile } from '../utils/saveFile'
 import ConfigCreateDialog from './ConfigCreateDialog.vue'
+import EmptyState from './EmptyState.vue'
 import HandlerDialog from './HandlerDialog.vue'
 
 type AccessKey = ListAccessKeysResponse[number]
@@ -133,7 +134,7 @@ async function revoke(id: number, keyName: string) {
       <Button :label="t('download.revokeButton')" severity="danger" text size="small" @click="revoke(key.id!, key.name!)" />
     </li>
   </ul>
-  <p v-else class="empty">{{ t('download.empty') }}</p>
+  <EmptyState v-else icon="pi pi-key" :title="t('download.emptyTitle')" :hint="t('download.emptyHint')" compact />
 
   <ConfigCreateDialog v-model:visible="createVisible" @created="loadKeys" />
   <HandlerDialog v-model:visible="handlerVisible" />
@@ -191,13 +192,8 @@ async function revoke(id: number, keyName: string) {
   font-size: 0.8125rem;
 }
 
-.key-identity small,
-.empty {
+.key-identity small {
   color: var(--p-text-muted-color);
-}
-
-.empty {
-  margin: 0.5rem 0 0;
 }
 
 .key-listen {

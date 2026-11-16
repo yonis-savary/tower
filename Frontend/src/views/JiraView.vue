@@ -9,6 +9,7 @@ import Message from 'primevue/message'
 import MultiSelect from 'primevue/multiselect'
 import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
+import EmptyState from '../components/EmptyState.vue'
 import JiraIssueCard from '../components/JiraIssueCard.vue'
 import { syncJiraIntegration } from '../client'
 import { useJiraStore, type JiraColumn, type JiraIssue, type JiraTransition } from '../stores/jira'
@@ -232,10 +233,11 @@ async function discuss(issue: JiraIssue) {
     <a :href="refusal.issue.url" target="_blank" rel="noopener noreferrer">{{ t('jira.openInJira') }}</a>
   </Message>
 
-  <p v-if="loaded && !store.columns.length" class="empty">
-    {{ t('jira.empty') }}
-    <RouterLink :to="{ name: 'settings' }">{{ t('nav.settings') }}</RouterLink>
-  </p>
+  <EmptyState v-if="loaded && !store.columns.length" icon="pi pi-objects-column" :title="t('jira.emptyTitle')" :hint="t('jira.emptyHint')">
+    <RouterLink v-slot="{ navigate }" :to="{ name: 'settings', query: { tab: 'jira' } }" custom>
+      <Button :label="t('jira.emptyAction')" icon="pi pi-cog" @click="navigate" />
+    </RouterLink>
+  </EmptyState>
 
   <div v-else class="board" :style="{ '--columns': store.columns.length + (unmapped.length ? 1 : 0) }" :aria-busy="moving">
     <section v-for="(column, index) in store.columns" :key="column.name" class="column">
@@ -349,11 +351,6 @@ async function discuss(issue: JiraIssue) {
 
 .page-message {
   margin-bottom: 1rem;
-}
-
-.empty {
-  margin: 0;
-  color: var(--p-text-muted-color);
 }
 
 .board {

@@ -6,6 +6,7 @@ import ToggleSwitch from 'primevue/toggleswitch'
 import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
 import TaskCard from './TaskCard.vue'
+import EmptyState from './EmptyState.vue'
 import { BOARD_STATUSES, useTasksStore, type Sprint, type Task, type TaskStatus } from '../stores/tasks'
 import { useWorkspaceStore } from '../stores/workspace'
 
@@ -115,10 +116,9 @@ async function close(sprint: Sprint) {
     </section>
   </div>
 
-  <div v-else class="no-sprint">
-    <p>{{ t('tasks.noActiveSprint') }}</p>
-    <Button :label="t('tasks.goToBacklog')" severity="secondary" outlined @click="emit('backlog')" />
-  </div>
+  <EmptyState v-else icon="pi pi-calendar" :title="t('tasks.noActiveSprintTitle')" :hint="t('tasks.noActiveSprintHint')">
+    <Button :label="t('tasks.goToBacklog')" icon="pi pi-arrow-right" @click="emit('backlog')" />
+  </EmptyState>
 </template>
 
 <style scoped>
@@ -235,18 +235,6 @@ async function close(sprint: Sprint) {
 }
 
 .empty,
-.no-sprint p {
-  margin: 0;
-  color: var(--p-text-muted-color);
-}
-
-.no-sprint {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
 :deep(.task-ghost) {
   opacity: 0.4;
 }

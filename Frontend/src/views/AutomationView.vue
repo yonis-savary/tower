@@ -45,7 +45,13 @@ const tab = computed<AutomationTab>({
   font-weight: 600;
 }
 
-.automation-tabs {
+/* Down to the bottom of the page, so that an empty tab centers its empty state in it */
+.automation-tabs,
+.automation-tabs :deep(.p-tabpanels),
+.automation-tabs :deep(.p-tabpanel) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
 }
 

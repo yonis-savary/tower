@@ -87,7 +87,13 @@ function createTask(sprint: number | null) {
   margin-bottom: 1rem;
 }
 
-.tasks-tabs {
+/* Down to the bottom of the page, so that an empty tab centers its empty state in it */
+.tasks-tabs,
+.tasks-tabs :deep(.p-tabpanels),
+.tasks-tabs :deep(.p-tabpanel) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
 }
 

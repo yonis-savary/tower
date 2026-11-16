@@ -16,6 +16,7 @@ import {
   type ListQuickActionsResponse,
 } from '../client'
 import EventFields from '../components/EventFields.vue'
+import EmptyState from '../components/EmptyState.vue'
 import { useWorkspaceStore } from '../stores/workspace'
 
 type QuickAction = ListQuickActionsResponse[number]
@@ -157,7 +158,7 @@ async function save() {
           </div>
         </li>
       </ul>
-      <p v-else class="empty">{{ t('events.noQuickAction') }}</p>
+      <EmptyState v-else icon="pi pi-bolt" :title="t('events.noQuickActionTitle')" :hint="t('events.noQuickActionHint')" compact />
     </section>
   </div>
 
@@ -199,6 +200,8 @@ async function save() {
 
 .panel {
   flex: 1 1 22rem;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   padding: 1.25rem;
   background: var(--p-content-background);
@@ -224,8 +227,7 @@ async function save() {
   margin-bottom: 0.75rem;
 }
 
-.description,
-.empty {
+.description {
   margin: 0;
   color: var(--p-text-muted-color);
 }

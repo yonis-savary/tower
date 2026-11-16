@@ -17,6 +17,7 @@ import {
   type ListWebhooksResponse,
 } from '../client'
 import CodeBlock from '../components/CodeBlock.vue'
+import EmptyState from '../components/EmptyState.vue'
 import WebhookCallsDialog from '../components/WebhookCallsDialog.vue'
 import { useWorkspaceStore } from '../stores/workspace'
 
@@ -27,6 +28,7 @@ const toast = useToast()
 const workspace = useWorkspaceStore()
 
 const webhooks = ref<ListWebhooksResponse>([])
+const loaded = ref(false)
 const listError = ref<string | null>(null)
 
 // The form serves the creation (`editing` null) and the edition
@@ -59,6 +61,7 @@ const curlExample = computed(() =>
 async function load() {
   listError.value = null
   const { data } = await listWebhooks()
+  loaded.value = true
   if (data) webhooks.value = data
   else listError.value = t('webhooks.loadError')
 }
@@ -153,7 +156,11 @@ function showCalls(webhook: Webhook) {
 <template>
   <h1 class="page-title">{{ t('webhooks.title') }}</h1>
 
-  <section class="panel">
+  <EmptyState v-if="loaded && !webhooks.length && !listError" icon="pi pi-globe" :title="t('webhooks.emptyTitle')" :hint="t('webhooks.emptyHint')">
+    <Button :label="t('webhooks.new')" icon="pi pi-plus" @click="openForm(null)" />
+  </EmptyState>
+
+  <section v-else class="panel">
     <header class="panel-header">
       <p class="description">{{ t('webhooks.description') }}</p>
       <Button :label="t('webhooks.new')" icon="pi pi-plus" size="small" @click="openForm(null)" />
@@ -219,7 +226,6 @@ function showCalls(webhook: Webhook) {
         </tbody>
       </table>
     </div>
-    <p v-else-if="!listError" class="empty">{{ t('webhooks.empty') }}</p>
   </section>
 
   <Dialog
@@ -305,8 +311,7 @@ function showCalls(webhook: Webhook) {
   margin-bottom: 0.75rem;
 }
 
-.description,
-.empty {
+.description {
   margin: 0;
   color: var(--p-text-muted-color);
 }

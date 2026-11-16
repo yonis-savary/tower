@@ -25,6 +25,8 @@ const workspace = useWorkspaceStore()
 
 const events = ref<ListRecentEventsResponse>([])
 const refusedCalls = ref<ListRefusedWebhookCallsResponse>([])
+// null until the first answer
+const filled = defineModel<boolean | null>('filled', { default: null })
 
 async function load() {
   const [eventList, callList] = await Promise.all([
@@ -33,6 +35,7 @@ async function load() {
   ])
   events.value = eventList?.data ?? []
   refusedCalls.value = callList?.data ?? []
+  filled.value = events.value.length + refusedCalls.value.length > 0
 }
 
 watch(() => [workspace.current?.id, workspace.current?.sections], ([id]) => { if (id) void load() }, { immediate: true })

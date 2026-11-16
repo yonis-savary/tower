@@ -15,12 +15,15 @@ const router = useRouter()
 const workspace = useWorkspaceStore()
 
 const actions = ref<ListQuickActionsResponse>([])
+// null until the first answer
+const filled = defineModel<boolean | null>('filled', { default: null })
 // Hidden while the workspace has none
 const launching = ref<number | null>(null)
 
 async function load() {
   const { data } = await listQuickActions()
   actions.value = data ?? []
+  filled.value = actions.value.length > 0
 }
 
 watch(() => workspace.current?.id, (id) => { if (id) void load() }, { immediate: true })

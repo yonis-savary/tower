@@ -10,6 +10,7 @@ import TabPanel from 'primevue/tabpanel'
 import TabPanels from 'primevue/tabpanels'
 import Tabs from 'primevue/tabs'
 import ConnectDevicePanel from './ConnectDevicePanel.vue'
+import EmptyState from './EmptyState.vue'
 import { disconnectDevice } from '../client'
 import { useDeviceSocketStore, type ConnectedDevice } from '../stores/deviceSocket'
 
@@ -98,7 +99,7 @@ async function disconnect(device: ConnectedDevice) {
             </li>
           </ul>
 
-          <p v-else class="empty">{{ t('devices.empty') }}</p>
+          <EmptyState v-else icon="pi pi-desktop" :title="t('devices.emptyTitle')" :hint="t('devices.emptyHint')" compact />
         </TabPanel>
         <TabPanel value="connect">
           <ConnectDevicePanel />
@@ -185,10 +186,5 @@ async function disconnect(device: ConnectedDevice) {
 .device-disconnect {
   flex: none;
   margin-left: auto;
-}
-
-.empty {
-  margin: 0;
-  color: var(--p-text-muted-color);
 }
 </style>

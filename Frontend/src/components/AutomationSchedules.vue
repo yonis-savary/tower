@@ -20,6 +20,7 @@ import {
   type ListScheduledEventsResponse,
 } from '../client'
 import EventFields from './EventFields.vue'
+import EmptyState from './EmptyState.vue'
 import { useDeviceSocketStore, type WorkspaceSignal } from '../stores/deviceSocket'
 import { useWorkspaceStore } from '../stores/workspace'
 import { EVENT_TYPE } from '../utils/historyLine'
@@ -46,6 +47,7 @@ const workspace = useWorkspaceStore()
 const socket = useDeviceSocketStore()
 
 const schedules = ref<ListScheduledEventsResponse>([])
+const loaded = ref(false)
 const listError = ref<string | null>(null)
 
 // The form serves the creation (`editing` null) and the edition
@@ -97,6 +99,7 @@ function weekdaysLabel(weekdays: number[]): string {
 async function load() {
   listError.value = null
   const { data } = await listScheduledEvents()
+  loaded.value = true
   if (data) schedules.value = data
   else listError.value = t('schedules.loadError')
 }
@@ -214,7 +217,11 @@ async function remove(schedule: Schedule) {
 </script>
 
 <template>
-  <section class="panel">
+  <EmptyState v-if="loaded && !schedules.length && !listError" icon="pi pi-clock" :title="t('schedules.emptyTitle')" :hint="t('schedules.emptyHint')">
+    <Button :label="t('schedules.new')" icon="pi pi-plus" @click="openForm(null)" />
+  </EmptyState>
+
+  <section v-else class="panel">
     <header class="panel-header">
       <p class="description">{{ t('schedules.description') }}</p>
       <Button :label="t('schedules.new')" icon="pi pi-plus" size="small" @click="openForm(null)" />
@@ -263,7 +270,6 @@ async function remove(schedule: Schedule) {
         </tbody>
       </table>
     </div>
-    <p v-else-if="!listError" class="empty">{{ t('schedules.empty') }}</p>
   </section>
 
   <Dialog
@@ -371,8 +377,7 @@ async function remove(schedule: Schedule) {
   margin-bottom: 0.75rem;
 }
 
-.description,
-.empty {
+.description {
   margin: 0;
   color: var(--p-text-muted-color);
 }

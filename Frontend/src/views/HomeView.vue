@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { RouterLink } from 'vue-router'
+import Button from 'primevue/button'
+import EmptyState from '../components/EmptyState.vue'
 import HomeActivity from '../components/HomeActivity.vue'
 import HomeQuickActions from '../components/HomeQuickActions.vue'
 import HomeTaskBoard from '../components/HomeTaskBoard.vue'
@@ -27,6 +30,13 @@ const dialogTask = ref<Task | null>(null)
 const showTasks = computed(() => workspace.hasSection('tasks'))
 const showQuickActions = computed(() => workspace.hasSection('events'))
 const showActivity = computed(() => workspace.hasSection('events') || workspace.hasSection('webhooks') || workspace.hasSection('automation'))
+
+// Each block hides itself while empty : null until it has loaded
+const filled = ref<{ tasks: boolean | null; quickActions: boolean | null; activity: boolean | null }>({ tasks: null, quickActions: null, activity: null })
+const isEmpty = computed(() => {
+  const shown = [showTasks.value && filled.value.tasks, showQuickActions.value && filled.value.quickActions, showActivity.value && filled.value.activity]
+  return !shown.includes(null) && !shown.includes(true)
+})
 
 function loadTasks() {
   if (!showTasks.value) return
@@ -81,12 +91,21 @@ function openTask(task: Task) {
 <template>
   <h1 class="page-title">{{ t('nav.home') }}</h1>
 
+  <EmptyState v-if="isEmpty" icon="pi pi-home" :title="t('home.emptyTitle')" :hint="t('home.emptyHint')">
+    <RouterLink v-if="showTasks" v-slot="{ navigate }" :to="{ name: 'tasks' }" custom>
+      <Button :label="t('home.emptyTasks')" icon="pi pi-check-square" @click="navigate" />
+    </RouterLink>
+    <RouterLink v-slot="{ navigate }" :to="{ name: 'docs' }" custom>
+      <Button :label="t('home.emptyDocs')" icon="pi pi-book" severity="secondary" outlined @click="navigate" />
+    </RouterLink>
+  </EmptyState>
+
   <div class="home">
-    <HomeTaskBoard v-if="showTasks" @open="openTask" />
+    <HomeTaskBoard v-if="showTasks" v-model:filled="filled.tasks" @open="openTask" />
 
     <div v-if="showQuickActions || showActivity" class="home-row">
-      <HomeQuickActions v-if="showQuickActions" />
-      <HomeActivity v-if="showActivity" ref="activity" />
+      <HomeQuickActions v-if="showQuickActions" v-model:filled="filled.quickActions" />
+      <HomeActivity v-if="showActivity" ref="activity" v-model:filled="filled.activity" />
     </div>
   </div>
 
