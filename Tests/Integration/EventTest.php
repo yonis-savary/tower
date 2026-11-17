@@ -68,6 +68,32 @@ class EventTest extends CubeTestCase
     {
         $this->postJson('/api/events', ['type' => 'a.b', 'payload' => '{}'])->assertUnauthorized();
         $this->get('/api/quick-actions')->assertUnauthorized();
+        $this->get('/api/events/suggestions')->assertUnauthorized();
+    }
+
+    public function testSuggestionsGatherTheTypesOfTheWorkspace()
+    {
+        $this->register('alice@example.com');
+        $this->assertSame([], $this->get('/api/events/suggestions')->assertOk()->json());
+
+        $this->createAction();
+        $this->postJson('/api/webhooks', ['name' => 'CI', 'events' => ['deploy.start', 'backup.run']])->assertCreated();
+        $this->postJson('/api/scheduled-events', ['name' => 'Standup', 'type' => 'standup.remind', 'payload' => '{}', 'cron' => '0 9 * * 1-5'])->assertCreated();
+        $this->postJson('/api/events', ['type' => 'notify.phone', 'payload' => '{}'])->assertNoContent();
+        $this->postJson('/api/events', ['type' => 'notify.phone', 'payload' => '{}'])->assertNoContent();
+
+        $suggestions = array_column($this->get('/api/events/suggestions')->assertOk()->json(), 'types', 'source');
+        ksort($suggestions);
+        $this->assertSame([
+            'history' => ['notify.phone'],
+            'quick_action' => ['backup.run'],
+            'schedule' => ['standup.remind'],
+            'webhook' => ['backup.run', 'deploy.start'],
+        ], $suggestions);
+
+        $this->logOut();
+        $this->register('bob@example.com');
+        $this->assertSame([], $this->get('/api/events/suggestions')->assertOk()->json());
     }
 
     public function testTriggeredEventIsJournaledAndSent()

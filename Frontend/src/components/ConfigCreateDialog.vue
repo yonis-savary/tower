@@ -6,6 +6,7 @@ import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import { createAccessKey, downloadPreconfiguredConnector, type CreateAccessKeyResponse } from '../client'
+import EventTypeInput from './EventTypeInput.vue'
 import { useWorkspaceStore } from '../stores/workspace'
 import { saveFile } from '../utils/saveFile'
 import { slugify } from '../utils/slugify'
@@ -118,7 +119,7 @@ async function downloadPreconfigured() {
       </form>
       <div class="listen-field">
         <label for="config-listen">{{ t('download.listenLabel') }}</label>
-        <InputText id="config-listen" v-model="listen" fluid />
+        <EventTypeInput v-model="listen" input-id="config-listen" list suggest-patterns />
         <small>{{ t('download.listenHint') }}</small>
       </div>
     </template>

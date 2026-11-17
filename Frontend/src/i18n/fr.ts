@@ -434,6 +434,14 @@ export default {
     deleteConfirm: 'Supprimer la planification « {name} » ? Les évènements déjà lancés restent dans l’historique.',
     deleteError: "La planification n'a pas pu être supprimée.",
   },
+  eventSuggestions: {
+    pattern: 'Motifs',
+    tower: 'Évènements Tower',
+    quick_action: 'Quick-actions',
+    webhook: 'Webhooks',
+    schedule: 'Planifications',
+    history: 'Lancés récemment',
+  },
   notifications: {
     browserTitle: 'Ce navigateur',
     state: {

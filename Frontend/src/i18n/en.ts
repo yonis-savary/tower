@@ -436,6 +436,14 @@ export default {
     deleteConfirm: 'Delete the schedule “{name}”? The events it already launched stay in the history.',
     deleteError: 'The schedule could not be deleted.',
   },
+  eventSuggestions: {
+    pattern: 'Patterns',
+    tower: 'Tower events',
+    quick_action: 'Quick actions',
+    webhook: 'Webhooks',
+    schedule: 'Schedules',
+    history: 'Recently triggered',
+  },
   notifications: {
     browserTitle: 'This browser',
     state: {

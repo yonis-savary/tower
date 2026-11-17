@@ -987,6 +987,54 @@
                 }
             }
         },
+        "\/api\/events\/suggestions": {
+            "get": {
+                "summary": "Suggest event types",
+                "description": "The event types already used in the current workspace, by source : quick actions, webhooks, schedules and recently triggered events",
+                "operationId": "suggestEventTypes",
+                "responses": {
+                    "200": {
+                        "description": "One entry per source that has types, each type once per source, sorted",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "source": {
+                                                "type": "string"
+                                            },
+                                            "types": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/api\/quick-actions": {
             "get": {
                 "summary": "List quick actions",

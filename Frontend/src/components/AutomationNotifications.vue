@@ -21,6 +21,7 @@ import {
   type ListPushSubscriptionsResponse,
 } from '../client'
 import EventFields from './EventFields.vue'
+import EventTypeInput from './EventTypeInput.vue'
 import { usePushStore } from '../stores/push'
 import { useWorkspaceStore } from '../stores/workspace'
 import { describeUserAgent } from '../utils/push'
@@ -354,7 +355,7 @@ watch(
 
       <div class="field">
         <label for="rule-listen">{{ t('notifications.listenLabel') }}</label>
-        <InputText id="rule-listen" v-model="form.listen" class="monospace" placeholder="task.* pr.pipeline.failed" required fluid />
+        <EventTypeInput v-model="form.listen" input-id="rule-listen" placeholder="task.* pr.pipeline.failed" list suggest-patterns required />
         <small>{{ t('notifications.listenHint') }}</small>
       </div>
 

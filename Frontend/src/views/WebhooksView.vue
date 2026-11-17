@@ -17,6 +17,7 @@ import {
   type ListWebhooksResponse,
 } from '../client'
 import CodeBlock from '../components/CodeBlock.vue'
+import EventTypeInput from '../components/EventTypeInput.vue'
 import EmptyState from '../components/EmptyState.vue'
 import WebhookCallsDialog from '../components/WebhookCallsDialog.vue'
 import { useWorkspaceStore } from '../stores/workspace'
@@ -242,7 +243,7 @@ function showCalls(webhook: Webhook) {
       </div>
       <div class="field">
         <label for="webhook-events">{{ t('webhooks.eventsLabel') }}</label>
-        <InputText id="webhook-events" v-model="form.events" placeholder="deploy.start, notify.phone" required fluid />
+        <EventTypeInput v-model="form.events" input-id="webhook-events" placeholder="deploy.start, notify.phone" list required />
         <small>{{ t('webhooks.eventsHint') }}</small>
       </div>
       <!-- Chosen once : a webhook cannot become secured or unsecured afterwards -->

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\EventTypes\EventTypeSource;
 use App\Models\History;
 use App\Models\QuickAction;
 use Cube\Data\Bunch;
@@ -46,6 +47,26 @@ class EventService
         $this->announcer->announce($workspace, $line->id, $type, $payload);
 
         return $line;
+    }
+
+    /**
+     * The event types already used in a workspace, by source, to suggest while typing one.
+     *
+     * @return list<array{source: string, types: list<string>}> Each type once per source, sorted
+     */
+    public function suggestedTypes(int $workspace): array
+    {
+        $suggestions = [];
+        foreach (Bunch::fromImplements(EventTypeSource::class) as $source) {
+            $types = array_values(array_unique($source->typesOf($workspace)));
+            if (!$types)
+                continue;
+
+            sort($types);
+            $suggestions[] = ['source' => $source::name(), 'types' => $types];
+        }
+
+        return $suggestions;
     }
 
     /**

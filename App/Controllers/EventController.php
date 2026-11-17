@@ -32,6 +32,7 @@ class EventController extends Controller
     {
         $router->group('/api', middlewares: [IsAuthenticated::class], routes: [
             Route::post('/events', [self::class, 'trigger']),
+            Route::get('/events/suggestions', [self::class, 'suggestions']),
             Route::get('/quick-actions', [self::class, 'listQuickActions']),
             Route::post('/quick-actions', [self::class, 'createQuickAction']),
             Route::delete('/quick-actions/{int:action}', [self::class, 'deleteQuickAction']),
@@ -47,6 +48,14 @@ class EventController extends Controller
         $this->events->triggerAsUser($this->currentWorkspaceId(), $this->authentication->userId(), $request->validated('type'), $request->validated('payload'));
 
         return Response::noContent();
+    }
+
+    #[Endpoint('Suggest event types', 'The event types already used in the current workspace, by source : quick actions, webhooks, schedules and recently triggered events', 'suggestEventTypes')]
+    #[RawResponse([['source' => 'quick_action', 'types' => ['deploy.start', 'notify.phone']], ['source' => 'history', 'types' => ['deploy.start']]], description: 'One entry per source that has types, each type once per source, sorted')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    public function suggestions(Request $request): Response
+    {
+        return Response::json($this->events->suggestedTypes($this->currentWorkspaceId()));
     }
 
     #[Endpoint('List quick actions', 'The predefined events of the current workspace', 'listQuickActions')]

@@ -519,6 +519,36 @@ export type TriggerEventResponses = {
 
 export type TriggerEventResponse = TriggerEventResponses[keyof TriggerEventResponses];
 
+export type SuggestEventTypesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/events/suggestions';
+};
+
+export type SuggestEventTypesErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type SuggestEventTypesError = SuggestEventTypesErrors[keyof SuggestEventTypesErrors];
+
+export type SuggestEventTypesResponses = {
+    /**
+     * One entry per source that has types, each type once per source, sorted
+     */
+    200: Array<{
+        source?: string;
+        types?: Array<string>;
+    }>;
+};
+
+export type SuggestEventTypesResponse = SuggestEventTypesResponses[keyof SuggestEventTypesResponses];
+
 export type ListQuickActionsData = {
     body?: never;
     path?: never;

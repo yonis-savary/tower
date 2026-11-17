@@ -2,7 +2,6 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import {
   downloadConnector,
@@ -12,6 +11,7 @@ import {
   updateAccessKeyListen,
   type ListAccessKeysResponse,
 } from '../client'
+import EventTypeInput from './EventTypeInput.vue'
 import { saveFile } from '../utils/saveFile'
 import ConfigCreateDialog from './ConfigCreateDialog.vue'
 import EmptyState from './EmptyState.vue'
@@ -121,7 +121,7 @@ async function revoke(id: number, keyName: string) {
           {{ key.last_used_at ? t('download.lastUsed', { date: d(new Date(key.last_used_at), 'short') }) : t('download.neverUsed') }}
         </small>
         <form v-if="editing === key.id" class="listen-form" @submit.prevent="saveListen(key.id!)">
-          <InputText v-model="editedListen" :aria-label="t('download.listenLabel')" size="small" fluid autofocus />
+          <EventTypeInput v-model="editedListen" :aria-label="t('download.listenLabel')" size="small" list suggest-patterns autofocus />
           <Button type="submit" :label="t('download.listenSave')" size="small" :loading="savingListen" />
           <Button :label="t('download.listenCancel')" severity="secondary" text size="small" @click="editing = null" />
         </form>

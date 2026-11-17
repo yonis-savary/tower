@@ -214,6 +214,23 @@ hors ligne au moment de l'envoi ne le reçoit jamais.
 Un événement envoyé depuis une transaction ne part qu'une fois celle-ci validée : le processus
 WebSocket écrit la livraison contre la ligne d'historique, qui doit déjà être visible.
 
+**Suggestions de types.** Chaque champ qui demande un type d'événement (lancement manuel,
+quick-action, planification, exemple d'une règle) ou une liste de types et de motifs (événements
+d'un webhook, motifs d'une règle de notification, écoute d'une configuration) propose des
+suggestions en cours de frappe (`EventTypeInput`, sur l'`AutoComplete` de PrimeVue). Dans une
+liste, seul le mot sous le curseur est complété, et les types déjà présents sont écartés.
+
+- Les événements de Tower viennent du front : les types de l'historique envoyés aux appareils,
+  plus `ai.discuss`, sans ceux d'une section absente du workspace.
+- Ceux du workspace viennent de `GET /api/events/suggestions`, par source : quick-actions,
+  webhooks, planifications, et les 200 dernières lignes `event.triggered`. Chaque source est une
+  classe qui implémente `EventTypeSource`, trouvée par découverte : ajouter une source, c'est
+  ajouter un fichier.
+- Les champs de motifs proposent aussi `*` et chaque préfixe des types connus (`pr.*`,
+  `pr.pipeline.*`).
+- Un type présent dans plusieurs groupes n'apparaît que dans le premier : motifs, Tower,
+  quick-actions, webhooks, planifications, lancés récemment.
+
 ### Webhooks
 
 Un webhook est une adresse qu'un service externe (CI, forge, domotique…) appelle pour lancer des

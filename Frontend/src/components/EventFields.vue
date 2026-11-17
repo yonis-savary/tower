@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
+import EventTypeInput from './EventTypeInput.vue'
 
 const type = defineModel<string>('type', { required: true })
 const payload = defineModel<string>('payload', { required: true })
@@ -14,7 +14,7 @@ const id = useId()
 <template>
   <div class="event-field">
     <label :for="`${id}-type`">{{ t('events.typeLabel') }}</label>
-    <InputText :id="`${id}-type`" v-model="type" placeholder="deploy.start" maxlength="100" required fluid />
+    <EventTypeInput v-model="type" :input-id="`${id}-type`" placeholder="deploy.start" :maxlength="100" required />
   </div>
   <div class="event-field">
     <label :for="`${id}-payload`">{{ t('events.payloadLabel') }}</label>
