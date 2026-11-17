@@ -119,7 +119,29 @@ const outputGroups = computed<FlowGroup[]>(() => [
 const layout = computed(() => layoutFlow(sourceGroups.value, outputGroups.value))
 const chipCount = computed(() => layout.value.sources.length + layout.value.outputs.length)
 const tooMany = computed(() => chipCount.value > LIVE_MAX_CHIPS)
-const live = computed(() => !tooMany.value && socket.status === 'connected')
+
+const EXPANDED_KEY = 'tower.home.flowExpanded'
+const expanded = ref(readExpanded())
+
+function readExpanded(): boolean {
+  try {
+    return localStorage.getItem(EXPANDED_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+
+function toggle() {
+  expanded.value = !expanded.value
+  try {
+    localStorage.setItem(EXPANDED_KEY, expanded.value ? '1' : '0')
+  } catch {
+    // Private browsing or blocked storage : the choice only lasts for this page
+  }
+}
+
+// Folded, the circuit is not drawn : nothing to animate
+const live = computed(() => expanded.value && !tooMany.value && socket.status === 'connected')
 
 const chipsByKey = computed(() => new Map([...layout.value.sources, ...layout.value.outputs].map((chip) => [chip.key, chip])))
 
@@ -221,76 +243,81 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="panel flow">
-    <header class="panel-header">
-      <h2>{{ t('home.flow.title') }}</h2>
-      <span class="status" :class="{ on: live }">
+    <header class="panel-header" :class="{ folded: !expanded }">
+      <button type="button" class="panel-toggle" :aria-expanded="expanded" @click="toggle">
+        <i :class="['pi', expanded ? 'pi-chevron-down' : 'pi-chevron-right']" aria-hidden="true" />
+        <h2>{{ t('home.flow.title') }}</h2>
+      </button>
+      <span v-if="expanded" class="status" :class="{ on: live }">
         <span class="status-dot" aria-hidden="true" />
         {{ live ? t('home.flow.live') : t('home.flow.paused') }}
       </span>
     </header>
 
-    <Message v-if="tooMany" class="notice" severity="info" :closable="false">{{ t('home.flow.tooMany', { max: LIVE_MAX_CHIPS }) }}</Message>
-    <Message v-else-if="socket.status !== 'connected'" class="notice" severity="warn" :closable="false">{{ t('home.flow.offline') }}</Message>
+    <template v-if="expanded">
+      <Message v-if="tooMany" class="notice" severity="info" :closable="false">{{ t('home.flow.tooMany', { max: LIVE_MAX_CHIPS }) }}</Message>
+      <Message v-else-if="socket.status !== 'connected'" class="notice" severity="warn" :closable="false">{{ t('home.flow.offline') }}</Message>
 
-    <svg class="board" :viewBox="`0 0 ${layout.width} ${layout.height}`" role="img" :aria-label="t('home.flow.title')">
-      <defs>
-        <pattern id="flow-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-          <circle cx="1" cy="1" r="1" class="grid-dot" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#flow-grid)" />
+      <svg class="board" :viewBox="`0 0 ${layout.width} ${layout.height}`" role="img" :aria-label="t('home.flow.title')">
+        <defs>
+          <pattern id="flow-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="1" class="grid-dot" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#flow-grid)" />
 
-      <g class="traces">
-        <path v-for="chip in [...layout.sources, ...layout.outputs]" :key="`trace-${chip.key}`" :d="pathOf(chip.trace)" class="trace" :class="{ off: !chip.enabled }" />
-        <template v-for="chip in [...layout.sources, ...layout.outputs]" :key="`via-${chip.key}`">
-          <circle class="via" :cx="chip.trace[0]!.x" :cy="chip.trace[0]!.y" r="3" />
-          <circle class="via" :cx="chip.trace.at(-1)!.x" :cy="chip.trace.at(-1)!.y" r="3" />
-        </template>
-      </g>
+        <g class="traces">
+          <path v-for="chip in [...layout.sources, ...layout.outputs]" :key="`trace-${chip.key}`" :d="pathOf(chip.trace)" class="trace" :class="{ off: !chip.enabled }" />
+          <template v-for="chip in [...layout.sources, ...layout.outputs]" :key="`via-${chip.key}`">
+            <circle class="via" :cx="chip.trace[0]!.x" :cy="chip.trace[0]!.y" r="3" />
+            <circle class="via" :cx="chip.trace.at(-1)!.x" :cy="chip.trace.at(-1)!.y" r="3" />
+          </template>
+        </g>
 
-      <path
-        v-for="pulse in pulses"
-        :key="pulse.id"
-        :d="pulse.d"
-        class="pulse"
-        :class="`pulse-${pulse.tone}`"
-        pathLength="100"
-        :style="{ animationDuration: `${PULSE_MS}ms`, animationDelay: `${pulse.delay}ms` }"
-        @animationend="removePulse(pulse.id)"
-      />
+        <path
+          v-for="pulse in pulses"
+          :key="pulse.id"
+          :d="pulse.d"
+          class="pulse"
+          :class="`pulse-${pulse.tone}`"
+          pathLength="100"
+          :style="{ animationDuration: `${PULSE_MS}ms`, animationDelay: `${pulse.delay}ms` }"
+          @animationend="removePulse(pulse.id)"
+        />
 
-      <text v-for="header in layout.headers" :key="header.label" class="header" :x="header.x" :y="header.y">{{ header.label }}</text>
-      <g v-for="placeholder in layout.placeholders" :key="placeholder.label">
-        <rect class="placeholder" :x="placeholder.x" :y="placeholder.y" :width="CHIP_WIDTH" :height="CHIP_HEIGHT" rx="4" />
-        <text class="placeholder-text" :x="placeholder.x + CHIP_WIDTH / 2" :y="placeholder.y + CHIP_HEIGHT / 2 + 4">{{ placeholder.label }}</text>
-      </g>
+        <text v-for="header in layout.headers" :key="header.label" class="header" :x="header.x" :y="header.y">{{ header.label }}</text>
+        <g v-for="placeholder in layout.placeholders" :key="placeholder.label">
+          <rect class="placeholder" :x="placeholder.x" :y="placeholder.y" :width="CHIP_WIDTH" :height="CHIP_HEIGHT" rx="4" />
+          <text class="placeholder-text" :x="placeholder.x + CHIP_WIDTH / 2" :y="placeholder.y + CHIP_HEIGHT / 2 + 4">{{ placeholder.label }}</text>
+        </g>
 
-      <FlowChip
-        v-for="chip in [...layout.sources, ...layout.outputs]"
-        :key="chip.key"
-        :x="chip.x"
-        :y="chip.y"
-        :width="CHIP_WIDTH"
-        :height="CHIP_HEIGHT"
-        :label="chip.label"
-        :detail="chip.detail"
-        :led="ledOf(chip)"
-        :clickable="chip.kind in LINKS"
-        @click="open(chip)"
-        @keydown.enter="open(chip)"
-      />
+        <FlowChip
+          v-for="chip in [...layout.sources, ...layout.outputs]"
+          :key="chip.key"
+          :x="chip.x"
+          :y="chip.y"
+          :width="CHIP_WIDTH"
+          :height="CHIP_HEIGHT"
+          :label="chip.label"
+          :detail="chip.detail"
+          :led="ledOf(chip)"
+          :clickable="chip.kind in LINKS"
+          @click="open(chip)"
+          @keydown.enter="open(chip)"
+        />
 
-      <FlowChip
-        :x="layout.tower.x"
-        :y="layout.tower.y"
-        :width="layout.tower.width"
-        :height="layout.tower.height"
-        label="Tower"
-        :detail="workspace.current?.name ?? ''"
-        :led="live ? 'idle' : 'off'"
-        logo
-      />
-    </svg>
+        <FlowChip
+          :x="layout.tower.x"
+          :y="layout.tower.y"
+          :width="layout.tower.width"
+          :height="layout.tower.height"
+          label="Tower"
+          :detail="workspace.current?.name ?? ''"
+          :led="live ? 'idle' : 'off'"
+          logo
+        />
+      </svg>
+    </template>
   </section>
 </template>
 
@@ -311,7 +338,33 @@ onBeforeUnmount(() => {
   margin-bottom: 0.75rem;
 }
 
-.panel-header h2 {
+.panel-header.folded {
+  margin-bottom: 0;
+}
+
+.panel-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  color: inherit;
+  background: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.panel-toggle:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  border-radius: var(--p-content-border-radius);
+}
+
+.panel-toggle .pi {
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
+}
+
+.panel-toggle h2 {
   margin: 0;
   font-size: 1.0625rem;
   font-weight: 600;

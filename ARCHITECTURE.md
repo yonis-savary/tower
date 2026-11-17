@@ -834,6 +834,8 @@ de 64rem de large : ni affiché ni abonné aux signaux sur mobile.
 - Au-delà de **12 puces** (Tower exclue), le circuit reste affiché mais statique, avec un message
   qui l'explique : animer chaque événement coûterait trop cher.
 - Un clic sur une puce ouvre son écran (Jira, Merge Requests, Webhooks, Automation).
+- Le bloc se replie sur son titre ; le choix est gardé dans le navigateur. Replié, le circuit
+  n'est pas dessiné et rien n'est animé.
 
 Les signaux du workspace portent ce qu'il faut pour cela : `history.created` (`history_type`,
 `history`, `origin`, et pour un événement `event` et l'id du webhook ou de la planification en
