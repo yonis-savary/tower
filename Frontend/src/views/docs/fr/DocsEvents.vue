@@ -149,7 +149,7 @@ const discussExample = `
 
   <h3>Événements planifiés</h3>
   <p>
-    Depuis l'écran Automation, onglet Planifications : un type et un payload, lancés chaque minute, toutes les N minutes, chaque heure, jour,
+    Depuis l'écran Automation, onglet Planifications : un type et un payload, lancés chaque minute, toutes les N minutes, chaque heure, toutes les N heures, chaque jour,
     semaine ou mois, ou une seule fois à une date donnée. Les heures sont celles du serveur, à la minute près. Un
     déclenchement manqué pendant un arrêt du serveur n'est pas rattrapé : une planification ponctuelle dont la date est
     passée est simplement désactivée. Dans l'Historique, ils apparaissent comme <em>Évènement lancé</em>, par la

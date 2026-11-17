@@ -276,7 +276,8 @@ Une adresse inconnue répond 404 et n'est pas tracée.
 
 Une planification lance un événement (type et payload, comme une quick-action) à heure fixe.
 
-- Elle est **régulière** (chaque minute, toutes les N minutes, chaque heure, chaque jour, certains
+- Elle est **régulière** (chaque minute, toutes les N minutes, chaque heure, toutes les N heures
+  à l'heure pile — N parmi 2, 3, 4, 6, 8, 12, pour garder le même écart la nuit —, chaque jour, certains
   jours de la semaine, chaque mois) ou **ponctuelle** (une date et une heure). Le front traduit ce choix en expression cron, seule
   stockée (`cron`) et seule lue pour la relire en formulaire ; une expression donnée par l'API sous
   une autre forme s'édite telle quelle.

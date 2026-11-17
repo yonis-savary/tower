@@ -1,6 +1,9 @@
-export type Frequency = 'minute' | 'minutes' | 'hourly' | 'daily' | 'weekly' | 'monthly'
+export type Frequency = 'minute' | 'minutes' | 'hourly' | 'hours' | 'daily' | 'weekly' | 'monthly'
 
-export const FREQUENCIES: Frequency[] = ['minute', 'minutes', 'hourly', 'daily', 'weekly', 'monthly']
+export const FREQUENCIES: Frequency[] = ['minute', 'minutes', 'hourly', 'hours', 'daily', 'weekly', 'monthly']
+
+// Cron counts the hours from midnight : only a divisor of 24 keeps the same gap across the night
+export const HOUR_STEPS = [2, 3, 4, 6, 8, 12]
 
 // Sunday is 0, as in cron and Date.getDay()
 export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0]
@@ -8,18 +11,20 @@ export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0]
 export type Recurrence = {
   frequency: Frequency
   step: number
+  hourStep: number
   minute: number
   hour: number
   weekdays: number[]
   monthDay: number
 }
 
-export const DEFAULT_RECURRENCE: Recurrence = { frequency: 'daily', step: 15, minute: 0, hour: 9, weekdays: [1], monthDay: 1 }
+export const DEFAULT_RECURRENCE: Recurrence = { frequency: 'daily', step: 15, hourStep: 2, minute: 0, hour: 9, weekdays: [1], monthDay: 1 }
 
 const toCronByFrequency: Record<Frequency, (recurrence: Recurrence) => string> = {
   minute: () => '* * * * *',
   minutes: ({ step }) => `*/${step} * * * *`,
   hourly: ({ minute }) => `${minute} * * * *`,
+  hours: ({ hourStep }) => `0 */${hourStep} * * *`,
   daily: ({ minute, hour }) => `${minute} ${hour} * * *`,
   weekly: ({ minute, hour, weekdays }) => `${minute} ${hour} * * ${[...weekdays].sort().join(',')}`,
   monthly: ({ minute, hour, monthDay }) => `${minute} ${hour} ${monthDay} * *`,
@@ -34,6 +39,7 @@ const fromCronPatterns: [RegExp, (values: string[]) => Partial<Recurrence>][] = 
   [/^\* \* \* \* \*$/, () => ({ frequency: 'minute' })],
   [/^\*\/(\d+) \* \* \* \*$/, ([step]) => ({ frequency: 'minutes', step: Number(step) })],
   [/^(\d+) \* \* \* \*$/, ([minute]) => ({ frequency: 'hourly', minute: Number(minute) })],
+  [new RegExp(`^0 \\*/(${HOUR_STEPS.join('|')}) \\* \\* \\*$`), ([hourStep]) => ({ frequency: 'hours', hourStep: Number(hourStep) })],
   [/^(\d+) (\d+) \* \* \*$/, ([minute, hour]) => ({ frequency: 'daily', minute: Number(minute), hour: Number(hour) })],
   [
     /^(\d+) (\d+) \* \* ([0-7](?:,[0-7])*)$/,

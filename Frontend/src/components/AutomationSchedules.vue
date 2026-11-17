@@ -27,6 +27,7 @@ import { EVENT_TYPE } from '../utils/historyLine'
 import {
   DEFAULT_RECURRENCE,
   FREQUENCIES,
+  HOUR_STEPS,
   WEEKDAYS,
   fromCron,
   timeOf,
@@ -74,6 +75,7 @@ const frequencyOptions = computed(() => [
   ...FREQUENCIES.map((value) => ({ value, label: t(`schedules.frequency.${value}`) })),
   ...(form.value.frequency === 'custom' ? [{ value: 'custom', label: t('schedules.frequency.custom') }] : []),
 ])
+const hourStepOptions = computed(() => HOUR_STEPS.map((value) => ({ value, label: t('schedules.hourStepOption', { step: value }) })))
 const weekdayOptions = computed(() => WEEKDAYS.map((value) => ({ value, label: weekdayName(value, 'short'), title: weekdayName(value, 'long') })))
 
 // The time pickers work on a Date : only its hours and minutes are read
@@ -116,6 +118,7 @@ const describeRecurrence: Record<Frequency, (recurrence: Recurrence) => string> 
   minute: () => t('schedules.every.minute'),
   minutes: ({ step }) => t('schedules.every.minutes', { step }),
   hourly: ({ minute }) => t('schedules.every.hourly', { minute: String(minute).padStart(2, '0') }),
+  hours: ({ hourStep }) => t('schedules.every.hours', { step: hourStep }),
   daily: (recurrence) => t('schedules.every.daily', { time: timeOf(recurrence) }),
   weekly: (recurrence) => t('schedules.every.weekly', { days: weekdaysLabel(recurrence.weekdays), time: timeOf(recurrence) }),
   monthly: (recurrence) => t('schedules.every.monthly', { day: recurrence.monthDay, time: timeOf(recurrence) }),
@@ -302,6 +305,12 @@ async function remove(schedule: Schedule) {
         <div v-if="form.frequency === 'hourly'" class="field">
           <label for="schedule-minute">{{ t('schedules.minuteLabel') }}</label>
           <InputNumber v-model="form.recurrence.minute" input-id="schedule-minute" :min="0" :max="59" :allow-empty="false" fluid />
+        </div>
+
+        <div v-if="form.frequency === 'hours'" class="field">
+          <label for="schedule-hour-step">{{ t('schedules.hourStepLabel') }}</label>
+          <Select v-model="form.recurrence.hourStep" input-id="schedule-hour-step" :options="hourStepOptions" option-label="label" option-value="value" fluid />
+          <small>{{ t('schedules.hourStepHint') }}</small>
         </div>
 
         <div v-if="form.frequency === 'weekly'" class="field">
