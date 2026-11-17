@@ -45,7 +45,7 @@ function truncate(text: string, length: number): string {
     <template v-if="logo">
       <TowerLogoMark
         class="logo"
-        color="var(--p-surface-500)"
+        color="light-dark(var(--p-surface-400), var(--p-surface-500))"
         :height="logoHeight"
         :x="x + (width - logoWidth) / 2"
         :y="y + height / 2 - logoHeight / 2 - 12"
@@ -78,13 +78,13 @@ function truncate(text: string, length: number): string {
 }
 
 .body {
-  fill: light-dark(var(--p-surface-800), var(--p-surface-900));
-  stroke: light-dark(var(--p-surface-700), var(--p-surface-700));
+  fill: light-dark(var(--p-surface-600), var(--p-surface-900));
+  stroke: light-dark(var(--p-surface-500), var(--p-surface-700));
   stroke-width: 1;
 }
 
 .notch {
-  fill: light-dark(var(--p-surface-700), var(--p-surface-800));
+  fill: light-dark(var(--p-surface-500), var(--p-surface-800));
 }
 
 .label {
@@ -96,7 +96,7 @@ function truncate(text: string, length: number): string {
 }
 
 .detail {
-  fill: var(--p-surface-400);
+  fill: light-dark(var(--p-surface-200), var(--p-surface-400));
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 11px;
 }
@@ -119,7 +119,7 @@ function truncate(text: string, length: number): string {
 }
 
 .led-off {
-  fill: var(--p-surface-600);
+  fill: light-dark(var(--p-surface-400), var(--p-surface-600));
 }
 
 .led-pending {
