@@ -16,18 +16,8 @@ const props = defineProps<{
   logo?: boolean
 }>()
 
-const PIN_GAP = 16
-const PIN_WIDTH = 6
-const PIN_LENGTH = 5
-
 const logoHeight = computed(() => Math.round(Math.min(props.width, props.height) * 0.42))
 const logoWidth = computed(() => (logoHeight.value * 256) / 306)
-
-const pins = computed(() => {
-  const count = Math.floor((props.width - PIN_GAP) / PIN_GAP)
-  const offset = (props.width - (count - 1) * PIN_GAP) / 2
-  return Array.from({ length: count }, (_, index) => props.x + offset + index * PIN_GAP - PIN_WIDTH / 2)
-})
 
 function truncate(text: string, length: number): string {
   return text.length <= length ? text : `${text.slice(0, length - 1)}…`
@@ -37,8 +27,6 @@ function truncate(text: string, length: number): string {
 <template>
   <g class="chip" :class="{ clickable }" :role="clickable ? 'button' : undefined" :tabindex="clickable ? 0 : undefined">
     <title>{{ detail ? `${label} · ${detail}` : label }}</title>
-    <rect v-for="pinX in pins" :key="`top-${pinX}`" class="pin" :x="pinX" :y="y - PIN_LENGTH" :width="PIN_WIDTH" :height="PIN_LENGTH" />
-    <rect v-for="pinX in pins" :key="`bottom-${pinX}`" class="pin" :x="pinX" :y="y + height" :width="PIN_WIDTH" :height="PIN_LENGTH" />
     <rect class="body" :x="x" :y="y" :width="width" :height="height" rx="4" />
     <circle class="notch" :cx="x + 10" :cy="y + 10" r="3" />
     <circle class="led" :class="`led-${led}`" :cx="x + width - 12" :cy="y + 12" r="4" />
@@ -71,10 +59,6 @@ function truncate(text: string, length: number): string {
 
 .chip:focus-visible {
   outline: none;
-}
-
-.pin {
-  fill: light-dark(var(--p-surface-400), var(--p-surface-500));
 }
 
 .body {
