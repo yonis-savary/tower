@@ -829,10 +829,11 @@ de 64rem de large : ni affiché ni abonné aux signaux sur mobile.
   désactivée ; pour un appareil, la couleur de sa dernière livraison pendant 4 s.
 - **Pistes** : horizontales, biseautées à 45°, verticales. La piste qui monte ou descend le plus
   tourne au plus près de Tower, ce qui évite tout croisement.
-- **En direct**, une impulsion parcourt la piste : d'une source vers Tower à chaque événement
-  envoyé aux appareils (la source vient de l'origine du signal), puis de Tower vers chaque règle
-  dont un motif correspond ; de Tower vers un appareil quand sa livraison part, et retour en vert
-  ou en rouge quand il répond ; en rouge sur un webhook dont l'appel est refusé.
+- **En direct**, une piste s'illumine en vert pendant une seconde, comme le témoin d'activité :
+  celle de la source à chaque événement envoyé aux appareils (la source vient de l'origine du
+  signal), puis celles des règles dont un motif correspond ; celle d'un appareil en bleu quand sa
+  livraison part, en vert quand il répond, en rouge s'il échoue ; en rouge celle d'un webhook dont
+  l'appel est refusé.
 - Au-delà de **12 puces** (Tower exclue), le circuit reste affiché mais statique, avec un message
   qui l'explique : animer chaque événement coûterait trop cher.
 - Un clic sur une puce ouvre son écran (Jira, Merge Requests, Webhooks, Automation).

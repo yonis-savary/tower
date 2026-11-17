@@ -22,11 +22,11 @@ import { isSent } from '../utils/historyLine'
 
 // Above this many chips, animating every event costs more than it shows
 const LIVE_MAX_CHIPS = 12
-const PULSE_MS = 900
+const GLOW_MS = 1000
 // How long a device keeps the color of its last delivery
 const LED_HOLD_MS = 4000
 
-type Pulse = { id: number; d: string; tone: 'event' | 'success' | 'failure'; delay: number }
+type Glow = { id: number; d: string; tone: 'active' | 'sending' | 'failure'; delay: number }
 
 const { t } = useI18n()
 const router = useRouter()
@@ -40,9 +40,9 @@ const rules = ref<ListNotificationRulesResponse>([])
 const jiraSite = ref<string | null>(null)
 const bitbucketWorkspace = ref<string | null>(null)
 
-const pulses = ref<Pulse[]>([])
+const glows = ref<Glow[]>([])
 const deviceLeds = ref<Record<string, ChipLed>>({})
-let nextPulse = 0
+let nextGlow = 0
 const ledTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
 async function load() {
@@ -163,13 +163,13 @@ function open(chip: PlacedChip) {
   if (link) void router.push(link)
 }
 
-function emitPulse(trace: PlacedChip['trace'], tone: Pulse['tone'], delay = 0, reverse = false) {
-  const id = nextPulse++
-  pulses.value = [...pulses.value, { id, d: pathOf(reverse ? [...trace].reverse() : trace), tone, delay }]
+function glow(trace: PlacedChip['trace'], tone: Glow['tone'], delay = 0) {
+  const id = nextGlow++
+  glows.value = [...glows.value, { id, d: pathOf(trace), tone, delay }]
 }
 
-function removePulse(id: number) {
-  pulses.value = pulses.value.filter((pulse) => pulse.id !== id)
+function removeGlow(id: number) {
+  glows.value = glows.value.filter((item) => item.id !== id)
 }
 
 function sourceOf(signal: Extract<WorkspaceSignal, { type: 'history.created' }>): string {
@@ -190,12 +190,14 @@ function setLed(key: string, led: ChipLed) {
   }, LED_HOLD_MS))
 }
 
+// Blue while the event goes out, green once answered, red on a failure ; `running` only blinks the LED
+const DELIVERY_GLOWS: Record<string, Glow['tone']> = { pending: 'sending', succeeded: 'active', received: 'active', failed: 'failure' }
 const DELIVERY_LEDS: Record<string, ChipLed> = { pending: 'pending', running: 'running', succeeded: 'succeeded', received: 'succeeded', failed: 'failed' }
 
 function animate(signal: WorkspaceSignal) {
   if (signal.type === 'webhook.refused') {
     const chip = chipsByKey.value.get(`webhook:${signal.webhook}`)
-    if (chip) emitPulse(chip.trace, 'failure')
+    if (chip) glow(chip.trace, 'failure')
     return
   }
 
@@ -203,21 +205,20 @@ function animate(signal: WorkspaceSignal) {
     const chip = chipsByKey.value.get(`device:${signal.device}`)
     if (!chip) return
     setLed(chip.key, DELIVERY_LEDS[signal.status] ?? 'idle')
-    if (signal.status === 'pending') emitPulse(chip.trace, 'event')
-    if (signal.status === 'succeeded' || signal.status === 'received') emitPulse(chip.trace, 'success', 0, true)
-    if (signal.status === 'failed') emitPulse(chip.trace, 'failure', 0, true)
+    const tone = DELIVERY_GLOWS[signal.status]
+    if (tone) glow(chip.trace, tone)
     return
   }
 
   if (!isSent(signal.history_type)) return
 
   const source = chipsByKey.value.get(sourceOf(signal))
-  if (source) emitPulse(source.trace, 'event')
+  if (source) glow(source.trace, 'active')
 
   const event = signal.event ?? signal.history_type
   for (const rule of rules.value) {
     const chip = chipsByKey.value.get(`rule:${rule.id}`)
-    if (chip && rule.enabled && rule.listen.some((pattern) => matchesPattern(pattern, event))) emitPulse(chip.trace, 'event', PULSE_MS)
+    if (chip && rule.enabled && rule.listen.some((pattern) => matchesPattern(pattern, event))) glow(chip.trace, 'active', GLOW_MS)
   }
 }
 
@@ -275,14 +276,13 @@ onBeforeUnmount(() => {
         </g>
 
         <path
-          v-for="pulse in pulses"
-          :key="pulse.id"
-          :d="pulse.d"
-          class="pulse"
-          :class="`pulse-${pulse.tone}`"
-          pathLength="100"
-          :style="{ animationDuration: `${PULSE_MS}ms`, animationDelay: `${pulse.delay}ms` }"
-          @animationend="removePulse(pulse.id)"
+          v-for="item in glows"
+          :key="item.id"
+          :d="item.d"
+          class="glow"
+          :class="`glow-${item.tone}`"
+          :style="{ animationDuration: `${GLOW_MS}ms`, animationDelay: `${item.delay}ms` }"
+          @animationend="removeGlow(item.id)"
         />
 
         <text v-for="header in layout.headers" :key="header.label" class="header" :x="header.x" :y="header.y">{{ header.label }}</text>
@@ -424,38 +424,43 @@ onBeforeUnmount(() => {
   stroke-width: 2;
 }
 
-.pulse {
+.glow {
   fill: none;
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-dasharray: 6 200;
-  animation-name: travel;
-  animation-timing-function: ease-in-out;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  opacity: 0;
+  animation-name: glow;
+  animation-timing-function: ease-out;
   animation-fill-mode: both;
 }
 
-.pulse-event {
+.glow-active {
+  stroke: var(--p-green-500);
+  filter: drop-shadow(0 0 3px var(--p-green-500));
+}
+
+.glow-sending {
   stroke: var(--p-primary-color);
-  filter: drop-shadow(0 0 4px var(--p-primary-color));
+  filter: drop-shadow(0 0 3px var(--p-primary-color));
 }
 
-.pulse-success {
-  stroke: var(--p-green-400);
-  filter: drop-shadow(0 0 4px var(--p-green-400));
-}
-
-.pulse-failure {
+.glow-failure {
   stroke: var(--p-red-500);
-  filter: drop-shadow(0 0 4px var(--p-red-500));
+  filter: drop-shadow(0 0 3px var(--p-red-500));
 }
 
-@keyframes travel {
-  from {
-    stroke-dashoffset: 6;
+@keyframes glow {
+  0% {
+    opacity: 0;
   }
 
-  to {
-    stroke-dashoffset: -100;
+  15%,
+  60% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
   }
 }
 
