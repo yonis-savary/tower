@@ -3410,38 +3410,14 @@
                                             },
                                             "title": {
                                                 "type": [
-                                                    "object",
+                                                    "string",
                                                     "null"
-                                                ],
-                                                "properties": {
-                                                    "mode": {
-                                                        "type": "string"
-                                                    },
-                                                    "value": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "mode",
-                                                    "value"
                                                 ]
                                             },
                                             "body": {
                                                 "type": [
-                                                    "object",
+                                                    "string",
                                                     "null"
-                                                ],
-                                                "properties": {
-                                                    "mode": {
-                                                        "type": "string"
-                                                    },
-                                                    "value": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "mode",
-                                                    "value"
                                                 ]
                                             },
                                             "enabled": {
@@ -3464,22 +3440,16 @@
                                 },
                                 "example": [
                                     {
-                                        "id": 975,
-                                        "name": "ut quae cupiditate",
+                                        "id": 3,
+                                        "name": "sapiente a omnis",
                                         "listen": [
                                             "task.*",
                                             "pr.pipeline.failed"
                                         ],
-                                        "title": {
-                                            "mode": "raw",
-                                            "value": "Minus eos sapiente."
-                                        },
-                                        "body": {
-                                            "mode": "key",
-                                            "value": "author.name"
-                                        },
-                                        "enabled": false,
-                                        "created_at": "2016-12-07T00:00:00+00:00"
+                                        "title": "Pipeline {payload.status}",
+                                        "body": "{payload.title} by {payload.author.name}",
+                                        "enabled": true,
+                                        "created_at": "2024-08-24T00:00:00+00:00"
                                     }
                                 ]
                             }
@@ -3524,46 +3494,14 @@
                                     },
                                     "title": {
                                         "type": [
-                                            "object",
+                                            "string",
                                             "null"
-                                        ],
-                                        "properties": {
-                                            "mode": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "raw",
-                                                    "key"
-                                                ]
-                                            },
-                                            "value": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "required": [
-                                            "mode",
-                                            "value"
                                         ]
                                     },
                                     "body": {
                                         "type": [
-                                            "object",
+                                            "string",
                                             "null"
-                                        ],
-                                        "properties": {
-                                            "mode": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "raw",
-                                                    "key"
-                                                ]
-                                            },
-                                            "value": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "required": [
-                                            "mode",
-                                            "value"
                                         ]
                                     }
                                 },
@@ -3607,38 +3545,14 @@
                                         },
                                         "title": {
                                             "type": [
-                                                "object",
+                                                "string",
                                                 "null"
-                                            ],
-                                            "properties": {
-                                                "mode": {
-                                                    "type": "string"
-                                                },
-                                                "value": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "required": [
-                                                "mode",
-                                                "value"
                                             ]
                                         },
                                         "body": {
                                             "type": [
-                                                "object",
+                                                "string",
                                                 "null"
-                                            ],
-                                            "properties": {
-                                                "mode": {
-                                                    "type": "string"
-                                                },
-                                                "value": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "required": [
-                                                "mode",
-                                                "value"
                                             ]
                                         },
                                         "enabled": {
@@ -3659,22 +3573,16 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 975,
-                                    "name": "ut quae cupiditate",
+                                    "id": 3,
+                                    "name": "sapiente a omnis",
                                     "listen": [
                                         "task.*",
                                         "pr.pipeline.failed"
                                     ],
-                                    "title": {
-                                        "mode": "raw",
-                                        "value": "Minus eos sapiente."
-                                    },
-                                    "body": {
-                                        "mode": "key",
-                                        "value": "author.name"
-                                    },
-                                    "enabled": false,
-                                    "created_at": "2016-12-07T00:00:00+00:00"
+                                    "title": "Pipeline {payload.status}",
+                                    "body": "{payload.title} by {payload.author.name}",
+                                    "enabled": true,
+                                    "created_at": "2024-08-24T00:00:00+00:00"
                                 }
                             }
                         }
@@ -3711,46 +3619,14 @@
                                 "properties": {
                                     "title": {
                                         "type": [
-                                            "object",
+                                            "string",
                                             "null"
-                                        ],
-                                        "properties": {
-                                            "mode": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "raw",
-                                                    "key"
-                                                ]
-                                            },
-                                            "value": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "required": [
-                                            "mode",
-                                            "value"
                                         ]
                                     },
                                     "body": {
                                         "type": [
-                                            "object",
+                                            "string",
                                             "null"
-                                        ],
-                                        "properties": {
-                                            "mode": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "raw",
-                                                    "key"
-                                                ]
-                                            },
-                                            "value": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "required": [
-                                            "mode",
-                                            "value"
                                         ]
                                     },
                                     "type": {
@@ -3848,46 +3724,14 @@
                                     },
                                     "title": {
                                         "type": [
-                                            "object",
+                                            "string",
                                             "null"
-                                        ],
-                                        "properties": {
-                                            "mode": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "raw",
-                                                    "key"
-                                                ]
-                                            },
-                                            "value": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "required": [
-                                            "mode",
-                                            "value"
                                         ]
                                     },
                                     "body": {
                                         "type": [
-                                            "object",
+                                            "string",
                                             "null"
-                                        ],
-                                        "properties": {
-                                            "mode": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "raw",
-                                                    "key"
-                                                ]
-                                            },
-                                            "value": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "required": [
-                                            "mode",
-                                            "value"
                                         ]
                                     },
                                     "enabled": {
@@ -3935,38 +3779,14 @@
                                         },
                                         "title": {
                                             "type": [
-                                                "object",
+                                                "string",
                                                 "null"
-                                            ],
-                                            "properties": {
-                                                "mode": {
-                                                    "type": "string"
-                                                },
-                                                "value": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "required": [
-                                                "mode",
-                                                "value"
                                             ]
                                         },
                                         "body": {
                                             "type": [
-                                                "object",
+                                                "string",
                                                 "null"
-                                            ],
-                                            "properties": {
-                                                "mode": {
-                                                    "type": "string"
-                                                },
-                                                "value": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "required": [
-                                                "mode",
-                                                "value"
                                             ]
                                         },
                                         "enabled": {
@@ -3987,22 +3807,16 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 975,
-                                    "name": "ut quae cupiditate",
+                                    "id": 3,
+                                    "name": "sapiente a omnis",
                                     "listen": [
                                         "task.*",
                                         "pr.pipeline.failed"
                                     ],
-                                    "title": {
-                                        "mode": "raw",
-                                        "value": "Minus eos sapiente."
-                                    },
-                                    "body": {
-                                        "mode": "key",
-                                        "value": "author.name"
-                                    },
-                                    "enabled": false,
-                                    "created_at": "2016-12-07T00:00:00+00:00"
+                                    "title": "Pipeline {payload.status}",
+                                    "body": "{payload.title} by {payload.author.name}",
+                                    "enabled": true,
+                                    "created_at": "2024-08-24T00:00:00+00:00"
                                 }
                             }
                         }

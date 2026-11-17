@@ -303,8 +303,10 @@ connecteur. Le périmètre détaillé est dans `ROADMAP/notification.md`.
   avait activé est supprimé. Retirer un membre supprime ses navigateurs de ce workspace. Sur iOS,
   seulement dans la PWA ajoutée à l'écran d'accueil.
 - Une **règle** (`notification_rule`) appartient à un membre dans un workspace : un nom, des motifs
-  (syntaxe des configurations), un titre et un corps, chacun valeur brute ou clé du payload
-  (`{"mode": "raw"|"key", "value": …}`, nul pour le texte par défaut). Une notification par
+  (syntaxe des configurations), un titre et un corps. Ce sont des modèles avec les variables des
+  handlers du connecteur (`{event}`, `{workspace}` — ici le nom du workspace —, `{payload}`,
+  `{payload.author.name}`) ; une variable sans valeur reste écrite telle quelle, et un modèle nul
+  ou qui ne donne que du vide prend le texte par défaut. Une notification par
   règle qui correspond, à tous les navigateurs que son utilisateur a activés dans ce workspace.
 - Tout événement passe par `EventAnnouncer::announce()` : envoi aux appareils, et
   `PushQueue` quand une règle active existe dans le workspace. Le worker `push`
@@ -862,7 +864,7 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `webhook`         | `workspace`, `name`, `uuid`, `secured`, `secret` (chiffré, nul si non sécurisé), `events` (JSON), `enabled`, `created_at`, `last_called_at` |
 | `webhook_call`    | `webhook`, `status`, `ip`, `user_agent`, `payload`, `created_at`          |
 | `push_subscription` | `workspace`, `user`, `endpoint` (unique avec `workspace`), `p256dh`, `auth`, `content_encoding`, `user_agent`, `created_at`, `last_success_at` |
-| `notification_rule` | `workspace`, `user`, `name`, `listen` (JSON), `title` et `body` (JSON `{mode, value}`, nuls : texte par défaut), `enabled`, `created_at` |
+| `notification_rule` | `workspace`, `user`, `name`, `listen` (JSON), `title` et `body` (modèles, nuls : texte par défaut), `enabled`, `created_at` |
 | `scheduled_event` | `workspace`, `name`, `type`, `payload`, `cron`, `run_at` (ponctuelle seulement), `enabled`, `last_run_at`, `created_at` |
 | `integration`     | `workspace`, `type`, `settings` (JSON), `credentials` (chiffré), `last_synced_at`, `last_error` |
 | `pull_request`    | `workspace`, `integration`, `external_id`, `repository`, branches source et cible, `source_commit`, `url`, `title`, `author`, `state`, `draft`, `comment_count`, `pipeline_status`, `synced_at` |

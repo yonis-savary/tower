@@ -57,18 +57,31 @@ VAPID_SUBJECT=mailto:toi@example.com
   </ul>
 
   <h3>Titre et texte</h3>
+  <p>
+    Le titre et le texte sont des modèles, avec les mêmes variables que les handlers du connecteur, par exemple
+    <code>{payload.count} nouvelles tâches de {payload.author.name}</code>.
+  </p>
   <table>
-    <thead><tr><th>Choix</th><th>Donne</th></tr></thead>
+    <thead><tr><th>Variable</th><th>Donne</th></tr></thead>
     <tbody>
-      <tr><td>Par défaut</td><td>titre : le nom du workspace et le type de l'événement ; texte : <code>payload.title</code>, sinon un résumé du payload</td></tr>
-      <tr><td>Texte</td><td>la valeur saisie, telle quelle</td></tr>
-      <tr><td>Clé du payload</td><td>un champ du payload, champs imbriqués avec des points (<code>author.name</code>) ; un objet ou une liste est écrit en JSON</td></tr>
+      <tr><td><code>{event}</code></td><td>le type de l'événement</td></tr>
+      <tr><td><code>{workspace}</code></td><td>le nom du workspace</td></tr>
+      <tr><td><code>{payload.title}</code></td><td>un champ du payload, champs imbriqués avec des points (<code>{payload.author.name}</code>) ; un objet ou une liste est écrit en JSON</td></tr>
+      <tr><td><code>{payload}</code></td><td>tout le payload, en JSON</td></tr>
     </tbody>
   </table>
-  <p>
-    Une clé absente du payload, ou vide, laisse place au texte par défaut. Le titre est coupé à 100 caractères, le texte à 300.
-    L'aperçu du formulaire montre le résultat avec un événement d'exemple.
-  </p>
+  <ul>
+    <li>
+      Un champ du payload se préfixe toujours par <code>payload.</code> : <code>{title}</code> n'est pas une variable et reste
+      écrit tel quel, il faut écrire <code>{payload.title}</code>.
+    </li>
+    <li>Une variable sans valeur (champ absent ou nul, nom inconnu) reste écrite telle quelle, comme dans le connecteur.</li>
+    <li>
+      Un champ laissé vide, ou un modèle qui ne donne que du vide, prend le texte par défaut : le nom du workspace et le type
+      de l'événement pour le titre ; <code>payload.title</code>, sinon un résumé du payload, pour le texte.
+    </li>
+    <li>Le titre est coupé à 100 caractères, le texte à 300. L'aperçu du formulaire montre le résultat avec un événement d'exemple.</li>
+  </ul>
   <p>Un clic sur la notification ouvre Tower sur la ligne de l'événement, dans l'Historique.</p>
 
   <h3>Mise en place du serveur</h3>

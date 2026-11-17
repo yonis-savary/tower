@@ -32,8 +32,8 @@ class NotificationRuleResource extends ModelResource
             'id' => $model->id,
             'name' => $model->name,
             'listen' => $this->push->listenOf($model),
-            'title' => $this->push->textOf($model->title),
-            'body' => $this->push->textOf($model->body),
+            'title' => $model->title,
+            'body' => $model->body,
             'enabled' => (bool) $model->enabled,
             'created_at' => AtomDate::format($model->created_at),
         ];

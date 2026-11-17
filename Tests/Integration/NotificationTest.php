@@ -267,17 +267,17 @@ class NotificationTest extends CubeTestCase
     {
         $this->register('alice@example.com');
         $rule = $this->createRule([
-            'title' => ['mode' => 'raw', 'value' => 'Pipeline failed'],
-            'body' => ['mode' => 'key', 'value' => 'title'],
+            'title' => '  Pipeline {payload.status}  ',
+            'body' => '{payload.title}',
         ]);
 
         $this->assertSame('Pipelines', $rule['name']);
         $this->assertSame(['pr.*'], $rule['listen']);
-        $this->assertSame(['mode' => 'raw', 'value' => 'Pipeline failed'], $rule['title']);
-        $this->assertSame(['mode' => 'key', 'value' => 'title'], $rule['body']);
+        $this->assertSame('Pipeline {payload.status}', $rule['title']);
+        $this->assertSame('{payload.title}', $rule['body']);
         $this->assertTrue($rule['enabled']);
 
-        $updated = $this->putJson("/api/notification-rules/{$rule['id']}", ['name' => 'Tasks', 'listen' => ['task.*'], 'title' => null, 'enabled' => false])->assertOk()->json();
+        $updated = $this->putJson("/api/notification-rules/{$rule['id']}", ['name' => 'Tasks', 'listen' => ['task.*'], 'title' => null, 'body' => '   ', 'enabled' => false])->assertOk()->json();
         $this->assertSame('Tasks', $updated['name']);
         $this->assertSame(['task.*'], $updated['listen']);
         $this->assertNull($updated['title']);
@@ -296,8 +296,8 @@ class NotificationTest extends CubeTestCase
         $this->postJson('/api/notification-rules', ['name' => 'Empty', 'listen' => []])->assertUnprocessableContent();
         $this->postJson('/api/notification-rules', ['name' => 'Bad pattern', 'listen' => ['Task Created']])->assertUnprocessableContent();
         $this->postJson('/api/notification-rules', ['name' => '', 'listen' => ['*']])->assertUnprocessableContent();
-        $this->postJson('/api/notification-rules', ['name' => 'Bad mode', 'listen' => ['*'], 'title' => ['mode' => 'template', 'value' => 'x']])->assertUnprocessableContent();
-        $this->postJson('/api/notification-rules', ['name' => 'Empty key', 'listen' => ['*'], 'body' => ['mode' => 'key', 'value' => '']])->assertUnprocessableContent();
+        $this->postJson('/api/notification-rules', ['name' => 'Long', 'listen' => ['*'], 'title' => str_repeat('a', PushService::MAX_TEMPLATE_LENGTH + 1)])->assertUnprocessableContent();
+        $this->postJson('/api/notification-rules', ['name' => 'Not text', 'listen' => ['*'], 'body' => ['mode' => 'raw', 'value' => 'x']])->assertUnprocessableContent();
     }
 
     public function testRulesArePersonal()
@@ -323,12 +323,12 @@ class NotificationTest extends CubeTestCase
         $workspace = $this->get('/api/workspaces/current')->json()['name'];
 
         $preview = $this->postJson('/api/notification-rules/preview', [
-            'title' => ['mode' => 'key', 'value' => 'author.name'],
-            'body' => ['mode' => 'raw', 'value' => 'Pipeline failed'],
+            'title' => '{payload.author.name} on {workspace}',
+            'body' => 'Pipeline failed ({event})',
             'type' => 'pr.pipeline.failed',
             'payload' => '{"author":{"name":"Alice"}}',
         ])->assertOk()->json();
-        $this->assertSame(['title' => 'Alice', 'body' => 'Pipeline failed'], $preview);
+        $this->assertSame(['title' => "Alice on {$workspace}", 'body' => 'Pipeline failed (pr.pipeline.failed)'], $preview);
 
         $default = $this->postJson('/api/notification-rules/preview', ['type' => 'deploy.done', 'payload' => '{"env":"prod","ok":true}'])->assertOk()->json();
         $this->assertSame(['title' => "{$workspace} · deploy.done", 'body' => 'env: prod, ok: true'], $default);
@@ -339,19 +339,20 @@ class NotificationTest extends CubeTestCase
         $push = inject(PushService::class);
         $payload = json_encode(['title' => 'Fix login', 'author' => ['name' => 'Alice', 'roles' => ['dev']], 'count' => 3, 'empty' => '']);
 
-        $content = fn (?array $title, ?array $body) => $push->content($title, $body, 'Pro', 'task.created', $payload);
+        $content = fn (?string $title, ?string $body = null) => $push->content($title, $body, 'Pro', 'task.created', $payload);
 
         $this->assertSame(['title' => 'Pro · task.created', 'body' => 'Fix login'], $content(null, null));
-        $this->assertSame('Alice', $content(['mode' => 'key', 'value' => 'author.name'], null)['title']);
-        $this->assertSame('{"name":"Alice","roles":["dev"]}', $content(['mode' => 'key', 'value' => 'author'], null)['title']);
-        $this->assertSame('3', $content(['mode' => 'key', 'value' => 'count'], null)['title']);
-        // Missing or empty : the default text
-        $this->assertSame('Pro · task.created', $content(['mode' => 'key', 'value' => 'author.email'], null)['title']);
-        $this->assertSame('Fix login', $content(null, ['mode' => 'key', 'value' => 'empty'])['body']);
-        // A raw value is never read as a key
-        $this->assertSame('author.name', $content(['mode' => 'raw', 'value' => 'author.name'], null)['title']);
+        $this->assertSame('3 new tasks by Alice', $content('{payload.count} new tasks by {payload.author.name}')['title']);
+        $this->assertSame('{"name":"Alice","roles":["dev"]}', $content('{payload.author}')['title']);
+        $this->assertSame('task.created in Pro', $content('{event} in {workspace}')['title']);
+        $this->assertSame('author.name', $content('author.name')['title']);
+        // Like the connector handlers : a placeholder without a value stays as written
+        $this->assertSame('By {payload.author.email} {unknown}', $content('By {payload.author.email} {unknown}')['title']);
+        $this->assertSame('{ not a placeholder }', $content('{ not a placeholder }')['title']);
+        // A template that renders empty : the default text
+        $this->assertSame('Fix login', $content(null, '{payload.empty}')['body']);
 
-        $long = $push->content(['mode' => 'raw', 'value' => str_repeat('a', 150)], null, 'Pro', 'x', '{}');
+        $long = $push->content(str_repeat('a', 150), null, 'Pro', 'x', '{}');
         $this->assertSame(100, mb_strlen($long['title']));
         $this->assertStringEndsWith('…', $long['title']);
     }
@@ -362,7 +363,7 @@ class NotificationTest extends CubeTestCase
         $workspace = $this->get('/api/workspaces/current')->json()['id'];
         $this->subscribe('https://push.example.com/phone');
         $this->subscribe('https://push.example.com/laptop');
-        $rule = $this->createRule(['listen' => ['deploy.*'], 'title' => ['mode' => 'raw', 'value' => 'Deployed'], 'body' => ['mode' => 'key', 'value' => 'env']]);
+        $rule = $this->createRule(['listen' => ['deploy.*'], 'title' => 'Deployed', 'body' => '{payload.env}']);
 
         $this->trigger('deploy.done', ['env' => 'prod']);
         $this->trigger('task.reminder', ['title' => 'Ignored']);
@@ -380,9 +381,9 @@ class NotificationTest extends CubeTestCase
     {
         $this->register('alice@example.com');
         $this->subscribe();
-        $this->createRule(['name' => 'All', 'listen' => ['*'], 'title' => ['mode' => 'raw', 'value' => 'All']]);
-        $this->createRule(['name' => 'Deploys', 'listen' => ['deploy.*'], 'title' => ['mode' => 'raw', 'value' => 'Deploys']]);
-        $disabled = $this->createRule(['name' => 'Off', 'listen' => ['*'], 'title' => ['mode' => 'raw', 'value' => 'Off']]);
+        $this->createRule(['name' => 'All', 'listen' => ['*'], 'title' => 'All']);
+        $this->createRule(['name' => 'Deploys', 'listen' => ['deploy.*'], 'title' => 'Deploys']);
+        $disabled = $this->createRule(['name' => 'Off', 'listen' => ['*'], 'title' => 'Off']);
         $this->putJson("/api/notification-rules/{$disabled['id']}", ['name' => 'Off', 'listen' => ['*'], 'enabled' => false])->assertOk();
 
         $this->trigger('deploy.done');

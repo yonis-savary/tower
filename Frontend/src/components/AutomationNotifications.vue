@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
-import SelectButton from 'primevue/selectbutton'
 import Tag from 'primevue/tag'
 import ToggleSwitch from 'primevue/toggleswitch'
 import { useToast } from 'primevue/usetoast'
@@ -28,8 +27,6 @@ import { describeUserAgent } from '../utils/push'
 
 type Rule = ListNotificationRulesResponse[number]
 type Subscription = ListPushSubscriptionsResponse[number]
-type TextMode = 'default' | 'raw' | 'key'
-type Text = { mode: 'raw' | 'key'; value: string } | null
 
 const { t, d } = useI18n()
 const toast = useToast()
@@ -47,9 +44,7 @@ const editing = ref<Rule | null>(null)
 const form = ref({
   name: '',
   listen: '',
-  titleMode: 'default' as TextMode,
   title: '',
-  bodyMode: 'default' as TextMode,
   body: '',
   // An example event, only for the preview
   exampleType: '',
@@ -59,11 +54,10 @@ const saving = ref(false)
 const formError = ref<string | null>(null)
 const preview = ref<{ title: string; body: string } | null>(null)
 
-const modeOptions = computed(() => [
-  { value: 'default', label: t('notifications.mode.default') },
-  { value: 'raw', label: t('notifications.mode.raw') },
-  { value: 'key', label: t('notifications.mode.key') },
-])
+// vue-i18n reads braces as its own placeholders : the template examples are given to the messages as parameters
+const TEMPLATE_VARIABLES = '{event}, {workspace}, {payload.title}, {payload.author.name}'
+const DEFAULT_TITLE_TEMPLATE = '{workspace} · {event}'
+const TEMPLATE_MAX_LENGTH = 200
 
 async function loadRules() {
   error.value = null
@@ -117,19 +111,8 @@ async function forget(subscription: Subscription) {
 
 // Rules
 
-function textOf(mode: TextMode, value: string): Text {
-  return mode === 'default' || !value.trim() ? null : { mode, value: value.trim() }
-}
-
-// Read back from the server, which only stores these two modes
-function storedText(text: { mode: string; value: string } | null): Text {
-  return text && (text.mode === 'raw' || text.mode === 'key') ? { mode: text.mode, value: text.value } : null
-}
-
-function describeText(stored: { mode: string; value: string } | null, fallback: string): string {
-  const text = storedText(stored)
-  if (!text) return fallback
-  return text.mode === 'key' ? `payload.${text.value}` : `“${text.value}”`
+function templateOf(value: string): string | null {
+  return value.trim() || null
 }
 
 function parseListen(value: string): string[] {
@@ -147,10 +130,8 @@ function openForm(rule: Rule | null) {
   form.value = {
     name: rule?.name ?? '',
     listen: rule?.listen.join(' ') ?? '',
-    titleMode: (rule?.title?.mode as TextMode) ?? 'default',
-    title: rule?.title?.value ?? '',
-    bodyMode: (rule?.body?.mode as TextMode) ?? 'default',
-    body: rule?.body?.value ?? '',
+    title: rule?.title ?? '',
+    body: rule?.body ?? '',
     exampleType: exampleTypeOf(rule?.listen ?? []),
     examplePayload: '{ "title": "Fix the login form", "author": { "name": "Alice" } }',
   }
@@ -163,8 +144,8 @@ function rulePayload() {
   return {
     name: form.value.name.trim(),
     listen: parseListen(form.value.listen),
-    title: textOf(form.value.titleMode, form.value.title),
-    body: textOf(form.value.bodyMode, form.value.body),
+    title: templateOf(form.value.title),
+    body: templateOf(form.value.body),
   }
 }
 
@@ -191,7 +172,7 @@ async function save() {
 async function setEnabled(rule: Rule, enabled: boolean) {
   error.value = null
   const { name, listen } = rule
-  const { data } = await updateNotificationRule({ path: { rule: rule.id }, body: { name, listen, title: storedText(rule.title), body: storedText(rule.body), enabled } })
+  const { data } = await updateNotificationRule({ path: { rule: rule.id }, body: { name, listen, title: rule.title, body: rule.body, enabled } })
   if (!data) error.value = t('notifications.saveError')
   await loadRules()
 }
@@ -216,8 +197,8 @@ watch(
     previewTimer = setTimeout(async () => {
       const { data } = await previewNotification({
         body: {
-          title: textOf(values.titleMode, values.title),
-          body: textOf(values.bodyMode, values.body),
+          title: templateOf(values.title),
+          body: templateOf(values.body),
           type: values.exampleType.trim(),
           payload: values.examplePayload.trim() || '{}',
         },
@@ -325,8 +306,8 @@ watch(
                 <code v-for="pattern in rule.listen" :key="pattern" class="pattern">{{ pattern }}</code>
               </span>
             </td>
-            <td>{{ describeText(rule.title, t('notifications.defaultTitle')) }}</td>
-            <td>{{ describeText(rule.body, t('notifications.defaultBody')) }}</td>
+            <td :class="{ muted: !rule.title }">{{ rule.title ?? t('notifications.defaultTitle') }}</td>
+            <td :class="{ muted: !rule.body }">{{ rule.body ?? t('notifications.defaultBody') }}</td>
             <td>
               <div class="buttons">
                 <Button icon="pi pi-pencil" severity="secondary" text size="small" :aria-label="t('notifications.edit')" :title="t('notifications.edit')" @click="openForm(rule)" />
@@ -360,37 +341,27 @@ watch(
       </div>
 
       <div class="field">
-        <span id="rule-title-mode" class="field-label">{{ t('notifications.titleLabel') }}</span>
-        <SelectButton v-model="form.titleMode" :options="modeOptions" option-label="label" option-value="value" :allow-empty="false" aria-labelledby="rule-title-mode" />
+        <label for="rule-title">{{ t('notifications.titleLabel') }}</label>
         <InputText
-          v-if="form.titleMode !== 'default'"
+          id="rule-title"
           v-model="form.title"
-          :class="{ monospace: form.titleMode === 'key' }"
-          :placeholder="form.titleMode === 'key' ? 'author.name' : t('notifications.rawPlaceholder')"
-          :aria-label="t('notifications.titleLabel')"
-          maxlength="200"
-          required
+          :placeholder="t('notifications.templatePlaceholder', { fallback: DEFAULT_TITLE_TEMPLATE })"
+          :maxlength="TEMPLATE_MAX_LENGTH"
           fluid
         />
-        <small v-else>{{ t('notifications.defaultTitleHint') }}</small>
       </div>
 
       <div class="field">
-        <span id="rule-body-mode" class="field-label">{{ t('notifications.bodyLabel') }}</span>
-        <SelectButton v-model="form.bodyMode" :options="modeOptions" option-label="label" option-value="value" :allow-empty="false" aria-labelledby="rule-body-mode" />
+        <label for="rule-body">{{ t('notifications.bodyLabel') }}</label>
         <InputText
-          v-if="form.bodyMode !== 'default'"
+          id="rule-body"
           v-model="form.body"
-          :class="{ monospace: form.bodyMode === 'key' }"
-          :placeholder="form.bodyMode === 'key' ? 'title' : t('notifications.rawPlaceholder')"
-          :aria-label="t('notifications.bodyLabel')"
-          maxlength="200"
-          required
+          :placeholder="t('notifications.templatePlaceholder', { fallback: t('notifications.defaultBodyFallback') })"
+          :maxlength="TEMPLATE_MAX_LENGTH"
           fluid
         />
-        <small v-else>{{ t('notifications.defaultBodyHint') }}</small>
+        <small>{{ t('notifications.templateHint', { variables: TEMPLATE_VARIABLES }) }}</small>
       </div>
-      <small class="muted">{{ t('notifications.keyHint') }}</small>
 
       <fieldset class="preview">
         <legend>{{ t('notifications.preview') }}</legend>

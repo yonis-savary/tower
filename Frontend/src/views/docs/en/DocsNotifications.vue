@@ -57,18 +57,31 @@ VAPID_SUBJECT=mailto:you@example.com
   </ul>
 
   <h3>Title and body</h3>
+  <p>
+    The title and the body are templates, with the same variables as the connector handlers, for instance
+    <code>{payload.count} new tasks by {payload.author.name}</code>.
+  </p>
   <table>
-    <thead><tr><th>Choice</th><th>Gives</th></tr></thead>
+    <thead><tr><th>Variable</th><th>Gives</th></tr></thead>
     <tbody>
-      <tr><td>Default</td><td>title: the name of the workspace and the type of the event; body: <code>payload.title</code>, or else a summary of the payload</td></tr>
-      <tr><td>Text</td><td>the value typed, as is</td></tr>
-      <tr><td>Payload key</td><td>a field of the payload, nested fields with dots (<code>author.name</code>); an object or a list is written as JSON</td></tr>
+      <tr><td><code>{event}</code></td><td>the type of the event</td></tr>
+      <tr><td><code>{workspace}</code></td><td>the name of the workspace</td></tr>
+      <tr><td><code>{payload.title}</code></td><td>a field of the payload, nested fields with dots (<code>{payload.author.name}</code>); an object or a list is written as JSON</td></tr>
+      <tr><td><code>{payload}</code></td><td>the whole payload, as JSON</td></tr>
     </tbody>
   </table>
-  <p>
-    A key missing from the payload, or empty, gives way to the default text. The title is cut at 100 characters, the body at
-    300. The preview of the form shows the result with an example event.
-  </p>
+  <ul>
+    <li>
+      A field of the payload always starts with <code>payload.</code>: <code>{title}</code> is not a variable and stays as
+      written, write <code>{payload.title}</code>.
+    </li>
+    <li>A variable without a value (missing or null field, unknown name) stays as written, as in the connector.</li>
+    <li>
+      A field left empty, or a template that only gives blanks, takes the default text: the name of the workspace and the
+      type of the event for the title; <code>payload.title</code>, or else a summary of the payload, for the body.
+    </li>
+    <li>The title is cut at 100 characters, the body at 300. The preview of the form shows the result with an example event.</li>
+  </ul>
   <p>A click on the notification opens Tower on the line of the event, in the History.</p>
 
   <h3>Server setup</h3>

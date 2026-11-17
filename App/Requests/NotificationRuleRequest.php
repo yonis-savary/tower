@@ -26,16 +26,13 @@ class NotificationRuleRequest extends Request
     }
 
     /**
-     * A raw value, or the dotted path of a key of the payload. Null or missing : the default text.
+     * A template with placeholders such as {payload.title}. Null, missing or empty : the default text.
      */
     public static function textRule(): Rule
     {
-        return Param::object([
-            'mode' => Param::string()->inArray(PushService::TEXT_MODES),
-            'value' => Param::string()->withValueCondition(
-                fn ($value) => '' !== (string) $value && mb_strlen((string) $value) <= 200,
-                '{key} must contain between 1 and 200 characters'
-            ),
-        ], nullable: true)->optional();
+        return Param::string(nullable: true)->withValueCondition(
+            fn ($template) => null === $template || mb_strlen((string) $template) <= PushService::MAX_TEMPLATE_LENGTH,
+            '{key} must contain '.PushService::MAX_TEMPLATE_LENGTH.' characters at most'
+        )->optional();
     }
 }

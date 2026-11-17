@@ -1640,14 +1640,8 @@ export type ListNotificationRulesResponses = {
         id: number;
         name: string;
         listen: Array<string>;
-        title: {
-            mode: string;
-            value: string;
-        } | null;
-        body: {
-            mode: string;
-            value: string;
-        } | null;
+        title: string | null;
+        body: string | null;
         enabled: boolean;
         created_at: string;
     }>;
@@ -1659,14 +1653,8 @@ export type CreateNotificationRuleData = {
     body: {
         name: string;
         listen: Array<string>;
-        title?: {
-            mode: 'raw' | 'key';
-            value: string;
-        } | null;
-        body?: {
-            mode: 'raw' | 'key';
-            value: string;
-        } | null;
+        title?: string | null;
+        body?: string | null;
     };
     path?: never;
     query?: never;
@@ -1696,14 +1684,8 @@ export type CreateNotificationRuleResponses = {
         id: number;
         name: string;
         listen: Array<string>;
-        title: {
-            mode: string;
-            value: string;
-        } | null;
-        body: {
-            mode: string;
-            value: string;
-        } | null;
+        title: string | null;
+        body: string | null;
         enabled: boolean;
         created_at: string;
     };
@@ -1713,14 +1695,8 @@ export type CreateNotificationRuleResponse = CreateNotificationRuleResponses[key
 
 export type PreviewNotificationData = {
     body: {
-        title?: {
-            mode: 'raw' | 'key';
-            value: string;
-        } | null;
-        body?: {
-            mode: 'raw' | 'key';
-            value: string;
-        } | null;
+        title?: string | null;
+        body?: string | null;
         type: string;
         payload: string;
     };
@@ -1795,14 +1771,8 @@ export type UpdateNotificationRuleData = {
     body: {
         name: string;
         listen: Array<string>;
-        title?: {
-            mode: 'raw' | 'key';
-            value: string;
-        } | null;
-        body?: {
-            mode: 'raw' | 'key';
-            value: string;
-        } | null;
+        title?: string | null;
+        body?: string | null;
         enabled: boolean;
     };
     path: {
@@ -1841,14 +1811,8 @@ export type UpdateNotificationRuleResponses = {
         id: number;
         name: string;
         listen: Array<string>;
-        title: {
-            mode: string;
-            value: string;
-        } | null;
-        body: {
-            mode: string;
-            value: string;
-        } | null;
+        title: string | null;
+        body: string | null;
         enabled: boolean;
         created_at: string;
     };

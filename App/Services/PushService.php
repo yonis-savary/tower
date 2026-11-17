@@ -18,10 +18,7 @@ use Cube\Env\Logger\Logger;
  */
 class PushService
 {
-    public const TEXT_RAW = 'raw';
-    public const TEXT_KEY = 'key';
-    public const TEXT_MODES = [self::TEXT_RAW, self::TEXT_KEY];
-
+    public const MAX_TEMPLATE_LENGTH = 200;
     public const MAX_TITLE_LENGTH = 100;
     public const MAX_BODY_LENGTH = 300;
     public const MAX_ATTEMPTS = 3;
@@ -126,11 +123,11 @@ class PushService
     }
 
     /**
-     * @param list<string>                            $listen
-     * @param null|array{mode: string, value: string} $title  null for the default title
-     * @param null|array{mode: string, value: string} $body   null for the default body
+     * @param list<string> $listen
+     * @param ?string      $title  A template, null or empty for the default title
+     * @param ?string      $body   A template, null or empty for the default body
      */
-    public function createRule(int $workspace, int $user, string $name, array $listen, ?array $title, ?array $body): NotificationRule
+    public function createRule(int $workspace, int $user, string $name, array $listen, ?string $title, ?string $body): NotificationRule
     {
         $rule = new NotificationRule([
             'workspace' => $workspace,
@@ -143,11 +140,9 @@ class PushService
     }
 
     /**
-     * @param list<string>                            $listen
-     * @param null|array{mode: string, value: string} $title
-     * @param null|array{mode: string, value: string} $body
+     * @param list<string> $listen
      */
-    public function updateRule(NotificationRule $rule, string $name, array $listen, ?array $title, ?array $body, bool $enabled): NotificationRule
+    public function updateRule(NotificationRule $rule, string $name, array $listen, ?string $title, ?string $body, bool $enabled): NotificationRule
     {
         $rule->enabled = $enabled;
 
@@ -167,18 +162,6 @@ class PushService
         $listen = json_decode((string) $rule->listen, true);
 
         return is_array($listen) ? array_values(array_filter($listen, 'is_string')) : [];
-    }
-
-    /**
-     * @return null|array{mode: string, value: string}
-     */
-    public function textOf(?string $stored): ?array
-    {
-        $text = null === $stored ? null : json_decode($stored, true);
-        if (!is_array($text) || !in_array($text['mode'] ?? null, self::TEXT_MODES, true) || !is_string($text['value'] ?? null))
-            return null;
-
-        return ['mode' => $text['mode'], 'value' => $text['value']];
     }
 
     // Sending
@@ -217,7 +200,7 @@ class PushService
                 continue;
 
             $message = [
-                ...$this->content($this->textOf($rule->title), $this->textOf($rule->body), $found->name, $event, $payload),
+                ...$this->content($rule->title, $rule->body, $found->name, $event, $payload),
                 // A new notification of the same rule and event replaces the previous one
                 'tag' => "rule-{$rule->id}-{$event}",
                 'url' => "/history?workspace={$workspace}&line={$history}",
@@ -229,23 +212,23 @@ class PushService
     }
 
     /**
-     * The text of a notification : each of the title and the body is a raw value, or the value of
-     * a key of the payload. A missing or empty value falls back to the default text.
+     * The text of a notification : the title and the body are templates, with the placeholders of
+     * the connector handlers ({event}, {workspace}, {payload.author.name}). A placeholder without
+     * a value stays as written ; a template that renders empty falls back to the default text.
      *
-     * @param null|array{mode: string, value: string} $title
-     * @param null|array{mode: string, value: string} $body
-     * @param string                                  $payload JSON object
+     * @param string $payload JSON object
      *
      * @return array{title: string, body: string}
      */
-    public function content(?array $title, ?array $body, string $workspaceName, string $event, string $payload): array
+    public function content(?string $title, ?string $body, string $workspaceName, string $event, string $payload): array
     {
         $data = json_decode($payload, true);
         $data = is_array($data) ? $data : [];
+        $values = ['event' => $event, 'workspace' => $workspaceName, 'payload' => json_encode((object) $data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)];
 
         return [
-            'title' => $this->truncate($this->resolve($title, $data) ?? "{$workspaceName} · {$event}", self::MAX_TITLE_LENGTH),
-            'body' => $this->truncate($this->resolve($body, $data) ?? $this->defaultBody($data), self::MAX_BODY_LENGTH),
+            'title' => $this->truncate($this->render($title, $values, $data) ?? "{$workspaceName} · {$event}", self::MAX_TITLE_LENGTH),
+            'body' => $this->truncate($this->render($body, $values, $data) ?? $this->defaultBody($data), self::MAX_BODY_LENGTH),
         ];
     }
 
@@ -327,16 +310,28 @@ class PushService
     }
 
     /**
-     * @param null|array{mode: string, value: string} $text
+     * @param array<string,string> $values
      */
-    private function resolve(?array $text, array $payload): ?string
+    private function render(?string $template, array $values, array $payload): ?string
     {
-        if (null === $text)
+        if (null === $template)
             return null;
 
-        $value = self::TEXT_RAW === $text['mode'] ? $text['value'] : $this->valueAt($payload, $text['value']);
+        // The placeholders of the connector handlers : a name of letters, digits, dots and underscores
+        $text = preg_replace_callback('/\{([A-Za-z0-9_.]+)\}/', fn (array $match) => $this->placeholder($match[1], $values, $payload) ?? $match[0], $template);
 
-        return null === $value || '' === trim($value) ? null : $value;
+        return '' === trim($text) ? null : $text;
+    }
+
+    /**
+     * @param array<string,string> $values
+     */
+    private function placeholder(string $name, array $values, array $payload): ?string
+    {
+        if (array_key_exists($name, $values))
+            return $values[$name];
+
+        return str_starts_with($name, 'payload.') ? $this->valueAt($payload, substr($name, strlen('payload.'))) : null;
     }
 
     /**
@@ -363,28 +358,20 @@ class PushService
     }
 
     /**
-     * @param list<string>                            $listen
-     * @param null|array{mode: string, value: string} $title
-     * @param null|array{mode: string, value: string} $body
+     * @param list<string> $listen
      */
-    private function fillRule(NotificationRule $rule, string $name, array $listen, ?array $title, ?array $body): NotificationRule
+    private function fillRule(NotificationRule $rule, string $name, array $listen, ?string $title, ?string $body): NotificationRule
     {
         $rule->name = $name;
         $rule->listen = json_encode(array_values(array_unique($listen)), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-        $rule->title = $this->encodeText($title);
-        $rule->body = $this->encodeText($body);
+        $rule->title = $this->templateOrDefault($title);
+        $rule->body = $this->templateOrDefault($body);
 
         return $rule;
     }
 
-    /**
-     * @param null|array{mode: string, value: string} $text
-     */
-    private function encodeText(?array $text): ?string
+    private function templateOrDefault(?string $template): ?string
     {
-        if (null === $text)
-            return null;
-
-        return json_encode(['mode' => $text['mode'], 'value' => $text['value']], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        return null === $template || '' === trim($template) ? null : trim($template);
     }
 }
