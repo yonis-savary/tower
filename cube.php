@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Connector\ConnectorConfiguration;
 use App\Push\PushConfiguration;
 use App\Security\ActiveUserAuthentication;
 use App\Security\RegistrationConfiguration;
@@ -69,6 +70,9 @@ return [
         privateKey: env('VAPID_PRIVATE_KEY'),
         subject: env('VAPID_SUBJECT'),
     ),
+
+    // A connector answering an event may describe the `next` events to trigger : false ignores them
+    new ConnectorConfiguration(allowNextEvents: true),
 
     new OpenAPIConfiguration(
         outputFile: 'Frontend/openapi.json',

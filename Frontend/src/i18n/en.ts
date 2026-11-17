@@ -256,6 +256,7 @@ export default {
     },
     viaWebhook: 'through the webhook “{name}”',
     viaSchedule: 'by the schedule “{name}”',
+    viaDevice: 'by {name}, answering #{line}',
     title: 'History',
     emptyTitle: 'Nothing yet',
     emptyHint: 'Every action of the workspace will be written here: tasks, launched events, connected devices, changes seen in Jira and Bitbucket.',

@@ -2,18 +2,23 @@
 
 namespace App\Services;
 
+use App\Connector\ConnectorConfiguration;
 use App\EventTypes\EventTypeSource;
+use App\Models\EventDelivery;
 use App\Models\History;
 use App\Models\QuickAction;
 use Cube\Data\Bunch;
+use Cube\Env\Logger\Logger;
 
 class EventService
 {
     public const HISTORY_TYPE = 'event.triggered';
+    public const MAX_NEXT_EVENTS = 10;
 
     public function __construct(
         protected EventAnnouncer $announcer,
         protected HistoryService $history,
+        protected ConnectorConfiguration $connector,
     ) {}
 
     /**
@@ -67,6 +72,54 @@ class EventService
         }
 
         return $suggestions;
+    }
+
+    /**
+     * The events a connector described in its final answer, as `next` : it only sends those of the
+     * handlers that succeeded. A chain never goes on to the type of the event it answers ; longer
+     * loops are the business of whoever writes the handlers.
+     *
+     * @param list<array{type: string, payload?: array<string,mixed>}> $next
+     */
+    public function triggerNext(int $delivery, array $next): void
+    {
+        if (!$this->connector->allowNextEvents)
+            return;
+
+        $found = EventDelivery::find($delivery);
+        if (!$found || !in_array($found->status, [HistoryService::DELIVERY_SUCCEEDED, HistoryService::DELIVERY_FAILED], true) || !$answered = History::find($found->history))
+            return;
+
+        $answeredType = $this->eventTypeOf($answered);
+        foreach ($next as $event) {
+            if ($event['type'] === $answeredType) {
+                Logger::getInstance()->warning('A connector answered {type} with the same event as next, ignored', ['type' => $answeredType, 'delivery' => $delivery]);
+                continue;
+            }
+
+            $this->triggerFromDevice($answered, $found, $event['type'], json_encode((object) ($event['payload'] ?? []), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        }
+    }
+
+    private function triggerFromDevice(History $answered, EventDelivery $delivery, string $type, string $payload): History
+    {
+        $details = ['event' => $type, 'payload' => json_decode($payload), 'device' => $delivery->hostname, 'answering' => $answered->id];
+        $line = $this->history->log($answered->workspace, self::HISTORY_TYPE, $details, HistoryService::ORIGIN_DEVICE, signal: ['event' => $type, 'device' => $delivery->connection_uuid]);
+
+        $this->announcer->announce($answered->workspace, $line->id, $type, $payload);
+
+        return $line;
+    }
+
+    /**
+     * The type the devices received for a line : the event itself for an `event.triggered` line.
+     */
+    private function eventTypeOf(History $line): string
+    {
+        if (self::HISTORY_TYPE !== $line->type)
+            return $line->type;
+
+        return json_decode((string) $line->details, true)['event'] ?? $line->type;
     }
 
     /**

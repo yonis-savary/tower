@@ -4,8 +4,10 @@ Each event Tower sends is given to the handler : the message as JSON on its stan
 TOWER_EVENT, TOWER_EVENT_ID, TOWER_DELIVERY and TOWER_WORKSPACE in its environment. Its exit code
 and output are sent back to Tower, in the history of the event.
 
-Handlers map event patterns to one command or a list of commands :
-    {"task.*": "notify-send Tower {payload.title}", "deploy.*": ["git pull", "make deploy"]}
+Handlers map event patterns to one command or a list of commands, or to an object choosing the
+answer sent to Tower and the next events to trigger :
+    {"task.*": "notify-send Tower {payload.title}", "deploy.*": ["git pull", "make deploy"],
+     "backup.run": {"run": "backup.sh", "response": {"log": "{stdout}"}, "next": {"type": "backup.done"}}}
 A command starting with a .py or .pyz file runs with the Python of the connector.
 They are read, by priority, from --handler (one command for every event), --handler-file, or the
 "handlers" section of the configuration.
@@ -23,6 +25,7 @@ import platform
 import random
 import subprocess
 import sys
+import typing
 import zipfile
 from pathlib import Path
 from socket import gethostname
@@ -159,6 +162,15 @@ class Outbox:
 
 
 PLACEHOLDER = re.compile(r"\{([A-Za-z0-9_.]+)\}")
+# "response" missing : the outputs of the commands answer, as before the key existed
+NO_RESPONSE = object()
+HANDLER_KEYS = {"run", "response", "next"}
+
+
+class Chain(typing.NamedTuple):
+    commands: list[list[str]]
+    response: object = NO_RESPONSE
+    next: list = []
 
 
 class SingleCommand:
@@ -167,8 +179,8 @@ class SingleCommand:
     def __init__(self, command: list[str]) -> None:
         self.command = command
 
-    def chains_for(self, message: dict) -> list[list[list[str]]]:
-        return [[self.command]]
+    def chains_for(self, message: dict) -> list[Chain]:
+        return [Chain([self.command])]
 
 
 class HandlerFile:
@@ -184,7 +196,7 @@ class HandlerFile:
         self.path = Path(path).expanduser() if path else None
         self.section = section
         self.modified: float | None = None
-        self.rules: list[tuple[str, list[list[str]]]] = []
+        self.rules: list[tuple[str, Chain]] = []
         if mapping is not None:
             self.rules = self.parse(mapping)
 
@@ -200,18 +212,31 @@ class HandlerFile:
         self.modified = self.path.stat().st_mtime
 
     @staticmethod
-    def parse(content) -> list[tuple[str, list[list[str]]]]:
+    def parse(content) -> list[tuple[str, Chain]]:
         if not isinstance(content, dict) or not content:
             raise ValueError("expected a JSON object of event patterns")
 
-        rules = []
-        for pattern, value in content.items():
-            commands = [value] if isinstance(value, str) else value
-            if not pattern or not isinstance(commands, list) or not commands or not all(isinstance(command, str) and split_command(command) for command in commands):
-                raise ValueError(f"{pattern!r} must be a command or a non empty list of commands")
-            rules.append((pattern, [split_command(command) for command in commands]))
+        return [(pattern, HandlerFile.parse_chain(pattern, value)) for pattern, value in content.items()]
 
-        return rules
+    @staticmethod
+    def parse_chain(pattern: str, value) -> Chain:
+        """A command, a list of commands, or {"run": ..., "response": ..., "next": ...}."""
+        handler = value if isinstance(value, dict) else {"run": value}
+        unknown = set(handler) - HANDLER_KEYS
+        if unknown:
+            raise ValueError(f"{pattern!r} has unknown keys {sorted(unknown)}, expected {sorted(HANDLER_KEYS)}")
+
+        run = handler.get("run")
+        commands = [run] if isinstance(run, str) else run
+        if not pattern or not isinstance(commands, list) or not commands or not all(isinstance(command, str) and split_command(command) for command in commands):
+            raise ValueError(f"{pattern!r} must run a command or a non empty list of commands")
+
+        following = handler.get("next", [])
+        following = [following] if isinstance(following, dict) else following
+        if not isinstance(following, list) or not all(isinstance(event, dict) and isinstance(event.get("type"), str) and set(event) <= {"type", "payload"} for event in following):
+            raise ValueError(f"{pattern!r} : next must be an event {{\"type\": ..., \"payload\": ...}} or a list of them")
+
+        return Chain([split_command(command) for command in commands], handler.get("response", NO_RESPONSE), following)
 
     def refresh(self) -> None:
         if self.path is None:
@@ -224,30 +249,63 @@ class HandlerFile:
         except (OSError, ValueError) as error:
             print(f"{self.name}: {error}, keeping the previous version", file=sys.stderr, flush=True)
 
-    def chains_for(self, message: dict) -> list[list[list[str]]]:
+    def chains_for(self, message: dict) -> list[Chain]:
         self.refresh()
         event = str(message.get("event", ""))
         values = placeholder_values(message)
 
-        # Replaced inside an argument, after splitting : a value never adds an argument. Unknown names stay as written
+        # Replaced inside an argument, after splitting : a value never adds an argument
         def fill(command: list[str]) -> list[str]:
-            return [PLACEHOLDER.sub(lambda match: values.get(match.group(1), match.group(0)), part) for part in command]
+            return [fill_text(part, values) for part in command]
 
-        return [[fill(command) for command in commands] for pattern, commands in self.rules if fnmatch.fnmatchcase(event, pattern)]
+        return [chain._replace(commands=[fill(command) for command in chain.commands]) for pattern, chain in self.rules if fnmatch.fnmatchcase(event, pattern)]
 
 
-def placeholder_values(message: dict) -> dict[str, str]:
-    """{event}, {id}, {delivery}, {workspace} and {payload.<field>}, nested fields with dots."""
-    values = {key: str(message.get(key, "")) for key in ("event", "id", "delivery", "workspace")}
+def placeholder_values(message: dict) -> dict:
+    """{event}, {id}, {delivery}, {workspace} and {payload.<field>}, nested fields with dots, as they came."""
+    values = {key: message.get(key, "") for key in ("event", "id", "delivery", "workspace")}
 
     def flatten(prefix: str, value) -> None:
-        values[prefix] = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
+        values[prefix] = value
         if isinstance(value, dict):
             for key, child in value.items():
                 flatten(f"{prefix}.{key}", child)
 
     flatten("payload", message.get("payload"))
     return values
+
+
+def as_text(value) -> str:
+    return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
+
+
+def fill_text(text: str, values: dict) -> str:
+    """Unknown names stay as written."""
+    return PLACEHOLDER.sub(lambda match: as_text(values[match.group(1)]) if match.group(1) in values else match.group(0), text)
+
+
+def interpolate(value, values: dict):
+    """Every string inside a JSON value. A string that is a single placeholder takes the value with its type."""
+    if isinstance(value, str):
+        alone = PLACEHOLDER.fullmatch(value)
+        return values[alone.group(1)] if alone and alone.group(1) in values else fill_text(value, values)
+    if isinstance(value, list):
+        return [interpolate(item, values) for item in value]
+    if isinstance(value, dict):
+        return {key: interpolate(item, values) for key, item in value.items()}
+    return value
+
+
+class Result(typing.NamedTuple):
+    status: str
+    exit_code: int | None
+    stdout: str
+    stderr: str
+
+    @property
+    def output(self) -> str:
+        """The output is the answer ; without one, the errors explain what happened."""
+        return self.stdout if self.stdout.strip() else self.stderr
 
 
 class Handler:
@@ -270,31 +328,53 @@ class Handler:
 
         async with self.slots:
             await self.outbox.send({"type": "response", "delivery": delivery, "status": "running"})
-            status, exit_code, output = await self.execute_all(chains, message)
+            status, exit_code, output, following = await self.execute_all(chains, message)
 
-        self.console.outgoing(f"{self.console.event(message)} {status}", exit_code, output if status == "failed" else "")
-        await self.outbox.send({"type": "response", "delivery": delivery, "status": status, "exit_code": exit_code, "output": output})
+        chained = f" · next {', '.join(str(event.get('type')) for event in following)}" if following else ""
+        self.console.outgoing(f"{self.console.event(message)} {status}{chained}", exit_code, output if status == "failed" else "")
+        answer = {"type": "response", "delivery": delivery, "status": status, "exit_code": exit_code, "output": output}
+        await self.outbox.send({**answer, "next": following} if following else answer)
 
-    async def execute_all(self, chains: list[list[list[str]]], message: dict) -> tuple[str, int | None, str]:
+    async def execute_all(self, chains: list[Chain], message: dict) -> tuple[str, int | None, str, list]:
         """Each chain in order, stopping at its first failure as `&&` would. The answer fails if a chain failed,
-        with the exit code of the first failure, or of the last command otherwise."""
+        with the exit code of the first failure, or of the last command otherwise. Each chain gives its
+        response, and its next events when it succeeded."""
         outputs = []
+        following = []
         failure = None
         status, exit_code = "succeeded", 0
+        values = placeholder_values(message)
 
         for chain in chains:
-            for command in chain:
-                status, exit_code, output = await self.execute(command, message)
-                if output.strip():
-                    outputs.append(output.rstrip("\n"))
-                if status == "failed":
-                    failure = failure or (status, exit_code)
+            results = []
+            for command in chain.commands:
+                result = await self.execute(command, message)
+                results.append(result)
+                if result.status == "failed":
                     break
 
-        status, exit_code = failure or (status, exit_code)
-        return status, exit_code, "\n".join(outputs)[:MAX_OUTPUT_BYTES]
+            status, exit_code = results[-1].status, results[-1].exit_code
+            if status == "failed":
+                failure = failure or (status, exit_code)
 
-    async def execute(self, command: list[str], message: dict) -> tuple[str, int | None, str]:
+            chain_values = {
+                **values,
+                "stdout": "\n".join(result.stdout.rstrip("\n") for result in results if result.stdout.strip()),
+                "stderr": "\n".join(result.stderr.rstrip("\n") for result in results if result.stderr.strip()),
+                "exit_code": exit_code,
+                "status": status,
+            }
+            if chain.response is NO_RESPONSE:
+                outputs += [result.output.rstrip("\n") for result in results if result.output.strip()]
+            else:
+                outputs.append(as_text(interpolate(chain.response, chain_values)))
+            if status == "succeeded":
+                following += [interpolate(event, chain_values) for event in chain.next]
+
+        status, exit_code = failure or (status, exit_code)
+        return status, exit_code, "\n".join(outputs)[:MAX_OUTPUT_BYTES], following
+
+    async def execute(self, command: list[str], message: dict) -> Result:
         environment = {
             **os.environ,
             "TOWER_EVENT": str(message.get("event", "")),
@@ -311,18 +391,21 @@ class Handler:
                 env=environment,
             )
         except OSError as error:
-            return "failed", None, f"cannot start {command[0]}: {error}"
+            return Result("failed", None, "", f"cannot start {command[0]}: {error}")
 
         try:
             stdout, stderr = await asyncio.wait_for(process.communicate(json.dumps(message).encode()), self.timeout)
         except asyncio.TimeoutError:
             process.kill()
             await process.wait()
-            return "failed", None, f"timeout after {self.timeout:g}s"
+            return Result("failed", None, "", f"timeout after {self.timeout:g}s")
 
-        # The output is the answer ; without one, the errors explain what happened
-        output = (stdout if stdout.strip() else stderr)[:MAX_OUTPUT_BYTES].decode(errors="replace")
-        return ("succeeded" if process.returncode == 0 else "failed"), process.returncode, output
+        return Result(
+            "succeeded" if process.returncode == 0 else "failed",
+            process.returncode,
+            stdout[:MAX_OUTPUT_BYTES].decode(errors="replace"),
+            stderr[:MAX_OUTPUT_BYTES].decode(errors="replace"),
+        )
 
 
 class Connector:

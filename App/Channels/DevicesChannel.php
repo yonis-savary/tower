@@ -4,6 +4,8 @@ namespace App\Channels;
 
 use App\Models\AccessKey;
 use App\Services\AccessKeyService;
+use App\Requests\TriggerEventRequest;
+use App\Services\EventService;
 use App\Services\HistoryService;
 use Cube\Web\Http\Rules\Param;
 use Cube\Web\Http\Rules\Rule;
@@ -186,6 +188,13 @@ class DevicesChannel extends Channel
             'status' => Param::string()->inArray(HistoryService::DELIVERY_ANSWERS),
             'exit_code' => Param::integer(nullable: true)->optional(),
             'output' => Param::string(trim: false, nullable: true)->optional(),
+            'next' => Param::array(Param::object([
+                'type' => TriggerEventRequest::typeRule(),
+                'payload' => TriggerEventRequest::objectPayloadRule()->optional(),
+            ]))->withValueCondition(
+                fn ($next) => is_array($next) && count($next) <= EventService::MAX_NEXT_EVENTS,
+                '{key} lists '.EventService::MAX_NEXT_EVENTS.' events at most'
+            )->optional(),
         ]);
     }
 
@@ -198,7 +207,11 @@ class DevicesChannel extends Channel
         if (null === $key)
             return;
 
-        $this->history->recordResponse($key, $data['delivery'], $data['status'], $data['exit_code'] ?? null, $data['output'] ?? null);
+        if (!$this->history->recordResponse($key, $data['delivery'], $data['status'], $data['exit_code'] ?? null, $data['output'] ?? null) || empty($data['next']))
+            return;
+
+        // Built here rather than injected : it announces through this channel, which would build it again
+        inject(EventService::class)->triggerNext($data['delivery'], $data['next']);
     }
 
     /**

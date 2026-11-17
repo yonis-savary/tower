@@ -38,6 +38,17 @@ const envelope = `
 const shell = `
 "backup.run": "sh -c 'tar czf ~/backup.tgz ~/projects && rclone copy ~/backup.tgz remote:'"
 `
+
+const chained = `
+"backup.run": {
+  "run": "python3 ~/tower/backup.py {payload.env}",
+  "response": { "env": "{payload.env}", "summary": "{stdout}", "code": "{exit_code}" },
+  "next": {
+    "type": "notify.phone",
+    "payload": { "title": "Backup of {payload.env} done", "files": "{payload.count}" }
+  }
+}
+`
 </script>
 
 <template>
@@ -155,4 +166,41 @@ const shell = `
     standard output, or its errors when it is empty, 64 KiB at most). A command running past the timeout is stopped and
     counts as a failure. Answers sent while the connection is down leave as soon as it is back.
   </p>
+
+  <h3>Choosing the answer and chaining an event</h3>
+  <p>
+    Instead of a command or a list, a pattern accepts an object: <code>run</code> takes the command or the list, as usual,
+    <code>response</code> describes the answer sent to Tower, and <code>next</code> an event to launch afterwards. Both are
+    optional.
+  </p>
+  <CodeBlock :code="chained" language="json" />
+  <ul>
+    <li>
+      <code>response</code> can be any JSON value: each text inside it is filled with the variables of the commands, plus
+      <code>{stdout}</code>, <code>{stderr}</code>, <code>{exit_code}</code> and <code>{status}</code> (<code>succeeded</code>
+      or <code>failed</code>). It replaces the outputs of the commands of this pattern; an object or a list goes as JSON.
+      Several patterns: their answers are put one after the other.
+    </li>
+    <li>
+      A text that is <strong>a single</strong> variable keeps the type of the value: <code>"{payload.count}"</code> gives the
+      number <code>3</code>, and <code>"{exit_code}"</code> an integer.
+    </li>
+    <li>
+      <code>next</code> is an event <code>{"type": …, "payload": …}</code>, or a list of events (10 at most per answer),
+      filled the same way. It only leaves when the <code>run</code> of this pattern <strong>succeeded</strong>.
+    </li>
+    <li>
+      Tower launches it as an ordinary event: it goes through the History (“by &lt;device&gt;, answering #…”), the devices
+      listening to it and the notification rules. It is refused when it has the same type as the event it answers; a
+      longer loop is your responsibility.
+    </li>
+    <li>
+      An unknown key in the object (<code>reponse</code> for instance) makes the file invalid: the previous version is kept
+      and the connector says so. It needs an up-to-date connector, downloaded again from the Devices dialog.
+    </li>
+    <li>
+      The server administrator can turn chaining off in <code>cube.php</code>:
+      <code>new ConnectorConfiguration(allowNextEvents: false)</code>. The <code>next</code> events are then ignored.
+    </li>
+  </ul>
 </template>

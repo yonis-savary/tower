@@ -88,6 +88,7 @@ export function historyDetail({ t, te }: HistoryI18n, type: string, parsed: Deta
     case EVENT_TYPE:
       if (parsed.webhook) return `${parsed.event} · ${t('history.viaWebhook', { name: parsed.webhook })}`
       if (parsed.schedule) return `${parsed.event} · ${t('history.viaSchedule', { name: parsed.schedule })}`
+      if (parsed.answering) return `${parsed.event} · ${t('history.viaDevice', { name: parsed.device ?? t('devices.unknownHost'), line: parsed.answering })}`
       return parsed.event
     case 'device.connected':
       return `${parsed.hostname ?? t('devices.unknownHost')} · ${parsed.access_key}`

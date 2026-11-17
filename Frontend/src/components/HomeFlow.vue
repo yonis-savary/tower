@@ -176,6 +176,7 @@ function sourceOf(signal: Extract<WorkspaceSignal, { type: 'history.created' }>)
   if (signal.origin === 'webhook') return `webhook:${signal.source}`
   if (signal.origin === 'schedule') return `schedule:${signal.source}`
   if (signal.origin === 'integration') return signal.history_type.startsWith('jira.') ? 'jira' : 'bitbucket'
+  if (signal.origin === 'device') return `device:${signal.device}`
   return 'interface'
 }
 

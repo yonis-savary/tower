@@ -3,11 +3,14 @@
 namespace Tests\Integration;
 
 use App\Channels\DevicesChannel;
+use App\Connector\ConnectorConfiguration;
+use App\Models\History;
 use App\Models\EventDelivery;
 use App\Models\Workspace;
 use App\Services\AccessKeyService;
 use App\Services\HistoryService;
 use App\Session\SelectedWorkspace;
+use Cube\Env\Configuration;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
 use Cube\Web\Websocket\Broadcast\Broadcast;
@@ -147,6 +150,74 @@ class DeviceDeliveryTest extends CubeTestCase
         // A finished delivery keeps its result
         $this->answer($device, ['type' => 'response', 'delivery' => $delivery->id, 'status' => 'succeeded', 'output' => 'later']);
         $this->assertSame('failed', EventDelivery::find($delivery->id)->status);
+    }
+
+    /**
+     * @return list<History>
+     */
+    private function chainedLines(): array
+    {
+        return History::select()->where('type', 'event.triggered')->where('origin', 'device')->fetch();
+    }
+
+    public function testNextEventsFollowASuccessfulAnswer()
+    {
+        $workspace = $this->workspace();
+        $device = $this->connect($workspace, ['*']);
+        $answered = $this->send($workspace, 'backup.run');
+        $delivery = $this->events($device)[0]['delivery'];
+
+        $this->answer($device, ['type' => 'response', 'delivery' => $delivery, 'status' => 'succeeded', 'output' => 'ok', 'next' => [
+            ['type' => 'backup.done', 'payload' => ['size' => 3, 'files' => ['a', 'b']]],
+            ['type' => 'notify.phone'],
+            // The answered event itself : a loop of one step, refused
+            ['type' => 'backup.run'],
+        ]]);
+
+        $lines = $this->chainedLines();
+        $this->assertSame(['backup.done', 'notify.phone'], array_map(fn (History $line) => json_decode($line->details, true)['event'], $lines));
+        $details = json_decode($lines[0]->details, true);
+        $this->assertSame(['size' => 3, 'files' => ['a', 'b']], $details['payload']);
+        $this->assertSame($answered, $details['answering']);
+        $this->assertSame([], json_decode($lines[1]->details, true)['payload']);
+    }
+
+    public function testNextEventsNeedAFinalAnswerAndTheConfiguration()
+    {
+        $workspace = $this->workspace();
+        $device = $this->connect($workspace, ['*']);
+
+        $this->send($workspace, 'backup.run');
+        $running = $this->events($device)[0]['delivery'];
+        $this->answer($device, ['type' => 'response', 'delivery' => $running, 'status' => 'running', 'next' => [['type' => 'backup.done']]]);
+        $this->assertSame([], $this->chainedLines());
+
+        // Another handler of the same event failed : the connector still sends the next events of those that succeeded
+        $this->answer($device, ['type' => 'response', 'delivery' => $running, 'status' => 'failed', 'next' => [['type' => 'backup.done']]]);
+        $this->assertCount(1, $this->chainedLines());
+
+        Configuration::getInstance()->add(new ConnectorConfiguration(allowNextEvents: false));
+        try {
+            $this->send($workspace, 'backup.run');
+            $refused = $this->events($device)[1]['delivery'];
+            $this->answer($device, ['type' => 'response', 'delivery' => $refused, 'status' => 'succeeded', 'next' => [['type' => 'backup.done']]]);
+            $this->assertCount(1, $this->chainedLines());
+        } finally {
+            Configuration::getInstance()->add(new ConnectorConfiguration());
+        }
+    }
+
+    public function testNextEventsAreValidated()
+    {
+        $rule = $this->channel->getMessageRule();
+        $answer = fn (array $next) => ['type' => 'response', 'delivery' => 1, 'status' => 'succeeded', 'next' => $next];
+
+        $this->assertTrue($rule->validate($answer([['type' => 'a.b', 'payload' => ['x' => 1]], ['type' => 'c']]))->isValid());
+        $this->assertTrue($rule->validate($answer([['type' => 'a.b', 'payload' => []]]))->isValid());
+        $this->assertFalse($rule->validate($answer([['type' => 'Not A Type']]))->isValid());
+        $this->assertFalse($rule->validate($answer([['type' => 'a.b', 'payload' => [1, 2]]]))->isValid());
+        $this->assertFalse($rule->validate($answer([['type' => 'a.b', 'payload' => 'text']]))->isValid());
+        $this->assertFalse($rule->validate($answer(array_fill(0, 11, ['type' => 'a.b'])))->isValid());
     }
 
     public function testAnotherKeyCannotAnswerForADelivery()

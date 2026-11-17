@@ -38,6 +38,17 @@ const envelope = `
 const shell = `
 "backup.run": "sh -c 'tar czf ~/backup.tgz ~/projets && rclone copy ~/backup.tgz remote:'"
 `
+
+const chained = `
+"backup.run": {
+  "run": "python3 ~/tower/backup.py {payload.env}",
+  "response": { "env": "{payload.env}", "summary": "{stdout}", "code": "{exit_code}" },
+  "next": {
+    "type": "notify.phone",
+    "payload": { "title": "Sauvegarde {payload.env} terminée", "files": "{payload.count}" }
+  }
+}
+`
 </script>
 
 <template>
@@ -161,4 +172,42 @@ const shell = `
     sortie standard, ou les erreurs si elle est vide, 64 Kio au plus). Une commande qui dépasse le délai est arrêtée et
     compte comme un échec. Les réponses envoyées pendant une coupure partent dès que la connexion revient.
   </p>
+
+  <h3>Choisir la réponse et enchaîner un événement</h3>
+  <p>
+    À la place d'une commande ou d'une liste, un motif accepte un objet : <code>run</code> reçoit la commande ou la liste,
+    comme d'habitude, <code>response</code> décrit la réponse envoyée à Tower, et <code>next</code> un événement à lancer
+    ensuite. Les deux sont facultatifs.
+  </p>
+  <CodeBlock :code="chained" language="json" />
+  <ul>
+    <li>
+      <code>response</code> peut être n'importe quelle valeur JSON : chaque texte qu'elle contient est complété avec les
+      variables des commandes, plus <code>{stdout}</code>, <code>{stderr}</code>, <code>{exit_code}</code> et
+      <code>{status}</code> (<code>succeeded</code> ou <code>failed</code>). Elle remplace les sorties des commandes de ce
+      motif ; un objet ou une liste part en JSON. Plusieurs motifs : leurs réponses sont mises bout à bout.
+    </li>
+    <li>
+      Un texte qui n'est qu'<strong>une seule</strong> variable garde le type de la valeur : <code>"{payload.count}"</code>
+      donne le nombre <code>3</code>, et <code>"{exit_code}"</code> un entier.
+    </li>
+    <li>
+      <code>next</code> est un événement <code>{"type": …, "payload": …}</code>, ou une liste d'événements (10 au plus par
+      réponse), complétés de la même façon. Il ne part que si le <code>run</code> de ce motif a <strong>réussi</strong>.
+    </li>
+    <li>
+      Tower le lance comme un événement ordinaire : il passe par l'Historique (« par &lt;appareil&gt;, en réponse à #… »),
+      les appareils qui l'écoutent et les règles de notification. Il est refusé s'il a le même type que l'événement
+      auquel il répond ; une boucle plus longue reste ta responsabilité.
+    </li>
+    <li>
+      Une clé inconnue dans l'objet (<code>reponse</code> par exemple) rend le fichier invalide : la version précédente
+      est gardée et le connecteur l'affiche. Il faut un connecteur à jour, téléchargé à nouveau depuis la modale
+      Appareils.
+    </li>
+    <li>
+      L'administrateur du serveur peut couper l'enchaînement dans <code>cube.php</code> :
+      <code>new ConnectorConfiguration(allowNextEvents: false)</code>. Les <code>next</code> sont alors ignorés.
+    </li>
+  </ul>
 </template>

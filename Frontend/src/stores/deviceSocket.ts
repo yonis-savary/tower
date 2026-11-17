@@ -15,7 +15,7 @@ export type ConnectedDevice = {
 
 /** Sent when some data of the workspace changed : it carries what the flow diagram draws, the API gives the rest */
 export type WorkspaceSignal =
-  | { type: 'history.created'; history_type: string; history: number; origin: string; event?: string; source?: number }
+  | { type: 'history.created'; history_type: string; history: number; origin: string; event?: string; source?: number; device?: string }
   | { type: 'delivery.updated'; history: number; device: string; status: string }
   | { type: 'webhook.refused'; webhook: number }
 

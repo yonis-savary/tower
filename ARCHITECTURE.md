@@ -471,7 +471,7 @@ ne sont pas dans ce fichier : ils appartiennent à la configuration, côté Towe
 3. la section `handlers` de la configuration.
 
 Format de `handlers` : des motifs d'événements (`fnmatch`, comme les abonnements) en clés, une
-commande ou une liste de commandes en valeur.
+commande ou une liste de commandes en valeur, ou un objet `{run, response, next}` (voir plus bas).
 
 - Toutes les clés qui correspondent sont exécutées, dans l'ordre du fichier. Chacune est une
   chaîne indépendante : dans une liste, les commandes s'enchaînent et s'arrêtent au premier
@@ -496,6 +496,22 @@ Pour chaque commande :
 Le connecteur répond `running` au démarrage, puis `succeeded` ou `failed`, avec le code de
 sortie du premier échec, ou de la dernière commande. La sortie renvoyée réunit celles des
 commandes : la sortie standard de chacune, ou sa sortie d'erreur si la première est vide.
+**Réponse et événements suivants.** Un motif en objet prend `run` (commande ou liste),
+`response` et `next`, facultatifs ; une autre clé rend le fichier invalide.
+
+- `response` : n'importe quelle valeur JSON, dont chaque texte est complété avec les variables
+  des commandes, plus `{stdout}`, `{stderr}`, `{exit_code}` et `{status}`. Un texte qui n'est
+  qu'une variable en prend la valeur typée. Elle remplace les sorties des commandes du motif ;
+  un objet ou une liste part sérialisé en JSON. Les réponses de plusieurs motifs sont mises bout
+  à bout.
+- `next` : un événement `{type, payload}` ou une liste, complété de même, envoyé seulement si le
+  `run` du motif a réussi, dans le champ `next` de la réponse finale (10 au plus).
+- Tower déclenche chacun comme un événement ordinaire, d'origine `device` (ligne
+  `event.triggered` avec `device` et `answering`, l'id de la ligne à laquelle il répond),
+  seulement sur une réponse finale, et jamais vers le type de l'événement auquel il répond ; les
+  boucles plus longues restent à la charge de l'utilisateur. `ConnectorConfiguration(allowNextEvents:
+  false)` dans `cube.php` les ignore.
+
 `--max-jobs` (4 par défaut) limite les événements traités en même temps ; les suivants
 attendent, et le connecteur continue de recevoir. Sans aucun handler, le connecteur affiche
 les événements et répond `received`.
