@@ -21,7 +21,7 @@ class EventService
      */
     public function triggerAsUser(int $workspace, int $user, string $type, string $payload): History
     {
-        $line = $this->history->log($workspace, self::HISTORY_TYPE, ['event' => $type, 'payload' => json_decode($payload)], user: $user);
+        $line = $this->history->log($workspace, self::HISTORY_TYPE, ['event' => $type, 'payload' => json_decode($payload)], user: $user, signal: ['event' => $type]);
 
         $this->announcer->announce($workspace, $line->id, $type, $payload);
 
@@ -31,18 +31,18 @@ class EventService
     /**
      * Same as an event launched by a user, but brought by a call to a webhook of the workspace.
      */
-    public function triggerFromWebhook(int $workspace, string $webhook, string $type, string $payload): History
+    public function triggerFromWebhook(int $workspace, int $webhook, string $webhookName, string $type, string $payload): History
     {
-        $line = $this->history->log($workspace, self::HISTORY_TYPE, ['event' => $type, 'payload' => json_decode($payload), 'webhook' => $webhook], HistoryService::ORIGIN_WEBHOOK);
+        $line = $this->history->log($workspace, self::HISTORY_TYPE, ['event' => $type, 'payload' => json_decode($payload), 'webhook' => $webhookName], HistoryService::ORIGIN_WEBHOOK, signal: ['event' => $type, 'source' => $webhook]);
 
         $this->announcer->announce($workspace, $line->id, $type, $payload);
 
         return $line;
     }
 
-    public function triggerFromSchedule(int $workspace, string $schedule, string $type, string $payload): History
+    public function triggerFromSchedule(int $workspace, int $schedule, string $scheduleName, string $type, string $payload): History
     {
-        $line = $this->history->log($workspace, self::HISTORY_TYPE, ['event' => $type, 'payload' => json_decode($payload), 'schedule' => $schedule], HistoryService::ORIGIN_SCHEDULE);
+        $line = $this->history->log($workspace, self::HISTORY_TYPE, ['event' => $type, 'payload' => json_decode($payload), 'schedule' => $scheduleName], HistoryService::ORIGIN_SCHEDULE, signal: ['event' => $type, 'source' => $schedule]);
 
         $this->announcer->announce($workspace, $line->id, $type, $payload);
 

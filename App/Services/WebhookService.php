@@ -147,7 +147,7 @@ class WebhookService
         $webhook->save();
 
         foreach ($this->eventsOf($webhook) as $event)
-            $this->events->triggerFromWebhook($webhook->workspace, $webhook->name, $event, $payload);
+            $this->events->triggerFromWebhook($webhook->workspace, $webhook->id, $webhook->name, $event, $payload);
 
         return $call;
     }
@@ -235,7 +235,7 @@ class WebhookService
 
         // An accepted call signals through the events it triggers
         if (self::CALL_ACCEPTED !== $status)
-            $this->signals->send($webhook->workspace, WorkspaceSignals::WEBHOOK_REFUSED);
+            $this->signals->send($webhook->workspace, WorkspaceSignals::WEBHOOK_REFUSED, ['webhook' => $webhook->id]);
 
         return $call;
     }

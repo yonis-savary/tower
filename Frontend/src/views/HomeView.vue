@@ -5,6 +5,7 @@ import { RouterLink } from 'vue-router'
 import Button from 'primevue/button'
 import EmptyState from '../components/EmptyState.vue'
 import HomeActivity from '../components/HomeActivity.vue'
+import HomeFlow from '../components/HomeFlow.vue'
 import HomeQuickActions from '../components/HomeQuickActions.vue'
 import HomeTaskBoard from '../components/HomeTaskBoard.vue'
 import TaskDialog from '../components/TaskDialog.vue'
@@ -13,6 +14,7 @@ import { useJiraStore } from '../stores/jira'
 import { useTasksStore, type Task } from '../stores/tasks'
 import { useWorkspaceStore } from '../stores/workspace'
 import { EVENT_TYPE } from '../utils/historyLine'
+import { useMediaQuery } from '../utils/mediaQuery'
 
 // A burst of signals (a sync, a task move) reloads once
 const RELOAD_DELAY_MS = 300
@@ -24,6 +26,8 @@ const jira = useJiraStore()
 const socket = useDeviceSocketStore()
 
 const activity = ref<InstanceType<typeof HomeActivity> | null>(null)
+// The flow diagram needs the width of a desktop screen : it is not even mounted below
+const desktop = useMediaQuery('(min-width: 64rem)')
 const dialogVisible = ref(false)
 const dialogTask = ref<Task | null>(null)
 
@@ -91,6 +95,8 @@ function openTask(task: Task) {
 <template>
   <h1 class="page-title">{{ t('nav.home') }}</h1>
 
+  <HomeFlow v-if="desktop" class="home-flow" />
+
   <EmptyState v-if="isEmpty" icon="pi pi-home" :title="t('home.emptyTitle')" :hint="t('home.emptyHint')">
     <RouterLink v-if="showTasks" v-slot="{ navigate }" :to="{ name: 'tasks' }" custom>
       <Button :label="t('home.emptyTasks')" icon="pi pi-check-square" @click="navigate" />
@@ -117,6 +123,10 @@ function openTask(task: Task) {
   margin: 0 0 1.25rem;
   font-size: 1.5rem;
   font-weight: 600;
+}
+
+.home-flow {
+  margin-bottom: 1.25rem;
 }
 
 .home {

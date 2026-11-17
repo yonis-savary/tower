@@ -87,7 +87,7 @@ class ScheduledEventService
             $schedule->enabled = null === $runAt;
             $schedule->save();
 
-            $this->events->triggerFromSchedule($schedule->workspace, $schedule->name, $schedule->type, $schedule->payload);
+            $this->events->triggerFromSchedule($schedule->workspace, $schedule->id, $schedule->name, $schedule->type, $schedule->payload);
         }
     }
 

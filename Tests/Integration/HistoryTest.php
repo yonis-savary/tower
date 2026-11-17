@@ -152,15 +152,17 @@ class HistoryTest extends CubeTestCase
         $this->postJson('/api/events', ['type' => 'deploy.start', 'payload' => '{}'])->assertNoContent();
         $line = History::findWhere(['type' => 'event.triggered']);
 
-        $this->assertContains(['type' => WorkspaceSignals::HISTORY_CREATED, 'history_type' => 'event.triggered'], array_map(
-            fn (array $signal) => array_diff_key($signal, ['__class' => true]),
-            $this->broadcast->signals,
-        ));
+        $this->assertContains(
+            ['type' => WorkspaceSignals::HISTORY_CREATED, 'history_type' => 'event.triggered', 'history' => $line->id, 'origin' => 'user', 'event' => 'deploy.start'],
+            array_map(fn (array $signal) => array_diff_key($signal, ['__class' => true]), $this->broadcast->signals),
+        );
 
         $this->broadcast->signals = [];
         (new HistoryService())->logDelivery($line->id, 'uuid-1', 'pc', '{}');
-        $this->assertSame(WorkspaceSignals::DELIVERY_UPDATED, $this->broadcast->signals[0]['type']);
-        $this->assertSame($line->id, $this->broadcast->signals[0]['history']);
+        $this->assertSame(
+            ['type' => WorkspaceSignals::DELIVERY_UPDATED, 'history' => $line->id, 'device' => 'uuid-1', 'status' => 'pending'],
+            array_diff_key($this->broadcast->signals[0], ['__class' => true]),
+        );
     }
 
     public function testPurgeRemovesOnlyExpiredLinesAndTheirDeliveries()

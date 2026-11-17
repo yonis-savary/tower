@@ -814,11 +814,37 @@ connexion et un bouton **Déconnecter**. *Connecter un appareil* : voir ci-desso
 d'appareil, job échoué, job en cours), et dans la modale les jobs en attente d'un choix et
 les jobs échoués récents.
 
+### Circuit
+
+Le premier bloc de l'accueil dessine le workspace comme un circuit électronique, dans un SVG
+écrit à la main (`HomeFlow`, placement dans `utils/flowLayout.ts`). Il n'est monté qu'à partir
+de 64rem de large : ni affiché ni abonné aux signaux sur mobile.
+
+- **Puces** : Tower au centre ; à gauche les sources, par catégorie (Interface, Intégrations,
+  Webhooks, Planifications ; une catégorie vide ne prend pas de place) ; à droite les sorties :
+  les appareils **actuellement connectés** (WebSocket) et les règles de notification de
+  l'utilisateur (Push, si les clés VAPID sont en place). Chaque puce a une LED : verte, grise si
+  désactivée ; pour un appareil, la couleur de sa dernière livraison pendant 4 s.
+- **Pistes** : horizontales, biseautées à 45°, verticales. La piste qui monte ou descend le plus
+  tourne au plus près de Tower, ce qui évite tout croisement.
+- **En direct**, une impulsion parcourt la piste : d'une source vers Tower à chaque événement
+  envoyé aux appareils (la source vient de l'origine du signal), puis de Tower vers chaque règle
+  dont un motif correspond ; de Tower vers un appareil quand sa livraison part, et retour en vert
+  ou en rouge quand il répond ; en rouge sur un webhook dont l'appel est refusé.
+- Au-delà de **12 puces** (Tower exclue), le circuit reste affiché mais statique, avec un message
+  qui l'explique : animer chaque événement coûterait trop cher.
+- Un clic sur une puce ouvre son écran (Jira, Merge Requests, Webhooks, Automation).
+
+Les signaux du workspace portent ce qu'il faut pour cela : `history.created` (`history_type`,
+`history`, `origin`, et pour un événement `event` et l'id du webhook ou de la planification en
+`source`), `delivery.updated` (`history`, `device` : la connexion, `status`), `webhook.refused`
+(`webhook`).
+
 ### Écrans
 
 | Écran              | Contenu                                                              |
 |--------------------|----------------------------------------------------------------------|
-| Accueil            |                                                                      |
+| Accueil            | sur écran large, en premier et sur toute la largeur, le **circuit** (voir § Circuit) ; puis les sprints en cours, les quick-actions et les derniers événements |
 | Tâches             | onglet Tableau (un kanban de cinq colonnes par sprint actif, repliable, choix gardé dans le navigateur par workspace ; une tâche se glisse d'un sprint actif à l'autre ; annulées à part) et onglet Backlog (sprints ouverts et planifiés, backlog, sprints clôturés repliés) ; fiche de tâche avec son historique |
 | Événements         | deux cartes côte à côte, l'une sous l'autre quand la place manque : lancer un événement (type et payload JSON) ; créer, lancer et supprimer des quick-actions |
 | Automation         | onglets, choisi dans l'adresse (`?tab=`) ; onglet **Planifications** : tableau des planifications : interrupteur actif/inactif (bloqué pour une ponctuelle passée), nom, événement, fréquence en clair, dernier déclenchement ; création et modification (nom, événement, régulière avec sa fréquence ou ponctuelle avec sa date), lancement immédiat, suppression ; rechargé quand un événement est lancé |

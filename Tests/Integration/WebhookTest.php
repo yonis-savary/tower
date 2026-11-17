@@ -182,6 +182,8 @@ class WebhookTest extends CubeTestCase
 
         $this->call($uuid, '{}', ['X-Tower-Secret' => $created['secret']])->assertNoContent();
         $this->assertSame(0, $refusals());
+        $triggered = array_values(array_filter($this->broadcast->signals, fn (array $signal) => 'event.triggered' === ($signal['history_type'] ?? null)));
+        $this->assertSame([['webhook', 'deploy.start', $created['webhook']['id']], ['webhook', 'notify.me', $created['webhook']['id']]], array_map(fn (array $signal) => [$signal['origin'], $signal['event'], $signal['source']], $triggered));
 
         $this->call($uuid, '{}')->assertUnauthorized();
         $this->call($uuid, '[1]', ['X-Tower-Secret' => $created['secret']])->assertUnprocessableContent();
@@ -190,6 +192,7 @@ class WebhookTest extends CubeTestCase
         $this->assertSame(['invalid', 'unauthorized'], array_column($refused, 'status'));
         $this->assertSame('CI', $refused[0]['webhook_name']);
         $this->assertSame(2, $refusals());
+        $this->assertSame($created['webhook']['id'], array_values(array_filter($this->broadcast->signals, fn (array $signal) => WorkspaceSignals::WEBHOOK_REFUSED === $signal['type']))[0]['webhook']);
 
         $this->logOut();
         $this->register('bob@example.com');

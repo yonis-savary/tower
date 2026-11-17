@@ -13,11 +13,11 @@ class WorkspaceSignals
 {
     use Component;
 
-    /** A line was added to the history (`history_type` : its type) */
+    /** A line was added to the history : `history_type`, `history`, `origin`, and for an event `event` and its webhook or schedule as `source` */
     public const HISTORY_CREATED = 'history.created';
-    /** A device was sent an event, or answered it (`history` : the line of the event) */
+    /** A device was sent an event, or answered it : `history` (the line of the event), `device` (its connection) and `status` */
     public const DELIVERY_UPDATED = 'delivery.updated';
-    /** A call to a webhook was refused */
+    /** A call to a webhook was refused : `webhook` */
     public const WEBHOOK_REFUSED = 'webhook.refused';
     public const SIGNALS = [self::HISTORY_CREATED, self::DELIVERY_UPDATED, self::WEBHOOK_REFUSED];
 

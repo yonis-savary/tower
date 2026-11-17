@@ -37,8 +37,9 @@ class HistoryService
     /**
      * @param string               $type What happened, translated by the frontend (`device.connected`, `key.revoked`...)
      * @param array<string,mixed> $details Values shown with the line
+     * @param array<string,scalar|null> $signal  Sent with the `history.created` signal, for the browsers drawing the flow of events
      */
-    public function log(int $workspace, string $type, array $details = [], string $origin = self::ORIGIN_USER, ?int $user = null, ?int $task = null): History
+    public function log(int $workspace, string $type, array $details = [], string $origin = self::ORIGIN_USER, ?int $user = null, ?int $task = null, array $signal = []): History
     {
         // created_at as a string : generated models type a DATETIME column as DATE, which drops the time
         $line = (new History([
@@ -51,7 +52,7 @@ class HistoryService
             'created_at' => date('Y-m-d H:i:s'),
         ]))->save();
 
-        $this->signals->send($workspace, WorkspaceSignals::HISTORY_CREATED, ['history_type' => $type]);
+        $this->signals->send($workspace, WorkspaceSignals::HISTORY_CREATED, ['history_type' => $type, 'history' => $line->id, 'origin' => $origin, ...$signal]);
 
         return $line;
     }
@@ -72,7 +73,7 @@ class HistoryService
             'access_key' => $accessKey,
         ]))->save();
 
-        $this->signalDelivery($history);
+        $this->signalDelivery($delivery);
 
         return $delivery;
     }
@@ -97,15 +98,15 @@ class HistoryService
         }
         $found->save();
 
-        $this->signalDelivery($found->history);
+        $this->signalDelivery($found);
 
         return true;
     }
 
-    private function signalDelivery(int $history): void
+    private function signalDelivery(EventDelivery $delivery): void
     {
-        if ($line = History::find($history))
-            $this->signals->send($line->workspace, WorkspaceSignals::DELIVERY_UPDATED, ['history' => $history]);
+        if ($line = History::find($delivery->history))
+            $this->signals->send($line->workspace, WorkspaceSignals::DELIVERY_UPDATED, ['history' => $delivery->history, 'device' => $delivery->connection_uuid, 'status' => $delivery->status]);
     }
 
     public function page(int $workspace, ?int $before = null): Bunch
