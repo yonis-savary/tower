@@ -3,11 +3,16 @@
 namespace App\Controllers;
 
 use App\Channels\DevicesChannel;
+use App\Connector\ConfigDownloadService;
 use App\Connector\ConnectorPackager;
+use App\Connector\HandlerRules;
+use App\Models\AccessKey;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\CreateAccessKeyRequest;
+use App\Requests\CreateDownloadLinkRequest;
 use App\Requests\ListenRequest;
 use App\Requests\PreconfiguredConnectorRequest;
+use App\Requests\UpdateHandlersRequest;
 use App\Resources\AccessKeyResource;
 use App\Services\AccessKeyService;
 use App\Services\HistoryService;
@@ -34,7 +39,14 @@ class AccessKeyController extends Controller
         protected ConnectorPackager $connector,
         protected DevicesChannel $devices,
         protected HistoryService $history,
+        protected ConfigDownloadService $downloads,
     ) {}
+
+    /** The answer of every route that gives a secret : the key, and the configuration to give to the connector */
+    private const CONFIG_EXAMPLE = [
+        'key' => AccessKeyResource::class,
+        'config' => ['tower_url' => 'ws://localhost:8088/devices', 'client_id' => 'twr_abcdef', 'secret' => 'abcdef'],
+    ];
 
     public function routes(Router $router): void
     {
@@ -43,10 +55,18 @@ class AccessKeyController extends Controller
             Route::post('/access-keys', [self::class, 'create']),
             Route::delete('/access-keys/{int:key}', [self::class, 'revoke']),
             Route::put('/access-keys/{int:key}/listen', [self::class, 'updateListen']),
+            Route::put('/access-keys/{int:key}/handlers', [self::class, 'updateHandlers']),
+            Route::post('/access-keys/{int:key}/secret', [self::class, 'rotateSecret']),
             Route::post('/access-keys/{int:key}/connector', [self::class, 'downloadPreconfigured']),
+            Route::post('/access-keys/{int:key}/download-links', [self::class, 'createDownloadLink']),
             Route::get('/connector', [self::class, 'download']),
             Route::get('/connector/handler', [self::class, 'downloadHandler']),
         ]);
+
+        // Called from a terminal : the single-use token is the authentication, not a session
+        $router->addRoutes(
+            Route::get('/api/config-links/{token}', [self::class, 'downloadFromLink']),
+        );
     }
 
     #[Endpoint('List access keys', 'The usable access keys of the current workspace', 'listAccessKeys')]
@@ -58,20 +78,93 @@ class AccessKeyController extends Controller
     }
 
     #[Endpoint('Create access key', 'Creates an access key in the current workspace. The secret is only given by this answer', 'createAccessKey')]
-    #[ObjectResponse([
-        'key' => AccessKeyResource::class,
-        'config' => ['tower_url' => 'ws://localhost:8088/devices', 'client_id' => 'twr_abcdef', 'secret' => 'abcdef'],
-    ], responseCode: StatusCode::CREATED, description: 'The key and its connector configuration')]
+    #[ObjectResponse(self::CONFIG_EXAMPLE, responseCode: StatusCode::CREATED, description: 'The key and its connector configuration')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function create(CreateAccessKeyRequest $request): Response
     {
-        [$key, $secret] = $this->keys->create($this->currentWorkspaceId(), $request->validated('name'), $request->validated('listen') ?? AccessKeyService::LISTEN_EVERYTHING);
+        [$key, $secret] = $this->keys->create(
+            $this->currentWorkspaceId(),
+            $request->validated('name'),
+            $request->validated('listen') ?? AccessKeyService::LISTEN_EVERYTHING,
+            HandlerRules::normalize($request->validated('handlers') ?? []),
+        );
         $this->history->log($key->workspace, 'key.created', ['name' => $key->name], user: $this->authentication->userId());
 
-        return Response::json([
-            'key' => AccessKeyResource::of($key),
-            'config' => $this->connector->configFor($key, $secret),
-        ], StatusCode::CREATED);
+        return $this->withConfig($key, $secret, StatusCode::CREATED);
+    }
+
+    #[Endpoint('Update handlers', 'Replaces the handler rules written into the configuration of this key. Gives it a new secret : the devices using it are disconnected, and need the new configuration', 'updateAccessKeyHandlers')]
+    #[ObjectResponse(self::CONFIG_EXAMPLE, description: 'The key and its new connector configuration')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace')]
+    public function updateHandlers(UpdateHandlersRequest $request, int $key): Response
+    {
+        $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
+        if (!$accessKey)
+            return $this->keyNotFound();
+
+        $secret = $this->keys->setHandlers($accessKey, HandlerRules::normalize($request->validated('handlers')));
+        $this->history->log($accessKey->workspace, 'key.handlers_updated', ['name' => $accessKey->name], user: $this->authentication->userId());
+        $this->devices->disconnectKey($accessKey->id, 'secret_rotated');
+
+        return $this->withConfig($accessKey, $secret);
+    }
+
+    #[Endpoint('Rotate secret', 'Gives a new secret to this key. The devices using it are disconnected, and need the new configuration', 'rotateAccessKeySecret')]
+    #[ObjectResponse(self::CONFIG_EXAMPLE, description: 'The key and its new connector configuration')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace')]
+    public function rotateSecret(Request $request, int $key): Response
+    {
+        $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
+        if (!$accessKey)
+            return $this->keyNotFound();
+
+        $secret = $this->keys->rotateSecret($accessKey);
+        $this->history->log($accessKey->workspace, 'key.secret_rotated', ['name' => $accessKey->name], user: $this->authentication->userId());
+        $this->devices->disconnectKey($accessKey->id, 'secret_rotated');
+
+        return $this->withConfig($accessKey, $secret);
+    }
+
+    #[Endpoint('Create download link', 'A single-use link to download the configuration or the preconfigured connector from a terminal, without a session. Needs the secret, and expires after 15 minutes', 'createConfigDownloadLink')]
+    #[RawResponse(['path' => '/api/config-links/abcdef', 'expires_at' => '2026-11-17T22:15:00+00:00'], responseCode: StatusCode::CREATED, description: 'The path of the link, to append to the address of Tower')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace, or wrong secret')]
+    #[RawResponse(['error' => 'Connector unavailable'], responseCode: StatusCode::SERVICE_UNAVAILABLE, description: 'A connector is asked, and it was not built into this image')]
+    public function createDownloadLink(CreateDownloadLinkRequest $request, int $key): Response
+    {
+        $secret = $request->validated('secret');
+        $format = $request->validated('format');
+        $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
+        if (!$accessKey || !$this->keys->secretMatches($accessKey, $secret))
+            return $this->keyNotFound();
+
+        if (ConfigDownloadService::FORMAT_PYZ === $format && !$this->connector->isAvailable())
+            return $this->connectorUnavailable();
+
+        $link = $this->downloads->create($accessKey, $format, $this->connector->configFor($accessKey, $secret));
+
+        return Response::json(['path' => '/api/config-links/'.$link['token'], 'expires_at' => $link['expires_at']], StatusCode::CREATED);
+    }
+
+    #[Endpoint('Download from link', 'The configuration or the preconfigured connector behind a single-use link. Needs no session : the link only serves once', 'downloadFromConfigLink')]
+    #[RawResponse(mimeType: 'application/octet-stream', description: 'tower-config.json or tower-connector.pyz')]
+    #[RawResponse(['error' => 'Link not found'], responseCode: StatusCode::NOT_FOUND, description: 'Unknown, already used or expired link')]
+    #[RawResponse(['error' => 'Connector unavailable'], responseCode: StatusCode::SERVICE_UNAVAILABLE, description: 'The connector was not built into this image')]
+    public function downloadFromLink(Request $request, string $token): Response
+    {
+        $link = $this->downloads->consume($token);
+        if (!$link)
+            return Response::json(['error' => 'Link not found'], StatusCode::NOT_FOUND);
+
+        if (ConfigDownloadService::FORMAT_JSON === $link['format'])
+            return $this->attachment($this->connector->encode($link['config']), 'tower-config.json');
+
+        if (!$this->connector->isAvailable())
+            return $this->connectorUnavailable();
+
+        return $this->attachment($this->connector->withEmbeddedConfig($link['config']), 'tower-connector.pyz');
     }
 
     #[Endpoint('Revoke access key', 'Revokes a key of the current workspace and disconnects the devices using it', 'revokeAccessKey')]
@@ -82,7 +175,7 @@ class AccessKeyController extends Controller
     {
         $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
         if (!$accessKey)
-            return Response::json(['error' => 'Access key not found'], StatusCode::NOT_FOUND);
+            return $this->keyNotFound();
 
         $this->keys->revoke($accessKey);
         $this->history->log($accessKey->workspace, 'key.revoked', ['name' => $accessKey->name], user: $this->authentication->userId());
@@ -99,7 +192,7 @@ class AccessKeyController extends Controller
     {
         $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
         if (!$accessKey)
-            return Response::json(['error' => 'Access key not found'], StatusCode::NOT_FOUND);
+            return $this->keyNotFound();
 
         $this->keys->setListen($accessKey, $request->validated('listen'));
 
@@ -140,16 +233,36 @@ class AccessKeyController extends Controller
         $secret = $request->validated('secret');
         $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
         if (!$accessKey || !$this->keys->secretMatches($accessKey, $secret))
-            return Response::json(['error' => 'Access key not found'], StatusCode::NOT_FOUND);
+            return $this->keyNotFound();
 
         if (!$this->connector->isAvailable())
             return $this->connectorUnavailable();
 
-        return new Response(StatusCode::OK, $this->connector->withEmbeddedConfig($this->connector->configFor($accessKey, $secret)), [
+        return $this->attachment($this->connector->withEmbeddedConfig($this->connector->configFor($accessKey, $secret)), 'tower-connector-preconfigured.pyz');
+    }
+
+    private function withConfig(AccessKey $key, #[\SensitiveParameter] string $secret, int $status = StatusCode::OK): Response
+    {
+        return Response::json([
+            'key' => AccessKeyResource::of($key),
+            'config' => $this->connector->configFor($key, $secret),
+        ], $status);
+    }
+
+    private function attachment(string $bytes, string $filename): Response
+    {
+        return new Response(StatusCode::OK, $bytes, [
             'Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename="tower-connector-preconfigured.pyz"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
             'X-Content-Type-Options' => 'nosniff',
+            // Holds a secret : no proxy or browser keeps it
+            'Cache-Control' => 'no-store',
         ]);
+    }
+
+    private function keyNotFound(): Response
+    {
+        return Response::json(['error' => 'Access key not found'], StatusCode::NOT_FOUND);
     }
 
     private function connectorUnavailable(): Response

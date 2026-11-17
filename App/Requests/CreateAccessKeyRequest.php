@@ -2,6 +2,7 @@
 
 namespace App\Requests;
 
+use App\Connector\HandlerRules;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Rules\Param;
 
@@ -15,6 +16,7 @@ class CreateAccessKeyRequest extends Request
                 '{key} must contain between 1 and 100 characters'
             ),
             'listen' => ListenRequest::listenRule()->optional(),
+            'handlers' => HandlerRules::rule()->optional(),
         ];
     }
 }

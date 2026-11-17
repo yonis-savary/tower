@@ -142,6 +142,7 @@ y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les l
 | `jira.issue.*`                | changements vus par l'intégration Jira, et transitions faites depuis Tower |
 | `device.connected`, `device.disconnected` | connexions des appareils                |
 | `key.created`, `key.revoked`  | création et révocation d'une configuration          |
+| `key.handlers_updated`, `key.secret_rotated` | handlers modifiés, nouveau secret ; les deux changent le secret |
 | `webhook.created`, `webhook.enabled`, `webhook.disabled`, `webhook.deleted`, `webhook.secret_regenerated` | gestion des webhooks |
 | `schedule.created`, `schedule.enabled`, `schedule.disabled`, `schedule.deleted` | gestion des planifications |
 
@@ -195,6 +196,29 @@ le front, à la création ou ensuite. `*` par défaut, liste vide pour ne rien r
 - Ils sont relus à chaque événement : une modification s'applique sans reconnecter ni
   retélécharger quoi que ce soit.
 - Au plus 20 motifs, faits de minuscules, chiffres, points, tirets, `_`, `*` et `?`.
+
+Chaque configuration porte aussi ses **handlers** (`access_key.handlers`) : ce que l'appareil
+lance pour chaque événement, construit dans un formulaire du front plutôt qu'écrit à la main.
+
+- Tower les écrit dans la section `handlers` du `config.json` et du client préconfiguré
+  téléchargés ; il ne les envoie **jamais** à un appareil, qui reste seul à décider de ce qu'il
+  exécute. Sans handler, le fichier n'a pas de section `handlers` (le connecteur refuse une
+  section vide).
+- Stockés comme une liste de règles (`pattern`, `run`, `response`, `next`), pour garder leur ordre
+  et des motifs que JSON transformerait en indices ; `App\Connector\HandlerRules` les valide avec
+  les contraintes de `parse_chain` du connecteur (guillemets fermés, types d'événements, 10
+  `next` au plus…) et les traduit au format du connecteur. Le formulaire ne propose que des
+  réponses et des payloads à un niveau (champs texte).
+- Modifier les handlers **change le secret** de la configuration : ses appareils sont
+  déconnectés (motif `secret_rotated`) et l'ancien fichier ne se connecte plus. « Nouveau secret »
+  fait la même chose sans toucher aux handlers, pour retélécharger une configuration. Lignes
+  d'historique `key.handlers_updated` et `key.secret_rotated`.
+- **Lien de téléchargement** : tant que le secret est à l'écran, le front peut demander un lien
+  pour `curl` (`config.json` ou client préconfiguré), `GET /api/config-links/<jeton>`, sans
+  session. Table `config_download` : SHA-256 du jeton, configuration chiffrée avec `APP_KEY`,
+  15 minutes, **un seul usage** (marqué utilisé avant d'être servi, contenu effacé ensuite).
+  Changer le secret ou révoquer supprime les liens de la configuration ; la tâche quotidienne
+  purge les liens expirés ou servis.
 
 ### Événements
 
@@ -360,7 +384,7 @@ ce que le connecteur envoie à l'ouverture :
 
 La liste des appareils connectés est publiée en direct aux navigateurs du workspace. Les
 ouvertures et fermetures sont écrites dans l'historique, avec le motif de fermeture :
-`connection_closed`, `revoked` ou `disconnected_by_user`.
+`connection_closed`, `revoked`, `secret_rotated` ou `disconnected_by_user`.
 
 Le processus WebSocket vérifie sa connexion à la base toutes les 5 minutes et s'arrête s'il
 l'a perdue, pour être relancé par Docker.

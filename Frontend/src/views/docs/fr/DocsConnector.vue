@@ -75,7 +75,13 @@ const chained = `
   <p>
     La modale <strong>Appareils</strong>, onglet <em>Connecter un appareil</em>, crée une <strong>configuration</strong>. Elle
     se télécharge de deux façons : un fichier <code>config.json</code> à passer au connecteur, ou un
-    <strong>client préconfiguré</strong> qui l'embarque et se lance sans argument.
+    <strong>client préconfiguré</strong> qui l'embarque et se lance sans argument. Pour l'installer depuis le terminal de
+    l'appareil, <em>Télécharger depuis un terminal</em> donne une commande <code>curl</code> : le lien ne sert qu'une fois et
+    expire au bout de 15 minutes.
+  </p>
+  <p>
+    Le secret n'est montré qu'à ce moment-là. Pour retélécharger une configuration, <strong>Nouveau secret</strong> en génère
+    un autre : l'ancien fichier ne se connecte plus, et les appareils qui l'utilisaient sont déconnectés.
   </p>
   <CodeBlock :code="run" language="bash" />
   <table>
@@ -110,6 +116,13 @@ const chained = `
     contient alors directement l'objet des motifs :
   </p>
   <CodeBlock :code="config" language="json" filename="config.json" />
+  <p>
+    Plutôt que d'écrire ce JSON à la main, tu peux le construire dans Tower : <strong>Configurer les handlers</strong> à la
+    création d'une configuration, ou <strong>Modifier</strong> à côté de ses handlers ensuite. Un formulaire par handler
+    donne son motif, ses commandes, sa réponse et ses événements suivants, et vérifie tout ce que le connecteur refuserait.
+    Tower les écrit dans le fichier téléchargé : il ne les envoie jamais à un appareil. Les enregistrer donne donc un
+    nouveau secret à la configuration, et il faut remplacer le fichier sur chaque appareil.
+  </p>
   <ul>
     <li>
       Les motifs suivent la même syntaxe que l'écoute. Un événement lance les commandes de <strong>tous</strong> les motifs

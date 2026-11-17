@@ -37,6 +37,9 @@
                                                     "string",
                                                     "null"
                                                 ]
+                                            },
+                                            "handlers": {
+                                                "type": "array"
                                             }
                                         },
                                         "required": [
@@ -44,7 +47,8 @@
                                             "name",
                                             "client_id",
                                             "listen",
-                                            "last_used_at"
+                                            "last_used_at",
+                                            "handlers"
                                         ]
                                     }
                                 },
@@ -54,7 +58,8 @@
                                         "name": "nostrum quo sequi",
                                         "client_id": "est sed non",
                                         "listen": [],
-                                        "last_used_at": "2021-01-04T00:00:00+00:00"
+                                        "last_used_at": "2021-01-04T00:00:00+00:00",
+                                        "handlers": []
                                     }
                                 ]
                             }
@@ -95,6 +100,98 @@
                                         "type": "array",
                                         "items": {
                                             "type": "string"
+                                        }
+                                    },
+                                    "handlers": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pattern": {
+                                                    "type": "string"
+                                                },
+                                                "run": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "response": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "properties": {
+                                                        "mode": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "text",
+                                                                "fields"
+                                                            ]
+                                                        },
+                                                        "text": {
+                                                            "type": "string"
+                                                        },
+                                                        "fields": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "value": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "value"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "mode"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "type": {
+                                                                "type": "string"
+                                                            },
+                                                            "payload": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "key": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "value": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "required": [
+                                                                        "key",
+                                                                        "value"
+                                                                    ]
+                                                                }
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "type"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "pattern",
+                                                "run"
+                                            ]
                                         }
                                     }
                                 },
@@ -143,6 +240,9 @@
                                                         "string",
                                                         "null"
                                                     ]
+                                                },
+                                                "handlers": {
+                                                    "type": "array"
                                                 }
                                             },
                                             "required": [
@@ -150,7 +250,8 @@
                                                 "name",
                                                 "client_id",
                                                 "listen",
-                                                "last_used_at"
+                                                "last_used_at",
+                                                "handlers"
                                             ]
                                         },
                                         "config": {
@@ -313,6 +414,9 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "handlers": {
+                                            "type": "array"
                                         }
                                     },
                                     "required": [
@@ -320,7 +424,8 @@
                                         "name",
                                         "client_id",
                                         "listen",
-                                        "last_used_at"
+                                        "last_used_at",
+                                        "handlers"
                                     ]
                                 },
                                 "example": {
@@ -328,7 +433,343 @@
                                     "name": "nostrum quo sequi",
                                     "client_id": "est sed non",
                                     "listen": [],
-                                    "last_used_at": "2021-01-04T00:00:00+00:00"
+                                    "last_used_at": "2021-01-04T00:00:00+00:00",
+                                    "handlers": []
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such usable key in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/access-keys\/{key}\/handlers": {
+            "put": {
+                "summary": "Update handlers",
+                "description": "Replaces the handler rules written into the configuration of this key. Gives it a new secret : the devices using it are disconnected, and need the new configuration",
+                "operationId": "updateAccessKeyHandlers",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "handlers": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "pattern": {
+                                                    "type": "string"
+                                                },
+                                                "run": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "response": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "properties": {
+                                                        "mode": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "text",
+                                                                "fields"
+                                                            ]
+                                                        },
+                                                        "text": {
+                                                            "type": "string"
+                                                        },
+                                                        "fields": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "value": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "value"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "mode"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "type": {
+                                                                "type": "string"
+                                                            },
+                                                            "payload": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "key": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "value": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "required": [
+                                                                        "key",
+                                                                        "value"
+                                                                    ]
+                                                                }
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "type"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "pattern",
+                                                "run"
+                                            ]
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "handlers"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The key and its new connector configuration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "key": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "client_id": {
+                                                    "type": "string"
+                                                },
+                                                "listen": {
+                                                    "type": "array"
+                                                },
+                                                "last_used_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "handlers": {
+                                                    "type": "array"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "name",
+                                                "client_id",
+                                                "listen",
+                                                "last_used_at",
+                                                "handlers"
+                                            ]
+                                        },
+                                        "config": {
+                                            "type": "object",
+                                            "properties": {
+                                                "tower_url": {
+                                                    "type": "string"
+                                                },
+                                                "client_id": {
+                                                    "type": "string"
+                                                },
+                                                "secret": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such usable key in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/access-keys\/{key}\/secret": {
+            "post": {
+                "summary": "Rotate secret",
+                "description": "Gives a new secret to this key. The devices using it are disconnected, and need the new configuration",
+                "operationId": "rotateAccessKeySecret",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The key and its new connector configuration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "key": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "client_id": {
+                                                    "type": "string"
+                                                },
+                                                "listen": {
+                                                    "type": "array"
+                                                },
+                                                "last_used_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "handlers": {
+                                                    "type": "array"
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "name",
+                                                "client_id",
+                                                "listen",
+                                                "last_used_at",
+                                                "handlers"
+                                            ]
+                                        },
+                                        "config": {
+                                            "type": "object",
+                                            "properties": {
+                                                "tower_url": {
+                                                    "type": "string"
+                                                },
+                                                "client_id": {
+                                                    "type": "string"
+                                                },
+                                                "secret": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -469,6 +910,124 @@
                 }
             }
         },
+        "\/api\/access-keys\/{key}\/download-links": {
+            "post": {
+                "summary": "Create download link",
+                "description": "A single-use link to download the configuration or the preconfigured connector from a terminal, without a session. Needs the secret, and expires after 15 minutes",
+                "operationId": "createConfigDownloadLink",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "secret": {
+                                        "type": "string"
+                                    },
+                                    "format": {
+                                        "type": "string",
+                                        "enum": [
+                                            "json",
+                                            "pyz"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "secret",
+                                    "format"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The path of the link, to append to the address of Tower",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "path": {
+                                            "type": "string"
+                                        },
+                                        "expires_at": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such usable key in the current workspace, or wrong secret",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "A connector is asked, and it was not built into this image",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/api\/connector": {
             "get": {
                 "summary": "Download connector",
@@ -553,6 +1112,66 @@
                     },
                     "503": {
                         "description": "The handler was not built into this image",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/config-links\/{token}": {
+            "get": {
+                "summary": "Download from link",
+                "description": "The configuration or the preconfigured connector behind a single-use link. Needs no session : the link only serves once",
+                "operationId": "downloadFromConfigLink",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "tower-config.json or tower-connector.pyz",
+                        "content": {
+                            "application\/octet-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown, already used or expired link",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The connector was not built into this image",
                         "content": {
                             "application\/json": {
                                 "schema": {
@@ -7127,21 +7746,6 @@
                         "description": "The member is removed"
                     }
                 }
-            }
-        },
-        "\/{any}": {
-            "get": {
-                "summary": "serveIndexFile",
-                "description": "FrontendServer.serveIndexFile",
-                "operationId": "serveIndexFile",
-                "parameters": [
-                    {
-                        "name": "any",
-                        "in": "path",
-                        "required": true,
-                        "schema": {}
-                    }
-                ]
             }
         }
     },

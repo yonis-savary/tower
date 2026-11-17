@@ -36,6 +36,7 @@ export type ListAccessKeysResponses = {
         client_id: string;
         listen: Array<unknown>;
         last_used_at: string | null;
+        handlers: Array<unknown>;
     }>;
 };
 
@@ -45,6 +46,25 @@ export type CreateAccessKeyData = {
     body: {
         name: string;
         listen?: Array<string>;
+        handlers?: Array<{
+            pattern: string;
+            run: Array<string>;
+            response?: {
+                mode: 'text' | 'fields';
+                text?: string;
+                fields?: Array<{
+                    key: string;
+                    value: string;
+                }>;
+            } | null;
+            next?: Array<{
+                type: string;
+                payload?: Array<{
+                    key: string;
+                    value: string;
+                }>;
+            }>;
+        }>;
     };
     path?: never;
     query?: never;
@@ -77,6 +97,7 @@ export type CreateAccessKeyResponses = {
             client_id: string;
             listen: Array<unknown>;
             last_used_at: string | null;
+            handlers: Array<unknown>;
         };
         config?: {
             tower_url?: string;
@@ -165,10 +186,133 @@ export type UpdateAccessKeyListenResponses = {
         client_id: string;
         listen: Array<unknown>;
         last_used_at: string | null;
+        handlers: Array<unknown>;
     };
 };
 
 export type UpdateAccessKeyListenResponse = UpdateAccessKeyListenResponses[keyof UpdateAccessKeyListenResponses];
+
+export type UpdateAccessKeyHandlersData = {
+    body: {
+        handlers: Array<{
+            pattern: string;
+            run: Array<string>;
+            response?: {
+                mode: 'text' | 'fields';
+                text?: string;
+                fields?: Array<{
+                    key: string;
+                    value: string;
+                }>;
+            } | null;
+            next?: Array<{
+                type: string;
+                payload?: Array<{
+                    key: string;
+                    value: string;
+                }>;
+            }>;
+        }>;
+    };
+    path: {
+        key: number;
+    };
+    query?: never;
+    url: '/api/access-keys/{key}/handlers';
+};
+
+export type UpdateAccessKeyHandlersErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such usable key in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type UpdateAccessKeyHandlersError = UpdateAccessKeyHandlersErrors[keyof UpdateAccessKeyHandlersErrors];
+
+export type UpdateAccessKeyHandlersResponses = {
+    /**
+     * The key and its new connector configuration
+     */
+    200: {
+        key?: {
+            id: number;
+            name: string;
+            client_id: string;
+            listen: Array<unknown>;
+            last_used_at: string | null;
+            handlers: Array<unknown>;
+        };
+        config?: {
+            tower_url?: string;
+            client_id?: string;
+            secret?: string;
+        };
+    };
+};
+
+export type UpdateAccessKeyHandlersResponse = UpdateAccessKeyHandlersResponses[keyof UpdateAccessKeyHandlersResponses];
+
+export type RotateAccessKeySecretData = {
+    body?: never;
+    path: {
+        key: number;
+    };
+    query?: never;
+    url: '/api/access-keys/{key}/secret';
+};
+
+export type RotateAccessKeySecretErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such usable key in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type RotateAccessKeySecretError = RotateAccessKeySecretErrors[keyof RotateAccessKeySecretErrors];
+
+export type RotateAccessKeySecretResponses = {
+    /**
+     * The key and its new connector configuration
+     */
+    200: {
+        key?: {
+            id: number;
+            name: string;
+            client_id: string;
+            listen: Array<unknown>;
+            last_used_at: string | null;
+            handlers: Array<unknown>;
+        };
+        config?: {
+            tower_url?: string;
+            client_id?: string;
+            secret?: string;
+        };
+    };
+};
+
+export type RotateAccessKeySecretResponse = RotateAccessKeySecretResponses[keyof RotateAccessKeySecretResponses];
 
 export type DownloadPreconfiguredConnectorData = {
     body: {
@@ -216,6 +360,57 @@ export type DownloadPreconfiguredConnectorResponses = {
 };
 
 export type DownloadPreconfiguredConnectorResponse = DownloadPreconfiguredConnectorResponses[keyof DownloadPreconfiguredConnectorResponses];
+
+export type CreateConfigDownloadLinkData = {
+    body: {
+        secret: string;
+        format: 'json' | 'pyz';
+    };
+    path: {
+        key: number;
+    };
+    query?: never;
+    url: '/api/access-keys/{key}/download-links';
+};
+
+export type CreateConfigDownloadLinkErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such usable key in the current workspace, or wrong secret
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+    /**
+     * A connector is asked, and it was not built into this image
+     */
+    503: {
+        error?: string;
+    };
+};
+
+export type CreateConfigDownloadLinkError = CreateConfigDownloadLinkErrors[keyof CreateConfigDownloadLinkErrors];
+
+export type CreateConfigDownloadLinkResponses = {
+    /**
+     * The path of the link, to append to the address of Tower
+     */
+    201: {
+        path?: string;
+        expires_at?: string;
+    };
+};
+
+export type CreateConfigDownloadLinkResponse = CreateConfigDownloadLinkResponses[keyof CreateConfigDownloadLinkResponses];
 
 export type DownloadConnectorData = {
     body?: never;
@@ -282,6 +477,41 @@ export type DownloadHandlerResponses = {
 };
 
 export type DownloadHandlerResponse = DownloadHandlerResponses[keyof DownloadHandlerResponses];
+
+export type DownloadFromConfigLinkData = {
+    body?: never;
+    path: {
+        token: string;
+    };
+    query?: never;
+    url: '/api/config-links/{token}';
+};
+
+export type DownloadFromConfigLinkErrors = {
+    /**
+     * Unknown, already used or expired link
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The connector was not built into this image
+     */
+    503: {
+        error?: string;
+    };
+};
+
+export type DownloadFromConfigLinkError = DownloadFromConfigLinkErrors[keyof DownloadFromConfigLinkErrors];
+
+export type DownloadFromConfigLinkResponses = {
+    /**
+     * tower-config.json or tower-connector.pyz
+     */
+    200: Blob | File;
+};
+
+export type DownloadFromConfigLinkResponse = DownloadFromConfigLinkResponses[keyof DownloadFromConfigLinkResponses];
 
 export type RegisterData = {
     body: {
@@ -3186,12 +3416,3 @@ export type RemoveWorkspaceMemberResponses = {
 };
 
 export type RemoveWorkspaceMemberResponse = RemoveWorkspaceMemberResponses[keyof RemoveWorkspaceMemberResponses];
-
-export type ServeIndexFileData = {
-    body?: never;
-    path: {
-        any: unknown;
-    };
-    query?: never;
-    url: '/{any}';
-};

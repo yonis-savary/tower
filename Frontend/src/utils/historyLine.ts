@@ -18,6 +18,8 @@ export const HISTORY_ICONS: Record<string, string> = {
   [EVENT_TYPE]: 'pi pi-bolt',
   'key.created': 'pi pi-key',
   'key.revoked': 'pi pi-ban',
+  'key.handlers_updated': 'pi pi-cog',
+  'key.secret_rotated': 'pi pi-refresh',
   'webhook.created': 'pi pi-globe',
   'webhook.enabled': 'pi pi-play',
   'webhook.disabled': 'pi pi-pause',

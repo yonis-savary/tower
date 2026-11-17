@@ -2,6 +2,7 @@
 
 namespace App\Resources;
 
+use App\Connector\HandlerRules;
 use App\Models\AccessKey;
 use Cube\Data\Models\Model;
 use Cube\Data\Models\ModelResource;
@@ -30,6 +31,8 @@ class AccessKeyResource extends ModelResource
             // Patterns of the events sent to the devices using this key
             'listen' => array_values(array_filter((array) (json_decode((string) $model->listen, true) ?? []), 'is_string')),
             'last_used_at' => AtomDate::format($model->last_used_at),
+            // The rules written into the downloaded configuration, see HandlerRules
+            'handlers' => HandlerRules::decode($model->handlers),
         ];
     }
 }

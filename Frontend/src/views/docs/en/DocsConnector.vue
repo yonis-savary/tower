@@ -73,7 +73,12 @@ const chained = `
   <p>
     The <strong>Devices</strong> dialog, <em>Connect a device</em> tab, creates a <strong>configuration</strong>. It downloads
     two ways: a <code>config.json</code> file to give the connector, or a <strong>preconfigured client</strong> embedding it,
-    which runs without any argument.
+    which runs without any argument. To install it from the device's terminal, <em>Download from a terminal</em> gives a
+    <code>curl</code> command: the link works once and expires after 15 minutes.
+  </p>
+  <p>
+    The secret is only shown then. To download a configuration again, <strong>New secret</strong> generates another one:
+    the previous file no longer connects, and the devices using it are disconnected.
   </p>
   <CodeBlock :code="run" language="bash" />
   <table>
@@ -107,6 +112,13 @@ const chained = `
     patterns directly:
   </p>
   <CodeBlock :code="config" language="json" filename="config.json" />
+  <p>
+    Rather than writing this JSON by hand, you can build it in Tower: <strong>Configure handlers</strong> when creating a
+    configuration, or <strong>Edit</strong> next to its handlers afterwards. A form per handler gives its pattern, its
+    commands, its answer and its next events, and checks everything the connector would refuse. Tower writes them into the
+    downloaded file: it never sends them to a device. Saving them therefore gives the configuration a new secret, and the
+    file must be replaced on each device.
+  </p>
   <ul>
     <li>
       Patterns follow the same syntax as listening. An event runs the commands of <strong>every</strong> pattern matching

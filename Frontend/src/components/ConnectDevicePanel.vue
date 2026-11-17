@@ -8,12 +8,16 @@ import {
   downloadHandler,
   listAccessKeys,
   revokeAccessKey,
+  rotateAccessKeySecret,
   updateAccessKeyListen,
+  type CreateAccessKeyResponse,
   type ListAccessKeysResponse,
 } from '../client'
 import EventTypeInput from './EventTypeInput.vue'
 import { saveFile } from '../utils/saveFile'
 import ConfigCreateDialog from './ConfigCreateDialog.vue'
+import ConfigSecretDialog from './ConfigSecretDialog.vue'
+import HandlersDialog from './HandlersDialog.vue'
 import EmptyState from './EmptyState.vue'
 import HandlerDialog from './HandlerDialog.vue'
 
@@ -30,6 +34,12 @@ const downloading = ref<'connector' | 'handler' | null>(null)
 const createVisible = ref(false)
 const handlerVisible = ref(false)
 const error = ref<string | null>(null)
+// The key whose handler rules are edited
+const handlersKey = ref<AccessKey | null>(null)
+const handlersVisible = ref(false)
+const rotating = ref<number | null>(null)
+// The configuration with its new secret, shown once
+const rotated = ref<CreateAccessKeyResponse | null>(null)
 
 async function loadKeys() {
   const { data } = await listAccessKeys()
@@ -93,6 +103,37 @@ async function saveListen(id: number) {
   await loadKeys()
 }
 
+function handlersLabel(key: AccessKey): string {
+  const count = (key.handlers ?? []).length
+  return count ? t('handlers.count', { count }, count) : t('handlers.none')
+}
+
+function editHandlers(key: AccessKey) {
+  handlersKey.value = key
+  handlersVisible.value = true
+}
+
+async function onRotated(created: CreateAccessKeyResponse) {
+  rotated.value = created
+  await loadKeys()
+}
+
+async function rotate(key: AccessKey) {
+  if (!window.confirm(t('handlers.rotateConfirm', { name: key.name }))) return
+
+  rotating.value = key.id
+  error.value = null
+  const { data } = await rotateAccessKeySecret({ path: { key: key.id } })
+  rotating.value = null
+
+  if (!data) {
+    error.value = t('handlers.rotateError')
+    return
+  }
+
+  await onRotated(data)
+}
+
 async function revoke(id: number, keyName: string) {
   if (!window.confirm(t('download.revokeConfirm', { name: keyName }))) return
 
@@ -130,14 +171,24 @@ async function revoke(id: number, keyName: string) {
           {{ t('download.listening', { events: listenLabel(key) }) }}
           <Button :label="t('download.listenEdit')" link size="small" class="listen-edit" @click="editListen(key)" />
         </small>
+        <small class="key-listen">
+          <i class="pi pi-cog" aria-hidden="true" />
+          {{ handlersLabel(key) }}
+          <Button :label="t('handlers.edit')" link size="small" class="listen-edit" @click="editHandlers(key)" />
+        </small>
       </div>
-      <Button :label="t('download.revokeButton')" severity="danger" text size="small" @click="revoke(key.id!, key.name!)" />
+      <div class="key-actions">
+        <Button :label="t('handlers.rotate')" icon="pi pi-refresh" severity="secondary" text size="small" :loading="rotating === key.id" @click="rotate(key)" />
+        <Button :label="t('download.revokeButton')" icon="pi pi-ban" severity="danger" text size="small" @click="revoke(key.id!, key.name!)" />
+      </div>
     </li>
   </ul>
   <EmptyState v-else icon="pi pi-key" :title="t('download.emptyTitle')" :hint="t('download.emptyHint')" compact />
 
   <ConfigCreateDialog v-model:visible="createVisible" @created="loadKeys" />
   <HandlerDialog v-model:visible="handlerVisible" />
+  <HandlersDialog v-model:visible="handlersVisible" :access-key="handlersKey" @saved="onRotated" />
+  <ConfigSecretDialog v-model="rotated" />
 </template>
 
 <style scoped>
@@ -167,6 +218,7 @@ async function revoke(id: number, keyName: string) {
 
 .keys li {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -179,11 +231,18 @@ async function revoke(id: number, keyName: string) {
 }
 
 .key-identity {
+  flex-basis: 14rem;
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
   min-width: 0;
+}
+
+.key-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .key-identity code {

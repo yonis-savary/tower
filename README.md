@@ -61,7 +61,9 @@ python3 tower-connector.pyz config.json --handler tower-handler.pyz
 ```
 
 Commands run without a shell, with the event as JSON on their standard input, and their result comes back to the
-history. Tower only triggers what a device agreed to run: it never sends a command to execute. The optional **basic
+history. The handlers can be built in a form in Tower, which writes them into the downloaded configuration, also
+available as a single-use `curl` link. Tower only triggers what a device agreed to run: it never sends a command to
+execute. The optional **basic
 handler** opens a Claude Code session on a Jira ticket. To run the connector as a service, see *Documentation → Linux
 service* in the app.
 

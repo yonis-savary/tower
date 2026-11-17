@@ -5,11 +5,12 @@ import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
-import { createAccessKey, downloadPreconfiguredConnector, type CreateAccessKeyResponse } from '../client'
+import { createAccessKey, type CreateAccessKeyResponse } from '../client'
+import ConfigDownloads from './ConfigDownloads.vue'
 import EventTypeInput from './EventTypeInput.vue'
+import HandlerRulesEditor from './HandlerRulesEditor.vue'
 import { useWorkspaceStore } from '../stores/workspace'
-import { saveFile } from '../utils/saveFile'
-import { slugify } from '../utils/slugify'
+import { emptyRule, fromForm, scrollToFirstError, validate, type RuleForm } from '../utils/handlerRules'
 
 const visible = defineModel<boolean>('visible', { required: true })
 const emit = defineEmits<{ created: [] }>()
@@ -19,18 +20,16 @@ const workspace = useWorkspaceStore()
 
 const name = ref('')
 const listen = ref('*')
+const withHandlers = ref(false)
+const rules = ref<RuleForm[]>([])
+const submitted = ref(false)
 const creating = ref(false)
-const downloading = ref(false)
 const error = ref<string | null>(null)
 // Holds the secret : only kept while the dialog is open, it cannot be read back
 const created = ref<CreateAccessKeyResponse | null>(null)
 
-const configJson = computed(() => JSON.stringify(created.value?.config, null, 2))
-const preconfiguredFilename = computed(() => {
-  const parts = ['tower', slugify(created.value?.key?.name ?? ''), slugify(workspace.current?.name ?? '')]
-
-  return `${parts.filter(Boolean).join('-')}.pyz`
-})
+const errors = computed(() => (submitted.value && withHandlers.value ? validate(rules.value) : {}))
+const listenPatterns = computed(() => parseListen(listen.value))
 
 function parseListen(value: string): string[] {
   return value.split(/[\s,]+/).filter(Boolean)
@@ -40,14 +39,30 @@ watch(visible, () => {
   error.value = null
   name.value = ''
   listen.value = '*'
+  withHandlers.value = false
+  rules.value = []
+  submitted.value = false
   created.value = null
 })
 
-async function create() {
-  creating.value = true
-  error.value = null
+function addHandlers() {
+  withHandlers.value = true
+  if (!rules.value.length) rules.value.push(emptyRule())
+}
 
-  const { data } = await createAccessKey({ body: { name: name.value.trim(), listen: parseListen(listen.value) } })
+async function create() {
+  if (!name.value.trim() || creating.value) return
+  submitted.value = true
+  error.value = null
+  if (Object.keys(errors.value).length) {
+    error.value = t('handlers.invalid')
+    scrollToFirstError()
+    return
+  }
+
+  creating.value = true
+  const handlers = withHandlers.value ? fromForm(rules.value) : []
+  const { data } = await createAccessKey({ body: { name: name.value.trim(), listen: listenPatterns.value, handlers } })
   creating.value = false
 
   if (!data) {
@@ -58,26 +73,6 @@ async function create() {
   created.value = data
   emit('created')
 }
-
-function downloadConfig() {
-  saveFile(new Blob([configJson.value], { type: 'application/json' }), 'tower-config.json')
-}
-
-async function downloadPreconfigured() {
-  const id = created.value?.key?.id
-  const secret = created.value?.config?.secret
-  if (!id || !secret) return
-
-  downloading.value = true
-  error.value = null
-
-  const { data } = await downloadPreconfiguredConnector({ path: { key: id }, body: { secret }, parseAs: 'blob' })
-  downloading.value = false
-
-  if (data instanceof Blob) saveFile(data, preconfiguredFilename.value)
-  else error.value = t('download.connectorError')
-}
-
 </script>
 
 <template>
@@ -87,108 +82,76 @@ async function downloadPreconfigured() {
     :closable="created === null"
     :close-on-escape="created === null"
     :header="created ? t('download.createdTitle') : t('download.createTab')"
-    :style="{ width: '36rem', maxWidth: 'calc(100vw - 2rem)' }"
+    :style="{ width: withHandlers && !created ? '52rem' : '38rem', maxWidth: 'calc(100vw - 2rem)' }"
   >
-    <Message v-if="error" class="dialog-error" severity="error" :closable="false">{{ error }}</Message>
+    <ConfigDownloads v-if="created" :created="created" />
 
-    <template v-if="created">
-      <Message severity="warn" :closable="false">{{ t('download.secretWarning') }}</Message>
-      <pre class="config">{{ configJson }}</pre>
-
-      <div class="created-section">
-        <strong>{{ t('download.preconfiguredTitle') }}</strong>
-        <p>{{ t('download.preconfiguredDescription') }}</p>
-        <code class="command">python3 {{ preconfiguredFilename }}</code>
-      </div>
-    </template>
-
-    <template v-else>
+    <!-- Not a form : Enter in an event field picks a suggestion, it must not create the configuration -->
+    <div v-else class="create-form">
+      <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
       <p class="description">{{ t('download.configsDescription', { workspace: workspace.current?.name ?? '' }) }}</p>
 
-      <form class="create-form" @submit.prevent="create">
-        <InputText
-          v-model="name"
-          :placeholder="t('download.namePlaceholder')"
-          :aria-label="t('download.namePlaceholder')"
-          maxlength="100"
-          required
-          autofocus
-          fluid
-        />
-        <Button type="submit" :label="t('download.createButton')" icon="pi pi-plus" :loading="creating" />
-      </form>
-      <div class="listen-field">
+      <InputText
+        v-model="name"
+        :placeholder="t('download.namePlaceholder')"
+        :aria-label="t('download.namePlaceholder')"
+        maxlength="100"
+        required
+        autofocus
+        fluid
+        @keydown.enter.prevent="create"
+      />
+      <div class="field">
         <label for="config-listen">{{ t('download.listenLabel') }}</label>
         <EventTypeInput v-model="listen" input-id="config-listen" list suggest-patterns />
         <small>{{ t('download.listenHint') }}</small>
       </div>
-    </template>
 
-    <template v-if="created" #footer>
-      <Button :label="t('download.closeButton')" severity="secondary" text @click="visible = false" />
-      <Button :label="t('download.configButton')" severity="secondary" icon="pi pi-file" @click="downloadConfig" />
-      <Button :label="t('download.preconfiguredButton')" icon="pi pi-download" :loading="downloading" @click="downloadPreconfigured" />
+      <div class="field">
+        <span class="field-title">{{ t('handlers.title') }}</span>
+        <small>{{ t('handlers.description') }}</small>
+        <HandlerRulesEditor v-if="withHandlers" v-model="rules" :errors="errors" :listen="listenPatterns" />
+        <Button v-else :label="t('handlers.addNow')" icon="pi pi-cog" severity="secondary" outlined class="add-handlers" @click="addHandlers" />
+      </div>
+    </div>
+
+    <template #footer>
+      <Button v-if="created" :label="t('download.closeButton')" @click="visible = false" />
+      <template v-else>
+        <Button :label="t('handlers.cancel')" severity="secondary" text @click="visible = false" />
+        <Button :label="t('download.createButton')" icon="pi pi-plus" :loading="creating" :disabled="!name.trim()" @click="create" />
+      </template>
     </template>
   </Dialog>
 </template>
 
 <style scoped>
-.dialog-error {
-  margin-bottom: 1rem;
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .description {
-  margin: 0 0 1rem;
+  margin: 0;
   color: var(--p-text-muted-color);
 }
 
-.create-form {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.create-form :deep(button) {
-  flex: none;
-}
-
-.listen-field {
+.field {
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
-  margin-top: 1rem;
 }
 
-.listen-field small {
+.field small {
   color: var(--p-text-muted-color);
 }
 
-.config {
-  margin: 1rem 0;
-  padding: 0.75rem;
-  overflow-x: auto;
-  background: var(--p-content-hover-background);
-  border-radius: var(--p-content-border-radius);
-  font-size: 0.8125rem;
+.field-title {
+  font-weight: 600;
 }
 
-.created-section p {
-  margin: 0.25rem 0 0.75rem;
-  color: var(--p-text-muted-color);
-}
-
-.command {
-  display: block;
-  padding: 0.5rem 0.75rem;
-  overflow-x: auto;
-  white-space: nowrap;
-  background: var(--p-content-hover-background);
-  border-radius: var(--p-content-border-radius);
-  font-size: 0.875rem;
-}
-
-@media (max-width: 30rem) {
-  .create-form {
-    flex-direction: column;
-  }
+.add-handlers {
+  align-self: flex-start;
 }
 </style>

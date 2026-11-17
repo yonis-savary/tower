@@ -36,19 +36,32 @@ class ConnectorPackager
     }
 
     /**
-     * @return array{tower_url: string, client_id: string, secret: string}
+     * @return array{tower_url: string, client_id: string, secret: string, handlers?: \stdClass} The handlers
+     *                                                                                          edited in Tower, if there are any
      */
     public function configFor(AccessKey $key, #[\SensitiveParameter] string $secret): array
     {
-        return [
+        $config = [
             'tower_url' => BroadcastConfiguration::resolve()->getWebsocketOrigin().$this->channel->path(),
             'client_id' => $key->client_id,
             'secret' => $secret,
         ];
+
+        $handlers = HandlerRules::toConnector(HandlerRules::decode($key->handlers));
+
+        return $handlers ? [...$config, 'handlers' => $handlers] : $config;
     }
 
     /**
-     * @param array<string,string> $config
+     * The configuration, as written in `tower-config.json` and inside a preconfigured connector.
+     */
+    public function encode(#[\SensitiveParameter] array $config): string
+    {
+        return json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * @param array<string,mixed> $config
      *
      * @return string The bytes of an archive that needs no configuration file
      */
@@ -63,7 +76,7 @@ class ConnectorPackager
             if (true !== $archive->open($copy))
                 throw new \RuntimeException('Could not open the connector archive');
 
-            $archive->addFromString(self::EMBEDDED_CONFIG, json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+            $archive->addFromString(self::EMBEDDED_CONFIG, $this->encode($config));
             $archive->close();
 
             return file_get_contents($copy);

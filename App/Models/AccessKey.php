@@ -19,7 +19,9 @@ use Cube\Utils\Attributes\Generated;
  * @property \DateTime $last_used_at
  * @property \DateTime $revoked_at
  * @property string $listen
+ * @property string $handlers
  * @property Workspace $_workspace
+ * @property ConfigDownload[] $configDownloads
  * @property EventDelivery[] $eventDeliveries
  */
 class AccessKey extends Model
@@ -52,7 +54,8 @@ class AccessKey extends Model
             'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
             'last_used_at' => (new ModelField('last_used_at'))->type('DATE')->nullable()->default(NULL),
             'revoked_at' => (new ModelField('revoked_at'))->type('DATE')->nullable()->default(NULL),
-            'listen' => (new ModelField('listen'))->type('STRING')->notNull()->default(NULL)
+            'listen' => (new ModelField('listen'))->type('STRING')->notNull()->default(NULL),
+            'handlers' => (new ModelField('handlers'))->type('STRING')->nullable()->default(NULL)
         ];
     }
 
@@ -60,6 +63,12 @@ class AccessKey extends Model
     public function _workspace(): HasOne
     {
         return $this->hasOne('_workspace', 'workspace', Workspace::class, 'id');
+    }
+
+    #[Generated]
+    public function configDownloads(): HasMany
+    {
+        return $this->hasMany('configDownloads', ConfigDownload::class, 'access_key', 'id');
     }
 
     #[Generated]
@@ -72,6 +81,7 @@ class AccessKey extends Model
     public static function relations(): array
     {
         return [
+            "configDownloads",
             "eventDeliveries",
             "_workspace",
         ];
