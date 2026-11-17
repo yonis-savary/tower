@@ -23,6 +23,16 @@ watch(
 )
 onBeforeUnmount(() => (document.title = 'Tower'))
 
+// The mobile browser bar takes the accent of the workspace ; index.html holds the color of Tower
+const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+const towerColor = themeColor?.content ?? null
+watch(
+  () => workspace.current?.accent_color,
+  (accent) => themeColor?.setAttribute('content', accent || towerColor || ''),
+  { immediate: true },
+)
+onBeforeUnmount(() => themeColor?.setAttribute('content', towerColor ?? ''))
+
 // A screen of a section the workspace does not use : opened by its address, or left open while switching workspace
 watch(
   () => [route.meta.section as WorkspaceSection | undefined, workspace.current] as const,

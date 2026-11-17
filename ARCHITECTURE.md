@@ -78,7 +78,9 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
   synchronisations et ses événements continuent. Accueil, Historique, Paramètres et
   les appareils sont toujours là.
 - Un workspace peut avoir une couleur (`accent_color`, `#rrggbb`) : quand il est le workspace
-  courant, la page porte une bordure de cette couleur à gauche ; sans couleur, rien.
+  courant, la page porte une bordure de cette couleur à gauche, et la barre du navigateur mobile
+  la prend (`<meta name="theme-color">`) ; sans couleur, rien, et la barre garde le bleu de Tower.
+  L'application installée garde la couleur de `manifest.json`, lue une fois à l'installation.
 - Tout membre peut renommer le workspace, changer sa couleur, en ajouter un autre par l'e-mail de son compte Tower
   (un compte existant et actif : il n'y a pas d'invitation), retirer un membre ou le quitter.
   Un workspace créé depuis le front n'a que son créateur pour membre et n'est pas sélectionné.
