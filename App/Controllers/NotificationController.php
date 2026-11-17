@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\NotificationPreviewRequest;
 use App\Requests\NotificationRuleRequest;
+use App\Requests\PushClaimRequest;
 use App\Requests\PushSubscriptionRequest;
 use App\Requests\PushTestRequest;
 use App\Requests\UpdateNotificationRuleRequest;
@@ -25,8 +26,8 @@ use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
 /**
- * Push notifications : the browsers of the user, and their rules in the current workspace. Each
- * member only sees and changes their own.
+ * Push notifications : the browsers of the user and their rules, both in the current workspace.
+ * Each member only sees and changes their own.
  */
 class NotificationController extends Controller
 {
@@ -42,6 +43,7 @@ class NotificationController extends Controller
             Route::get('/push', [self::class, 'configuration']),
             Route::get('/push/subscriptions', [self::class, 'listSubscriptions']),
             Route::put('/push/subscriptions', [self::class, 'saveSubscription']),
+            Route::post('/push/subscriptions/claim', [self::class, 'claimBrowser']),
             Route::delete('/push/subscriptions/{int:subscription}', [self::class, 'deleteSubscription']),
             Route::post('/push/subscriptions/{int:subscription}/test', [self::class, 'testSubscription']),
             Route::get('/notification-rules', [self::class, 'listRules']),
@@ -60,15 +62,15 @@ class NotificationController extends Controller
         return Response::json(['enabled' => $this->push->isEnabled(), 'public_key' => $this->push->publicKey()]);
     }
 
-    #[Endpoint('List push subscriptions', 'The browsers where the user enabled push notifications, oldest first', 'listPushSubscriptions')]
+    #[Endpoint('List push subscriptions', 'The browsers where the user enabled the push notifications of the current workspace, oldest first', 'listPushSubscriptions')]
     #[ResourceResponse(PushSubscriptionResource::class, isArray: true, description: 'The subscriptions')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function listSubscriptions(Request $request): Response
     {
-        return Response::json(PushSubscriptionResource::of($this->push->subscriptionsOf($this->authentication->userId())));
+        return Response::json(PushSubscriptionResource::of($this->push->subscriptionsOf($this->currentWorkspaceId(), $this->authentication->userId())));
     }
 
-    #[Endpoint('Save push subscription', 'Records the subscription of this browser for the user, or updates it when its endpoint is known', 'savePushSubscription')]
+    #[Endpoint('Save push subscription', 'Enables the push notifications of the current workspace on this browser, or updates its subscription there. What another user enabled on this browser is dropped', 'savePushSubscription')]
     #[ResourceResponse(PushSubscriptionResource::class, description: 'The subscription')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Push notifications are not set up'], responseCode: StatusCode::CONFLICT, description: 'No VAPID keys on this server')]
@@ -78,6 +80,7 @@ class NotificationController extends Controller
             return Response::json(['error' => 'Push notifications are not set up'], StatusCode::CONFLICT);
 
         $subscription = $this->push->saveSubscription(
+            $this->currentWorkspaceId(),
             $this->authentication->userId(),
             $request->validated('endpoint'),
             $request->validated('keys')['p256dh'],
@@ -89,13 +92,23 @@ class NotificationController extends Controller
         return Response::json(PushSubscriptionResource::of($subscription));
     }
 
-    #[Endpoint('Delete push subscription', 'Stops the push notifications on one browser of the user', 'deletePushSubscription')]
+    #[Endpoint('Claim browser', 'Sent each time Tower opens : drops what another user enabled on this browser, which now belongs to the user logged in', 'claimPushBrowser')]
+    #[NoContentResponse('The browser belongs to the user')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    public function claimBrowser(PushClaimRequest $request): Response
+    {
+        $this->push->claimBrowser($this->authentication->userId(), $request->validated('endpoint'));
+
+        return Response::noContent();
+    }
+
+    #[Endpoint('Delete push subscription', 'Stops the push notifications of the current workspace on one browser of the user', 'deletePushSubscription')]
     #[NoContentResponse('The subscription is deleted')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
-    #[RawResponse(['error' => 'Subscription not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such subscription for this user')]
+    #[RawResponse(['error' => 'Subscription not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such subscription of the user in the current workspace')]
     public function deleteSubscription(Request $request, int $subscription): Response
     {
-        $found = $this->push->findSubscription($this->authentication->userId(), $subscription);
+        $found = $this->push->findSubscription($this->currentWorkspaceId(), $this->authentication->userId(), $subscription);
         if (!$found)
             return $this->subscriptionNotFound();
 
@@ -107,11 +120,11 @@ class NotificationController extends Controller
     #[Endpoint('Test push subscription', 'Sends a notification to one browser of the user. A browser that dropped its subscription is deleted', 'testPushSubscription')]
     #[NoContentResponse('The browser accepted the notification')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
-    #[RawResponse(['error' => 'Subscription not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such subscription for this user')]
+    #[RawResponse(['error' => 'Subscription not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such subscription of the user in the current workspace')]
     #[RawResponse(['error' => 'The push service refused the notification'], responseCode: StatusCode::BAD_GATEWAY, description: 'The push service of the browser refused it')]
     public function testSubscription(PushTestRequest $request, int $subscription): Response
     {
-        $found = $this->push->findSubscription($this->authentication->userId(), $subscription);
+        $found = $this->push->findSubscription($this->currentWorkspaceId(), $this->authentication->userId(), $subscription);
         if (!$found)
             return $this->subscriptionNotFound();
 

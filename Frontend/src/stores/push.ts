@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { deletePushSubscription, getPushConfiguration, listPushSubscriptions, savePushSubscription, type ListPushSubscriptionsResponse } from '../client'
+import { claimPushBrowser, deletePushSubscription, getPushConfiguration, listPushSubscriptions, savePushSubscription, type ListPushSubscriptionsResponse } from '../client'
 import { decodeBase64Url, isIos, isStandalone, sameKey } from '../utils/push'
 
 export type PushState = 'loading' | 'unconfigured' | 'unsupported' | 'ios' | 'denied' | 'disabled' | 'enabled'
@@ -8,17 +8,18 @@ export type PushState = 'loading' | 'unconfigured' | 'unsupported' | 'ios' | 'de
 const WORKER_URL = '/sw.js'
 
 /**
- * Push notifications on this browser : its subscription, sent to Tower each time it opens, and
- * the browsers of the user.
+ * Push notifications on this browser : its subscription, enabled workspace by workspace, and the
+ * browsers of the user in the current workspace.
  */
 export const usePushStore = defineStore('push', () => {
   // null until the server answered
   const configured = ref<boolean | null>(null)
   const publicKey = ref<string | null>(null)
   const permission = ref<NotificationPermission>(typeof Notification === 'undefined' ? 'default' : Notification.permission)
-  // The endpoint of this browser, when subscribed
+  // The endpoint of this browser, when subscribed : enabled in a workspace once listed there
   const endpoint = ref<string | null>(null)
-  const subscriptions = ref<ListPushSubscriptionsResponse>([])
+  // null while the browsers of the current workspace load
+  const subscriptions = ref<ListPushSubscriptionsResponse | null>(null)
   let listening = false
 
   const supported = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
@@ -29,12 +30,13 @@ export const usePushStore = defineStore('push', () => {
     if (!supported) return isIos() && !isStandalone() ? 'ios' : 'unsupported'
     if (permission.value === 'denied') return 'denied'
 
-    return endpoint.value ? 'enabled' : 'disabled'
+    if (endpoint.value && subscriptions.value === null) return 'loading'
+
+    return subscriptions.value?.some((item) => item.endpoint === endpoint.value) ? 'enabled' : 'disabled'
   })
 
   /**
-   * Once logged in : registers the service worker and sends the subscription of this browser again,
-   * which then belongs to the user logged in
+   * Once logged in : registers the service worker, and gives this browser to the user logged in
    */
   async function start(onNavigate: (url: string) => void): Promise<void> {
     const { data } = await getPushConfiguration()
@@ -60,10 +62,13 @@ export const usePushStore = defineStore('push', () => {
       return
     }
 
-    if (permission.value === 'granted' && (await send(subscription))) endpoint.value = subscription.endpoint
+    if (permission.value !== 'granted') return
+
+    endpoint.value = subscription.endpoint
+    await claimPushBrowser({ body: { endpoint: subscription.endpoint } })
   }
 
-  /** On a click : browsers only ask for the permission after a gesture of the user */
+  /** In the current workspace, on a click : browsers only ask for the permission after a gesture of the user */
   async function enable(): Promise<boolean> {
     if (!publicKey.value || !supported) return false
 
@@ -83,22 +88,19 @@ export const usePushStore = defineStore('push', () => {
     return true
   }
 
-  /** Stops the notifications on this browser */
+  /** Stops the notifications of the current workspace on this browser : the others keep its subscription */
   async function disable(): Promise<void> {
-    const registration = await navigator.serviceWorker.getRegistration(WORKER_URL)
-    const subscription = await registration?.pushManager.getSubscription()
-    await subscription?.unsubscribe()
-
-    const own = subscriptions.value.find((item) => item.endpoint === endpoint.value)
+    const own = subscriptions.value?.find((item) => item.endpoint === endpoint.value)
     if (own) await deletePushSubscription({ path: { subscription: own.id } })
 
-    endpoint.value = null
     await loadSubscriptions()
   }
 
+  /** The browsers of the current workspace, to load again after switching workspace */
   async function loadSubscriptions(): Promise<boolean> {
+    subscriptions.value = null
     const { data } = await listPushSubscriptions()
-    if (data) subscriptions.value = data
+    subscriptions.value = data ?? []
 
     return Boolean(data)
   }

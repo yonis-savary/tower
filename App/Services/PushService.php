@@ -14,7 +14,7 @@ use Cube\Data\Bunch;
 use Cube\Env\Logger\Logger;
 
 /**
- * Push notifications : the browsers of each user, and the rules saying which events reach them.
+ * Push notifications : the browsers of each user in each workspace, and the rules saying which events reach them.
  */
 class PushService
 {
@@ -46,29 +46,30 @@ class PushService
     // Subscriptions
 
     /**
-     * @return Bunch<int,PushSubscription> Oldest first
+     * @return Bunch<int,PushSubscription> The browsers of this user enabled in this workspace, oldest first
      */
-    public function subscriptionsOf(int $user): Bunch
+    public function subscriptionsOf(int $workspace, int $user): Bunch
     {
-        return Bunch::wrap(PushSubscription::select()->where('user', $user)->order('id', 'ASC')->fetch());
+        return Bunch::wrap(PushSubscription::select()->where('workspace', $workspace)->where('user', $user)->order('id', 'ASC')->fetch());
     }
 
-    public function findSubscription(int $user, int $id): ?PushSubscription
+    public function findSubscription(int $workspace, int $user, int $id): ?PushSubscription
     {
         $subscription = PushSubscription::find($id);
 
-        return $subscription && $subscription->user === $user ? $subscription : null;
+        return $subscription && $subscription->workspace === $workspace && $subscription->user === $user ? $subscription : null;
     }
 
     /**
-     * A browser sends its subscription each time Tower opens : a known endpoint is updated, never
-     * duplicated, and belongs to the last user logged in on this browser.
+     * Enables a browser in one workspace : a known endpoint is updated there, never duplicated.
      */
-    public function saveSubscription(int $user, string $endpoint, string $p256dh, string $auth, string $contentEncoding, ?string $userAgent): PushSubscription
+    public function saveSubscription(int $workspace, int $user, string $endpoint, string $p256dh, string $auth, string $contentEncoding, ?string $userAgent): PushSubscription
     {
+        $this->claimBrowser($user, $endpoint);
+
         // created_at as a string : generated models type a DATETIME column as DATE, which drops the time
-        $subscription = PushSubscription::select()->where('endpoint', $endpoint)->first()
-            ?? new PushSubscription(['endpoint' => $endpoint, 'created_at' => date('Y-m-d H:i:s')]);
+        $subscription = PushSubscription::select()->where('endpoint', $endpoint)->where('workspace', $workspace)->first()
+            ?? new PushSubscription(['endpoint' => $endpoint, 'workspace' => $workspace, 'created_at' => date('Y-m-d H:i:s')]);
 
         $subscription->user = $user;
         $subscription->p256dh = $p256dh;
@@ -77,6 +78,16 @@ class PushService
         $subscription->user_agent = null === $userAgent ? null : mb_substr($userAgent, 0, 255);
 
         return $subscription->save();
+    }
+
+    /**
+     * A browser belongs to the last user logged in on it : what someone else enabled there is dropped,
+     * rather than sending them their notifications.
+     */
+    public function claimBrowser(int $user, string $endpoint): void
+    {
+        foreach (PushSubscription::select()->where('endpoint', $endpoint)->where('user', $user, '<>')->fetch() as $subscription)
+            $this->deleteSubscription($subscription);
     }
 
     public function deleteSubscription(PushSubscription $subscription): void
@@ -189,7 +200,7 @@ class PushService
     }
 
     /**
-     * Sends one notification per matching rule to every browser of its user. The rules are read
+     * Sends one notification per matching rule to every browser its user enabled in this workspace. The rules are read
      * again for each event : a change applies at once.
      *
      * @param string $payload JSON object
@@ -212,7 +223,7 @@ class PushService
                 'url' => "/history?workspace={$workspace}&line={$history}",
             ];
 
-            foreach ($this->subscriptionsOf($rule->user) as $subscription)
+            foreach ($this->subscriptionsOf($workspace, $rule->user) as $subscription)
                 $this->deliverTo($subscription, $message);
         }
     }

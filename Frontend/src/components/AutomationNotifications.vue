@@ -72,8 +72,7 @@ async function loadRules() {
   else error.value = t('notifications.loadError')
 }
 
-watch(() => workspace.current?.id, (id) => { if (id) void loadRules() }, { immediate: true })
-void push.loadSubscriptions()
+watch(() => workspace.current?.id, (id) => { if (id) void Promise.all([loadRules(), push.loadSubscriptions()]) }, { immediate: true })
 
 // Browsers
 
@@ -109,7 +108,7 @@ async function test(subscription: Subscription) {
 
 async function forget(subscription: Subscription) {
   if (subscription.endpoint === push.endpoint) return disable()
-  if (!window.confirm(t('notifications.forgetConfirm', { browser: browserName(subscription) }))) return
+  if (!window.confirm(t('notifications.forgetConfirm', { browser: browserName(subscription), workspace: workspace.current?.name }))) return
 
   await deletePushSubscription({ path: { subscription: subscription.id } })
   await push.loadSubscriptions()
@@ -236,7 +235,7 @@ watch(
     <header class="panel-header">
       <div>
         <h2 class="panel-title">{{ t('notifications.browserTitle') }}</h2>
-        <p class="description">{{ t(`notifications.state.${push.state}`) }}</p>
+        <p class="description">{{ t(`notifications.state.${push.state}`, { workspace: workspace.current?.name }) }}</p>
       </div>
       <Button
         v-if="push.state === 'disabled'"
@@ -257,7 +256,7 @@ watch(
       />
     </header>
 
-    <div v-if="push.subscriptions.length" class="table-wrapper">
+    <div v-if="push.subscriptions?.length" class="table-wrapper">
       <table class="list">
         <thead>
           <tr>

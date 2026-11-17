@@ -2918,7 +2918,7 @@
         "\/api\/push\/subscriptions": {
             "get": {
                 "summary": "List push subscriptions",
-                "description": "The browsers where the user enabled push notifications, oldest first",
+                "description": "The browsers where the user enabled the push notifications of the current workspace, oldest first",
                 "operationId": "listPushSubscriptions",
                 "responses": {
                     "200": {
@@ -2964,10 +2964,10 @@
                                 "example": [
                                     {
                                         "id": 588,
-                                        "endpoint": "officia quia quia",
-                                        "user_agent": "eligendi atque et",
-                                        "created_at": "2029-07-22T00:00:00+00:00",
-                                        "last_success_at": "2006-03-27T00:00:00+00:00"
+                                        "endpoint": "quia quia vitae",
+                                        "user_agent": "atque et iusto",
+                                        "created_at": "2006-03-27T00:00:00+00:00",
+                                        "last_success_at": "2009-09-05T00:00:00+00:00"
                                     }
                                 ]
                             }
@@ -2992,7 +2992,7 @@
             },
             "put": {
                 "summary": "Save push subscription",
-                "description": "Records the subscription of this browser for the user, or updates it when its endpoint is known",
+                "description": "Enables the push notifications of the current workspace on this browser, or updates its subscription there. What another user enabled on this browser is dropped",
                 "operationId": "savePushSubscription",
                 "requestBody": {
                     "required": true,
@@ -3086,10 +3086,10 @@
                                 },
                                 "example": {
                                     "id": 588,
-                                    "endpoint": "officia quia quia",
-                                    "user_agent": "eligendi atque et",
-                                    "created_at": "2029-07-22T00:00:00+00:00",
-                                    "last_success_at": "2006-03-27T00:00:00+00:00"
+                                    "endpoint": "quia quia vitae",
+                                    "user_agent": "atque et iusto",
+                                    "created_at": "2006-03-27T00:00:00+00:00",
+                                    "last_success_at": "2009-09-05T00:00:00+00:00"
                                 }
                             }
                         }
@@ -3127,10 +3127,65 @@
                 }
             }
         },
+        "\/api\/push\/subscriptions\/claim": {
+            "post": {
+                "summary": "Claim browser",
+                "description": "Sent each time Tower opens : drops what another user enabled on this browser, which now belongs to the user logged in",
+                "operationId": "claimPushBrowser",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "endpoint": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "endpoint"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The browser belongs to the user"
+                    }
+                }
+            }
+        },
         "\/api\/push\/subscriptions\/{subscription}": {
             "delete": {
                 "summary": "Delete push subscription",
-                "description": "Stops the push notifications on one browser of the user",
+                "description": "Stops the push notifications of the current workspace on one browser of the user",
                 "operationId": "deletePushSubscription",
                 "parameters": [
                     {
@@ -3159,7 +3214,7 @@
                         }
                     },
                     "404": {
-                        "description": "No such subscription for this user",
+                        "description": "No such subscription of the user in the current workspace",
                         "content": {
                             "application\/json": {
                                 "schema": {
@@ -3243,7 +3298,7 @@
                         }
                     },
                     "404": {
-                        "description": "No such subscription for this user",
+                        "description": "No such subscription of the user in the current workspace",
                         "content": {
                             "application\/json": {
                                 "schema": {

@@ -1468,6 +1468,39 @@ export type SavePushSubscriptionResponses = {
 
 export type SavePushSubscriptionResponse = SavePushSubscriptionResponses[keyof SavePushSubscriptionResponses];
 
+export type ClaimPushBrowserData = {
+    body: {
+        endpoint: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/push/subscriptions/claim';
+};
+
+export type ClaimPushBrowserErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type ClaimPushBrowserError = ClaimPushBrowserErrors[keyof ClaimPushBrowserErrors];
+
+export type ClaimPushBrowserResponses = {
+    /**
+     * The browser belongs to the user
+     */
+    204: void;
+};
+
+export type ClaimPushBrowserResponse = ClaimPushBrowserResponses[keyof ClaimPushBrowserResponses];
+
 export type DeletePushSubscriptionData = {
     body?: never;
     path: {
@@ -1485,7 +1518,7 @@ export type DeletePushSubscriptionErrors = {
         error?: string;
     };
     /**
-     * No such subscription for this user
+     * No such subscription of the user in the current workspace
      */
     404: {
         error?: string;
@@ -1523,7 +1556,7 @@ export type TestPushSubscriptionErrors = {
         error?: string;
     };
     /**
-     * No such subscription for this user
+     * No such subscription of the user in the current workspace
      */
     404: {
         error?: string;

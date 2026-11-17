@@ -22,6 +22,7 @@ use Cube\Utils\Attributes\Generated;
  * @property JiraIssue[] $jiraIssues
  * @property NotificationRule[] $notificationRules
  * @property PullRequest[] $pullRequests
+ * @property PushSubscription[] $pushSubscriptions
  * @property QuickAction[] $quickActions
  * @property ScheduledEvent[] $scheduledEvents
  * @property Sprint[] $sprints
@@ -102,6 +103,12 @@ class Workspace extends Model
     }
 
     #[Generated]
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany('pushSubscriptions', PushSubscription::class, 'workspace', 'id');
+    }
+
+    #[Generated]
     public function quickActions(): HasMany
     {
         return $this->hasMany('quickActions', QuickAction::class, 'workspace', 'id');
@@ -147,6 +154,7 @@ class Workspace extends Model
             "jiraIssues",
             "notificationRules",
             "pullRequests",
+            "pushSubscriptions",
             "quickActions",
             "scheduledEvents",
             "sprints",

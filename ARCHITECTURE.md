@@ -278,13 +278,17 @@ Une planification lance un événement (type et payload, comme une quick-action)
 Tower envoie lui-même des notifications natives (téléphone, ordinateur) par Web Push, sans
 connecteur. Le périmètre détaillé est dans `ROADMAP/notification.md`.
 
-- Un utilisateur active les notifications sur chaque navigateur (`push_subscription`, une ligne
-  par endpoint, au dernier utilisateur connecté dessus). Le navigateur renvoie son abonnement à
-  chaque ouverture de Tower. Sur iOS, seulement dans la PWA ajoutée à l'écran d'accueil.
+- Un utilisateur active les notifications **par workspace** sur chaque navigateur
+  (`push_subscription`, une ligne par endpoint et par workspace, unique sur ce couple). Un
+  navigateur n'a qu'un abonnement push : ses clés sont recopiées dans chaque workspace activé, et
+  désactiver un workspace ne désabonne pas le navigateur. À chaque ouverture de Tower, le
+  navigateur est revendiqué (`POST /api/push/subscriptions/claim`) : ce qu'un autre utilisateur y
+  avait activé est supprimé. Retirer un membre supprime ses navigateurs de ce workspace. Sur iOS,
+  seulement dans la PWA ajoutée à l'écran d'accueil.
 - Une **règle** (`notification_rule`) appartient à un membre dans un workspace : un nom, des motifs
   (syntaxe des configurations), un titre et un corps, chacun valeur brute ou clé du payload
   (`{"mode": "raw"|"key", "value": …}`, nul pour le texte par défaut). Une notification par
-  règle qui correspond, à tous les navigateurs de son utilisateur.
+  règle qui correspond, à tous les navigateurs que son utilisateur a activés dans ce workspace.
 - Tout événement passe par `EventAnnouncer::announce()` : envoi aux appareils, et
   `PushQueue` quand une règle active existe dans le workspace. Le worker `push`
   (`cube:queue`) relit les règles, vérifie l'adhésion, et envoie (`TTL` 1 h, `Urgency: high`,
@@ -840,7 +844,7 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `quick_action`    | `workspace`, `name`, `type`, `payload`, `created_at`                      |
 | `webhook`         | `workspace`, `name`, `uuid`, `secured`, `secret` (chiffré, nul si non sécurisé), `events` (JSON), `enabled`, `created_at`, `last_called_at` |
 | `webhook_call`    | `webhook`, `status`, `ip`, `user_agent`, `payload`, `created_at`          |
-| `push_subscription` | `user`, `endpoint` (unique), `p256dh`, `auth`, `content_encoding`, `user_agent`, `created_at`, `last_success_at` |
+| `push_subscription` | `workspace`, `user`, `endpoint` (unique avec `workspace`), `p256dh`, `auth`, `content_encoding`, `user_agent`, `created_at`, `last_success_at` |
 | `notification_rule` | `workspace`, `user`, `name`, `listen` (JSON), `title` et `body` (JSON `{mode, value}`, nuls : texte par défaut), `enabled`, `created_at` |
 | `scheduled_event` | `workspace`, `name`, `type`, `payload`, `cron`, `run_at` (ponctuelle seulement), `enabled`, `last_run_at`, `created_at` |
 | `integration`     | `workspace`, `type`, `settings` (JSON), `credentials` (chiffré), `last_synced_at`, `last_error` |

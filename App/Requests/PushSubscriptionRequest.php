@@ -10,13 +10,18 @@ use Cube\Web\Http\Rules\Param;
  */
 class PushSubscriptionRequest extends Request
 {
+    public static function endpointRule(): Param
+    {
+        return Param::url()->withValueCondition(
+            fn ($endpoint) => strlen((string) $endpoint) <= 500 && str_starts_with((string) $endpoint, 'https://'),
+            '{key} must be an https address of 500 characters at most'
+        );
+    }
+
     public function getRules(): array
     {
         return [
-            'endpoint' => Param::url()->withValueCondition(
-                fn ($endpoint) => strlen((string) $endpoint) <= 500 && str_starts_with((string) $endpoint, 'https://'),
-                '{key} must be an https address of 500 characters at most'
-            ),
+            'endpoint' => self::endpointRule(),
             'keys' => Param::object([
                 'p256dh' => Param::string()->withValueCondition(
                     fn ($key) => 1 === preg_match('/^[A-Za-z0-9_-]{1,200}={0,2}$/', (string) $key),

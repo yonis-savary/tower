@@ -130,6 +130,7 @@ class NotificationTest extends CubeTestCase
     {
         $this->get('/api/push')->assertUnauthorized();
         $this->get('/api/push/subscriptions')->assertUnauthorized();
+        $this->postJson('/api/push/subscriptions/claim', ['endpoint' => 'https://push.example.com/abc'])->assertUnauthorized();
         $this->get('/api/notification-rules')->assertUnauthorized();
         $this->postJson('/api/notification-rules', ['name' => 'a', 'listen' => ['*']])->assertUnauthorized();
     }
@@ -184,6 +185,59 @@ class NotificationTest extends CubeTestCase
         $this->delete("/api/push/subscriptions/{$bobs['id']}")->assertNotFound();
         $this->postJson("/api/push/subscriptions/{$bobs['id']}/test", ['title' => 'Tower', 'body' => 'Test'])->assertNotFound();
         $this->assertNotNull(PushSubscription::find($bobs['id']));
+    }
+
+    public function testBrowserIsEnabledPerWorkspace()
+    {
+        $this->register('alice@example.com');
+        $pro = $this->get('/api/workspaces/current')->json()['id'];
+        $perso = $this->postJson('/api/workspaces', ['name' => 'Perso'])->assertCreated()->json()['id'];
+
+        $this->subscribe('https://push.example.com/laptop');
+        $this->createRule(['listen' => ['*']]);
+        $this->putJson('/api/workspaces/current', ['workspace' => $perso])->assertOk();
+        $this->assertSame([], $this->get('/api/push/subscriptions')->json());
+        $this->subscribe('https://push.example.com/phone');
+        $this->createRule(['listen' => ['*']]);
+
+        $this->trigger('perso.event');
+        $this->putJson('/api/workspaces/current', ['workspace' => $pro])->assertOk();
+        $this->trigger('pro.event');
+        $this->processQueue();
+
+        $this->assertSame([
+            ['https://push.example.com/phone', 'Perso · perso.event'],
+            ['https://push.example.com/laptop', Workspace::find($pro)->name.' · pro.event'],
+        ], array_map(fn ($sent) => [$sent['endpoint'], $sent['title']], $this->sender->sent));
+    }
+
+    public function testSameBrowserInSeveralWorkspaces()
+    {
+        $this->register('alice@example.com');
+        $first = $this->subscribe();
+        $perso = $this->postJson('/api/workspaces', ['name' => 'Perso'])->assertCreated()->json()['id'];
+        $this->putJson('/api/workspaces/current', ['workspace' => $perso])->assertOk();
+        $second = $this->subscribe();
+
+        $this->assertNotSame($first['id'], $second['id']);
+        $this->delete("/api/push/subscriptions/{$first['id']}")->assertNotFound();
+        $this->delete("/api/push/subscriptions/{$second['id']}")->assertNoContent();
+        $this->assertNotNull(PushSubscription::find($first['id']));
+    }
+
+    public function testClaimDropsWhatAnotherUserEnabledOnTheBrowser()
+    {
+        $this->register('bob@example.com');
+        $bobs = $this->subscribe();
+        $this->logOut();
+
+        $this->register('alice@example.com');
+        $this->postJson('/api/push/subscriptions/claim', ['endpoint' => 'https://push.example.com/other'])->assertNoContent();
+        $this->assertNotNull(PushSubscription::find($bobs['id']));
+
+        $this->postJson('/api/push/subscriptions/claim', ['endpoint' => 'https://push.example.com/abc'])->assertNoContent();
+        $this->assertNull(PushSubscription::find($bobs['id']));
+        $this->postJson('/api/push/subscriptions/claim', ['endpoint' => 'http://push.example.com/abc'])->assertUnprocessableContent();
     }
 
     public function testTestNotificationAndDeletion()
@@ -426,6 +480,7 @@ class NotificationTest extends CubeTestCase
         $this->logIn('alice@example.com');
         $this->delete("/api/workspaces/{$aliceWorkspace}/members/{$bob}")->assertNoContent();
         $this->assertSame(0, NotificationRule::select()->where('user', $bob)->count());
+        $this->assertSame(0, PushSubscription::select()->where('user', $bob)->count());
 
         $this->trigger('deploy.done');
         $this->processQueue();

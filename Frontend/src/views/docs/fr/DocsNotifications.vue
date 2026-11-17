@@ -25,12 +25,13 @@ VAPID_SUBJECT=mailto:toi@example.com
   <ul>
     <li>
       Dans <strong>Automation → Notifications</strong>, clique sur <em>Activer les notifications</em> et accepte la demande du
-      navigateur. À faire sur chaque appareil, et chaque navigateur, où tu veux les recevoir.
+      navigateur. À faire dans chaque workspace, sur chaque appareil et chaque navigateur où tu veux les recevoir.
     </li>
     <li>Le bouton d'envoi à côté de chaque navigateur envoie une notification de test.</li>
     <li>
-      Un navigateur activé reçoit les notifications de tes règles dans <strong>tous</strong> tes workspaces. Il appartient au
-      dernier utilisateur connecté dessus.
+      Un navigateur ne reçoit que les notifications des workspaces où tu l'as activé : ton workspace perso peut rester sur
+      ton téléphone et hors de ton ordinateur pro. Il appartient au dernier utilisateur connecté dessus : ce qu'un autre y
+      avait activé est retiré.
     </li>
   </ul>
 

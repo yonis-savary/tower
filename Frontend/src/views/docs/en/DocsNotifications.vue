@@ -25,12 +25,13 @@ VAPID_SUBJECT=mailto:you@example.com
   <ul>
     <li>
       In <strong>Automation → Notifications</strong>, click <em>Enable notifications</em> and accept the request of the browser.
-      Do it on each device, and each browser, where you want them.
+      Do it in each workspace, on each device and each browser where you want them.
     </li>
     <li>The send button next to each browser sends a test notification.</li>
     <li>
-      An enabled browser receives the notifications of your rules in <strong>all</strong> your workspaces. It belongs to the last
-      user logged in on it.
+      A browser only receives the notifications of the workspaces where you enabled it: your personal workspace can stay on
+      your phone and off your work computer. It belongs to the last user logged in on it: what someone else enabled there
+      is removed.
     </li>
   </ul>
 
