@@ -16,7 +16,8 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(message.title || 'Tower', {
       body: message.body || '',
       icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      // The status bar icon : Android keeps only its transparency, so the logo-mark in white on nothing
+      badge: '/badge-96.png',
       // A notification with the same tag replaces the previous one, and still alerts
       tag: message.tag,
       renotify: Boolean(message.tag),

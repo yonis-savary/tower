@@ -313,7 +313,9 @@ connecteur. Le périmètre détaillé est dans `ROADMAP/notification.md`.
 - Tout événement passe par `EventAnnouncer::announce()` : envoi aux appareils, et
   `PushQueue` quand une règle active existe dans le workspace. Le worker `push`
   (`cube:queue`) relit les règles, vérifie l'adhésion, et envoie (`TTL` 1 h, `Urgency: high`,
-  `tag` par règle et type d'événement). `404`/`410` supprime l'abonnement ; `429`, `5xx` et
+  `tag` par règle et type d'événement ; grande icône : le logo, `icon-192.png` ; icône de la barre
+  d'état : `badge-96.png`, le logo-mark blanc sur fond transparent, car Android n'en garde que la
+  transparence). `404`/`410` supprime l'abonnement ; `429`, `5xx` et
   une erreur réseau sont réessayés 3 fois au plus.
 - Clés VAPID dans `.env` (`php do app:push-keys`) ; sans elles, l'onglet est masqué et rien
   n'est mis en file. Retirer un membre supprime ses règles du workspace.
