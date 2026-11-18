@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddWorkspaceMemberData, AddWorkspaceMemberErrors, AddWorkspaceMemberResponses, CallWebhookData, CallWebhookErrors, CallWebhookResponses, ChangePasswordData, ChangePasswordErrors, ChangePasswordResponses, ClaimPushBrowserData, ClaimPushBrowserErrors, ClaimPushBrowserResponses, CloseSprintData, CloseSprintErrors, CloseSprintResponses, CreateAccessKeyData, CreateAccessKeyErrors, CreateAccessKeyResponses, CreateConfigDownloadLinkData, CreateConfigDownloadLinkErrors, CreateConfigDownloadLinkResponses, CreateNotificationRuleData, CreateNotificationRuleErrors, CreateNotificationRuleResponses, CreateQuickActionData, CreateQuickActionErrors, CreateQuickActionResponses, CreateScheduledEventData, CreateScheduledEventErrors, CreateScheduledEventResponses, CreateSprintData, CreateSprintErrors, CreateSprintResponses, CreateTaskData, CreateTaskErrors, CreateTaskFromJiraIssueData, CreateTaskFromJiraIssueErrors, CreateTaskFromJiraIssueResponses, CreateTaskResponses, CreateWebhookData, CreateWebhookErrors, CreateWebhookResponses, CreateWorkspaceData, CreateWorkspaceErrors, CreateWorkspaceResponses, DeleteBitbucketIntegrationData, DeleteBitbucketIntegrationErrors, DeleteBitbucketIntegrationResponses, DeleteJiraIntegrationData, DeleteJiraIntegrationErrors, DeleteJiraIntegrationResponses, DeleteNotificationRuleData, DeleteNotificationRuleErrors, DeleteNotificationRuleResponses, DeletePushSubscriptionData, DeletePushSubscriptionErrors, DeletePushSubscriptionResponses, DeleteQuickActionData, DeleteQuickActionErrors, DeleteQuickActionResponses, DeleteScheduledEventData, DeleteScheduledEventErrors, DeleteScheduledEventResponses, DeleteWebhookData, DeleteWebhookErrors, DeleteWebhookResponses, DisconnectDeviceData, DisconnectDeviceErrors, DisconnectDeviceResponses, DiscussJiraIssueData, DiscussJiraIssueErrors, DiscussJiraIssueResponses, DownloadConnectorData, DownloadConnectorErrors, DownloadConnectorResponses, DownloadFromConfigLinkData, DownloadFromConfigLinkErrors, DownloadFromConfigLinkResponses, DownloadHandlerData, DownloadHandlerErrors, DownloadHandlerResponses, DownloadPreconfiguredConnectorData, DownloadPreconfiguredConnectorErrors, DownloadPreconfiguredConnectorResponses, GetBitbucketIntegrationData, GetBitbucketIntegrationErrors, GetBitbucketIntegrationResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetCurrentWorkspaceData, GetCurrentWorkspaceErrors, GetCurrentWorkspaceResponses, GetJiraBoardData, GetJiraBoardErrors, GetJiraBoardResponses, GetJiraIntegrationData, GetJiraIntegrationErrors, GetJiraIntegrationResponses, GetPushConfigurationData, GetPushConfigurationErrors, GetPushConfigurationResponses, GetWorkspaceSocketData, GetWorkspaceSocketErrors, GetWorkspaceSocketResponses, ListAccessKeysData, ListAccessKeysErrors, ListAccessKeysResponses, ListEventDeliveriesData, ListEventDeliveriesErrors, ListEventDeliveriesResponses, ListHistoryData, ListHistoryErrors, ListHistoryResponses, ListJiraIssuesData, ListJiraIssuesErrors, ListJiraIssuesResponses, ListJiraIssueTransitionsData, ListJiraIssueTransitionsErrors, ListJiraIssueTransitionsResponses, ListNotificationRulesData, ListNotificationRulesErrors, ListNotificationRulesResponses, ListPullRequestApprovalsData, ListPullRequestApprovalsErrors, ListPullRequestApprovalsResponses, ListPullRequestsData, ListPullRequestsErrors, ListPullRequestsResponses, ListPushSubscriptionsData, ListPushSubscriptionsErrors, ListPushSubscriptionsResponses, ListQuickActionsData, ListQuickActionsErrors, ListQuickActionsResponses, ListRecentEventsData, ListRecentEventsErrors, ListRecentEventsResponses, ListRefusedWebhookCallsData, ListRefusedWebhookCallsErrors, ListRefusedWebhookCallsResponses, ListScheduledEventsData, ListScheduledEventsErrors, ListScheduledEventsResponses, ListSprintsData, ListSprintsErrors, ListSprintsResponses, ListTaskHistoryData, ListTaskHistoryErrors, ListTaskHistoryResponses, ListTasksData, ListTasksErrors, ListTasksResponses, ListWebhookCallsData, ListWebhookCallsErrors, ListWebhookCallsResponses, ListWebhooksData, ListWebhooksErrors, ListWebhooksResponses, ListWorkspaceMembersData, ListWorkspaceMembersErrors, ListWorkspaceMembersResponses, ListWorkspacesData, ListWorkspacesErrors, ListWorkspacesResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MoveTaskData, MoveTaskErrors, MoveTaskResponses, OpenSprintData, OpenSprintErrors, OpenSprintResponses, PreviewNotificationData, PreviewNotificationErrors, PreviewNotificationResponses, RegenerateWebhookSecretData, RegenerateWebhookSecretErrors, RegenerateWebhookSecretResponses, RegisterData, RegisterErrors, RegisterResponses, RemoveWorkspaceMemberData, RemoveWorkspaceMemberErrors, RemoveWorkspaceMemberResponses, RevokeAccessKeyData, RevokeAccessKeyErrors, RevokeAccessKeyResponses, RotateAccessKeySecretData, RotateAccessKeySecretErrors, RotateAccessKeySecretResponses, SaveBitbucketIntegrationData, SaveBitbucketIntegrationErrors, SaveBitbucketIntegrationResponses, SaveJiraIntegrationData, SaveJiraIntegrationErrors, SaveJiraIntegrationResponses, SavePushSubscriptionData, SavePushSubscriptionErrors, SavePushSubscriptionResponses, SelectWorkspaceData, SelectWorkspaceErrors, SelectWorkspaceResponses, SuggestEventTypesData, SuggestEventTypesErrors, SuggestEventTypesResponses, SyncBitbucketIntegrationData, SyncBitbucketIntegrationErrors, SyncBitbucketIntegrationResponses, SyncJiraIntegrationData, SyncJiraIntegrationErrors, SyncJiraIntegrationResponses, TestPushSubscriptionData, TestPushSubscriptionErrors, TestPushSubscriptionResponses, TransitionJiraIssueData, TransitionJiraIssueErrors, TransitionJiraIssueResponses, TriggerEventData, TriggerEventErrors, TriggerEventResponses, TriggerQuickActionData, TriggerQuickActionErrors, TriggerQuickActionResponses, TriggerScheduledEventData, TriggerScheduledEventErrors, TriggerScheduledEventResponses, UpdateAccessKeyHandlersData, UpdateAccessKeyHandlersErrors, UpdateAccessKeyHandlersResponses, UpdateAccessKeyListenData, UpdateAccessKeyListenErrors, UpdateAccessKeyListenResponses, UpdateNotificationRuleData, UpdateNotificationRuleErrors, UpdateNotificationRuleResponses, UpdateScheduledEventData, UpdateScheduledEventErrors, UpdateScheduledEventResponses, UpdateTaskData, UpdateTaskErrors, UpdateTaskResponses, UpdateWebhookData, UpdateWebhookErrors, UpdateWebhookResponses, UpdateWorkspaceData, UpdateWorkspaceErrors, UpdateWorkspaceResponses } from './types.gen';
+import type { AddWorkspaceMemberData, AddWorkspaceMemberErrors, AddWorkspaceMemberResponses, CallWebhookData, CallWebhookErrors, CallWebhookResponses, ChangePasswordData, ChangePasswordErrors, ChangePasswordResponses, ClaimPushBrowserData, ClaimPushBrowserErrors, ClaimPushBrowserResponses, CloseSprintData, CloseSprintErrors, CloseSprintResponses, CreateAccessKeyData, CreateAccessKeyErrors, CreateAccessKeyResponses, CreateApiTokenData, CreateApiTokenErrors, CreateApiTokenResponses, CreateConfigDownloadLinkData, CreateConfigDownloadLinkErrors, CreateConfigDownloadLinkResponses, CreateNotificationRuleData, CreateNotificationRuleErrors, CreateNotificationRuleResponses, CreateQuickActionData, CreateQuickActionErrors, CreateQuickActionResponses, CreateScheduledEventData, CreateScheduledEventErrors, CreateScheduledEventResponses, CreateSprintData, CreateSprintErrors, CreateSprintResponses, CreateTaskData, CreateTaskErrors, CreateTaskFromJiraIssueData, CreateTaskFromJiraIssueErrors, CreateTaskFromJiraIssueResponses, CreateTaskResponses, CreateWebhookData, CreateWebhookErrors, CreateWebhookResponses, CreateWorkspaceData, CreateWorkspaceErrors, CreateWorkspaceResponses, DeleteBitbucketIntegrationData, DeleteBitbucketIntegrationErrors, DeleteBitbucketIntegrationResponses, DeleteJiraIntegrationData, DeleteJiraIntegrationErrors, DeleteJiraIntegrationResponses, DeleteNotificationRuleData, DeleteNotificationRuleErrors, DeleteNotificationRuleResponses, DeletePushSubscriptionData, DeletePushSubscriptionErrors, DeletePushSubscriptionResponses, DeleteQuickActionData, DeleteQuickActionErrors, DeleteQuickActionResponses, DeleteScheduledEventData, DeleteScheduledEventErrors, DeleteScheduledEventResponses, DeleteWebhookData, DeleteWebhookErrors, DeleteWebhookResponses, DisconnectDeviceData, DisconnectDeviceErrors, DisconnectDeviceResponses, DiscussJiraIssueData, DiscussJiraIssueErrors, DiscussJiraIssueResponses, DownloadConnectorData, DownloadConnectorErrors, DownloadConnectorResponses, DownloadFromConfigLinkData, DownloadFromConfigLinkErrors, DownloadFromConfigLinkResponses, DownloadHandlerData, DownloadHandlerErrors, DownloadHandlerResponses, DownloadJiraAttachmentData, DownloadJiraAttachmentErrors, DownloadPreconfiguredConnectorData, DownloadPreconfiguredConnectorErrors, DownloadPreconfiguredConnectorResponses, GetBitbucketIntegrationData, GetBitbucketIntegrationErrors, GetBitbucketIntegrationResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetCurrentWorkspaceData, GetCurrentWorkspaceErrors, GetCurrentWorkspaceResponses, GetJiraBoardData, GetJiraBoardErrors, GetJiraBoardResponses, GetJiraIntegrationData, GetJiraIntegrationErrors, GetJiraIntegrationResponses, GetPushConfigurationData, GetPushConfigurationErrors, GetPushConfigurationResponses, GetWorkspaceSocketData, GetWorkspaceSocketErrors, GetWorkspaceSocketResponses, ListAccessKeysData, ListAccessKeysErrors, ListAccessKeysResponses, ListApiTokensData, ListApiTokensErrors, ListApiTokensResponses, ListEventDeliveriesData, ListEventDeliveriesErrors, ListEventDeliveriesResponses, ListHistoryData, ListHistoryErrors, ListHistoryResponses, ListJiraIssuesData, ListJiraIssuesErrors, ListJiraIssuesResponses, ListJiraIssueTransitionsData, ListJiraIssueTransitionsErrors, ListJiraIssueTransitionsResponses, ListNotificationRulesData, ListNotificationRulesErrors, ListNotificationRulesResponses, ListPullRequestApprovalsData, ListPullRequestApprovalsErrors, ListPullRequestApprovalsResponses, ListPullRequestsData, ListPullRequestsErrors, ListPullRequestsResponses, ListPushSubscriptionsData, ListPushSubscriptionsErrors, ListPushSubscriptionsResponses, ListQuickActionsData, ListQuickActionsErrors, ListQuickActionsResponses, ListRecentEventsData, ListRecentEventsErrors, ListRecentEventsResponses, ListRefusedWebhookCallsData, ListRefusedWebhookCallsErrors, ListRefusedWebhookCallsResponses, ListScheduledEventsData, ListScheduledEventsErrors, ListScheduledEventsResponses, ListSprintsData, ListSprintsErrors, ListSprintsResponses, ListTaskHistoryData, ListTaskHistoryErrors, ListTaskHistoryResponses, ListTasksData, ListTasksErrors, ListTasksResponses, ListWebhookCallsData, ListWebhookCallsErrors, ListWebhookCallsResponses, ListWebhooksData, ListWebhooksErrors, ListWebhooksResponses, ListWorkspaceApiTokensData, ListWorkspaceApiTokensErrors, ListWorkspaceApiTokensResponses, ListWorkspaceMembersData, ListWorkspaceMembersErrors, ListWorkspaceMembersResponses, ListWorkspacesData, ListWorkspacesErrors, ListWorkspacesResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MoveTaskData, MoveTaskErrors, MoveTaskResponses, OpenSprintData, OpenSprintErrors, OpenSprintResponses, PreviewNotificationData, PreviewNotificationErrors, PreviewNotificationResponses, ReadJiraIssueData, ReadJiraIssueErrors, ReadJiraIssueResponses, RegenerateWebhookSecretData, RegenerateWebhookSecretErrors, RegenerateWebhookSecretResponses, RegisterData, RegisterErrors, RegisterResponses, RemoveWorkspaceMemberData, RemoveWorkspaceMemberErrors, RemoveWorkspaceMemberResponses, RevokeAccessKeyData, RevokeAccessKeyErrors, RevokeAccessKeyResponses, RevokeApiTokenData, RevokeApiTokenErrors, RevokeApiTokenResponses, RotateAccessKeySecretData, RotateAccessKeySecretErrors, RotateAccessKeySecretResponses, SaveBitbucketIntegrationData, SaveBitbucketIntegrationErrors, SaveBitbucketIntegrationResponses, SaveJiraIntegrationData, SaveJiraIntegrationErrors, SaveJiraIntegrationResponses, SavePushSubscriptionData, SavePushSubscriptionErrors, SavePushSubscriptionResponses, SelectWorkspaceData, SelectWorkspaceErrors, SelectWorkspaceResponses, ServeIndexFileData, SuggestEventTypesData, SuggestEventTypesErrors, SuggestEventTypesResponses, SyncBitbucketIntegrationData, SyncBitbucketIntegrationErrors, SyncBitbucketIntegrationResponses, SyncJiraIntegrationData, SyncJiraIntegrationErrors, SyncJiraIntegrationResponses, TestPushSubscriptionData, TestPushSubscriptionErrors, TestPushSubscriptionResponses, TransitionJiraIssueData, TransitionJiraIssueErrors, TransitionJiraIssueResponses, TriggerEventData, TriggerEventErrors, TriggerEventResponses, TriggerQuickActionData, TriggerQuickActionErrors, TriggerQuickActionResponses, TriggerScheduledEventData, TriggerScheduledEventErrors, TriggerScheduledEventResponses, UpdateAccessKeyHandlersData, UpdateAccessKeyHandlersErrors, UpdateAccessKeyHandlersResponses, UpdateAccessKeyListenData, UpdateAccessKeyListenErrors, UpdateAccessKeyListenResponses, UpdateNotificationRuleData, UpdateNotificationRuleErrors, UpdateNotificationRuleResponses, UpdateScheduledEventData, UpdateScheduledEventErrors, UpdateScheduledEventResponses, UpdateTaskData, UpdateTaskErrors, UpdateTaskResponses, UpdateWebhookData, UpdateWebhookErrors, UpdateWebhookResponses, UpdateWorkspaceData, UpdateWorkspaceErrors, UpdateWorkspaceResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -129,6 +129,41 @@ export const downloadHandler = <ThrowOnError extends boolean = false>(options?: 
  * The configuration or the preconfigured connector behind a single-use link. Needs no session : the link only serves once
  */
 export const downloadFromConfigLink = <ThrowOnError extends boolean = false>(options: Options<DownloadFromConfigLinkData, ThrowOnError>): RequestResult<DownloadFromConfigLinkResponses, DownloadFromConfigLinkErrors, ThrowOnError> => (options.client ?? client).get<DownloadFromConfigLinkResponses, DownloadFromConfigLinkErrors, ThrowOnError>({ url: '/api/config-links/{token}', ...options });
+
+/**
+ * List API tokens
+ *
+ * The API tokens of the user for the current workspace, newest first
+ */
+export const listApiTokens = <ThrowOnError extends boolean = false>(options?: Options<ListApiTokensData, ThrowOnError>): RequestResult<ListApiTokensResponses, ListApiTokensErrors, ThrowOnError> => (options?.client ?? client).get<ListApiTokensResponses, ListApiTokensErrors, ThrowOnError>({ url: '/api/tokens', ...options });
+
+/**
+ * Create API token
+ *
+ * Creates an API token of the user for the current workspace. Its value is only given by this answer
+ */
+export const createApiToken = <ThrowOnError extends boolean = false>(options: Options<CreateApiTokenData, ThrowOnError>): RequestResult<CreateApiTokenResponses, CreateApiTokenErrors, ThrowOnError> => (options.client ?? client).post<CreateApiTokenResponses, CreateApiTokenErrors, ThrowOnError>({
+    url: '/api/tokens',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List workspace API tokens
+ *
+ * The API tokens of every member for the current workspace, oldest first : the agents drawn on the home circuit
+ */
+export const listWorkspaceApiTokens = <ThrowOnError extends boolean = false>(options?: Options<ListWorkspaceApiTokensData, ThrowOnError>): RequestResult<ListWorkspaceApiTokensResponses, ListWorkspaceApiTokensErrors, ThrowOnError> => (options?.client ?? client).get<ListWorkspaceApiTokensResponses, ListWorkspaceApiTokensErrors, ThrowOnError>({ url: '/api/tokens/workspace', ...options });
+
+/**
+ * Revoke API token
+ *
+ * Deletes an API token of the user for the current workspace : it stops working at once
+ */
+export const revokeApiToken = <ThrowOnError extends boolean = false>(options: Options<RevokeApiTokenData, ThrowOnError>): RequestResult<RevokeApiTokenResponses, RevokeApiTokenErrors, ThrowOnError> => (options.client ?? client).delete<RevokeApiTokenResponses, RevokeApiTokenErrors, ThrowOnError>({ url: '/api/tokens/{token}', ...options });
 
 /**
  * Register
@@ -350,9 +385,16 @@ export const getJiraBoard = <ThrowOnError extends boolean = false>(options?: Opt
 /**
  * List Jira issues
  *
- * The unfinished issues of the board (`tracked`), whoever they are assigned to, and the issues kept because a task is linked to them
+ * The unfinished issues of the board (`tracked`), whoever they are assigned to, and the issues kept because a task is linked to them. A board often holds hundreds : narrow with `mine` (assigned to the Jira account of the integration) and `status_category`
  */
 export const listJiraIssues = <ThrowOnError extends boolean = false>(options?: Options<ListJiraIssuesData, ThrowOnError>): RequestResult<ListJiraIssuesResponses, ListJiraIssuesErrors, ThrowOnError> => (options?.client ?? client).get<ListJiraIssuesResponses, ListJiraIssuesErrors, ThrowOnError>({ url: '/api/jira/issues', ...options });
+
+/**
+ * Read Jira issue
+ *
+ * Reads an issue from Jira by its key, on the board or not : its description and last 20 comments in Jira wiki text, its labels and the list of its attachments
+ */
+export const readJiraIssue = <ThrowOnError extends boolean = false>(options: Options<ReadJiraIssueData, ThrowOnError>): RequestResult<ReadJiraIssueResponses, ReadJiraIssueErrors, ThrowOnError> => (options.client ?? client).get<ReadJiraIssueResponses, ReadJiraIssueErrors, ThrowOnError>({ url: '/api/jira/issues/{key}', ...options });
 
 /**
  * List Jira issue transitions
@@ -374,6 +416,13 @@ export const transitionJiraIssue = <ThrowOnError extends boolean = false>(option
         ...options.headers
     }
 });
+
+/**
+ * Download Jira attachment
+ *
+ * Downloads an attachment of a Jira issue, as listed by readJiraIssue, of 5 MiB at most
+ */
+export const downloadJiraAttachment = <ThrowOnError extends boolean = false>(options: Options<DownloadJiraAttachmentData, ThrowOnError>): RequestResult<unknown, DownloadJiraAttachmentErrors, ThrowOnError> => (options.client ?? client).get<unknown, DownloadJiraAttachmentErrors, ThrowOnError>({ url: '/api/jira/attachments/{attachment}', ...options });
 
 /**
  * Create task from Jira issue
@@ -784,7 +833,7 @@ export const getWorkspaceSocket = <ThrowOnError extends boolean = false>(options
 /**
  * Update workspace
  *
- * Changes the name, the accent color and, when given, the sections of a workspace the current user is a member of
+ * Changes the name, the accent color and, when given, the sections and the MCP access of a workspace the current user is a member of
  */
 export const updateWorkspace = <ThrowOnError extends boolean = false>(options: Options<UpdateWorkspaceData, ThrowOnError>): RequestResult<UpdateWorkspaceResponses, UpdateWorkspaceErrors, ThrowOnError> => (options.client ?? client).put<UpdateWorkspaceResponses, UpdateWorkspaceErrors, ThrowOnError>({
     url: '/api/workspaces/{workspace}',
@@ -822,3 +871,10 @@ export const addWorkspaceMember = <ThrowOnError extends boolean = false>(options
  * Removes a member from a workspace, the current user included
  */
 export const removeWorkspaceMember = <ThrowOnError extends boolean = false>(options: Options<RemoveWorkspaceMemberData, ThrowOnError>): RequestResult<RemoveWorkspaceMemberResponses, RemoveWorkspaceMemberErrors, ThrowOnError> => (options.client ?? client).delete<RemoveWorkspaceMemberResponses, RemoveWorkspaceMemberErrors, ThrowOnError>({ url: '/api/workspaces/{workspace}/members/{user}', ...options });
+
+/**
+ * serveIndexFile
+ *
+ * FrontendServer.serveIndexFile
+ */
+export const serveIndexFile = <ThrowOnError extends boolean = false>(options: Options<ServeIndexFileData, ThrowOnError>): RequestResult<unknown, unknown, ThrowOnError> => (options.client ?? client).get<unknown, unknown, ThrowOnError>({ url: '/{any}', ...options });

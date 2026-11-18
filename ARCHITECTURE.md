@@ -127,7 +127,7 @@ listes et à l'intérieur d'une liste.
 ### Historique
 
 Toute action notable écrit une ligne dans la table `history` : `workspace`, `type`,
-`origin` (`user`, `device`, `integration`, `webhook`, `schedule`, plus tard `agent`), l'utilisateur à l'origine s'il
+`origin` (`user`, `device`, `integration`, `webhook`, `schedule`, `mcp`, plus tard `agent`), l'utilisateur à l'origine s'il
 y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les lignes sont
 écrites par `HistoryService::log()`.
 
@@ -145,6 +145,7 @@ y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les l
 | `key.handlers_updated`, `key.secret_rotated` | handlers modifiés, nouveau secret ; les deux changent le secret |
 | `webhook.created`, `webhook.enabled`, `webhook.disabled`, `webhook.deleted`, `webhook.secret_regenerated` | gestion des webhooks |
 | `schedule.created`, `schedule.enabled`, `schedule.disabled`, `schedule.deleted` | gestion des planifications |
+| `token.created`, `token.revoked` | création et révocation d'un jeton d'agent (voir § Serveur MCP) |
 
 Les lignes `task.*`, `sprint.*` et `event.triggered` sont aussi envoyées aux appareils
 connectés comme des événements du même type (voir § Événements), comme les lignes `pr.*` et
@@ -600,6 +601,7 @@ l'outil d'origine.
 | `jira`      | tickets          | Jira                         | en place |
 | `gitlab`    | merge requests   | Merge Requests               | prévu    |
 | `github`    | merge requests   | Merge Requests               | prévu    |
+| `figma`     | maquettes        | aucun : lue par les agents   | prévu    |
 
 Pour l'instant, un workspace a au plus une intégration par type.
 
@@ -863,8 +865,8 @@ Le premier bloc de l'accueil dessine le workspace comme un circuit électronique
 écrit à la main (`HomeFlow`, placement dans `utils/flowLayout.ts`). Il n'est monté qu'à partir
 de 64rem de large : ni affiché ni abonné aux signaux sur mobile.
 
-- **Puces** : Tower au centre ; à gauche les sources, par catégorie (Interface, Intégrations,
-  Webhooks, Planifications ; une catégorie vide ne prend pas de place) ; à droite les sorties :
+- **Puces** : Tower au centre ; à gauche les sources, par catégorie (Interface, Agents IA : un
+  jeton du workspace par puce, de tous les membres, Intégrations, Webhooks, Planifications ; une catégorie vide ne prend pas de place) ; à droite les sorties :
   les appareils **actuellement connectés** (WebSocket) et les règles de notification de
   l'utilisateur (Push, si les clés VAPID sont en place). Chaque puce a une LED : verte, grise si
   désactivée ; pour un appareil, la couleur de sa dernière livraison pendant 4 s.
@@ -874,17 +876,18 @@ de 64rem de large : ni affiché ni abonné aux signaux sur mobile.
   celle de la source à chaque événement envoyé aux appareils (la source vient de l'origine du
   signal), puis celles des règles dont un motif correspond ; celle d'un appareil en bleu quand sa
   livraison part, en vert quand il répond, en rouge s'il échoue ; en rouge celle d'un webhook dont
-  l'appel est refusé.
+  l'appel est refusé ; celle d'un agent à chaque appel d'outil, en rouge s'il échoue (l'évènement
+  qu'il lance n'allume pas en plus la puce Interface).
 - Au-delà de **12 puces** (Tower exclue), le circuit reste affiché mais statique, avec un message
   qui l'explique : animer chaque événement coûterait trop cher.
-- Un clic sur une puce ouvre son écran (Jira, Merge Requests, Webhooks, Automation).
+- Un clic sur une puce ouvre son écran (Jira, Merge Requests, Webhooks, Automation, Paramètres → Agents IA).
 - Le bloc se replie sur son titre ; le choix est gardé dans le navigateur. Replié, le circuit
   n'est pas dessiné et rien n'est animé.
 
 Les signaux du workspace portent ce qu'il faut pour cela : `history.created` (`history_type`,
 `history`, `origin`, et pour un événement `event` et l'id du webhook ou de la planification en
 `source`), `delivery.updated` (`history`, `device` : la connexion, `status`), `webhook.refused`
-(`webhook`).
+(`webhook`), `mcp.called` (`token`, `tool`, `ok`).
 
 ### Écrans
 
@@ -957,13 +960,42 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 - **API appareil** : la connexion WebSocket `/devices`, authentifiée par la configuration.
 - **Webhooks** : `POST /api/hooks/<uuid>`, authentifié par le secret du webhook, ou par son
   adresse seule pour un webhook non sécurisé.
+- **Serveur MCP** : `/mcp`, authentifié par un jeton d'agent, voir ci-dessous.
+
+### Serveur MCP
+
+Un agent (Claude Code, Claude Desktop, tout client MCP) se branche sur un workspace avec une
+adresse et un jeton. Le protocole est porté par le SDK PHP officiel (`mcp/sdk`), en Streamable
+HTTP **sans session** : chaque requête est autonome, php-fpm répond en JSON et ferme.
+
+- **Jetons d'agent** (table `api_token`) : créés par un utilisateur dans Paramètres → Agents IA,
+  liés à **un** workspace, en lecture ou en lecture et écriture, avec une expiration facultative.
+  La valeur (`tower_…`) n'est affichée qu'à la création ; seul son SHA-256 est gardé. Révoquer
+  supprime la ligne. Un jeton cesse de marcher si son compte est désactivé ou si son
+  utilisateur quitte le workspace.
+- **Accès du workspace** (`workspace.mcp_access`) : `blocked`, `read` (par défaut) ou `write`,
+  réglé dans la gestion des workspaces. Le droit effectif d'un jeton est le plus restrictif des
+  deux ; un workspace bloqué répond `403` et refuse la création de jetons.
+- **Les outils sont des routes de l'API** marquées `#[McpTool('nom', write: …)]`. Leur schéma
+  d'entrée vient des slugs du chemin et des règles `Param` du `Request`, leur description de
+  `#[Endpoint]`, comme pour l'OpenAPI. Un appel est exécuté par la route elle-même, en interne,
+  sous l'identité du jeton (`ApiTokenIdentity` : authentification et session en mémoire,
+  workspace du jeton) : mêmes validations, mêmes `ModelResource`, mêmes lignes d'historique.
+  Un outil d'écriture n'est pas listé pour un jeton qui ne peut pas écrire, et sa description
+  commence par `[write]`. Ajouter un outil, c'est poser l'attribut sur une route. Une route qui
+  répond autre chose que du JSON donne une image (`image/*`), un texte (`text/*`) ou un fichier
+  joint au client MCP : c'est ainsi que `get_jira_attachment` montre une maquette à l'agent.
+- **Historique** : ce que fait un jeton est écrit avec l'`origin` `mcp` et le nom du jeton dans
+  `details.token`, au nom de son utilisateur.
+- Hors des outils : tout ce qui touche aux secrets et aux accès, et les suppressions.
 
 ## 8. Feuille de route
 
 1. ~~Comptes, workspaces, tâches, historique, API utilisateur, front avec navbar.~~
 2. ~~WebSocket, connecteur `.pyz`, configurations, appareils connectés, événements et
    quick-actions, abonnements, handler et réponses.~~
-3. Intégrations : ~~Bitbucket~~, ~~Jira et tickets transformables en tâches~~, GitLab, GitHub.
+3. Intégrations : ~~Bitbucket~~, ~~Jira et tickets transformables en tâches~~, GitLab, GitHub,
+   Figma (un agent va chercher seul un morceau de maquette, voir `ROADMAP/MCP.md`).
 4. Jobs vers un appareil précis.
 5. Agent IA : abstraction, driver Claude, outils, déclenchement par historique, budget.
 6. ~~Notifications push.~~

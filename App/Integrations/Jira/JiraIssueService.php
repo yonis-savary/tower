@@ -31,9 +31,22 @@ class JiraIssueService
     /**
      * @return Bunch<int,JiraIssue>
      */
-    public function listIssues(int $workspace): Bunch
+    /**
+     * @return Bunch<int,JiraIssue>
+     */
+    public function listIssues(int $workspace, bool $mine = false, ?string $statusCategory = null): Bunch
     {
-        return Bunch::wrap(JiraIssue::select()->where('workspace', $workspace)->order('id', 'DESC')->fetch());
+        $account = $mine ? $this->board($workspace)['account_id'] : null;
+        if ($mine && null === $account)
+            return Bunch::wrap([]);
+
+        $query = JiraIssue::select()->where('workspace', $workspace)->order('id', 'DESC');
+        if (null !== $statusCategory)
+            $query->where('status_category', $statusCategory);
+        if (null !== $account)
+            $query->where('assignee_id', $account);
+
+        return Bunch::wrap($query->fetch());
     }
 
     /**
@@ -115,8 +128,35 @@ class JiraIssueService
         if (!$content)
             return null;
 
-        $payload = [
-            'source' => 'jira',
+        return $this->events->triggerAsUser(
+            $issue->workspace,
+            $user,
+            self::DISCUSS_EVENT,
+            json_encode(['source' => 'jira', ...$this->contentPayload($content)], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        );
+    }
+
+    public function content(int $workspace, string $key): ?JiraIssueContent
+    {
+        return $this->providerOf($workspace)?->issueContent($key);
+    }
+
+    public function attachment(int $workspace, string $id): ?JiraAttachment
+    {
+        return $this->providerOf($workspace)?->attachment($id);
+    }
+
+    public function attachmentContent(int $workspace, JiraAttachment $attachment): string
+    {
+        return $this->providerOf($workspace)->attachmentContent($attachment->id);
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    public function contentPayload(JiraIssueContent $content): array
+    {
+        return [
             'key' => $content->issue->key,
             'url' => $content->issue->url,
             'summary' => $content->issue->summary,
@@ -130,14 +170,22 @@ class JiraIssueService
             'labels' => $content->labels,
             'description' => $content->description,
             'comments' => $content->comments,
+            'attachments' => array_map(fn (JiraAttachment $attachment) => [
+                'id' => $attachment->id,
+                'filename' => $attachment->filename,
+                'mime_type' => $attachment->mimeType,
+                'size' => $attachment->size,
+                'created' => $attachment->created,
+                'author' => $attachment->author,
+            ], $content->attachments),
         ];
+    }
 
-        return $this->events->triggerAsUser(
-            $issue->workspace,
-            $user,
-            self::DISCUSS_EVENT,
-            json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-        );
+    private function providerOf(int $workspace): ?JiraProvider
+    {
+        $integration = $this->integrations->findJira($workspace);
+
+        return $integration ? $this->integrations->jiraProviderFor($integration) : null;
     }
 
     protected function provider(JiraIssue $issue): JiraProvider

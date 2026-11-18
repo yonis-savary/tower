@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\ScheduledEventRequest;
 use App\Requests\UpdateScheduledEventRequest;
@@ -46,6 +47,7 @@ class ScheduledEventController extends Controller
     #[Endpoint('List scheduled events', 'The scheduled events of the current workspace, oldest first', 'listScheduledEvents')]
     #[ResourceResponse(ScheduledEventResource::class, isArray: true, description: 'The scheduled events')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[McpTool('list_scheduled_events')]
     public function list(Request $request): Response
     {
         return Response::json(ScheduledEventResource::of($this->schedules->listFor($this->currentWorkspaceId())));

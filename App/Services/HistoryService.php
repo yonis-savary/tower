@@ -14,6 +14,7 @@ class HistoryService
     public const ORIGIN_INTEGRATION = 'integration';
     public const ORIGIN_WEBHOOK = 'webhook';
     public const ORIGIN_SCHEDULE = 'schedule';
+    public const ORIGIN_MCP = 'mcp';
 
     public const DELIVERY_PENDING = 'pending';
     public const DELIVERY_RUNNING = 'running';
@@ -41,6 +42,13 @@ class HistoryService
      */
     public function log(int $workspace, string $type, array $details = [], string $origin = self::ORIGIN_USER, ?int $user = null, ?int $task = null, array $signal = []): History
     {
+        // A user acting through an API token is logged with the origin and the name of that token
+        $actor = HistoryActor::getInstance();
+        if (self::ORIGIN_USER === $origin && null !== $actor->tokenName) {
+            $origin = $actor->origin;
+            $details['token'] = $actor->tokenName;
+        }
+
         // created_at as a string : generated models type a DATETIME column as DATE, which drops the time
         $line = (new History([
             'workspace' => $workspace,

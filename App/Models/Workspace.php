@@ -15,8 +15,10 @@ use Cube\Utils\Attributes\Generated;
  * @property string $accent_color
  * @property int $author
  * @property string $sections
+ * @property string $mcp_access
  * @property User $_author
  * @property AccessKey[] $accessKeies
+ * @property ApiToken[] $apiTokens
  * @property History[] $histories
  * @property Integration[] $integrations
  * @property JiraIssue[] $jiraIssues
@@ -56,7 +58,8 @@ class Workspace extends Model
             'name' => (new ModelField('name'))->type('STRING')->notNull()->hasDefault(false),
             'accent_color' => (new ModelField('accent_color'))->type('STRING')->nullable()->default(NULL),
             'author' => (new ModelField('author'))->type('INTEGER')->notNull()->hasDefault(false)->references(User::class,'id'),
-            'sections' => (new ModelField('sections'))->type('STRING')->nullable()->default(NULL)
+            'sections' => (new ModelField('sections'))->type('STRING')->nullable()->default(NULL),
+            'mcp_access' => (new ModelField('mcp_access'))->type('STRING')->notNull()->default(NULL)
         ];
     }
 
@@ -70,6 +73,12 @@ class Workspace extends Model
     public function accessKeies(): HasMany
     {
         return $this->hasMany('accessKeies', AccessKey::class, 'workspace', 'id');
+    }
+
+    #[Generated]
+    public function apiTokens(): HasMany
+    {
+        return $this->hasMany('apiTokens', ApiToken::class, 'workspace', 'id');
     }
 
     #[Generated]
@@ -149,6 +158,7 @@ class Workspace extends Model
     {
         return [
             "accessKeies",
+            "apiTokens",
             "histories",
             "integrations",
             "jiraIssues",

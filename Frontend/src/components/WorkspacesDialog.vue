@@ -7,6 +7,7 @@ import ColorPicker from 'primevue/colorpicker'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
+import RadioButton from 'primevue/radiobutton'
 import Tab from 'primevue/tab'
 import TabList from 'primevue/tablist'
 import TabPanel from 'primevue/tabpanel'
@@ -22,7 +23,7 @@ import {
   type ListWorkspaceMembersResponse,
 } from '../client'
 import { useAuthStore } from '../stores/auth'
-import { WORKSPACE_SECTIONS, useWorkspaceStore, type WorkspaceSection } from '../stores/workspace'
+import { MCP_ACCESSES, WORKSPACE_SECTIONS, useWorkspaceStore, type McpAccess, type WorkspaceSection } from '../stores/workspace'
 
 const visible = defineModel<boolean>('visible', { required: true })
 
@@ -36,6 +37,7 @@ const members = ref<ListWorkspaceMembersResponse>([])
 const name = ref('')
 const color = ref<string | null>(null)
 const sections = ref<WorkspaceSection[]>([])
+const mcpAccess = ref<McpAccess>('read')
 const newWorkspace = ref('')
 const newMember = ref('')
 const busy = ref(false)
@@ -43,8 +45,10 @@ const error = ref<string | null>(null)
 
 const selected = computed(() => store.workspaces?.find(({ id }) => id === selectedId.value) ?? null)
 const generalUnchanged = computed(() => name.value.trim() === selected.value?.name && color.value === selected.value?.accent_color)
-const featuresUnchanged = computed(() =>
-  WORKSPACE_SECTIONS.every((section) => sections.value.includes(section) === selected.value?.sections.includes(section)),
+const featuresUnchanged = computed(
+  () =>
+    mcpAccess.value === selected.value?.mcp_access &&
+    WORKSPACE_SECTIONS.every((section) => sections.value.includes(section) === selected.value?.sections.includes(section)),
 )
 
 // The picker works without the leading #, the API with it
@@ -66,6 +70,7 @@ watch(selected, async (workspace) => {
   name.value = workspace?.name ?? ''
   color.value = workspace?.accent_color ?? null
   sections.value = [...((workspace?.sections ?? []) as WorkspaceSection[])]
+  mcpAccess.value = (workspace?.mcp_access ?? 'read') as McpAccess
   newMember.value = ''
   members.value = []
   if (!workspace) return
@@ -100,10 +105,10 @@ function saveGeneral() {
 }
 
 function saveFeatures() {
-  return save((workspace) => ({ name: workspace.name, accent_color: workspace.accent_color, sections: sections.value }))
+  return save((workspace) => ({ name: workspace.name, accent_color: workspace.accent_color, sections: sections.value, mcp_access: mcpAccess.value }))
 }
 
-function save(bodyOf: (workspace: NonNullable<typeof selected.value>) => { name: string; accent_color: string | null; sections?: WorkspaceSection[] }) {
+function save(bodyOf: (workspace: NonNullable<typeof selected.value>) => { name: string; accent_color: string | null; sections?: WorkspaceSection[]; mcp_access?: McpAccess }) {
   const workspace = selected.value
   if (!workspace) return
 
@@ -223,6 +228,14 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
                     {{ t(`workspaces.section.${section}`) }}
                   </label>
                   <small class="hint">{{ t('workspaces.sectionsHint') }}</small>
+                </fieldset>
+                <fieldset class="field sections">
+                  <legend class="label">{{ t('workspaces.mcpAccess') }}</legend>
+                  <label v-for="access in MCP_ACCESSES" :key="access" class="section-option">
+                    <RadioButton v-model="mcpAccess" :value="access" name="mcp-access" />
+                    {{ t(`workspaces.mcp.${access}`) }}
+                  </label>
+                  <small class="hint">{{ t('workspaces.mcpAccessHint') }}</small>
                 </fieldset>
                 <Button type="submit" :label="t('workspaces.save')" severity="secondary" class="save" :disabled="featuresUnchanged" :loading="busy" />
               </form>

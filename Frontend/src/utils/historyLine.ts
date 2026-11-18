@@ -20,6 +20,8 @@ export const HISTORY_ICONS: Record<string, string> = {
   'key.revoked': 'pi pi-ban',
   'key.handlers_updated': 'pi pi-cog',
   'key.secret_rotated': 'pi pi-refresh',
+  'token.created': 'pi pi-sparkles',
+  'token.revoked': 'pi pi-ban',
   'webhook.created': 'pi pi-globe',
   'webhook.enabled': 'pi pi-play',
   'webhook.disabled': 'pi pi-pause',
@@ -77,7 +79,12 @@ export function historyLabel({ t, te }: HistoryI18n, type: string): string {
   return te(key) ? t(key) : type
 }
 
-export function historyDetail({ t, te }: HistoryI18n, type: string, parsed: Details): string {
+export function historyDetail(i18n: HistoryI18n, type: string, parsed: Details): string {
+  const detail = describe(i18n, type, parsed)
+  return parsed.token ? [detail, i18n.t('history.viaToken', { name: parsed.token })].filter(Boolean).join(' · ') : detail
+}
+
+function describe({ t, te }: HistoryI18n, type: string, parsed: Details): string {
   if (type.startsWith('pr.')) return `${parsed.title} · ${parsed.repository}${integrationChange(type, parsed)}`
   if (type.startsWith('jira.issue.')) return `${parsed.key} · ${parsed.summary}${integrationChange(type, parsed)}`
 

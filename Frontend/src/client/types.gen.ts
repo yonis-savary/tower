@@ -513,6 +513,160 @@ export type DownloadFromConfigLinkResponses = {
 
 export type DownloadFromConfigLinkResponse = DownloadFromConfigLinkResponses[keyof DownloadFromConfigLinkResponses];
 
+export type ListApiTokensData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/tokens';
+};
+
+export type ListApiTokensErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListApiTokensError = ListApiTokensErrors[keyof ListApiTokensErrors];
+
+export type ListApiTokensResponses = {
+    /**
+     * The tokens
+     */
+    200: Array<{
+        id: number;
+        name: string;
+        scope: string;
+        created_at: string;
+        last_used_at: string | null;
+        expires_at: string | null;
+    }>;
+};
+
+export type ListApiTokensResponse = ListApiTokensResponses[keyof ListApiTokensResponses];
+
+export type CreateApiTokenData = {
+    body: {
+        name: string;
+        scope: 'read' | 'write';
+        expires_in_days?: number | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/tokens';
+};
+
+export type CreateApiTokenErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The workspace refuses MCP connections
+     */
+    409: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type CreateApiTokenError = CreateApiTokenErrors[keyof CreateApiTokenErrors];
+
+export type CreateApiTokenResponses = {
+    /**
+     * The token and its value
+     */
+    201: {
+        token?: {
+            id: number;
+            name: string;
+            scope: string;
+            created_at: string;
+            last_used_at: string | null;
+            expires_at: string | null;
+        };
+        value?: string;
+    };
+};
+
+export type CreateApiTokenResponse = CreateApiTokenResponses[keyof CreateApiTokenResponses];
+
+export type ListWorkspaceApiTokensData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/tokens/workspace';
+};
+
+export type ListWorkspaceApiTokensErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+};
+
+export type ListWorkspaceApiTokensError = ListWorkspaceApiTokensErrors[keyof ListWorkspaceApiTokensErrors];
+
+export type ListWorkspaceApiTokensResponses = {
+    /**
+     * The tokens
+     */
+    200: Array<{
+        id: number;
+        name: string;
+        scope: string;
+        created_at: string;
+        last_used_at: string | null;
+        expires_at: string | null;
+    }>;
+};
+
+export type ListWorkspaceApiTokensResponse = ListWorkspaceApiTokensResponses[keyof ListWorkspaceApiTokensResponses];
+
+export type RevokeApiTokenData = {
+    body?: never;
+    path: {
+        token: number;
+    };
+    query?: never;
+    url: '/api/tokens/{token}';
+};
+
+export type RevokeApiTokenErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such token for this user in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type RevokeApiTokenError = RevokeApiTokenErrors[keyof RevokeApiTokenErrors];
+
+export type RevokeApiTokenResponses = {
+    /**
+     * The token is revoked
+     */
+    204: void;
+};
+
+export type RevokeApiTokenResponse = RevokeApiTokenResponses[keyof RevokeApiTokenResponses];
+
 export type RegisterData = {
     body: {
         email: string;
@@ -1387,7 +1541,10 @@ export type GetJiraBoardResponse = GetJiraBoardResponses[keyof GetJiraBoardRespo
 export type ListJiraIssuesData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        mine?: boolean;
+        status_category?: 'todo' | 'in_progress' | 'done';
+    };
     url: '/api/jira/issues';
 };
 
@@ -1398,6 +1555,10 @@ export type ListJiraIssuesErrors = {
     401: {
         error?: string;
     };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
 };
 
 export type ListJiraIssuesError = ListJiraIssuesErrors[keyof ListJiraIssuesErrors];
@@ -1428,6 +1589,67 @@ export type ListJiraIssuesResponses = {
 };
 
 export type ListJiraIssuesResponse = ListJiraIssuesResponses[keyof ListJiraIssuesResponses];
+
+export type ReadJiraIssueData = {
+    body?: never;
+    path: {
+        key: string;
+    };
+    query?: never;
+    url: '/api/jira/issues/{key}';
+};
+
+export type ReadJiraIssueErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No Jira integration, or Jira does not know this issue
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type ReadJiraIssueError = ReadJiraIssueErrors[keyof ReadJiraIssueErrors];
+
+export type ReadJiraIssueResponses = {
+    /**
+     * The issue
+     */
+    200: {
+        key?: string;
+        url?: string;
+        summary?: string;
+        project?: string;
+        issue_type?: string;
+        priority?: string;
+        status?: string;
+        sprint?: string;
+        assignee?: string;
+        reporter?: string;
+        labels?: Array<string>;
+        description?: string;
+        comments?: Array<{
+            author?: string;
+            created?: string;
+            body?: string;
+        }>;
+        attachments?: Array<{
+            id?: string;
+            filename?: string;
+            mime_type?: string;
+            size?: number;
+            created?: string;
+            author?: string;
+        }>;
+    };
+};
+
+export type ReadJiraIssueResponse = ReadJiraIssueResponses[keyof ReadJiraIssueResponses];
 
 export type ListJiraIssueTransitionsData = {
     body?: never;
@@ -1530,6 +1752,38 @@ export type TransitionJiraIssueResponses = {
 };
 
 export type TransitionJiraIssueResponse = TransitionJiraIssueResponses[keyof TransitionJiraIssueResponses];
+
+export type DownloadJiraAttachmentData = {
+    body?: never;
+    path: {
+        attachment: number;
+    };
+    query?: never;
+    url: '/api/jira/attachments/{attachment}';
+};
+
+export type DownloadJiraAttachmentErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No Jira integration, or Jira does not know this attachment
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * Over 5 MiB
+     */
+    413: {
+        error?: string;
+    };
+};
+
+export type DownloadJiraAttachmentError = DownloadJiraAttachmentErrors[keyof DownloadJiraAttachmentErrors];
 
 export type CreateTaskFromJiraIssueData = {
     body?: never;
@@ -3083,6 +3337,7 @@ export type ListWorkspacesResponses = {
         name: string;
         accent_color: string | null;
         sections: Array<string>;
+        mcp_access: string;
     }>;
 };
 
@@ -3121,6 +3376,7 @@ export type CreateWorkspaceResponses = {
         name: string;
         accent_color: string | null;
         sections: Array<string>;
+        mcp_access: string;
     };
 };
 
@@ -3159,6 +3415,7 @@ export type GetCurrentWorkspaceResponses = {
         name: string;
         accent_color: string | null;
         sections: Array<string>;
+        mcp_access: string;
     };
 };
 
@@ -3203,6 +3460,7 @@ export type SelectWorkspaceResponses = {
         name: string;
         accent_color: string | null;
         sections: Array<string>;
+        mcp_access: string;
     };
 };
 
@@ -3248,6 +3506,7 @@ export type UpdateWorkspaceData = {
         name: string;
         accent_color: string | null;
         sections?: Array<'tasks' | 'jira' | 'merge_requests' | 'events' | 'automation' | 'webhooks'>;
+        mcp_access?: 'blocked' | 'read' | 'write';
     };
     path: {
         workspace: number;
@@ -3286,6 +3545,7 @@ export type UpdateWorkspaceResponses = {
         name: string;
         accent_color: string | null;
         sections: Array<string>;
+        mcp_access: string;
     };
 };
 
@@ -3416,3 +3676,12 @@ export type RemoveWorkspaceMemberResponses = {
 };
 
 export type RemoveWorkspaceMemberResponse = RemoveWorkspaceMemberResponses[keyof RemoveWorkspaceMemberResponses];
+
+export type ServeIndexFileData = {
+    body?: never;
+    path: {
+        any: unknown;
+    };
+    query?: never;
+    url: '/{any}';
+};

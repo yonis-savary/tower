@@ -79,7 +79,7 @@ class WorkspaceTest extends CubeTestCase
     {
         $this->register('alice@example.com');
 
-        $this->assertEquals(['id', 'name', 'accent_color', 'sections'], array_keys($this->get('/api/workspaces')->assertOk()->json()[0]));
+        $this->assertEquals(['id', 'name', 'accent_color', 'sections', 'mcp_access'], array_keys($this->get('/api/workspaces')->assertOk()->json()[0]));
     }
 
     public function testRegisterSelectsDefaultWorkspace()

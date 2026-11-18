@@ -19,7 +19,9 @@ class WorkspaceSignals
     public const DELIVERY_UPDATED = 'delivery.updated';
     /** A call to a webhook was refused : `webhook` */
     public const WEBHOOK_REFUSED = 'webhook.refused';
-    public const SIGNALS = [self::HISTORY_CREATED, self::DELIVERY_UPDATED, self::WEBHOOK_REFUSED];
+    /** An agent called a tool through an API token : `token`, `tool`, `ok` */
+    public const MCP_CALLED = 'mcp.called';
+    public const SIGNALS = [self::HISTORY_CREATED, self::DELIVERY_UPDATED, self::WEBHOOK_REFUSED, self::MCP_CALLED];
 
     public function __construct(
         protected WorkspaceDevicesChannel $channel,

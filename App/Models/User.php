@@ -15,6 +15,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $password_hash
  * @property \DateTime $created_at
  * @property \DateTime $disabled_at
+ * @property ApiToken[] $apiTokens
  * @property History[] $histories
  * @property NotificationRule[] $notificationRules
  * @property PushSubscription[] $pushSubscriptions
@@ -52,6 +53,12 @@ class User extends Model
     }
 
     #[Generated]
+    public function apiTokens(): HasMany
+    {
+        return $this->hasMany('apiTokens', ApiToken::class, 'user', 'id');
+    }
+
+    #[Generated]
     public function histories(): HasMany
     {
         return $this->hasMany('histories', History::class, 'user', 'id');
@@ -85,6 +92,7 @@ class User extends Model
     public static function relations(): array
     {
         return [
+            "apiTokens",
             "histories",
             "notificationRules",
             "pushSubscriptions",

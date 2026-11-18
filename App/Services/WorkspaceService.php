@@ -16,6 +16,11 @@ class WorkspaceService
 {
     public const SECTIONS = ['tasks', 'jira', 'merge_requests', 'events', 'automation', 'webhooks'];
 
+    public const MCP_BLOCKED = 'blocked';
+    public const MCP_READ = 'read';
+    public const MCP_WRITE = 'write';
+    public const MCP_ACCESSES = [self::MCP_BLOCKED, self::MCP_READ, self::MCP_WRITE];
+
     public function __construct(
         protected Database $database,
     ) {}
@@ -54,8 +59,9 @@ class WorkspaceService
     /**
      * @param ?list<string> $sections null keeps the current ones
      */
-    public function update(Workspace $workspace, string $name, ?string $accentColor, ?array $sections = null): Workspace
+    public function update(Workspace $workspace, string $name, ?string $accentColor, ?array $sections = null, ?string $mcpAccess = null): Workspace
     {
+        $workspace->mcp_access = $mcpAccess ?? $workspace->mcp_access;
         $workspace->name = $name;
         $workspace->accent_color = null === $accentColor ? null : strtolower($accentColor);
         if (null !== $sections)

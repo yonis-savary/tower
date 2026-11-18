@@ -1188,6 +1188,353 @@
                 }
             }
         },
+        "\/api\/tokens": {
+            "get": {
+                "summary": "List API tokens",
+                "description": "The API tokens of the user for the current workspace, newest first",
+                "operationId": "listApiTokens",
+                "responses": {
+                    "200": {
+                        "description": "The tokens",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "created_at": {
+                                                "type": "string"
+                                            },
+                                            "last_used_at": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "expires_at": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "name",
+                                            "scope",
+                                            "created_at",
+                                            "last_used_at",
+                                            "expires_at"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 51,
+                                        "name": "blanditiis minus sed",
+                                        "scope": "occaecati consequatur ab",
+                                        "created_at": "2003-08-24T00:00:00+00:00",
+                                        "last_used_at": "2001-02-18T00:00:00+00:00",
+                                        "expires_at": "2006-06-15T00:00:00+00:00"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create API token",
+                "description": "Creates an API token of the user for the current workspace. Its value is only given by this answer",
+                "operationId": "createApiToken",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "scope": {
+                                        "type": "string",
+                                        "enum": [
+                                            "read",
+                                            "write"
+                                        ]
+                                    },
+                                    "expires_in_days": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "minimum": 1,
+                                        "maximum": 3650
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "scope"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The token and its value",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "token": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "scope": {
+                                                    "type": "string"
+                                                },
+                                                "created_at": {
+                                                    "type": "string"
+                                                },
+                                                "last_used_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "expires_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "name",
+                                                "scope",
+                                                "created_at",
+                                                "last_used_at",
+                                                "expires_at"
+                                            ]
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The workspace refuses MCP connections",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/tokens\/workspace": {
+            "get": {
+                "summary": "List workspace API tokens",
+                "description": "The API tokens of every member for the current workspace, oldest first : the agents drawn on the home circuit",
+                "operationId": "listWorkspaceApiTokens",
+                "responses": {
+                    "200": {
+                        "description": "The tokens",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "created_at": {
+                                                "type": "string"
+                                            },
+                                            "last_used_at": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "expires_at": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "name",
+                                            "scope",
+                                            "created_at",
+                                            "last_used_at",
+                                            "expires_at"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 51,
+                                        "name": "blanditiis minus sed",
+                                        "scope": "occaecati consequatur ab",
+                                        "created_at": "2003-08-24T00:00:00+00:00",
+                                        "last_used_at": "2001-02-18T00:00:00+00:00",
+                                        "expires_at": "2006-06-15T00:00:00+00:00"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/tokens\/{token}": {
+            "delete": {
+                "summary": "Revoke API token",
+                "description": "Deletes an API token of the user for the current workspace : it stops working at once",
+                "operationId": "revokeApiToken",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such token for this user in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The token is revoked"
+                    }
+                }
+            }
+        },
         "\/api\/auth\/register": {
             "post": {
                 "summary": "Register",
@@ -2938,9 +3285,42 @@
         "\/api\/jira\/issues": {
             "get": {
                 "summary": "List Jira issues",
-                "description": "The unfinished issues of the board (`tracked`), whoever they are assigned to, and the issues kept because a task is linked to them",
+                "description": "The unfinished issues of the board (`tracked`), whoever they are assigned to, and the issues kept because a task is linked to them. A board often holds hundreds : narrow with `mine` (assigned to the Jira account of the integration) and `status_category`",
                 "operationId": "listJiraIssues",
+                "parameters": [
+                    {
+                        "name": "mine",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "status_category",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "todo",
+                                "in_progress",
+                                "done"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
                     "200": {
                         "description": "The stored issues",
                         "content": {
@@ -3070,6 +3450,150 @@
                     },
                     "401": {
                         "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/jira\/issues\/{key}": {
+            "get": {
+                "summary": "Read Jira issue",
+                "description": "Reads an issue from Jira by its key, on the board or not : its description and last 20 comments in Jira wiki text, its labels and the list of its attachments",
+                "operationId": "readJiraIssue",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[A-Za-z][A-Za-z0-9_]*-[0-9]+"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The issue",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "key": {
+                                            "type": "string"
+                                        },
+                                        "url": {
+                                            "type": "string"
+                                        },
+                                        "summary": {
+                                            "type": "string"
+                                        },
+                                        "project": {
+                                            "type": "string"
+                                        },
+                                        "issue_type": {
+                                            "type": "string"
+                                        },
+                                        "priority": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "sprint": {
+                                            "type": "string"
+                                        },
+                                        "assignee": {
+                                            "type": "string"
+                                        },
+                                        "reporter": {
+                                            "type": "string"
+                                        },
+                                        "labels": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "comments": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "author": {
+                                                        "type": "string"
+                                                    },
+                                                    "created": {
+                                                        "type": "string"
+                                                    },
+                                                    "body": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "attachments": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "filename": {
+                                                        "type": "string"
+                                                    },
+                                                    "mime_type": {
+                                                        "type": "string"
+                                                    },
+                                                    "size": {
+                                                        "type": "integer"
+                                                    },
+                                                    "created": {
+                                                        "type": "string"
+                                                    },
+                                                    "author": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No Jira integration, or Jira does not know this issue",
                         "content": {
                             "application\/json": {
                                 "schema": {
@@ -3351,6 +3875,70 @@
                     },
                     "404": {
                         "description": "No such issue in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/jira\/attachments\/{attachment}": {
+            "get": {
+                "summary": "Download Jira attachment",
+                "description": "Downloads an attachment of a Jira issue, as listed by readJiraIssue, of 5 MiB at most",
+                "operationId": "downloadJiraAttachment",
+                "parameters": [
+                    {
+                        "name": "attachment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No Jira integration, or Jira does not know this attachment",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "Over 5 MiB",
                         "content": {
                             "application\/json": {
                                 "schema": {
@@ -6963,13 +7551,17 @@
                                                 "items": {
                                                     "type": "string"
                                                 }
+                                            },
+                                            "mcp_access": {
+                                                "type": "string"
                                             }
                                         },
                                         "required": [
                                             "id",
                                             "name",
                                             "accent_color",
-                                            "sections"
+                                            "sections",
+                                            "mcp_access"
                                         ]
                                     }
                                 },
@@ -6980,7 +7572,8 @@
                                         "accent_color": "#9e881c",
                                         "sections": [
                                             "webhooks"
-                                        ]
+                                        ],
+                                        "mcp_access": "cupiditate dolores ab"
                                     }
                                 ]
                             }
@@ -7060,13 +7653,17 @@
                                             "items": {
                                                 "type": "string"
                                             }
+                                        },
+                                        "mcp_access": {
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
                                         "id",
                                         "name",
                                         "accent_color",
-                                        "sections"
+                                        "sections",
+                                        "mcp_access"
                                     ]
                                 },
                                 "example": {
@@ -7075,7 +7672,8 @@
                                     "accent_color": "#9e881c",
                                     "sections": [
                                         "webhooks"
-                                    ]
+                                    ],
+                                    "mcp_access": "cupiditate dolores ab"
                                 }
                             }
                         }
@@ -7128,13 +7726,17 @@
                                             "items": {
                                                 "type": "string"
                                             }
+                                        },
+                                        "mcp_access": {
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
                                         "id",
                                         "name",
                                         "accent_color",
-                                        "sections"
+                                        "sections",
+                                        "mcp_access"
                                     ]
                                 },
                                 "example": {
@@ -7143,7 +7745,8 @@
                                     "accent_color": "#9e881c",
                                     "sections": [
                                         "webhooks"
-                                    ]
+                                    ],
+                                    "mcp_access": "cupiditate dolores ab"
                                 }
                             }
                         }
@@ -7237,13 +7840,17 @@
                                             "items": {
                                                 "type": "string"
                                             }
+                                        },
+                                        "mcp_access": {
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
                                         "id",
                                         "name",
                                         "accent_color",
-                                        "sections"
+                                        "sections",
+                                        "mcp_access"
                                     ]
                                 },
                                 "example": {
@@ -7252,7 +7859,8 @@
                                     "accent_color": "#9e881c",
                                     "sections": [
                                         "webhooks"
-                                    ]
+                                    ],
+                                    "mcp_access": "cupiditate dolores ab"
                                 }
                             }
                         }
@@ -7347,7 +7955,7 @@
         "\/api\/workspaces\/{workspace}": {
             "put": {
                 "summary": "Update workspace",
-                "description": "Changes the name, the accent color and, when given, the sections of a workspace the current user is a member of",
+                "description": "Changes the name, the accent color and, when given, the sections and the MCP access of a workspace the current user is a member of",
                 "operationId": "updateWorkspace",
                 "parameters": [
                     {
@@ -7388,6 +7996,14 @@
                                                 "webhooks"
                                             ]
                                         }
+                                    },
+                                    "mcp_access": {
+                                        "type": "string",
+                                        "enum": [
+                                            "blocked",
+                                            "read",
+                                            "write"
+                                        ]
                                     }
                                 },
                                 "required": [
@@ -7433,13 +8049,17 @@
                                             "items": {
                                                 "type": "string"
                                             }
+                                        },
+                                        "mcp_access": {
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
                                         "id",
                                         "name",
                                         "accent_color",
-                                        "sections"
+                                        "sections",
+                                        "mcp_access"
                                     ]
                                 },
                                 "example": {
@@ -7448,7 +8068,8 @@
                                     "accent_color": "#9e881c",
                                     "sections": [
                                         "webhooks"
-                                    ]
+                                    ],
+                                    "mcp_access": "cupiditate dolores ab"
                                 }
                             }
                         }
@@ -7746,6 +8367,21 @@
                         "description": "The member is removed"
                     }
                 }
+            }
+        },
+        "\/{any}": {
+            "get": {
+                "summary": "serveIndexFile",
+                "description": "FrontendServer.serveIndexFile",
+                "operationId": "serveIndexFile",
+                "parameters": [
+                    {
+                        "name": "any",
+                        "in": "path",
+                        "required": true,
+                        "schema": {}
+                    }
+                ]
             }
         }
     },

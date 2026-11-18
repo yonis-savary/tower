@@ -16,6 +16,7 @@ class UpdateWorkspaceRequest extends WorkspaceNameRequest
                 '{key} must be a color like #3b82f6, or null'
             ),
             'sections' => Param::array(Param::string()->inArray(WorkspaceService::SECTIONS))->optional(),
+            'mcp_access' => Param::string()->inArray(WorkspaceService::MCP_ACCESSES)->optional(),
         ];
     }
 }

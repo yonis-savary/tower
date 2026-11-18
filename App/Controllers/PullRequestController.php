@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Models\PullRequest;
 use App\Models\PullRequestApprovals;
@@ -38,6 +39,7 @@ class PullRequestController extends Controller
     #[Endpoint('List pull requests', 'The open and recently closed pull requests of the current workspace', 'listPullRequests')]
     #[ResourceResponse(PullRequestResource::class, isArray: true, description: 'The stored pull requests')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[McpTool('list_pull_requests')]
     public function list(Request $request): Response
     {
         $rows = PullRequest::select()->where('workspace', $this->currentWorkspaceId())->order('id', 'DESC')->fetch();

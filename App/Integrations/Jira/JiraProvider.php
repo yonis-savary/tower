@@ -6,7 +6,7 @@ class JiraProvider
 {
     private const PAGE_LENGTH = 100;
     private const FIELDS = 'summary,status,issuetype,priority,project,sprint,assignee';
-    private const CONTENT_FIELDS = self::FIELDS.',description,assignee,reporter,labels,comment';
+    private const CONTENT_FIELDS = self::FIELDS.',description,assignee,reporter,labels,comment,attachment';
     private const CONTENT_COMMENTS = 20;
     private const BOARD_JQL = 'statusCategory != Done{exclusion} ORDER BY updated DESC';
 
@@ -97,7 +97,25 @@ class JiraProvider
                 'created' => (string) ($comment['created'] ?? ''),
                 'body' => (string) ($comment['body'] ?? ''),
             ], $comments),
+            attachments: array_map(fn (array $attachment) => $this->toAttachment($attachment), $fields['attachment'] ?? []),
         );
+    }
+
+    public function attachment(string $id): ?JiraAttachment
+    {
+        $attachment = $this->client->read('/rest/api/3/attachment/'.rawurlencode($id));
+
+        return $attachment ? $this->toAttachment($attachment) : null;
+    }
+
+    public function attachmentContent(string $id): string
+    {
+        $path = '/rest/api/3/attachment/content/'.rawurlencode($id);
+        $response = $this->client->get($path, headers: ['Accept' => '*/*']);
+        if (200 !== $response->getStatusCode())
+            throw new \RuntimeException($this->client->describeFailure($response, $path));
+
+        return $response->getBody();
     }
 
     /**
@@ -158,6 +176,18 @@ class JiraProvider
                 state: (string) ($fields['sprint']['state'] ?? ''),
             ) : null,
             assignee: isset($fields['assignee']['accountId']) ? $this->toUser($fields['assignee']) : null,
+        );
+    }
+
+    private function toAttachment(array $attachment): JiraAttachment
+    {
+        return new JiraAttachment(
+            id: (string) $attachment['id'],
+            filename: (string) ($attachment['filename'] ?? ''),
+            mimeType: (string) ($attachment['mimeType'] ?? 'application/octet-stream'),
+            size: (int) ($attachment['size'] ?? 0),
+            created: (string) ($attachment['created'] ?? ''),
+            author: $attachment['author']['displayName'] ?? null,
         );
     }
 

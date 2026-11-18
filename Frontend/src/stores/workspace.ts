@@ -10,6 +10,8 @@ import {
 
 export type WorkspaceSection = 'tasks' | 'jira' | 'merge_requests' | 'events' | 'automation' | 'webhooks'
 export const WORKSPACE_SECTIONS: WorkspaceSection[] = ['tasks', 'jira', 'merge_requests', 'events', 'automation', 'webhooks']
+export type McpAccess = 'blocked' | 'read' | 'write'
+export const MCP_ACCESSES: McpAccess[] = ['blocked', 'read', 'write']
 
 export const useWorkspaceStore = defineStore('workspace', () => {
   const current = ref<GetCurrentWorkspaceResponse | null>(null)

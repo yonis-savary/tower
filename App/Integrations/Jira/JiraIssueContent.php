@@ -7,6 +7,7 @@ final class JiraIssueContent
     /**
      * @param list<string>                                        $labels
      * @param list<array{author: string, created: string, body: string}> $comments
+     * @param list<JiraAttachment>                                $attachments
      */
     public function __construct(
         public readonly JiraIssueData $issue,
@@ -15,5 +16,6 @@ final class JiraIssueContent
         public readonly ?string $reporter,
         public readonly array $labels,
         public readonly array $comments,
+        public readonly array $attachments,
     ) {}
 }

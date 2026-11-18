@@ -7,10 +7,12 @@ import {
   getBitbucketIntegration,
   getJiraIntegration,
   listNotificationRules,
+  listWorkspaceApiTokens,
   listScheduledEvents,
   listWebhooks,
   type ListNotificationRulesResponse,
   type ListScheduledEventsResponse,
+  type ListWorkspaceApiTokensResponse,
   type ListWebhooksResponse,
 } from '../client'
 import FlowChip, { type ChipLed } from './FlowChip.vue'
@@ -37,6 +39,7 @@ const push = usePushStore()
 const webhooks = ref<ListWebhooksResponse>([])
 const schedules = ref<ListScheduledEventsResponse>([])
 const rules = ref<ListNotificationRulesResponse>([])
+const agents = ref<ListWorkspaceApiTokensResponse>([])
 const jiraSite = ref<string | null>(null)
 const bitbucketWorkspace = ref<string | null>(null)
 
@@ -46,21 +49,23 @@ let nextGlow = 0
 const ledTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
 async function load() {
-  const [webhookList, scheduleList, ruleList, jira, bitbucket] = await Promise.all([
+  const [webhookList, scheduleList, ruleList, jira, bitbucket, agentList] = await Promise.all([
     workspace.hasSection('webhooks') ? listWebhooks() : null,
     workspace.hasSection('automation') ? listScheduledEvents() : null,
     push.configured ? listNotificationRules() : null,
     workspace.hasSection('jira') ? getJiraIntegration() : null,
     workspace.hasSection('merge_requests') ? getBitbucketIntegration() : null,
+    workspace.current?.mcp_access !== 'blocked' ? listWorkspaceApiTokens() : null,
   ])
   webhooks.value = webhookList?.data ?? []
   schedules.value = scheduleList?.data ?? []
   rules.value = ruleList?.data ?? []
   jiraSite.value = jira?.data?.site ?? null
   bitbucketWorkspace.value = bitbucket?.data?.workspace ?? null
+  agents.value = agentList?.data ?? []
 }
 
-watch(() => [workspace.current?.id, workspace.current?.sections, push.configured], ([id]) => { if (id) void load() }, { immediate: true })
+watch(() => [workspace.current?.id, workspace.current?.sections, workspace.current?.mcp_access, push.configured], ([id]) => { if (id) void load() }, { immediate: true })
 
 const sourceGroups = computed<FlowGroup[]>(() => {
   const integrations: Chip[] = [
@@ -73,6 +78,12 @@ const sourceGroups = computed<FlowGroup[]>(() => {
       label: t('home.flow.interfaceGroup'),
       empty: '',
       chips: [{ key: 'interface', kind: 'interface', label: t('home.flow.members'), detail: t('home.flow.membersDetail'), enabled: true }],
+    },
+    {
+      key: 'agents',
+      label: t('home.flow.agentsGroup'),
+      empty: '',
+      chips: agents.value.map((agent) => ({ key: `agent:${agent.id}`, kind: 'agent', label: agent.name, detail: t(`settings.agents.scope.${agent.scope}`), enabled: true })),
     },
     { key: 'integrations', label: t('home.flow.integrationsGroup'), empty: '', chips: integrations },
     {
@@ -156,6 +167,7 @@ const LINKS: Partial<Record<Chip['kind'], RouteLocationRaw>> = {
   webhook: { name: 'webhooks' },
   schedule: { name: 'automation', query: { tab: 'schedules' } },
   rule: { name: 'automation', query: { tab: 'notifications' } },
+  agent: { name: 'settings', query: { tab: 'agents' } },
 }
 
 function open(chip: PlacedChip) {
@@ -177,6 +189,8 @@ function sourceOf(signal: Extract<WorkspaceSignal, { type: 'history.created' }>)
   if (signal.origin === 'schedule') return `schedule:${signal.source}`
   if (signal.origin === 'integration') return signal.history_type.startsWith('jira.') ? 'jira' : 'bitbucket'
   if (signal.origin === 'device') return `device:${signal.device}`
+  // Its call already lit the chip of the agent, through `mcp.called`
+  if (signal.origin === 'mcp') return ''
   return 'interface'
 }
 
@@ -202,6 +216,12 @@ function animate(signal: WorkspaceSignal) {
     return
   }
 
+  if (signal.type === 'mcp.called') {
+    const chip = chipsByKey.value.get(`agent:${signal.token}`)
+    if (chip) glow(chip.trace, signal.ok ? 'active' : 'failure')
+    return
+  }
+
   if (signal.type === 'delivery.updated') {
     const chip = chipsByKey.value.get(`device:${signal.device}`)
     if (!chip) return
@@ -223,7 +243,7 @@ function animate(signal: WorkspaceSignal) {
   }
 }
 
-// A webhook or a schedule created, changed or deleted adds, changes or removes its chip
+// A webhook, a schedule or a token created, changed or deleted adds, changes or removes its chip
 let reloadTimer: ReturnType<typeof setTimeout> | undefined
 function reloadSoon() {
   clearTimeout(reloadTimer)
@@ -231,7 +251,7 @@ function reloadSoon() {
 }
 
 function onSignal(signal: WorkspaceSignal) {
-  if (signal.type === 'history.created' && /^(webhook|schedule)\./.test(signal.history_type)) reloadSoon()
+  if (signal.type === 'history.created' && /^(webhook|schedule|token)\./.test(signal.history_type)) reloadSoon()
   if (live.value) animate(signal)
 }
 

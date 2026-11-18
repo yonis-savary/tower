@@ -5,9 +5,21 @@ tâches, les tickets Jira, les merge requests et l'historique d'un workspace, et
 créer ou déplacer une tâche, lancer un événement vers les appareils, passer un ticket dans une
 autre colonne.
 
-Statut : **non commencé**. Ce document fait le point sur ce qui est possible avec Tower tel
-qu'il est, puis sur ce qu'il faudrait y ajouter pour un vrai serveur MCP. Les points marqués
-**(à trancher)** restent ouverts.
+Statut : **étapes 1 à 3 en place** (jetons, endpoint `/mcp`, outils de lecture et
+d'écriture, accès par workspace, documentation in-app). Ce qui est fait est décrit dans
+`ARCHITECTURE.md` § Serveur MCP ; ce document garde l'étude de départ et la suite.
+
+Tranché :
+
+- un jeton = un workspace ; portées `read` / `write` ; plus un niveau par workspace
+  (`blocked`, `read` par défaut, `write`), le droit effectif étant le plus restrictif ;
+- serveur intégré à Tower, sur le SDK PHP officiel (`mcp/sdk`), en Streamable HTTP sans
+  session ;
+- un outil est une route de l'API marquée `#[McpTool]`, exécutée en interne sous l'identité du
+  jeton (pas une classe par outil) ;
+- jeton seul, sans OAuth pour l'instant ; origine `mcp` dans l'historique ;
+- le jeton ne vaut que pour `/mcp`, pas pour le reste de l'API : les routes qui prennent un
+  identifiant de workspace sortiraient de la borne du jeton.
 
 ## Ce que Tower offre déjà
 
@@ -178,6 +190,8 @@ Plus tard, avec un flux : l'abonnement à une ressource, notifié par les signau
 
 ## Étapes
 
+Les étapes 1 à 3 sont faites, sauf l'authentification `Bearer` sur toute l'API (voir plus haut).
+
 1. Jetons d'API personnels : table, écran dans Paramètres, authentification `Bearer`, workspace
    lié, origine dans l'historique. Utile seul : le serveur MCP local du § 1 n'a plus besoin du
    mot de passe.
@@ -186,6 +200,12 @@ Plus tard, avec un flux : l'abonnement à une ressource, notifié par les signau
    dans Claude Desktop).
 4. Ressources.
 5. **(à trancher)** flux d'événements et abonnements, OAuth 2.1.
+6. Une intégration **Figma** : un agent va chercher seul un morceau de maquette (un frame par son
+   lien ou son nom, rendu en image, avec ses textes et ses styles), sur le modèle de
+   `get_jira_attachment` pour l'image. Lien du workspace à un fichier ou à un projet, avec un
+   jeton personnel Figma chiffré comme ceux de Jira.
+7. ~~Les connexions MCP dans le circuit de l'accueil (`HomeFlow`)~~ : une puce par jeton du
+   workspace, allumée à chaque appel par le signal `mcp.called`.
 
 ## Points à trancher
 

@@ -18,8 +18,9 @@ export type WorkspaceSignal =
   | { type: 'history.created'; history_type: string; history: number; origin: string; event?: string; source?: number; device?: string }
   | { type: 'delivery.updated'; history: number; device: string; status: string }
   | { type: 'webhook.refused'; webhook: number }
+  | { type: 'mcp.called'; token: number; tool: string; ok: boolean }
 
-const SIGNALS: string[] = ['history.created', 'delivery.updated', 'webhook.refused']
+const SIGNALS: string[] = ['history.created', 'delivery.updated', 'webhook.refused', 'mcp.called']
 const MAX_RETRY_DELAY_MS = 30_000
 
 export const useDeviceSocketStore = defineStore('deviceSocket', () => {

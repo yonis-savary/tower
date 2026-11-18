@@ -73,6 +73,12 @@ class JiraTest extends CubeTestCase
     private const BOARD = 7;
     private const ME = ['accountId' => 'me-123', 'displayName' => 'Alice', 'avatarUrls' => ['24x24' => 'https://avatars.example/alice.png']];
     private const BOB = ['accountId' => 'bob-456', 'displayName' => 'Bob'];
+    private const ATTACHMENTS = [
+        '501' => ['id' => '501', 'filename' => 'mockup.png', 'mimeType' => 'image/png', 'size' => 4, 'created' => '2026-11-10T10:00:00.000+0100', 'author' => ['displayName' => 'Bob']],
+        '502' => ['id' => '502', 'filename' => 'notes.txt', 'mimeType' => 'text/plain', 'size' => 11, 'created' => '2026-11-10T10:00:00.000+0100', 'author' => ['displayName' => 'Bob']],
+        '503' => ['id' => '503', 'filename' => 'video.mp4', 'mimeType' => 'video/mp4', 'size' => 50000000, 'created' => '2026-11-10T10:00:00.000+0100', 'author' => ['displayName' => 'Bob']],
+    ];
+    private const ATTACHMENT_BODIES = ['501' => "\x89PNG", '502' => 'Hello there', '503' => ''];
     private const STATUSES = [
         '11' => ['id' => '11', 'name' => 'To Do', 'statusCategory' => ['key' => 'new']],
         '21' => ['id' => '21', 'name' => 'In Progress', 'statusCategory' => ['key' => 'indeterminate']],
@@ -86,6 +92,12 @@ class JiraTest extends CubeTestCase
     {
         return HttpMockServer::fromArray([
             '/rest/api/3/myself' => fn () => Response::json(self::ME),
+            '/rest/api/3/attachment/content/{id}' => fn (Request $request, string $id) => isset(self::ATTACHMENTS[$id])
+                ? new Response(200, self::ATTACHMENT_BODIES[$id], ['Content-Type' => self::ATTACHMENTS[$id]['mimeType']])
+                : Response::json(['errorMessages' => ['Attachment does not exist']], 404),
+            '/rest/api/3/attachment/{id}' => fn (Request $request, string $id) => isset(self::ATTACHMENTS[$id])
+                ? Response::json(self::ATTACHMENTS[$id])
+                : Response::json(['errorMessages' => ['Attachment does not exist']], 404),
             '/rest/agile/1.0/board/{int:board}/issue' => function (Request $request, int $board) {
                 if (200 !== $this->searchStatus || self::BOARD !== $board)
                     return Response::json([], 200 === $this->searchStatus ? 404 : $this->searchStatus);
@@ -329,6 +341,25 @@ class JiraTest extends CubeTestCase
         $this->assertNull($this->stored('PLAT-2'));
     }
 
+    public function testIssuesAreFilteredByAccountAndCategory()
+    {
+        $this->register();
+        $this->save();
+        $this->issue('100', 'PLAT-1');
+        $this->issue('101', 'PLAT-2', ['status' => self::STATUSES['21']]);
+        $this->issue('102', 'PLAT-3', ['assignee' => self::BOB, 'status' => self::STATUSES['21']]);
+        $this->assigned = ['PLAT-1', 'PLAT-2', 'PLAT-3'];
+        $this->sync();
+
+        $keys = fn (string $query) => array_column($this->get('/api/jira/issues'.$query)->assertOk()->json(), 'key');
+
+        $this->assertEqualsCanonicalizing(['PLAT-1', 'PLAT-2', 'PLAT-3'], $keys(''));
+        $this->assertEqualsCanonicalizing(['PLAT-1', 'PLAT-2'], $keys('?mine=true'));
+        $this->assertEqualsCanonicalizing(['PLAT-2', 'PLAT-3'], $keys('?status_category=in_progress'));
+        $this->assertSame(['PLAT-2'], $keys('?mine=true&status_category=in_progress'));
+        $this->get('/api/jira/issues?status_category=closed')->assertUnprocessableContent();
+    }
+
     public function testTheLastColumnOfTheBoardIsDone()
     {
         $this->register();
@@ -453,9 +484,46 @@ class JiraTest extends CubeTestCase
         $this->assertSame("h2. Context\nThe description of PLAT-1", $payload['description']);
         $this->assertSame(['backend'], $payload['labels']);
         $this->assertSame([['author' => 'Bob', 'created' => '2026-11-10T10:00:00.000+0100', 'body' => 'First remark']], $payload['comments']);
+        $this->assertSame([], $payload['attachments']);
 
         unset($this->issues['PLAT-1']);
         $this->postJson("/api/jira/issues/{$id}/discuss")->assertNotFound();
+    }
+
+    public function testAnIssueIsReadByItsKeyWithItsAttachments()
+    {
+        $this->register();
+        $this->save();
+        $this->issue('100', 'PLAT-9', ['labels' => ['billing'], 'attachment' => [self::ATTACHMENTS['501'], self::ATTACHMENTS['502']]]);
+
+        $read = $this->get('/api/jira/issues/plat-9')->assertOk()->json();
+        $this->assertSame('PLAT-9', $read['key']);
+        $this->assertSame("h2. Context\nThe description of PLAT-9", $read['description']);
+        $this->assertSame(['billing'], $read['labels']);
+        $this->assertSame(['mockup.png', 'notes.txt'], array_column($read['attachments'], 'filename'));
+        $this->assertSame(['501', 'image/png', 4, 'Bob'], [$read['attachments'][0]['id'], $read['attachments'][0]['mime_type'], $read['attachments'][0]['size'], $read['attachments'][0]['author']]);
+        $this->assertNull($this->stored('PLAT-9'));
+
+        $this->get('/api/jira/issues/PLAT-404')->assertNotFound();
+    }
+
+    public function testAnAttachmentIsDownloadedUnderTheSizeLimit()
+    {
+        $this->register();
+        $this->save();
+
+        $this->get('/api/jira/attachments/502')->assertOk()->assertHeaderEqual('content-type', 'text/plain');
+        $this->assertSame('Hello there', $this->get('/api/jira/attachments/502')->body());
+        $this->get('/api/jira/attachments/503')->assertResponseCode(413);
+        $this->get('/api/jira/attachments/999')->assertNotFound();
+    }
+
+    public function testWithoutIntegrationThereIsNothingToRead()
+    {
+        $this->register();
+
+        $this->get('/api/jira/issues/PLAT-1')->assertNotFound();
+        $this->get('/api/jira/attachments/501')->assertNotFound();
     }
 
     public function testIssuesStayInTheirWorkspace()

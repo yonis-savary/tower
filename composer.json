@@ -21,10 +21,16 @@
     "require": {
         "yonis-savary/cube": "dev-main",
         "minishlink/web-push": "^11.0",
-        "guzzlehttp/guzzle": "^7.16"
+        "guzzlehttp/guzzle": "^7.16",
+        "mcp/sdk": "^0.10"
     },
     "require-dev": {
         "phpunit/phpunit": "^13.4",
         "fakerphp/faker": "^1.24"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": false
+        }
     }
 }

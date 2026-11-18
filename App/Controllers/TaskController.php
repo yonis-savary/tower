@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\CreateSprintRequest;
 use App\Requests\CreateTaskRequest;
@@ -49,6 +50,7 @@ class TaskController extends Controller
     #[Endpoint('List tasks', 'Every task of the current workspace, in their order', 'listTasks')]
     #[ResourceResponse(TaskResource::class, isArray: true, description: 'The tasks')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[McpTool('list_tasks')]
     public function list(Request $request): Response
     {
         return Response::json(TaskResource::of($this->tasks->listTasks($this->workspace())));
@@ -58,6 +60,7 @@ class TaskController extends Controller
     #[ResourceResponse(TaskResource::class, responseCode: StatusCode::CREATED, description: 'The task')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'This sprint cannot receive tasks'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'Unknown or closed sprint, or an invalid field')]
+    #[McpTool('create_task', write: true)]
     public function create(CreateTaskRequest $request): Response
     {
         $task = $this->tasks->createTask(
@@ -77,6 +80,7 @@ class TaskController extends Controller
     #[ResourceResponse(TaskResource::class, description: 'The task')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Task not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such task in the current workspace')]
+    #[McpTool('update_task', write: true)]
     public function update(TaskContentRequest $request, int $task): Response
     {
         $found = $this->tasks->findTask($this->workspace(), $task);
@@ -93,6 +97,7 @@ class TaskController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Task not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such task in the current workspace')]
     #[RawResponse(['error' => 'This sprint cannot receive tasks'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'Unknown or closed sprint, or an invalid order')]
+    #[McpTool('move_task', write: true)]
     public function move(MoveTaskRequest $request, int $task): Response
     {
         $found = $this->tasks->findTask($this->workspace(), $task);
@@ -108,6 +113,7 @@ class TaskController extends Controller
     #[ResourceResponse(TaskHistoryResource::class, isArray: true, description: 'The history lines of this task')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Task not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such task in the current workspace')]
+    #[McpTool('list_task_history')]
     public function history(Request $request, int $task): Response
     {
         $found = $this->tasks->findTask($this->workspace(), $task);
@@ -118,6 +124,7 @@ class TaskController extends Controller
     #[Endpoint('List sprints', 'The sprints of the current workspace, oldest first', 'listSprints')]
     #[ResourceResponse(SprintResource::class, isArray: true, description: 'The sprints')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[McpTool('list_sprints')]
     public function listSprints(Request $request): Response
     {
         return Response::json(SprintResource::of($this->tasks->listSprints($this->workspace())));
