@@ -5,6 +5,7 @@ import Button from 'primevue/button'
 import ToggleSwitch from 'primevue/toggleswitch'
 import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
+import SprintLinks from './SprintLinks.vue'
 import TaskCard from './TaskCard.vue'
 import EmptyState from './EmptyState.vue'
 import { BOARD_STATUSES, useTasksStore, type Sprint, type Task, type TaskStatus } from '../stores/tasks'
@@ -112,6 +113,8 @@ async function close(sprint: Sprint) {
           <p v-if="!item.cancelled.length" class="empty">{{ t('tasks.emptyList') }}</p>
           <TaskCard v-for="task in item.cancelled" :key="task.id" :task="task" @open="emit('open', task)" />
         </section>
+
+        <SprintLinks class="board-links" :links="item.sprint.links" />
       </template>
     </section>
   </div>
@@ -130,6 +133,10 @@ async function close(sprint: Sprint) {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 0.5rem;
+}
+
+.board-links {
+  margin-top: 0.75rem;
 }
 
 .sprint + .sprint {

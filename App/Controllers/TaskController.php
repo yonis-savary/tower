@@ -2,18 +2,22 @@
 
 namespace App\Controllers;
 
+use App\Favicons\FaviconService;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\CreateSprintRequest;
 use App\Requests\CreateTaskRequest;
 use App\Requests\MoveTaskRequest;
+use App\Requests\SaveSprintLinkRequest;
 use App\Requests\TaskContentRequest;
+use App\Resources\SprintLinkResource;
 use App\Resources\SprintResource;
 use App\Resources\TaskHistoryResource;
 use App\Resources\TaskResource;
 use App\Services\TaskService;
 use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
+use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
 use Cube\Data\OpenAPI\Attributes\ResourceResponse;
 use Cube\Security\Authentication;
@@ -30,6 +34,7 @@ class TaskController extends Controller
         protected Authentication $authentication,
         protected WorkspaceService $workspaces,
         protected TaskService $tasks,
+        protected FaviconService $favicons,
     ) {}
 
     public function routes(Router $router): void
@@ -44,6 +49,10 @@ class TaskController extends Controller
             Route::post('/sprints', [self::class, 'createSprint']),
             Route::post('/sprints/{int:sprint}/open', [self::class, 'openSprint']),
             Route::post('/sprints/{int:sprint}/close', [self::class, 'closeSprint']),
+            Route::post('/sprints/{int:sprint}/links', [self::class, 'addSprintLink']),
+            Route::put('/sprints/links/{int:link}', [self::class, 'updateSprintLink']),
+            Route::delete('/sprints/links/{int:link}', [self::class, 'removeSprintLink']),
+            Route::get('/sprints/links/{int:link}/icon', [self::class, 'sprintLinkIcon']),
         ]);
     }
 
@@ -121,8 +130,8 @@ class TaskController extends Controller
         return $found ? Response::json(TaskHistoryResource::of($this->tasks->historyOf($found))) : $this->taskNotFound();
     }
 
-    #[Endpoint('List sprints', 'The sprints of the current workspace, oldest first', 'listSprints')]
-    #[ResourceResponse(SprintResource::class, isArray: true, description: 'The sprints')]
+    #[Endpoint('List sprints', 'The sprints of the current workspace, oldest first, with their links', 'listSprints')]
+    #[ResourceResponse(SprintResource::class, with: ['links'], isArray: true, description: 'The sprints')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[McpTool('list_sprints')]
     public function listSprints(Request $request): Response
@@ -131,7 +140,7 @@ class TaskController extends Controller
     }
 
     #[Endpoint('Create sprint', 'Plans a new sprint in the current workspace', 'createSprint')]
-    #[ResourceResponse(SprintResource::class, responseCode: StatusCode::CREATED, description: 'The sprint')]
+    #[ResourceResponse(SprintResource::class, with: ['links'], responseCode: StatusCode::CREATED, description: 'The sprint')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function createSprint(CreateSprintRequest $request): Response
     {
@@ -141,7 +150,7 @@ class TaskController extends Controller
     }
 
     #[Endpoint('Open sprint', 'Makes a sprint active, alongside the other active sprints of the current workspace', 'openSprint')]
-    #[ResourceResponse(SprintResource::class, description: 'The sprint')]
+    #[ResourceResponse(SprintResource::class, with: ['links'], description: 'The sprint')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Sprint not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such sprint in the current workspace')]
     public function openSprint(Request $request, int $sprint): Response
@@ -156,7 +165,7 @@ class TaskController extends Controller
     }
 
     #[Endpoint('Close sprint', 'Marks an active sprint as finished. Its tasks stay where they are', 'closeSprint')]
-    #[ResourceResponse(SprintResource::class, description: 'The sprint')]
+    #[ResourceResponse(SprintResource::class, with: ['links'], description: 'The sprint')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Sprint not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such sprint in the current workspace')]
     #[RawResponse(['error' => 'This sprint is not active'], responseCode: StatusCode::CONFLICT, description: 'Only an active sprint can be closed')]
@@ -169,6 +178,72 @@ class TaskController extends Controller
         return $this->tasks->closeSprint($found, $this->authentication->userId())
             ? Response::json(SprintResource::of($found))
             : Response::json(['error' => 'This sprint is not active'], StatusCode::CONFLICT);
+    }
+
+    #[Endpoint('Add sprint link', 'Adds a handy link to a sprint that is not closed : a page the team opens during the whole sprint (board, mockup, document). Without label, the link shows its address', 'addSprintLink')]
+    #[ResourceResponse(SprintLinkResource::class, responseCode: StatusCode::CREATED, description: 'The link')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Sprint not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such sprint in the current workspace')]
+    #[RawResponse(['error' => 'This sprint is closed'], responseCode: StatusCode::CONFLICT, description: 'The links of a closed sprint no longer change')]
+    #[McpTool('add_sprint_link', write: true)]
+    public function addSprintLink(SaveSprintLinkRequest $request, int $sprint): Response
+    {
+        $found = $this->tasks->findSprint($this->workspace(), $sprint);
+        if (!$found)
+            return $this->sprintNotFound();
+
+        $link = $this->tasks->addLink($found, $this->authentication->userId(), $request->validated('url'), $request->validated('label') ?: null);
+
+        return $link ? Response::json(SprintLinkResource::of($link), StatusCode::CREATED) : $this->sprintClosed();
+    }
+
+    #[Endpoint('Update sprint link', 'Changes the address and the label of a link of a sprint that is not closed', 'updateSprintLink')]
+    #[ResourceResponse(SprintLinkResource::class, description: 'The link')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Link not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such link in the current workspace')]
+    #[RawResponse(['error' => 'This sprint is closed'], responseCode: StatusCode::CONFLICT, description: 'The links of a closed sprint no longer change')]
+    public function updateSprintLink(SaveSprintLinkRequest $request, int $link): Response
+    {
+        $found = $this->tasks->findLink($this->workspace(), $link);
+        if (!$found)
+            return $this->linkNotFound();
+
+        return $this->tasks->updateLink($found, $this->authentication->userId(), $request->validated('url'), $request->validated('label') ?: null)
+            ? Response::json(SprintLinkResource::of($found))
+            : $this->sprintClosed();
+    }
+
+    #[Endpoint('Remove sprint link', 'Removes a link from a sprint that is not closed', 'removeSprintLink')]
+    #[NoContentResponse('The link is removed')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Link not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such link in the current workspace')]
+    #[RawResponse(['error' => 'This sprint is closed'], responseCode: StatusCode::CONFLICT, description: 'The links of a closed sprint no longer change')]
+    public function removeSprintLink(Request $request, int $link): Response
+    {
+        $found = $this->tasks->findLink($this->workspace(), $link);
+        if (!$found)
+            return $this->linkNotFound();
+
+        return $this->tasks->removeLink($found, $this->authentication->userId()) ? Response::noContent() : $this->sprintClosed();
+    }
+
+    #[Endpoint('Get sprint link icon', 'The favicon of the site a link points to, read once a month by Tower. A 404 when the site has none or cannot be reached', 'getSprintLinkIcon')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Icon not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such link, or no icon for its site')]
+    public function sprintLinkIcon(Request $request, int $link): Response
+    {
+        $found = $this->tasks->findLink($this->workspace(), $link);
+        $favicon = $found ? $this->favicons->of($found->url) : null;
+        if (!$favicon)
+            return Response::json(['error' => 'Icon not found'], StatusCode::NOT_FOUND);
+
+        return new Response(StatusCode::OK, $favicon->body, [
+            'Content-Type' => $favicon->type,
+            'Cache-Control' => 'private, max-age=86400',
+            'X-Content-Type-Options' => 'nosniff',
+            // An SVG icon opened on its own must not run what it carries
+            'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+        ]);
     }
 
     private function invalidMove(): Response
@@ -184,6 +259,16 @@ class TaskController extends Controller
     private function sprintNotFound(): Response
     {
         return Response::json(['error' => 'Sprint not found'], StatusCode::NOT_FOUND);
+    }
+
+    private function linkNotFound(): Response
+    {
+        return Response::json(['error' => 'Link not found'], StatusCode::NOT_FOUND);
+    }
+
+    private function sprintClosed(): Response
+    {
+        return Response::json(['error' => 'This sprint is closed'], StatusCode::CONFLICT);
     }
 
     private function workspace(): int

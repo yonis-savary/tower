@@ -18,6 +18,7 @@ use Cube\Utils\Attributes\Generated;
  * @property \DateTime $closed_at
  * @property \DateTime $created_at
  * @property Workspace $_workspace
+ * @property SprintLink[] $links
  * @property Task[] $tasks
  */
 class Sprint extends Model
@@ -59,6 +60,12 @@ class Sprint extends Model
     }
 
     #[Generated]
+    public function links(): HasMany
+    {
+        return $this->hasMany('links', SprintLink::class, 'sprint', 'id');
+    }
+
+    #[Generated]
     public function tasks(): HasMany
     {
         return $this->hasMany('tasks', Task::class, 'sprint', 'id');
@@ -68,6 +75,7 @@ class Sprint extends Model
     public static function relations(): array
     {
         return [
+            "links",
             "tasks",
             "_workspace",
         ];

@@ -6381,7 +6381,7 @@
         "\/api\/sprints": {
             "get": {
                 "summary": "List sprints",
-                "description": "The sprints of the current workspace, oldest first",
+                "description": "The sprints of the current workspace, oldest first, with their links",
                 "operationId": "listSprints",
                 "responses": {
                     "200": {
@@ -6413,6 +6413,31 @@
                                                     "string",
                                                     "null"
                                                 ]
+                                            },
+                                            "links": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "url": {
+                                                            "type": "string"
+                                                        },
+                                                        "label": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "url",
+                                                        "label"
+                                                    ]
+                                                }
                                             }
                                         },
                                         "required": [
@@ -6420,7 +6445,8 @@
                                             "name",
                                             "state",
                                             "opened_at",
-                                            "closed_at"
+                                            "closed_at",
+                                            "links"
                                         ]
                                     }
                                 },
@@ -6430,7 +6456,14 @@
                                         "name": "aut similique magni",
                                         "state": "nam error vero",
                                         "opened_at": "2004-09-03T00:00:00+00:00",
-                                        "closed_at": "2027-05-24T00:00:00+00:00"
+                                        "closed_at": "2027-05-24T00:00:00+00:00",
+                                        "links": [
+                                            {
+                                                "id": 198,
+                                                "url": "occaecati tempore repudiandae",
+                                                "label": "placeat incidunt tempora"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -6513,6 +6546,31 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "links": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "url": {
+                                                        "type": "string"
+                                                    },
+                                                    "label": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "url",
+                                                    "label"
+                                                ]
+                                            }
                                         }
                                     },
                                     "required": [
@@ -6520,7 +6578,8 @@
                                         "name",
                                         "state",
                                         "opened_at",
-                                        "closed_at"
+                                        "closed_at",
+                                        "links"
                                     ]
                                 },
                                 "example": {
@@ -6528,7 +6587,14 @@
                                     "name": "aut similique magni",
                                     "state": "nam error vero",
                                     "opened_at": "2004-09-03T00:00:00+00:00",
-                                    "closed_at": "2027-05-24T00:00:00+00:00"
+                                    "closed_at": "2027-05-24T00:00:00+00:00",
+                                    "links": [
+                                        {
+                                            "id": 198,
+                                            "url": "occaecati tempore repudiandae",
+                                            "label": "placeat incidunt tempora"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -6594,6 +6660,31 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "links": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "url": {
+                                                        "type": "string"
+                                                    },
+                                                    "label": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "url",
+                                                    "label"
+                                                ]
+                                            }
                                         }
                                     },
                                     "required": [
@@ -6601,7 +6692,8 @@
                                         "name",
                                         "state",
                                         "opened_at",
-                                        "closed_at"
+                                        "closed_at",
+                                        "links"
                                     ]
                                 },
                                 "example": {
@@ -6609,7 +6701,14 @@
                                     "name": "aut similique magni",
                                     "state": "nam error vero",
                                     "opened_at": "2004-09-03T00:00:00+00:00",
-                                    "closed_at": "2027-05-24T00:00:00+00:00"
+                                    "closed_at": "2027-05-24T00:00:00+00:00",
+                                    "links": [
+                                        {
+                                            "id": 198,
+                                            "url": "occaecati tempore repudiandae",
+                                            "label": "placeat incidunt tempora"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -6690,6 +6789,31 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "links": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "url": {
+                                                        "type": "string"
+                                                    },
+                                                    "label": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "url",
+                                                    "label"
+                                                ]
+                                            }
                                         }
                                     },
                                     "required": [
@@ -6697,7 +6821,8 @@
                                         "name",
                                         "state",
                                         "opened_at",
-                                        "closed_at"
+                                        "closed_at",
+                                        "links"
                                     ]
                                 },
                                 "example": {
@@ -6705,7 +6830,14 @@
                                     "name": "aut similique magni",
                                     "state": "nam error vero",
                                     "opened_at": "2004-09-03T00:00:00+00:00",
-                                    "closed_at": "2027-05-24T00:00:00+00:00"
+                                    "closed_at": "2027-05-24T00:00:00+00:00",
+                                    "links": [
+                                        {
+                                            "id": 198,
+                                            "url": "occaecati tempore repudiandae",
+                                            "label": "placeat incidunt tempora"
+                                        }
+                                    ]
                                 }
                             }
                         }
@@ -6742,6 +6874,384 @@
                     },
                     "409": {
                         "description": "Only an active sprint can be closed",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/sprints\/{sprint}\/links": {
+            "post": {
+                "summary": "Add sprint link",
+                "description": "Adds a handy link to a sprint that is not closed : a page the team opens during the whole sprint (board, mockup, document). Without label, the link shows its address",
+                "operationId": "addSprintLink",
+                "parameters": [
+                    {
+                        "name": "sprint",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "url": {
+                                        "type": "string"
+                                    },
+                                    "label": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "url"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The link",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "url": {
+                                            "type": "string"
+                                        },
+                                        "label": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "url",
+                                        "label"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 651,
+                                    "url": "est quasi enim",
+                                    "label": "explicabo nihil dolorum"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such sprint in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The links of a closed sprint no longer change",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/sprints\/links\/{link}": {
+            "put": {
+                "summary": "Update sprint link",
+                "description": "Changes the address and the label of a link of a sprint that is not closed",
+                "operationId": "updateSprintLink",
+                "parameters": [
+                    {
+                        "name": "link",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "url": {
+                                        "type": "string"
+                                    },
+                                    "label": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "url"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The link",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "url": {
+                                            "type": "string"
+                                        },
+                                        "label": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "url",
+                                        "label"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 651,
+                                    "url": "est quasi enim",
+                                    "label": "explicabo nihil dolorum"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such link in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The links of a closed sprint no longer change",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Remove sprint link",
+                "description": "Removes a link from a sprint that is not closed",
+                "operationId": "removeSprintLink",
+                "parameters": [
+                    {
+                        "name": "link",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such link in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The links of a closed sprint no longer change",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The link is removed"
+                    }
+                }
+            }
+        },
+        "\/api\/sprints\/links\/{link}\/icon": {
+            "get": {
+                "summary": "Get sprint link icon",
+                "description": "The favicon of the site a link points to, read once a month by Tower. A 404 when the site has none or cannot be reached",
+                "operationId": "getSprintLinkIcon",
+                "parameters": [
+                    {
+                        "name": "link",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such link, or no icon for its site",
                         "content": {
                             "application\/json": {
                                 "schema": {

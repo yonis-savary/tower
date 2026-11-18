@@ -2837,6 +2837,11 @@ export type ListSprintsResponses = {
         state: string;
         opened_at: string | null;
         closed_at: string | null;
+        links: Array<{
+            id: number;
+            url: string;
+            label: string | null;
+        }>;
     }>;
 };
 
@@ -2876,6 +2881,11 @@ export type CreateSprintResponses = {
         state: string;
         opened_at: string | null;
         closed_at: string | null;
+        links: Array<{
+            id: number;
+            url: string;
+            label: string | null;
+        }>;
     };
 };
 
@@ -2917,6 +2927,11 @@ export type OpenSprintResponses = {
         state: string;
         opened_at: string | null;
         closed_at: string | null;
+        links: Array<{
+            id: number;
+            url: string;
+            label: string | null;
+        }>;
     };
 };
 
@@ -2964,10 +2979,186 @@ export type CloseSprintResponses = {
         state: string;
         opened_at: string | null;
         closed_at: string | null;
+        links: Array<{
+            id: number;
+            url: string;
+            label: string | null;
+        }>;
     };
 };
 
 export type CloseSprintResponse = CloseSprintResponses[keyof CloseSprintResponses];
+
+export type AddSprintLinkData = {
+    body: {
+        url: string;
+        label?: string | null;
+    };
+    path: {
+        sprint: number;
+    };
+    query?: never;
+    url: '/api/sprints/{sprint}/links';
+};
+
+export type AddSprintLinkErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such sprint in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The links of a closed sprint no longer change
+     */
+    409: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type AddSprintLinkError = AddSprintLinkErrors[keyof AddSprintLinkErrors];
+
+export type AddSprintLinkResponses = {
+    /**
+     * The link
+     */
+    201: {
+        id: number;
+        url: string;
+        label: string | null;
+    };
+};
+
+export type AddSprintLinkResponse = AddSprintLinkResponses[keyof AddSprintLinkResponses];
+
+export type RemoveSprintLinkData = {
+    body?: never;
+    path: {
+        link: number;
+    };
+    query?: never;
+    url: '/api/sprints/links/{link}';
+};
+
+export type RemoveSprintLinkErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such link in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The links of a closed sprint no longer change
+     */
+    409: {
+        error?: string;
+    };
+};
+
+export type RemoveSprintLinkError = RemoveSprintLinkErrors[keyof RemoveSprintLinkErrors];
+
+export type RemoveSprintLinkResponses = {
+    /**
+     * The link is removed
+     */
+    204: void;
+};
+
+export type RemoveSprintLinkResponse = RemoveSprintLinkResponses[keyof RemoveSprintLinkResponses];
+
+export type UpdateSprintLinkData = {
+    body: {
+        url: string;
+        label?: string | null;
+    };
+    path: {
+        link: number;
+    };
+    query?: never;
+    url: '/api/sprints/links/{link}';
+};
+
+export type UpdateSprintLinkErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such link in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The links of a closed sprint no longer change
+     */
+    409: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type UpdateSprintLinkError = UpdateSprintLinkErrors[keyof UpdateSprintLinkErrors];
+
+export type UpdateSprintLinkResponses = {
+    /**
+     * The link
+     */
+    200: {
+        id: number;
+        url: string;
+        label: string | null;
+    };
+};
+
+export type UpdateSprintLinkResponse = UpdateSprintLinkResponses[keyof UpdateSprintLinkResponses];
+
+export type GetSprintLinkIconData = {
+    body?: never;
+    path: {
+        link: number;
+    };
+    query?: never;
+    url: '/api/sprints/links/{link}/icon';
+};
+
+export type GetSprintLinkIconErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such link, or no icon for its site
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type GetSprintLinkIconError = GetSprintLinkIconErrors[keyof GetSprintLinkIconErrors];
 
 export type ListWebhooksData = {
     body?: never;

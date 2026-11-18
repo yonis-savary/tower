@@ -87,6 +87,7 @@ const discussExample = `
       <tr><td><code>sprint.created</code></td><td>un sprint est planifié</td></tr>
       <tr><td><code>sprint.opened</code></td><td>il devient actif, à côté des autres sprints actifs</td></tr>
       <tr><td><code>sprint.closed</code></td><td>il est clôturé</td></tr>
+      <tr><td><code>sprint.link_added</code>, <code>sprint.link_updated</code>, <code>sprint.link_removed</code></td><td>un lien du sprint est ajouté, modifié ou retiré ; <code>link</code> : son libellé, ou son adresse</td></tr>
     </tbody>
   </table>
 

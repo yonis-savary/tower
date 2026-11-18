@@ -56,6 +56,9 @@ export const HISTORY_ICONS: Record<string, string> = {
   'sprint.created': 'pi pi-calendar-plus',
   'sprint.opened': 'pi pi-play',
   'sprint.closed': 'pi pi-flag',
+  'sprint.link_added': 'pi pi-link',
+  'sprint.link_updated': 'pi pi-link',
+  'sprint.link_removed': 'pi pi-link',
 }
 
 export const DELIVERY_SEVERITY: Record<string, string> = { succeeded: 'success', received: 'success', failed: 'danger', running: 'info', pending: 'warn' }
@@ -87,6 +90,8 @@ export function historyDetail(i18n: HistoryI18n, type: string, parsed: Details):
 function describe({ t, te }: HistoryI18n, type: string, parsed: Details): string {
   if (type.startsWith('pr.')) return `${parsed.title} · ${parsed.repository}${integrationChange(type, parsed)}`
   if (type.startsWith('jira.issue.')) return `${parsed.key} · ${parsed.summary}${integrationChange(type, parsed)}`
+
+  if (type.startsWith('sprint.link_')) return `${parsed.name} · ${parsed.link}`
 
   if (type.startsWith('task.')) {
     const change = taskChange(t, type, parsed)

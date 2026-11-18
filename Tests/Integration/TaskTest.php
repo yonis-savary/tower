@@ -197,4 +197,38 @@ class TaskTest extends CubeTestCase
         $this->move($own, $sprint['id'], 'todo')->assertUnprocessableContent();
         $this->move($own, null, 'todo', [$own['id'], $task['id']])->assertUnprocessableContent();
     }
+
+    public function testSprintLinksAreKeptWhileTheSprintIsOpen()
+    {
+        $this->register();
+        $sprint = $this->sprint();
+
+        $board = $this->postJson("/api/sprints/{$sprint['id']}/links", ['url' => 'https://team.atlassian.net/board', 'label' => 'Board'])->assertCreated()->json();
+        $this->postJson("/api/sprints/{$sprint['id']}/links", ['url' => 'https://figma.com/design/abc', 'label' => ''])->assertCreated();
+        $this->postJson("/api/sprints/{$sprint['id']}/links", ['url' => 'javascript:alert(1)'])->assertUnprocessableContent();
+        $this->postJson("/api/sprints/{$sprint['id']}/links", ['url' => 'ftp://files.example.com/spec'])->assertUnprocessableContent();
+        $this->postJson('/api/sprints/999/links', ['url' => 'https://example.com'])->assertNotFound();
+
+        $links = $this->get('/api/sprints')->assertOk()->json()[0]['links'];
+        $this->assertSame([['id' => $board['id'], 'url' => 'https://team.atlassian.net/board', 'label' => 'Board'], ['id' => $board['id'] + 1, 'url' => 'https://figma.com/design/abc', 'label' => null]], $links);
+
+        $this->putJson("/api/sprints/links/{$board['id']}", ['url' => 'https://team.atlassian.net/board/2', 'label' => 'Board 2'])->assertOk();
+        $this->delete('/api/sprints/links/'.($board['id'] + 1))->assertNoContent();
+        $this->assertSame([['id' => $board['id'], 'url' => 'https://team.atlassian.net/board/2', 'label' => 'Board 2']], $this->get('/api/sprints')->assertOk()->json()[0]['links']);
+
+        $this->postJson("/api/sprints/{$sprint['id']}/open", [])->assertOk();
+        $this->postJson("/api/sprints/{$sprint['id']}/close", [])->assertOk();
+        $this->postJson("/api/sprints/{$sprint['id']}/links", ['url' => 'https://example.com'])->assertConflict();
+        $this->putJson("/api/sprints/links/{$board['id']}", ['url' => 'https://example.com'])->assertConflict();
+        $this->delete("/api/sprints/links/{$board['id']}")->assertConflict();
+
+        $events = array_column($this->broadcast->emitted, 'event');
+        $this->assertSame(['sprint.link_added', 'sprint.link_added', 'sprint.link_updated', 'sprint.link_removed'], array_values(array_filter($events, fn ($event) => str_starts_with($event, 'sprint.link'))));
+        $this->assertSame('Board 2', json_decode($this->broadcast->emitted[3]['payload'], true)['link']);
+
+        $this->logOut();
+        $this->register('bob@example.com');
+        $this->putJson("/api/sprints/links/{$board['id']}", ['url' => 'https://example.com'])->assertNotFound();
+        $this->get("/api/sprints/links/{$board['id']}/icon")->assertNotFound();
+    }
 }

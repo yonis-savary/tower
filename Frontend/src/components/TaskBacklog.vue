@@ -6,6 +6,7 @@ import Tag from 'primevue/tag'
 import ToggleSwitch from 'primevue/toggleswitch'
 import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
+import SprintLinks from './SprintLinks.vue'
 import TaskCard from './TaskCard.vue'
 import { useTasksStore, type Sprint, type Task } from '../stores/tasks'
 
@@ -106,6 +107,7 @@ function notifySprintError() {
     >
       <TaskCard v-for="task in item.tasks" :key="task.id" :task="task" show-status @open="emit('open', task)" />
     </VueDraggable>
+    <SprintLinks v-if="item.sprint" class="section-links" :links="item.sprint.links" :sprint="item.sprint.id" />
   </section>
 
   <section v-if="closedSections.length" class="panel">
@@ -133,6 +135,7 @@ function notifySprintError() {
         >
           <TaskCard v-for="task in item.tasks" :key="task.id" :task="task" show-status @open="emit('open', task)" />
         </VueDraggable>
+        <SprintLinks class="section-links" :links="item.sprint!.links" />
       </div>
     </div>
   </section>
@@ -188,6 +191,10 @@ function notifySprintError() {
   display: flex;
   align-items: center;
   margin-left: auto;
+}
+
+.section-links {
+  margin-top: 0.625rem;
 }
 
 .task-list {

@@ -203,7 +203,7 @@ Les étapes 1 à 3 sont faites, sauf l'authentification `Bearer` sur toute l'API
 6. Une intégration **Figma** : un agent va chercher seul un morceau de maquette (un frame par son
    lien ou son nom, rendu en image, avec ses textes et ses styles), sur le modèle de
    `get_jira_attachment` pour l'image. Lien du workspace à un fichier ou à un projet, avec un
-   jeton personnel Figma chiffré comme ceux de Jira.
+   jeton personnel Figma chiffré comme ceux de Jira. Idées et limites dans `Figma.md`.
 7. ~~Les connexions MCP dans le circuit de l'accueil (`HomeFlow`)~~ : une puce par jeton du
    workspace, allumée à chaque appel par le signal `mcp.called`.
 

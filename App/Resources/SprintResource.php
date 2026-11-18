@@ -10,7 +10,7 @@ use Cube\Data\OpenAPI\Attributes\Nullable;
 /**
  * @extends ModelResource<Sprint>
  */
-#[Nullable(['opened_at', 'closed_at'])]
+#[Nullable(['opened_at', 'closed_at', 'links.*.label'])]
 class SprintResource extends ModelResource
 {
     public static function getModelClass(): string
@@ -29,6 +29,7 @@ class SprintResource extends ModelResource
             'state' => $model->state,
             'opened_at' => AtomDate::format($model->opened_at),
             'closed_at' => AtomDate::format($model->closed_at),
+            'links' => SprintLinkResource::of($model->loadMissing('links')->links),
         ];
     }
 }

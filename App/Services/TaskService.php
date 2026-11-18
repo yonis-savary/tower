@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\History;
 use App\Models\Sprint;
+use App\Models\SprintLink;
 use App\Models\Task;
 use Cube\Data\Bunch;
 use Cube\Data\Database\Database;
@@ -160,7 +161,7 @@ class TaskService
      */
     public function listSprints(int $workspace): Bunch
     {
-        return Bunch::wrap(Sprint::select()->where('workspace', $workspace)->order('id', 'ASC')->fetch());
+        return Bunch::wrap(Sprint::select(['links'])->where('workspace', $workspace)->order('id', 'ASC')->fetch());
     }
 
     public function findSprint(int $workspace, int $id): ?Sprint
@@ -216,6 +217,67 @@ class TaskService
         return true;
     }
 
+    public function findLink(int $workspace, int $id): ?SprintLink
+    {
+        $link = SprintLink::find($id);
+
+        return $link && $this->findSprint($workspace, $link->sprint) ? $link : null;
+    }
+
+    /**
+     * @return ?SprintLink null when the sprint is closed
+     */
+    public function addLink(Sprint $sprint, int $user, string $url, ?string $label): ?SprintLink
+    {
+        if (self::SPRINT_CLOSED === $sprint->state)
+            return null;
+
+        $link = (new SprintLink([
+            'sprint' => $sprint->id,
+            'url' => $url,
+            'label' => $label,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]))->save();
+
+        $this->announceSprint($sprint, 'sprint.link_added', $user, ['link' => $label ?? $url]);
+
+        return $link;
+    }
+
+    /**
+     * @return bool false when the sprint is closed
+     */
+    public function updateLink(SprintLink $link, int $user, string $url, ?string $label): bool
+    {
+        $sprint = Sprint::find($link->sprint);
+        if (self::SPRINT_CLOSED === $sprint->state)
+            return false;
+
+        $link->url = $url;
+        $link->label = $label;
+        $link->save();
+
+        $this->announceSprint($sprint, 'sprint.link_updated', $user, ['link' => $label ?? $url]);
+
+        return true;
+    }
+
+    /**
+     * @return bool false when the sprint is closed
+     */
+    public function removeLink(SprintLink $link, int $user): bool
+    {
+        $sprint = Sprint::find($link->sprint);
+        if (self::SPRINT_CLOSED === $sprint->state)
+            return false;
+
+        SprintLink::deleteId($link->id);
+
+        $this->announceSprint($sprint, 'sprint.link_removed', $user, ['link' => $link->label ?? $link->url]);
+
+        return true;
+    }
+
     private function acceptsTasks(int $workspace, ?int $sprint): bool
     {
         if (null === $sprint)
@@ -263,11 +325,11 @@ class TaskService
         return [$line, $payload];
     }
 
-    private function announceSprint(Sprint $sprint, string $type, int $user): void
+    private function announceSprint(Sprint $sprint, string $type, int $user, array $details = []): void
     {
-        $line = $this->history->log($sprint->workspace, $type, ['name' => $sprint->name], user: $user);
+        $line = $this->history->log($sprint->workspace, $type, ['name' => $sprint->name, ...$details], user: $user);
 
-        $this->announce($line, ['sprint' => $sprint->id, 'name' => $sprint->name]);
+        $this->announce($line, ['sprint' => $sprint->id, 'name' => $sprint->name, ...$details]);
     }
 
     /**

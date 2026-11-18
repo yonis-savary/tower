@@ -124,6 +124,19 @@ Le tableau montre chaque sprint actif en cinq colonnes, du plus ancien au plus r
 planifiés puis les tâches sans sprint. Les tâches se déplacent par glisser-déposer, entre les
 listes et à l'intérieur d'une liste.
 
+**Liens d'un sprint** (table `sprint_link`) : des pages pratiques à garder sous la main pendant
+le sprint (board, maquette, document), une adresse http(s) et un libellé facultatif (sans
+libellé, le nom du site). Ils se gèrent dans le backlog tant que le sprint n'est pas clôturé, et
+s'affichent par ordre alphabétique sur le tableau et à l'accueil (sprints affichés seulement).
+
+Chaque lien porte l'icône de son site : `GET /api/sprints/links/{id}/icon`, lue par Tower
+(`App/Favicons`) dans la page d'accueil du site (`<link rel="icon">`, puis `apple-touch-icon`),
+sinon `/favicon.ico`. Elle est gardée **un mois** dans le cache, par origine ; un site sans
+icône est redemandé le lendemain. Seules les adresses **publiques** sont lues (résolution DNS
+vérifiée puis épinglée, redirections revérifiées, 5 s, 1 Mio par page et 256 Kio par icône) :
+un lien ne doit pas faire lire à Tower son propre réseau. Sans icône, le front affiche une
+pastille avec l'initiale, d'une couleur tirée du nom du site.
+
 ### Historique
 
 Toute action notable écrit une ligne dans la table `history` : `workspace`, `type`,
@@ -137,6 +150,7 @@ y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les l
 | `task.status_changed`         | changement de statut (`from`, `to`)                 |
 | `task.sprint_changed`         | changement de sprint (noms, `null` pour le backlog) |
 | `sprint.created`, `sprint.opened`, `sprint.closed` |                                |
+| `sprint.link_added`, `sprint.link_updated`, `sprint.link_removed` | `link` : libellé, ou adresse |
 | `event.triggered`             | événement lancé à la main, par une quick-action, un webhook ou une planification |
 | `pr.*`                        | changements vus par une intégration de forge (voir § Synchronisation et diff) |
 | `jira.issue.*`                | changements vus par l'intégration Jira, et transitions faites depuis Tower |
@@ -934,6 +948,7 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `workspace_member` | `workspace`, `user`                                                      |
 | `task`            | voir § Tâches et sprints                                                  |
 | `sprint`          | `workspace`, `name`, `state`, `opened_at`, `closed_at`, `created_at`      |
+| `sprint_link`     | `sprint`, `label`, `url`, `created_at`                                    |
 | `history`         | `workspace`, `type`, `origin`, `user`, `task`, `details`, `created_at`    |
 | `event_delivery`  | `history`, `access_key`, `connection_uuid`, `hostname`, `payload`, `status`, `exit_code`, `response`, `responded_at` |
 | `access_key`      | configurations : `workspace`, `name`, `client_id`, `secret_hash`, `listen`, `created_at`, `last_used_at`, `revoked_at` |

@@ -1,18 +1,23 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import {
+  addSprintLink,
   closeSprint,
   createSprint,
   listSprints,
   listTasks,
   moveTask,
   openSprint,
+  removeSprintLink,
+  updateSprintLink,
   type ListSprintsResponse,
   type ListTasksResponse,
 } from '../client'
 
 export type Task = Omit<ListTasksResponse[number], 'status'> & { status: TaskStatus }
 export type Sprint = ListSprintsResponse[number]
+export type SprintLink = Sprint['links'][number]
+export type SprintLinkContent = { url: string; label: string | null }
 export type TaskStatus = 'todo' | 'in_progress' | 'in_review' | 'finalizing' | 'done' | 'cancelled'
 
 /** The columns of the board : a cancelled task is kept apart */
@@ -60,5 +65,23 @@ export const useTasksStore = defineStore('tasks', () => {
     return !!response?.ok
   }
 
-  return { tasks, sprints, failed, loaded, activeSprints, load, move, addSprint, open, close }
+  async function addLink(sprint: number, body: SprintLinkContent): Promise<boolean> {
+    const { response } = await addSprintLink({ path: { sprint }, body })
+    await load()
+    return !!response?.ok
+  }
+
+  async function updateLink(link: number, body: SprintLinkContent): Promise<boolean> {
+    const { response } = await updateSprintLink({ path: { link }, body })
+    await load()
+    return !!response?.ok
+  }
+
+  async function removeLink(link: number): Promise<boolean> {
+    const { response } = await removeSprintLink({ path: { link } })
+    await load()
+    return !!response?.ok
+  }
+
+  return { tasks, sprints, failed, loaded, activeSprints, load, move, addSprint, open, close, addLink, updateLink, removeLink }
 })

@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import MultiSelect from 'primevue/multiselect'
 import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
+import SprintLinks from './SprintLinks.vue'
 import TaskCard from './TaskCard.vue'
 import { useTasksStore, type Task, type TaskStatus } from '../stores/tasks'
 import { useWorkspaceStore } from '../stores/workspace'
@@ -52,8 +53,10 @@ const sprintRank = computed(() => new Map(store.activeSprints.map(({ id }, rank)
 
 const columns = ref<Record<string, Task[]>>({})
 
-// Hidden while there is nothing to finish. Counted before the sprint filter : hiding every sprint keeps the filter at hand
-const hasContent = computed(() => store.tasks.some((task) =>
+const shownLinks = computed(() => store.activeSprints.filter(({ id }) => shownSprints.value.includes(id)).flatMap(({ links }) => links))
+
+// Hidden while there is nothing to finish nor to open. Counted before the sprint filter : hiding every sprint keeps the filter at hand
+const hasContent = computed(() => store.activeSprints.some(({ links }) => links.length > 0) || store.tasks.some((task) =>
   HOME_STATUSES.includes(task.status) && store.activeSprints.some(({ id }) => id === task.sprint)))
 
 watch([() => store.loaded, hasContent], ([loaded, content]) => (filled.value = loaded ? content : null), { immediate: true })
@@ -120,6 +123,8 @@ async function drop(status: TaskStatus, event: { data: Task }) {
         </VueDraggable>
       </section>
     </div>
+
+    <SprintLinks class="home-links" :links="shownLinks" />
   </section>
 </template>
 
@@ -150,6 +155,10 @@ async function drop(status: TaskStatus, event: { data: Task }) {
 .sprint-filter {
   min-width: 12rem;
   max-width: 100%;
+}
+
+.home-links {
+  margin-top: 0.75rem;
 }
 
 .board {
