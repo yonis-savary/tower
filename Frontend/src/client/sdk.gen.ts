@@ -385,7 +385,7 @@ export const getJiraBoard = <ThrowOnError extends boolean = false>(options?: Opt
 /**
  * List Jira issues
  *
- * The unfinished issues of the board (`tracked`), whoever they are assigned to, and the issues kept because a task is linked to them. A board often holds hundreds : narrow with `mine` (assigned to the Jira account of the integration) and `status_category`
+ * The unfinished issues of the board (`tracked`), whoever they are assigned to, and the issues kept because a task is linked to them. The subtasks of these issues, done or not, carry the id of their issue in `parent` and no assignee. A board often holds hundreds : narrow with `mine` (assigned to the Jira account of the integration) and `status_category`
  */
 export const listJiraIssues = <ThrowOnError extends boolean = false>(options?: Options<ListJiraIssuesData, ThrowOnError>): RequestResult<ListJiraIssuesResponses, ListJiraIssuesErrors, ThrowOnError> => (options?.client ?? client).get<ListJiraIssuesResponses, ListJiraIssuesErrors, ThrowOnError>({ url: '/api/jira/issues', ...options });
 

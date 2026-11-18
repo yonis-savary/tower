@@ -9,6 +9,9 @@ final class JiraIssueData
     public const CATEGORY_DONE = 'done';
     public const CATEGORIES = [self::CATEGORY_TODO, self::CATEGORY_IN_PROGRESS, self::CATEGORY_DONE];
 
+    /**
+     * @param list<JiraIssueData> $subtasks
+     */
     public function __construct(
         public readonly string $externalId,
         public readonly string $key,
@@ -22,5 +25,6 @@ final class JiraIssueData
         public readonly string $statusCategory,
         public readonly ?JiraSprint $sprint,
         public readonly ?JiraUser $assignee,
+        public readonly array $subtasks = [],
     ) {}
 }

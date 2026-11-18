@@ -761,6 +761,16 @@ la synchronisation, qui seule sait qu'un élément apparaît ou disparaît.
   tickets, plus « Sans sprint » ; les sprints actifs viennent en premier. Le choix est gardé
   dans le navigateur, par workspace. Ce sont les sprints masqués qui sont retenus : un nouveau
   sprint est affiché par défaut.
+- **Sous-tâches** : la lecture du board demande aussi le champ `subtasks` de chaque ticket,
+  sans appel de plus (le filtre du board les exclut souvent). Elles sont rangées dans
+  `jira_issue` avec l'id de leur ticket dans `parent`, terminées comprises. Jira ne donne ni
+  leur projet, ni leur sprint, ni leur assigné : elles prennent le projet et le sprint de leur
+  parent et restent sans assigné, donc jamais annoncées. Elles quittent l'ensemble suivi avec
+  leur parent (gardées hors du kanban et sans parent si elles ont une tâche). La case
+  « Sous-tâches », décochée par défaut et gardée dans le navigateur par workspace, les
+  affiche sous la carte de leur parent : clé, résumé, statut. Cliquer sur le statut lit les
+  transitions possibles et applique celle choisie ; la sous-tâche ne reprend de la lecture
+  qui suit que son statut, pas le sprint ni l'assigné que Jira lui donne seule.
 - Chaque ticket s'ouvre dans Jira, dans un nouvel onglet.
 - Un ticket peut être transformé en tâche, à la fin du backlog : son titre est `<clé> <résumé>`,
   sa description le lien du ticket. Un ticket a au plus une tâche. La tâche affiche le statut
@@ -961,7 +971,7 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `integration`     | `workspace`, `type`, `settings` (JSON), `credentials` (chiffré), `last_synced_at`, `last_error` |
 | `pull_request`    | `workspace`, `integration`, `external_id`, `repository`, branches source et cible, `source_commit`, `url`, `title`, `author`, `state`, `draft`, `comment_count`, `pipeline_status`, `synced_at` |
 | `pull_request_approvals` | `pull_request`, `external_user_id`, `display_name`, `status`        |
-| `jira_issue`      | `workspace`, `integration`, `external_id`, `issue_key`, `summary`, `url`, `project`, `issue_type`, `priority`, `status_id`, `status`, `status_category` (`todo`, `in_progress`, `done`), `sprint_id`, `sprint_name`, `sprint_state`, `assignee_id`, `assignee_name`, `assignee_avatar`, `tracked`, `synced_at` |
+| `jira_issue`      | `workspace`, `integration`, `external_id`, `issue_key`, `summary`, `url`, `project`, `issue_type`, `priority`, `status_id`, `status`, `status_category` (`todo`, `in_progress`, `done`), `sprint_id`, `sprint_name`, `sprint_state`, `assignee_id`, `assignee_name`, `assignee_avatar`, `parent` (ticket parent d'une sous-tâche), `tracked`, `synced_at` |
 
 **(prévu)** `job`, `device_connection`, `agent_run`, `agent_memory`.
 

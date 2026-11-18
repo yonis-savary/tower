@@ -422,6 +422,46 @@ class JiraTest extends CubeTestCase
         $this->assertSame($kept->id, Task::find($task['id'])->jira_issue);
     }
 
+    public function testSubtasksAreStoredUnderTheirParentAndLeaveWithIt()
+    {
+        $this->register();
+        $this->save();
+        $subtask = fn (string $id, string $key, string $status) => ['id' => $id, 'key' => $key, 'fields' => ['summary' => "Subtask {$key}", 'status' => self::STATUSES[$status], 'issuetype' => ['name' => 'Sub-task'], 'priority' => ['name' => 'Low']]];
+        $this->issue('100', 'PLAT-1', [
+            'sprint' => ['id' => 7, 'name' => 'Sprint 7', 'state' => 'active'],
+            'subtasks' => [$subtask('200', 'PLAT-10', '21'), $subtask('201', 'PLAT-11', '31')],
+        ]);
+        $this->assigned = ['PLAT-1'];
+        $this->sync();
+        $this->sync();
+
+        $parent = $this->stored('PLAT-1');
+        $issues = array_column($this->get('/api/jira/issues')->assertOk()->json(), null, 'key');
+        $this->assertCount(3, $issues);
+        $this->assertSame([$parent->id, 'Sprint 7', 'Platform', 'In Progress', null], [$issues['PLAT-10']['parent'], $issues['PLAT-10']['sprint_name'], $issues['PLAT-10']['project'], $issues['PLAT-10']['status'], $issues['PLAT-10']['assignee_id']]);
+        $this->assertSame('done', $issues['PLAT-11']['status_category']);
+        $this->assertNull($issues['PLAT-1']['parent']);
+        $this->assertSame([], $this->historyTypes());
+
+        // Read alone, a subtask has its own assignee and sprint : the transition only takes its status
+        $this->issue('200', 'PLAT-10', ['sprint' => ['id' => 9, 'name' => 'Other', 'state' => 'future']]);
+        $this->postJson("/api/jira/issues/{$issues['PLAT-10']['id']}/transitions", ['transition' => '22'])->assertOk();
+        $moved = $this->stored('PLAT-10');
+        $this->assertSame(['In Review', 'Sprint 7', null], [$moved->status, $moved->sprint_name, $moved->assignee_id]);
+        $this->assertSame([], $this->historyTypes());
+
+        $task = $this->postJson("/api/jira/issues/{$issues['PLAT-11']['id']}/task")->assertCreated()->json();
+        $this->assigned = [];
+        $this->sync();
+
+        $this->assertNull($this->integration()->last_error);
+        $this->assertNull($this->stored('PLAT-1'));
+        $this->assertNull($this->stored('PLAT-10'));
+        $kept = $this->stored('PLAT-11');
+        $this->assertSame([false, null], [(bool) $kept->tracked, $kept->parent]);
+        $this->assertSame($kept->id, Task::find($task['id'])->jira_issue);
+    }
+
     public function testFailureKeepsTheStoredStateAndReportsTheError()
     {
         $this->register();

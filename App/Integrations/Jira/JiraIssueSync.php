@@ -73,7 +73,9 @@ class JiraIssueSync
         // The last column of the board is its "done", whatever the category Jira gives its statuses
         $doneStatuses = [] === $columns ? [] : end($columns)->statusIds;
         $board = $provider->boardIssues($doneStatuses);
-        $seen = array_flip(array_map(fn (JiraIssueData $issue) => $issue->externalId, $board));
+        $seen = [];
+        foreach ($board as $issue)
+            $seen += array_flip([$issue->externalId, ...array_map(fn (JiraIssueData $subtask) => $subtask->externalId, $issue->subtasks)]);
 
         $left = [];
         foreach ($stored as $externalId => $row) {
@@ -82,6 +84,8 @@ class JiraIssueSync
             // Only the issues of the account are announced : the others need no last reading
             $left[] = [$row, $row->assignee_id === $account->accountId ? $provider->issue($row->issue_key) : null];
         }
+        // A parent can only be deleted once its subtasks are
+        usort($left, fn (array $a, array $b) => (null === $a[0]->parent) <=> (null === $b[0]->parent));
 
         return ['account' => $account, 'columns' => $columns, 'doneStatuses' => $doneStatuses, 'stored' => $stored, 'board' => $board, 'left' => $left];
     }
@@ -109,6 +113,9 @@ class JiraIssueSync
 
             if ($logChanges)
                 array_push($lines, ...array_map(fn (IntegrationChange $change) => $this->events->logIssue($row, $change), $found));
+
+            foreach ($issue->subtasks as $subtask)
+                $this->storeSubtask($integration, $changes['stored'][$subtask->externalId] ?? null, $subtask, $row);
         }
 
         foreach ($changes['left'] as [$row, $final]) {
@@ -126,10 +133,21 @@ class JiraIssueSync
             }
 
             $row->tracked = false;
+            $row->parent = null;
             $row->save();
         }
 
         return $lines;
+    }
+
+    // Jira does not give the assignee of a subtask : it is shown under its parent, never announced
+    private function storeSubtask(Integration $integration, ?JiraIssue $row, JiraIssueData $subtask, JiraIssue $parent): void
+    {
+        $row ??= new JiraIssue(['workspace' => $integration->workspace, 'integration' => $integration->id]);
+        $row->copyFrom($subtask);
+        $row->parent = $parent->id;
+        $row->tracked = true;
+        $row->save();
     }
 
     /**

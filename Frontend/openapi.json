@@ -3285,7 +3285,7 @@
         "\/api\/jira\/issues": {
             "get": {
                 "summary": "List Jira issues",
-                "description": "The unfinished issues of the board (`tracked`), whoever they are assigned to, and the issues kept because a task is linked to them. A board often holds hundreds : narrow with `mine` (assigned to the Jira account of the integration) and `status_category`",
+                "description": "The unfinished issues of the board (`tracked`), whoever they are assigned to, and the issues kept because a task is linked to them. The subtasks of these issues, done or not, carry the id of their issue in `parent` and no assignee. A board often holds hundreds : narrow with `mine` (assigned to the Jira account of the integration) and `status_category`",
                 "operationId": "listJiraIssues",
                 "parameters": [
                     {
@@ -3399,6 +3399,12 @@
                                                     "null"
                                                 ]
                                             },
+                                            "parent": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ]
+                                            },
                                             "tracked": {
                                                 "type": "boolean"
                                             }
@@ -3420,6 +3426,7 @@
                                             "assignee_id",
                                             "assignee_name",
                                             "assignee_avatar",
+                                            "parent",
                                             "tracked"
                                         ]
                                     }
@@ -3442,6 +3449,7 @@
                                         "assignee_id": "fugit voluptatem molestias",
                                         "assignee_name": "atque nihil non",
                                         "assignee_avatar": "magnam deleniti ratione",
+                                        "parent": 308,
                                         "tracked": true
                                     }
                                 ]
@@ -3812,6 +3820,12 @@
                                                 "null"
                                             ]
                                         },
+                                        "parent": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
                                         "tracked": {
                                             "type": "boolean"
                                         }
@@ -3833,6 +3847,7 @@
                                         "assignee_id",
                                         "assignee_name",
                                         "assignee_avatar",
+                                        "parent",
                                         "tracked"
                                     ]
                                 },
@@ -3853,6 +3868,7 @@
                                     "assignee_id": "fugit voluptatem molestias",
                                     "assignee_name": "atque nihil non",
                                     "assignee_avatar": "magnam deleniti ratione",
+                                    "parent": 308,
                                     "tracked": true
                                 }
                             }

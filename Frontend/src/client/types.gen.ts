@@ -1584,6 +1584,7 @@ export type ListJiraIssuesResponses = {
         assignee_id: string | null;
         assignee_name: string | null;
         assignee_avatar: string | null;
+        parent: number | null;
         tracked: boolean;
     }>;
 };
@@ -1747,6 +1748,7 @@ export type TransitionJiraIssueResponses = {
         assignee_id: string | null;
         assignee_name: string | null;
         assignee_avatar: string | null;
+        parent: number | null;
         tracked: boolean;
     };
 };

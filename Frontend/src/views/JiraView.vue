@@ -15,6 +15,7 @@ import { syncJiraIntegration } from '../client'
 import { useJiraStore, type JiraColumn, type JiraIssue, type JiraTransition } from '../stores/jira'
 import { useTasksStore } from '../stores/tasks'
 import { useWorkspaceStore } from '../stores/workspace'
+import { storedFlag } from '../utils/storedFlag'
 
 type Refusal = { issue: JiraIssue; message: string }
 type Choice = { issue: JiraIssue; transitions: JiraTransition[] }
@@ -42,24 +43,12 @@ const unmapped = ref<JiraIssue[]>([])
 
 const taskOf = computed(() => new Map(tasks.tasks.filter(({ jira_issue }) => jira_issue !== null).map(({ id, jira_issue }) => [jira_issue!, id])))
 
-const onlyMineKey = computed(() => `tower.jira.onlyMine.${workspace.current?.id}`)
-const onlyMine = ref(false)
+const onlyMine = storedFlag(computed(() => `tower.jira.onlyMine.${workspace.current?.id}`))
+const showSubtasks = storedFlag(computed(() => `tower.jira.showSubtasks.${workspace.current?.id}`))
 
-watch(onlyMineKey, (key) => {
-  try {
-    onlyMine.value = localStorage.getItem(key) === '1'
-  } catch {
-    onlyMine.value = false
-  }
-}, { immediate: true })
-
-watch(onlyMine, (value) => {
-  try {
-    localStorage.setItem(onlyMineKey.value, value ? '1' : '0')
-  } catch {
-    // Private browsing or blocked storage : the choice only lasts for this page
-  }
-})
+function subtasksOf(issue: JiraIssue): JiraIssue[] {
+  return showSubtasks.value ? store.subtasksOf.get(issue.id) ?? [] : []
+}
 
 const boardIssues = computed(() => (onlyMine.value ? store.mine : store.tracked))
 
@@ -207,9 +196,13 @@ async function discuss(issue: JiraIssue) {
 <template>
   <header class="page-header">
     <h1 class="page-title">{{ t('nav.jira') }}</h1>
-    <label class="only-mine">
+    <label class="board-option">
       <Checkbox v-model="onlyMine" binary />
       {{ t('jira.onlyMine') }}
+    </label>
+    <label class="board-option">
+      <Checkbox v-model="showSubtasks" binary />
+      {{ t('jira.subtasks') }}
     </label>
     <MultiSelect
       v-if="sprintOptions.length"
@@ -259,6 +252,7 @@ async function discuss(issue: JiraIssue) {
           v-for="issue in lists[index]"
           :key="issue.id"
           :issue="issue"
+          :subtasks="subtasksOf(issue)"
           :task-id="taskOf.get(issue.id) ?? null"
           :show-assignee="!onlyMine"
           :creating-task="creatingTask === issue.id"
@@ -288,6 +282,7 @@ async function discuss(issue: JiraIssue) {
           v-for="issue in unmapped"
           :key="issue.id"
           :issue="issue"
+          :subtasks="subtasksOf(issue)"
           :task-id="taskOf.get(issue.id) ?? null"
           :show-assignee="!onlyMine"
           :creating-task="creatingTask === issue.id"
@@ -338,7 +333,7 @@ async function discuss(issue: JiraIssue) {
   font-weight: 600;
 }
 
-.only-mine {
+.board-option {
   display: flex;
   align-items: center;
   gap: 0.5rem;

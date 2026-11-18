@@ -10,7 +10,7 @@ use Cube\Data\OpenAPI\Attributes\Nullable;
 /**
  * @extends ModelResource<JiraIssue>
  */
-#[Nullable(['priority', 'sprint_id', 'sprint_name', 'sprint_state', 'assignee_id', 'assignee_name', 'assignee_avatar'])]
+#[Nullable(['priority', 'sprint_id', 'sprint_name', 'sprint_state', 'assignee_id', 'assignee_name', 'assignee_avatar', 'parent'])]
 class JiraIssueResource extends ModelResource
 {
     public static function getModelClass(): string
@@ -40,6 +40,7 @@ class JiraIssueResource extends ModelResource
             'assignee_id' => $model->assignee_id,
             'assignee_name' => $model->assignee_name,
             'assignee_avatar' => $model->assignee_avatar,
+            'parent' => $model->parent,
             'tracked' => (bool) $model->tracked,
         ];
     }

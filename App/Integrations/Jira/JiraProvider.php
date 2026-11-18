@@ -5,7 +5,7 @@ namespace App\Integrations\Jira;
 class JiraProvider
 {
     private const PAGE_LENGTH = 100;
-    private const FIELDS = 'summary,status,issuetype,priority,project,sprint,assignee';
+    private const FIELDS = 'summary,status,issuetype,priority,project,sprint,assignee,subtasks';
     private const CONTENT_FIELDS = self::FIELDS.',description,assignee,reporter,labels,comment,attachment';
     private const CONTENT_COMMENTS = 20;
     private const BOARD_JQL = 'statusCategory != Done{exclusion} ORDER BY updated DESC';
@@ -176,6 +176,11 @@ class JiraProvider
                 state: (string) ($fields['sprint']['state'] ?? ''),
             ) : null,
             assignee: isset($fields['assignee']['accountId']) ? $this->toUser($fields['assignee']) : null,
+            // Jira gives a subtask without its project, sprint nor assignee : it is in the sprint of its parent
+            subtasks: array_map(
+                fn (array $subtask) => $this->toData([...$subtask, 'fields' => [...$subtask['fields'] ?? [], 'project' => $fields['project'] ?? null, 'sprint' => $fields['sprint'] ?? null]]),
+                $fields['subtasks'] ?? [],
+            ),
         );
     }
 

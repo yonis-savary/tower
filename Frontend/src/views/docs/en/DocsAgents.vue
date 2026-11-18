@@ -76,7 +76,7 @@ const token = 'tower_…'
     <tbody>
       <tr><td><code>list_tasks</code>, <code>list_sprints</code>, <code>list_task_history</code></td><td>the tasks, the sprints and their links, the history of a task</td></tr>
       <tr><td><code>create_task</code>, <code>update_task</code>, <code>move_task</code>, <code>add_sprint_link</code></td><td>write: create, edit, change status or sprint, add a link to a sprint</td></tr>
-      <tr><td><code>list_jira_issues</code>, <code>list_jira_transitions</code></td><td>the tracked Jira issues (filterable: mine, by status category), the transitions allowed for an issue</td></tr>
+      <tr><td><code>list_jira_issues</code>, <code>list_jira_transitions</code></td><td>the tracked Jira issues and their subtasks (filterable: mine, by status category), the transitions allowed for an issue</td></tr>
       <tr><td><code>get_jira_issue</code>, <code>get_jira_attachment</code></td><td>an issue read from Jira by its key, on the board or not (description, comments, attachments), and an attachment of 5 MiB at most: an image comes as an image</td></tr>
       <tr><td><code>transition_jira_issue</code>, <code>create_task_from_jira_issue</code></td><td>write: change the status in Jira, create a linked task</td></tr>
       <tr><td><code>list_pull_requests</code></td><td>the open and recently closed merge requests</td></tr>

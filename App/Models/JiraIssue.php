@@ -34,8 +34,10 @@ use App\Integrations\Jira\JiraUser;
  * @property string $assignee_id
  * @property string $assignee_name
  * @property string $assignee_avatar
+ * @property int $parent
  * @property Workspace $_workspace
  * @property Integration $_integration
+ * @property JiraIssue $_parent
  * @property Task[] $tasks
  */
 class JiraIssue extends Model
@@ -80,7 +82,8 @@ class JiraIssue extends Model
             'synced_at' => (new ModelField('synced_at'))->type('DATE')->notNull()->hasDefault(false),
             'assignee_id' => (new ModelField('assignee_id'))->type('STRING')->nullable()->default(NULL),
             'assignee_name' => (new ModelField('assignee_name'))->type('STRING')->nullable()->default(NULL),
-            'assignee_avatar' => (new ModelField('assignee_avatar'))->type('STRING')->nullable()->default(NULL)
+            'assignee_avatar' => (new ModelField('assignee_avatar'))->type('STRING')->nullable()->default(NULL),
+            'parent' => (new ModelField('parent'))->type('INTEGER')->nullable()->default(NULL)->references(JiraIssue::class,'id')
         ];
     }
 
@@ -97,6 +100,12 @@ class JiraIssue extends Model
     }
 
     #[Generated]
+    public function _parent(): HasOne
+    {
+        return $this->hasOne('_parent', 'parent', JiraIssue::class, 'id');
+    }
+
+    #[Generated]
     public function tasks(): HasMany
     {
         return $this->hasMany('tasks', Task::class, 'jira_issue', 'id');
@@ -109,6 +118,7 @@ class JiraIssue extends Model
             "tasks",
             "_workspace",
             "_integration",
+            "_parent",
         ];
     }
 
@@ -121,15 +131,22 @@ class JiraIssue extends Model
         $this->project = $issue->project;
         $this->issue_type = $issue->issueType;
         $this->priority = $issue->priority;
-        $this->status_id = $issue->statusId;
-        $this->status = $issue->status;
-        $this->status_category = $issue->statusCategory;
+        $this->copyStatusFrom($issue);
         $this->sprint_id = $issue->sprint?->id;
         $this->sprint_name = $issue->sprint?->name;
         $this->sprint_state = $issue->sprint?->state;
         $this->assignee_id = $issue->assignee?->accountId;
         $this->assignee_name = $issue->assignee?->name;
         $this->assignee_avatar = $issue->assignee?->avatar;
+
+        return $this;
+    }
+
+    public function copyStatusFrom(JiraIssueData $issue): static
+    {
+        $this->status_id = $issue->statusId;
+        $this->status = $issue->status;
+        $this->status_category = $issue->statusCategory;
         $this->synced_at = date('Y-m-d H:i:s');
 
         return $this;

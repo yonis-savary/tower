@@ -93,7 +93,9 @@ class JiraIssueService
 
         $before = $issue->toData();
         // Stored right away, so the next sync sees no change and does not announce it a second time
-        $issue->copyFrom($current)->save();
+        // A subtask keeps the sprint and the assignee the board gives it : only its status is taken from the reading
+        null === $issue->parent ? $issue->copyFrom($current) : $issue->copyStatusFrom($current);
+        $issue->save();
 
         if ($issue->assignee_id !== $this->integrations->jiraAccountOf(Integration::find($issue->integration)))
             return null;

@@ -23,7 +23,15 @@ export const useJiraStore = defineStore('jira', () => {
   const failed = ref(false)
 
   const byId = computed(() => new Map(issues.value.map((issue) => [issue.id, issue])))
-  const tracked = computed(() => issues.value.filter(({ tracked }) => tracked))
+  const tracked = computed(() => issues.value.filter(({ tracked, parent }) => tracked && parent === null))
+  const subtasksOf = computed(() => {
+    const subtasks = new Map<number, JiraIssue[]>()
+    issues.value
+      .filter(({ tracked, parent }) => tracked && parent !== null)
+      .sort((a, b) => a.key.localeCompare(b.key, undefined, { numeric: true }))
+      .forEach((issue) => subtasks.set(issue.parent!, [...(subtasks.get(issue.parent!) ?? []), issue]))
+    return subtasks
+  })
   const mine = computed(() => tracked.value.filter(({ assignee_id }) => assignee_id !== null && assignee_id === accountId.value))
   // The last column of the board is its "done", whatever the category Jira gives its statuses
   const doneStatuses = computed(() => new Set(columns.value.at(-1)?.statuses ?? []))
@@ -60,5 +68,5 @@ export const useJiraStore = defineStore('jira', () => {
     return !!response?.ok
   }
 
-  return { issues, columns, accountId, failed, byId, tracked, mine, isDone, load, transitionsOf, transition, createTask, discuss }
+  return { issues, columns, accountId, failed, byId, tracked, subtasksOf, mine, isDone, load, transitionsOf, transition, createTask, discuss }
 })
