@@ -5,7 +5,7 @@ export function mcpUrl(): string {
 }
 
 export function claudeCodeCommand(url: string, token: string): string {
-  return `claude mcp add --transport http ${MCP_SERVER_NAME} ${url} --header "Authorization: Bearer ${token}"`
+  return `claude mcp add --scope user --transport http ${MCP_SERVER_NAME} ${url} --header "Authorization: Bearer ${token}"`
 }
 
 export function mcpJsonConfig(url: string, token: string): string {

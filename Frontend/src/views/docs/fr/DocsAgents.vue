@@ -56,9 +56,10 @@ const token = 'tower_…'
   <p><strong>Claude Code</strong>, une commande :</p>
   <CodeBlock :code="claudeCodeCommand(url, token)" language="bash" filename="terminal" />
   <p>
-    Ajoute <code>--scope user</code> pour l'avoir dans tous tes projets, ou <code>--scope project</code> pour l'écrire dans le
-    <code>.mcp.json</code> du projet (sans y laisser le jeton si le fichier est versionné). <code>/mcp</code> dans Claude Code
-    montre si la connexion passe.
+    <code>--scope user</code> l'ajoute à tous tes projets. Remplace-le par <code>--scope local</code> pour le seul projet
+    courant, ou par <code>--scope project</code> pour l'écrire dans le <code>.mcp.json</code> du projet (sans y laisser le
+    jeton si le fichier est versionné). <code>/mcp</code> dans Claude Code montre si la connexion passe, et
+    <code>claude mcp remove tower</code> le retire.
   </p>
 
   <p><strong>Claude Desktop</strong> ne lance que des programmes locaux depuis sa configuration : <code>mcp-remote</code> (Node.js requis) fait le relais. Dans <em>Settings → Developer → Edit Config</em> :</p>
