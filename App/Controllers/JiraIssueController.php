@@ -3,12 +3,14 @@
 namespace App\Controllers;
 
 use App\Integrations\Jira\JiraIssueService;
+use App\Integrations\Jira\JiraProfileService;
 use App\Integrations\Jira\JiraTransition;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\ListJiraIssuesRequest;
 use App\Requests\TransitionJiraIssueRequest;
 use App\Resources\JiraIssueResource;
+use App\Resources\JiraProfileResource;
 use App\Resources\TaskResource;
 use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
@@ -33,12 +35,13 @@ class JiraIssueController extends Controller
         protected Authentication $authentication,
         protected WorkspaceService $workspaces,
         protected JiraIssueService $issues,
+        protected JiraProfileService $profiles,
     ) {}
 
     public function routes(Router $router): void
     {
         $router->group('/api', middlewares: [IsAuthenticated::class], routes: [
-            Route::get('/jira/board', [self::class, 'board']),
+            Route::get('/jira/profiles', [self::class, 'profiles']),
             Route::get('/jira/issues', [self::class, 'list']),
             Route::get('/jira/issues/{'.self::ISSUE_KEY.':key}', [self::class, 'read']),
             Route::get('/jira/issues/{int:issue}/transitions', [self::class, 'transitions']),
@@ -49,23 +52,29 @@ class JiraIssueController extends Controller
         ]);
     }
 
-    #[Endpoint('List Jira issues', 'The unfinished issues of the board (`tracked`), whoever they are assigned to, and the issues kept because a task is linked to them. The subtasks of these issues, done or not, carry the id of their issue in `parent` and no assignee. A board often holds hundreds : narrow with `mine` (assigned to the Jira account of the integration) and `status_category`', 'listJiraIssues')]
+    #[Endpoint('List Jira issues', 'The unfinished issues of the Jira profiles (`tracked`), whoever they are assigned to, with the ids of the profiles showing each one in `profiles`, and the issues kept because a task is linked to them. The subtasks of these issues, done or not, carry the id of their issue in `parent` and no assignee. A board often holds hundreds : narrow with `profile` (see list_jira_profiles), `mine` (assigned to the Jira account of the integration) and `status_category`', 'listJiraIssues')]
     #[ResourceResponse(JiraIssueResource::class, isArray: true, description: 'The stored issues')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[McpTool('list_jira_issues')]
     public function list(ListJiraIssuesRequest $request): Response
     {
-        $issues = $this->issues->listIssues($this->workspace(), (bool) $request->validated('mine'), $request->validated('status_category'));
+        $issues = $this->issues->listIssues($this->workspace(), (bool) $request->validated('mine'), $request->validated('status_category'), $request->validated('profile'));
 
         return Response::json(JiraIssueResource::of($issues));
     }
 
-    #[Endpoint('Get Jira board', 'The Jira account of the token, and the columns of the configured board in its order, with the ids of the statuses each one holds. Read on each sync', 'getJiraBoard')]
-    #[RawResponse(['account_id' => '5b10a2844c20165700ede21g', 'columns' => [['name' => 'In Review', 'statuses' => ['10002', '10007']]]], description: 'The board, empty before the first sync')]
+    #[Endpoint('List Jira profiles', 'The Jira account of the token, and the profiles of the workspace, oldest first : each one follows a board, narrowed by an optional JQL condition. A profile without name shows its board name. Its columns are those of its board in their order, with the ids of the statuses each one holds, the last one being its "done". Read on each sync', 'listJiraProfiles')]
+    #[RawResponse(['account_id' => '5b10a2844c20165700ede21g', 'profiles' => [['id' => 1, 'name' => 'Billing team', 'board' => 12, 'board_name' => 'PLAT board', 'jql' => 'component = Billing', 'columns' => [['name' => 'In Review', 'statuses' => ['10002', '10007']]]]]], description: 'The account, null before the first sync, and the profiles, without columns before their first sync')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
-    public function board(Request $request): Response
+    #[McpTool('list_jira_profiles')]
+    public function profiles(Request $request): Response
     {
-        return Response::json($this->issues->board($this->workspace()));
+        $workspace = $this->workspace();
+
+        return Response::json([
+            'account_id' => $this->issues->accountOf($workspace),
+            'profiles' => JiraProfileResource::of($this->profiles->listFor($workspace)),
+        ]);
     }
 
     #[Endpoint('Read Jira issue', 'Reads an issue from Jira by its key, on the board or not : its description and last 20 comments in Jira wiki text, its labels and the list of its attachments', 'readJiraIssue')]

@@ -7,12 +7,13 @@ import Checkbox from 'primevue/checkbox'
 import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
 import MultiSelect from 'primevue/multiselect'
+import Select from 'primevue/select'
 import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
 import EmptyState from '../components/EmptyState.vue'
 import JiraIssueCard from '../components/JiraIssueCard.vue'
 import { syncJiraIntegration } from '../client'
-import { useJiraStore, type JiraColumn, type JiraIssue, type JiraTransition } from '../stores/jira'
+import { useJiraStore, type JiraColumn, type JiraIssue, type JiraProfile, type JiraTransition } from '../stores/jira'
 import { useTasksStore } from '../stores/tasks'
 import { useWorkspaceStore } from '../stores/workspace'
 import { storedFlag } from '../utils/storedFlag'
@@ -50,7 +51,33 @@ function subtasksOf(issue: JiraIssue): JiraIssue[] {
   return showSubtasks.value ? store.subtasksOf.get(issue.id) ?? [] : []
 }
 
-const boardIssues = computed(() => (onlyMine.value ? store.mine : store.tracked))
+const selectedProfileId = ref<number | null>(null)
+const selectedProfileKey = computed(() => `tower.jira.profile.${workspace.current?.id}`)
+const profile = computed(() => store.profiles.find(({ id }) => id === selectedProfileId.value) ?? store.profiles[0] ?? null)
+const columns = computed(() => profile.value?.columns ?? [])
+
+function profileLabel({ name, board_name, board }: JiraProfile): string {
+  return name ?? board_name ?? t('jira.boardFallback', { board })
+}
+
+watch(selectedProfileKey, (key) => {
+  try {
+    selectedProfileId.value = Number(localStorage.getItem(key)) || null
+  } catch {
+    selectedProfileId.value = null
+  }
+}, { immediate: true })
+
+function selectProfile(id: number) {
+  selectedProfileId.value = id
+  try {
+    localStorage.setItem(selectedProfileKey.value, String(id))
+  } catch {
+    // Private browsing or blocked storage : the choice only lasts for this page
+  }
+}
+
+const boardIssues = computed(() => (onlyMine.value ? store.mine : store.tracked).filter((issue) => profile.value !== null && issue.profiles.includes(profile.value.id)))
 
 // The hidden sprints are kept rather than the shown ones, so that a new sprint shows up
 const hiddenSprints = ref<string[]>([])
@@ -104,7 +131,7 @@ watch(() => workspace.current?.id, (id) => { if (id) void load() }, { immediate:
 
 // The lists are copies : the drag library writes into them before Jira has answered
 watch(
-  () => [shownIssues.value, store.columns] as const,
+  () => [shownIssues.value, columns.value] as const,
   ([issues, columns]) => {
     lists.value = columns.map(({ statuses }) => issues.filter(({ status_id }) => statuses.includes(status_id)))
     // A status the board maps to no column : Jira hides these issues, Tower keeps them visible
@@ -196,6 +223,17 @@ async function discuss(issue: JiraIssue) {
 <template>
   <header class="page-header">
     <h1 class="page-title">{{ t('nav.jira') }}</h1>
+    <Select
+      v-if="store.profiles.length > 1"
+      :model-value="profile?.id"
+      :options="store.profiles"
+      :option-label="profileLabel"
+      option-value="id"
+      :aria-label="t('jira.profile')"
+      class="profile-select"
+      size="small"
+      @update:model-value="selectProfile"
+    />
     <label class="board-option">
       <Checkbox v-model="onlyMine" binary />
       {{ t('jira.onlyMine') }}
@@ -226,14 +264,14 @@ async function discuss(issue: JiraIssue) {
     <a :href="refusal.issue.url" target="_blank" rel="noopener noreferrer">{{ t('jira.openInJira') }}</a>
   </Message>
 
-  <EmptyState v-if="loaded && !store.columns.length" icon="pi pi-objects-column" :title="t('jira.emptyTitle')" :hint="t('jira.emptyHint')">
+  <EmptyState v-if="loaded && !columns.length" icon="pi pi-objects-column" :title="t('jira.emptyTitle')" :hint="t('jira.emptyHint')">
     <RouterLink v-slot="{ navigate }" :to="{ name: 'settings', query: { tab: 'jira' } }" custom>
       <Button :label="t('jira.emptyAction')" icon="pi pi-cog" @click="navigate" />
     </RouterLink>
   </EmptyState>
 
-  <div v-else class="board" :style="{ '--columns': store.columns.length + (unmapped.length ? 1 : 0) }" :aria-busy="moving">
-    <section v-for="(column, index) in store.columns" :key="column.name" class="column">
+  <div v-else class="board" :style="{ '--columns': columns.length + (unmapped.length ? 1 : 0) }" :aria-busy="moving">
+    <section v-for="(column, index) in columns" :key="column.name" class="column">
       <h2>{{ column.name }} <span>{{ lists[index]?.length ?? 0 }}</span></h2>
       <VueDraggable
         v-model="lists[index]!"
@@ -340,7 +378,8 @@ async function discuss(issue: JiraIssue) {
   font-size: 0.875rem;
 }
 
-.sprint-select {
+.sprint-select,
+.profile-select {
   width: min(18rem, 100%);
 }
 

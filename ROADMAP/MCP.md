@@ -150,6 +150,7 @@ vingts.
 | `move_task` | `PUT /api/tasks/{task}/move` | écriture |
 | `update_task` | `PUT /api/tasks/{task}` | écriture |
 | `list_sprints` | `GET /api/sprints` | lecture |
+| `list_jira_profiles` | `GET /api/jira/profiles` | lecture |
 | `list_jira_issues` | `GET /api/jira/issues` | lecture |
 | `list_jira_transitions` | `GET /api/jira/issues/{issue}/transitions` | lecture |
 | `transition_jira_issue` | `POST /api/jira/issues/{issue}/transitions` | écriture, vers Jira |

@@ -22,6 +22,7 @@ use Cube\Utils\Attributes\Generated;
  * @property History[] $histories
  * @property Integration[] $integrations
  * @property JiraIssue[] $jiraIssues
+ * @property JiraProfile[] $jiraProfiles
  * @property NotificationRule[] $notificationRules
  * @property PullRequest[] $pullRequests
  * @property PushSubscription[] $pushSubscriptions
@@ -100,6 +101,12 @@ class Workspace extends Model
     }
 
     #[Generated]
+    public function jiraProfiles(): HasMany
+    {
+        return $this->hasMany('jiraProfiles', JiraProfile::class, 'workspace', 'id');
+    }
+
+    #[Generated]
     public function notificationRules(): HasMany
     {
         return $this->hasMany('notificationRules', NotificationRule::class, 'workspace', 'id');
@@ -162,6 +169,7 @@ class Workspace extends Model
             "histories",
             "integrations",
             "jiraIssues",
+            "jiraProfiles",
             "notificationRules",
             "pullRequests",
             "pushSubscriptions",

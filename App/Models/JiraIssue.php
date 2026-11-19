@@ -38,6 +38,7 @@ use App\Integrations\Jira\JiraUser;
  * @property Workspace $_workspace
  * @property Integration $_integration
  * @property JiraIssue $_parent
+ * @property JiraIssueProfile[] $profiles
  * @property Task[] $tasks
  */
 class JiraIssue extends Model
@@ -106,6 +107,12 @@ class JiraIssue extends Model
     }
 
     #[Generated]
+    public function profiles(): HasMany
+    {
+        return $this->hasMany('profiles', JiraIssueProfile::class, 'jira_issue', 'id');
+    }
+
+    #[Generated]
     public function tasks(): HasMany
     {
         return $this->hasMany('tasks', Task::class, 'jira_issue', 'id');
@@ -115,6 +122,7 @@ class JiraIssue extends Model
     public static function relations(): array
     {
         return [
+            "profiles",
             "tasks",
             "_workspace",
             "_integration",

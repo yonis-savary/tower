@@ -2919,9 +2919,6 @@
                                         "email": {
                                             "type": "string"
                                         },
-                                        "board": {
-                                            "type": "integer"
-                                        },
                                         "last_synced_at": {
                                             "type": [
                                                 "string",
@@ -2938,7 +2935,6 @@
                                     "required": [
                                         "site",
                                         "email",
-                                        "board",
                                         "last_synced_at",
                                         "last_error"
                                     ]
@@ -2946,7 +2942,6 @@
                                 "example": {
                                     "site": "",
                                     "email": "",
-                                    "board": 0,
                                     "last_synced_at": "2020-09-22T00:00:00+00:00",
                                     "last_error": "minus perspiciatis eum"
                                 }
@@ -3003,17 +2998,13 @@
                                         "type": "string",
                                         "format": "email"
                                     },
-                                    "board": {
-                                        "type": "integer"
-                                    },
                                     "token": {
                                         "type": "string"
                                     }
                                 },
                                 "required": [
                                     "site",
-                                    "email",
-                                    "board"
+                                    "email"
                                 ]
                             }
                         }
@@ -3048,9 +3039,6 @@
                                         "email": {
                                             "type": "string"
                                         },
-                                        "board": {
-                                            "type": "integer"
-                                        },
                                         "last_synced_at": {
                                             "type": [
                                                 "string",
@@ -3067,7 +3055,6 @@
                                     "required": [
                                         "site",
                                         "email",
-                                        "board",
                                         "last_synced_at",
                                         "last_error"
                                     ]
@@ -3075,7 +3062,6 @@
                                 "example": {
                                     "site": "",
                                     "email": "",
-                                    "board": 0,
                                     "last_synced_at": "2020-09-22T00:00:00+00:00",
                                     "last_error": "minus perspiciatis eum"
                                 }
@@ -3101,7 +3087,7 @@
             },
             "delete": {
                 "summary": "Delete Jira integration",
-                "description": "Deletes the Jira integration of the current workspace, its token and its issues. Their tasks stay, unlinked",
+                "description": "Deletes the Jira integration of the current workspace, its token, its profiles and its issues. Their tasks stay, unlinked",
                 "operationId": "deleteJiraIntegration",
                 "responses": {
                     "401": {
@@ -3159,9 +3145,6 @@
                                         "email": {
                                             "type": "string"
                                         },
-                                        "board": {
-                                            "type": "integer"
-                                        },
                                         "last_synced_at": {
                                             "type": [
                                                 "string",
@@ -3178,7 +3161,6 @@
                                     "required": [
                                         "site",
                                         "email",
-                                        "board",
                                         "last_synced_at",
                                         "last_error"
                                     ]
@@ -3186,7 +3168,6 @@
                                 "example": {
                                     "site": "",
                                     "email": "",
-                                    "board": 0,
                                     "last_synced_at": "2020-09-22T00:00:00+00:00",
                                     "last_error": "minus perspiciatis eum"
                                 }
@@ -3226,21 +3207,82 @@
                 }
             }
         },
-        "\/api\/jira\/board": {
-            "get": {
-                "summary": "Get Jira board",
-                "description": "The Jira account of the token, and the columns of the configured board in its order, with the ids of the statuses each one holds. Read on each sync",
-                "operationId": "getJiraBoard",
+        "\/api\/integrations\/jira\/profiles": {
+            "post": {
+                "summary": "Create Jira profile",
+                "description": "Adds a profile to the Jira integration of the current workspace : a board to follow, narrowed by an optional JQL condition. Without name, the profile shows the name of its board. Its issues are read on the next sync, without being announced",
+                "operationId": "createJiraProfile",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "board": {
+                                        "type": "integer"
+                                    },
+                                    "jql": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "board"
+                                ]
+                            }
+                        }
+                    }
+                },
                 "responses": {
-                    "200": {
-                        "description": "The board, empty before the first sync",
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The profile",
                         "content": {
                             "application\/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "account_id": {
-                                            "type": "string"
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "board": {
+                                            "type": "integer"
+                                        },
+                                        "board_name": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "jql": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         },
                                         "columns": {
                                             "type": "array",
@@ -3254,6 +3296,348 @@
                                                         "type": "array",
                                                         "items": {
                                                             "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "required": [
+                                                    "name",
+                                                    "statuses"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "board",
+                                        "board_name",
+                                        "jql",
+                                        "columns"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 283,
+                                    "name": "Billing team",
+                                    "board": 698,
+                                    "board_name": "PLAT board",
+                                    "jql": "component = Billing",
+                                    "columns": [
+                                        {
+                                            "name": "In Review",
+                                            "statuses": [
+                                                "10002",
+                                                "10007"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The current workspace has no Jira integration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/integrations\/jira\/profiles\/{profile}": {
+            "put": {
+                "summary": "Update Jira profile",
+                "description": "Changes the name, the board and the JQL condition of a Jira profile. Another board or condition is read again from a new reference : the issues no other profile shows leave without being announced",
+                "operationId": "updateJiraProfile",
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "board": {
+                                        "type": "integer"
+                                    },
+                                    "jql": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "board"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The profile",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "board": {
+                                            "type": "integer"
+                                        },
+                                        "board_name": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "jql": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "columns": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "statuses": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                },
+                                                "required": [
+                                                    "name",
+                                                    "statuses"
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "board",
+                                        "board_name",
+                                        "jql",
+                                        "columns"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 283,
+                                    "name": "Billing team",
+                                    "board": 698,
+                                    "board_name": "PLAT board",
+                                    "jql": "component = Billing",
+                                    "columns": [
+                                        {
+                                            "name": "In Review",
+                                            "statuses": [
+                                                "10002",
+                                                "10007"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such profile in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete Jira profile",
+                "description": "Deletes a Jira profile. The issues no other profile shows leave without being announced, those linked to a task stay",
+                "operationId": "deleteJiraProfile",
+                "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such profile in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The profile is deleted"
+                    }
+                }
+            }
+        },
+        "\/api\/jira\/profiles": {
+            "get": {
+                "summary": "List Jira profiles",
+                "description": "The Jira account of the token, and the profiles of the workspace, oldest first : each one follows a board, narrowed by an optional JQL condition. A profile without name shows its board name. Its columns are those of its board in their order, with the ids of the statuses each one holds, the last one being its \"done\". Read on each sync",
+                "operationId": "listJiraProfiles",
+                "responses": {
+                    "200": {
+                        "description": "The account, null before the first sync, and the profiles, without columns before their first sync",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "account_id": {
+                                            "type": "string"
+                                        },
+                                        "profiles": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "board": {
+                                                        "type": "integer"
+                                                    },
+                                                    "board_name": {
+                                                        "type": "string"
+                                                    },
+                                                    "jql": {
+                                                        "type": "string"
+                                                    },
+                                                    "columns": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "statuses": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    }
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -3285,9 +3669,17 @@
         "\/api\/jira\/issues": {
             "get": {
                 "summary": "List Jira issues",
-                "description": "The unfinished issues of the board (`tracked`), whoever they are assigned to, and the issues kept because a task is linked to them. The subtasks of these issues, done or not, carry the id of their issue in `parent` and no assignee. A board often holds hundreds : narrow with `mine` (assigned to the Jira account of the integration) and `status_category`",
+                "description": "The unfinished issues of the Jira profiles (`tracked`), whoever they are assigned to, with the ids of the profiles showing each one in `profiles`, and the issues kept because a task is linked to them. The subtasks of these issues, done or not, carry the id of their issue in `parent` and no assignee. A board often holds hundreds : narrow with `profile` (see list_jira_profiles), `mine` (assigned to the Jira account of the integration) and `status_category`",
                 "operationId": "listJiraIssues",
                 "parameters": [
+                    {
+                        "name": "profile",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
                     {
                         "name": "mine",
                         "in": "query",
@@ -3407,6 +3799,9 @@
                                             },
                                             "tracked": {
                                                 "type": "boolean"
+                                            },
+                                            "profiles": {
+                                                "type": "array"
                                             }
                                         },
                                         "required": [
@@ -3427,7 +3822,8 @@
                                             "assignee_name",
                                             "assignee_avatar",
                                             "parent",
-                                            "tracked"
+                                            "tracked",
+                                            "profiles"
                                         ]
                                     }
                                 },
@@ -3450,7 +3846,8 @@
                                         "assignee_name": "atque nihil non",
                                         "assignee_avatar": "magnam deleniti ratione",
                                         "parent": 308,
-                                        "tracked": true
+                                        "tracked": true,
+                                        "profiles": []
                                     }
                                 ]
                             }
@@ -3828,6 +4225,9 @@
                                         },
                                         "tracked": {
                                             "type": "boolean"
+                                        },
+                                        "profiles": {
+                                            "type": "array"
                                         }
                                     },
                                     "required": [
@@ -3848,7 +4248,8 @@
                                         "assignee_name",
                                         "assignee_avatar",
                                         "parent",
-                                        "tracked"
+                                        "tracked",
+                                        "profiles"
                                     ]
                                 },
                                 "example": {
@@ -3869,7 +4270,8 @@
                                     "assignee_name": "atque nihil non",
                                     "assignee_avatar": "magnam deleniti ratione",
                                     "parent": 308,
-                                    "tracked": true
+                                    "tracked": true,
+                                    "profiles": []
                                 }
                             }
                         }

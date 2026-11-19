@@ -20,6 +20,7 @@ use Cube\Utils\Attributes\Generated;
  * @property \DateTime $created_at
  * @property Workspace $_workspace
  * @property JiraIssue[] $jiraIssues
+ * @property JiraProfile[] $jiraProfiles
  * @property PullRequest[] $pullRequests
  */
 class Integration extends Model
@@ -68,6 +69,12 @@ class Integration extends Model
     }
 
     #[Generated]
+    public function jiraProfiles(): HasMany
+    {
+        return $this->hasMany('jiraProfiles', JiraProfile::class, 'integration', 'id');
+    }
+
+    #[Generated]
     public function pullRequests(): HasMany
     {
         return $this->hasMany('pullRequests', PullRequest::class, 'integration', 'id');
@@ -78,6 +85,7 @@ class Integration extends Model
     {
         return [
             "jiraIssues",
+            "jiraProfiles",
             "pullRequests",
             "_workspace",
         ];

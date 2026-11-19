@@ -10,6 +10,8 @@ use App\Models\EventDelivery;
 use App\Models\History;
 use App\Models\Integration;
 use App\Models\JiraIssue;
+use App\Models\JiraIssueProfile;
+use App\Models\JiraProfile;
 use App\Models\NotificationRule;
 use App\Models\PullRequest;
 use App\Models\PullRequestApprovals;
@@ -236,6 +238,7 @@ class WorkspaceTest extends CubeTestCase
         $bitbucket = Integration::factory()->create(['workspace' => $workspace, 'type' => IntegrationService::TYPE_BITBUCKET]);
         $issue = JiraIssue::factory()->create(['workspace' => $workspace, 'integration' => $jira->id, 'parent' => null]);
         $subtask = JiraIssue::factory()->create(['workspace' => $workspace, 'integration' => $jira->id, 'parent' => $issue->id]);
+        $profile = JiraProfile::factory()->create(['workspace' => $workspace, 'integration' => $jira->id]);
         $pullRequest = PullRequest::factory()->create(['workspace' => $workspace, 'integration' => $bitbucket->id]);
         $task = Task::factory()->create(['workspace' => $workspace, 'sprint' => $sprint->id, 'jira_issue' => $subtask->id]);
         $history = History::factory()->create(['workspace' => $workspace, 'user' => $user, 'task' => $task->id]);
@@ -247,6 +250,8 @@ class WorkspaceTest extends CubeTestCase
             SprintLink::class => SprintLink::factory()->create(['sprint' => $sprint->id])->id,
             Integration::class => $jira->id,
             JiraIssue::class => $subtask->id,
+            JiraProfile::class => $profile->id,
+            JiraIssueProfile::class => JiraIssueProfile::factory()->create(['jira_issue' => $subtask->id, 'jira_profile' => $profile->id])->id,
             PullRequest::class => $pullRequest->id,
             PullRequestApprovals::class => PullRequestApprovals::factory()->create(['pull_request' => $pullRequest->id])->id,
             Task::class => $task->id,

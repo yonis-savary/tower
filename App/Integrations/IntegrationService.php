@@ -8,9 +8,12 @@ use App\Integrations\Jira\JiraClient;
 use App\Integrations\Jira\JiraProvider;
 use App\Models\Integration;
 use App\Models\JiraIssue;
+use App\Models\JiraIssueProfile;
+use App\Models\JiraProfile;
 use App\Models\PullRequest;
 use App\Models\PullRequestApprovals;
 use Cube\Data\Database\Database;
+use Cube\Data\Database\Query;
 
 use function Cube\decrypt;
 use function Cube\encrypt;
@@ -61,7 +64,7 @@ class IntegrationService
      * @param string  $site  https://<name>.atlassian.net
      * @param ?string $token null keeps the current one
      */
-    public function saveJira(int $workspace, string $site, string $email, int $board, #[\SensitiveParameter] ?string $token): Integration
+    public function saveJira(int $workspace, string $site, string $email, #[\SensitiveParameter] ?string $token): Integration
     {
         $existing = $this->findJira($workspace);
         $integration = $existing ?? new Integration([
@@ -72,14 +75,15 @@ class IntegrationService
 
         $settings = $existing ? $this->settingsOf($existing) : [];
 
-        // Another account, site or board : what is stored describes someone else, and the next run is a new reference
-        if ($existing && ($settings['site'] !== $site || $settings['email'] !== $email || ($settings['board'] ?? null) !== $board)) {
-            $this->forgetIssues($integration);
+        // Another account or site : what is stored describes someone else, and the next run is a new reference
+        if ($existing && ($settings['site'] !== $site || $settings['email'] !== $email)) {
+            // The boards of the profiles are numbered by their site
+            $settings['site'] === $site ? $this->forgetIssues($integration) : $this->forgetProfiles($integration);
             $integration->last_synced_at = null;
             $settings = [];
         }
 
-        $integration->settings = json_encode([...$settings, 'site' => $site, 'email' => $email, 'board' => $board], JSON_THROW_ON_ERROR);
+        $integration->settings = json_encode([...$settings, 'site' => $site, 'email' => $email], JSON_THROW_ON_ERROR);
         if (null !== $token)
             $integration->credentials = encrypt($token);
 
@@ -90,13 +94,20 @@ class IntegrationService
     {
         match ($integration->type) {
             self::TYPE_BITBUCKET => $this->forgetPullRequests($integration),
-            self::TYPE_JIRA => $this->forgetIssues($integration),
+            self::TYPE_JIRA => $this->forgetProfiles($integration),
         };
         Integration::deleteId($integration->id);
     }
 
+    private function forgetProfiles(Integration $integration): void
+    {
+        $this->forgetIssues($integration);
+        JiraProfile::deleteWhere(['integration' => $integration->id]);
+    }
+
     private function forgetIssues(Integration $integration): void
     {
+        JiraIssueProfile::delete()->whereIn('jira_profile', Query::select('jira_profile')->selectField('id', 'jira_profile')->where('integration', $integration->id, table: 'jira_profile'))->fetch();
         Database::getInstance()->exec('UPDATE task SET jira_issue = NULL WHERE jira_issue IN (SELECT id FROM jira_issue WHERE integration = {})', [$integration->id]);
         Database::getInstance()->exec('UPDATE jira_issue SET parent = NULL WHERE integration = {}', [$integration->id]);
         JiraIssue::deleteWhere(['integration' => $integration->id]);
@@ -122,9 +133,7 @@ class IntegrationService
     {
         $settings = $this->settingsOf($integration);
 
-        $board = $settings['board'] ?? throw new \RuntimeException('Choose the Jira board in the settings');
-
-        return new JiraProvider(new JiraClient($settings['site'], $settings['email'], decrypt($integration->credentials)), $board);
+        return new JiraProvider(new JiraClient($settings['site'], $settings['email'], decrypt($integration->credentials)));
     }
 
     public function providerFor(Integration $integration): PullRequestProvider

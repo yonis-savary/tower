@@ -44,13 +44,31 @@ defineEmits<{ open: [page: DocPage] }>()
     <thead><tr><th>Field</th><th>Value</th></tr></thead>
     <tbody>
       <tr><td>Site address</td><td><code>https://&lt;name&gt;.atlassian.net</code>: only Jira Cloud is supported</td></tr>
-      <tr><td>Board id</td><td>the number in the address of the board: <code>…/boards/42</code></td></tr>
       <tr><td>E-mail</td><td>the one of your Atlassian account</td></tr>
-      <tr><td>Token</td><td>a <strong>classic</strong> API token, made with <em>Create API token</em>: it has the rights of your account, and must be able to read the issues of the board and move them between statuses</td></tr>
+      <tr><td>Token</td><td>a <strong>classic</strong> API token, made with <em>Create API token</em>: it has the rights of your account, and must be able to read the issues of the boards and move them between statuses</td></tr>
+    </tbody>
+  </table>
+  <p>
+    Once the integration is saved, add a <strong>profile</strong> for each board to follow:
+  </p>
+  <table>
+    <thead><tr><th>Field</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td>Board id</td><td>the number in the address of the board: <code>…/boards/42</code></td></tr>
+      <tr><td>Name</td><td>optional: without a name, the profile takes the board's</td></tr>
+      <tr><td>JQL filter</td><td>optional: a condition added to the board's own, without <code>ORDER BY</code>, for example <code>component = Billing</code></td></tr>
     </tbody>
   </table>
   <ul>
-    <li>Tower shows the <strong>unfinished</strong> issues of the board, with its columns, in their order.</li>
+    <li>Tower shows the <strong>unfinished</strong> issues of one profile at a time, with the columns of its board, in their order.</li>
+    <li>
+      An issue shown by several profiles is stored and announced once. The issues of a new profile are not announced on
+      its first reading.
+    </li>
+    <li>
+      Deleting a profile, or changing its board or filter, removes without announcing them the issues no other profile
+      shows. Those linked to a task stay.
+    </li>
     <li>Only issues <strong>assigned to the token's account</strong> send events: the others show without sending anything.</li>
     <li>Dragging an issue to another column runs the matching Jira transition; when several statuses fit, Tower asks which one.</li>
   </ul>

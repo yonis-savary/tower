@@ -34,7 +34,7 @@ behind any NAT.
 Everything below is scoped to a **workspace**: separate *work* from *home*, each with its own data, devices and members.
 
 - Tasks and sprints, on a board and a backlog
-- Your Jira board, with transitions by drag and drop
+- Your Jira boards, as profiles narrowed by an optional JQL filter, with transitions by drag and drop
 - Your Bitbucket merge requests, as a tree of stacked branches
 - Events launched by hand or as quick actions
 - Automation: events scheduled at intervals or at a given date, and push notifications on your phone or computer

@@ -656,14 +656,14 @@ Merge requests :
 | `pr.ready`                  | elle quitte l'état brouillon                                   |
 | `pr.retargeted`             | sa branche cible change                                        |
 
-Tickets Jira, seulement pour ceux de l'utilisateur du token : les autres tickets du board
-s'affichent, mais n'émettent rien.
+Tickets Jira, seulement pour ceux de l'utilisateur du token : les autres tickets des profils
+s'affichent, mais n'émettent rien. Un ticket montré par plusieurs profils n'est annoncé qu'une fois.
 
 | Type                        | Quand                                                          |
 |-----------------------------|----------------------------------------------------------------|
-| `jira.issue.assigned`       | un ticket du board devient le sien : nouveau, ou réassigné à lui |
-| `jira.issue.done`           | un des siens devient terminé : catégorie « terminé », ou statut de la dernière colonne du board |
-| `jira.issue.unassigned`     | un des siens ne l'est plus : réassigné (`assignee`, `null` si plus personne), sorti du board, ou supprimé (`status` à `null`) |
+| `jira.issue.assigned`       | un ticket d'un profil devient le sien : nouveau, ou réassigné à lui |
+| `jira.issue.done`           | un des siens devient terminé : catégorie « terminé », ou statut de la dernière colonne du board d'un de ses profils |
+| `jira.issue.unassigned`     | un des siens ne l'est plus : réassigné (`assignee`, `null` si plus personne), sorti de tous les profils, ou supprimé (`status` à `null`) |
 | `jira.issue.status_changed` | son statut change (statuts et catégories avant et après)       |
 | `jira.issue.sprint_changed` | son sprint change (`null` : sans sprint)                       |
 | `jira.issue.priority_changed` | sa priorité change                                           |
@@ -732,25 +732,40 @@ la synchronisation, qui seule sait qu'un élément apparaît ou disparaît.
 - **Jira Cloud**, authentifié par l'e-mail du compte Atlassian et un API token. L'adresse du
   site doit être de la forme `https://<nom>.atlassian.net` : le token n'est envoyé qu'à un site
   Jira Cloud.
-- Un **board** est configuré par son identifiant (le nombre de son adresse, `…/boards/42`).
-- Ensemble suivi : **tous** les tickets du board qui ne sont pas terminés (API Jira Software,
-  `board/{id}/issue`), avec leur assigné (identifiant, nom, avatar). Un ticket est terminé si
-  son statut est dans la catégorie « terminé » de Jira, **ou** dans la dernière colonne du board :
-  c'est elle qui fait foi, un board pouvant y ranger des statuts que Jira classe « en cours »
-  (un « Fix », par exemple). Les statuts de cette colonne sont exclus de la requête et gardés
-  dans les `settings` (`done_statuses`) ; le premier passage qui les connaît sert de nouvelle
-  référence. Chaque passage lit aussi le compte du token (`/myself`), gardé dans les
-  `settings` : c'est « moi » pour le filtre, le compteur et les événements. Le premier passage
-  qui connaît le compte sert de nouvelle référence.
+- Les **profils Jira** (`jira_profile`) disent quoi suivre : chacun un board, par son identifiant
+  (le nombre de son adresse, `…/boards/42`), restreint par une condition JQL facultative
+  (1000 caractères, sans `ORDER BY` : elle est mise entre parenthèses dans la requête de Tower,
+  qui porte le seul tri), et un nom facultatif ; sans nom, il prend celui du board, relu à
+  chaque passage. Deux profils peuvent suivre le même board avec des filtres différents.
+- Ensemble suivi : **tous** les tickets non terminés de chaque profil (API Jira Software,
+  `board/{id}/issue`), avec leur assigné (identifiant, nom, avatar). Un ticket est stocké une
+  fois, quel que soit le nombre de profils qui le montrent : `jira_issue_profile` les relie,
+  sous-tâches comprises, et est réécrite à chaque passage. Un ticket est terminé si son statut
+  est dans la catégorie « terminé » de Jira, **ou** dans la dernière colonne du board d'un de
+  ses profils : c'est elle qui fait foi, un board pouvant y ranger des statuts que Jira classe
+  « en cours » (un « Fix », par exemple). Les statuts de cette colonne sont exclus de la
+  requête et gardés sur le profil (`done_statuses`). Chaque passage lit aussi le compte du
+  token (`/myself`), gardé dans les `settings` : c'est « moi » pour le filtre, le compteur et
+  les événements. Le premier passage qui connaît le compte sert de nouvelle référence.
+- Un profil ajouté est sa propre référence : les tickets qu'il est le seul à montrer à sa
+  première lecture ne sont pas annoncés (`synced_at` du profil encore vide). Changer son board
+  ou son filtre le remet à zéro de la même façon. Supprimer un profil, ou changer son board ou
+  son filtre, retire tout de suite et sans les annoncer les tickets qu'aucun autre profil ne
+  montre : rien ne s'est passé dans Jira, c'est ce qui est suivi qui a changé. Ceux qui ont une
+  tâche restent, hors du kanban.
+- Un profil en erreur (board inconnu, JQL refusée par Jira) fait échouer tout le passage, avec
+  son message dans `last_error` : l'état stocké reste celui du passage précédent.
 - Chaque carte porte la pastille de son assigné : son avatar Jira, ses initiales si l'avatar ne
   se charge pas, une silhouette s'il n'y a personne. La case « Mes tickets seulement », avant le
   choix des sprints, ne garde que les tickets du compte et masque alors les pastilles ; elle est
   décochée par défaut et gardée dans le navigateur, par workspace. Le compteur de la navbar ne
   compte que les tickets du compte.
-- Le kanban reprend les colonnes du board, dans son ordre, même vides, avec les statuts que
-  chacune regroupe (`board/{id}/configuration`). Elles sont relues à chaque synchronisation et
-  gardées dans les `settings` de l'intégration. Un ticket dont le statut n'est dans aucune
-  colonne, que Jira masque, est affiché dans une colonne à part, « hors des colonnes du board ».
+- Le kanban montre un profil à la fois, choisi dans une liste affichée dès qu'il y en a deux,
+  et gardé dans le navigateur par workspace. Il reprend les colonnes du board du profil, dans
+  son ordre, même vides, avec les statuts que chacune regroupe (`board/{id}/configuration`).
+  Elles sont relues à chaque synchronisation et gardées sur le profil (`columns`). Un ticket
+  dont le statut n'est dans aucune colonne, que Jira masque, est affiché dans une colonne à
+  part, « hors des colonnes du board ».
 - Glisser un ticket dans une autre colonne lit les transitions autorisées par le workflow
   depuis son statut actuel et garde celles qui mènent à un statut de la colonne. Une seule :
   elle est appliquée. Plusieurs : Tower demande le statut d'arrivée. Aucune, ou une transition
@@ -765,7 +780,7 @@ la synchronisation, qui seule sait qu'un élément apparaît ou disparaît.
   tickets, plus « Sans sprint » ; les sprints actifs viennent en premier. Le choix est gardé
   dans le navigateur, par workspace. Ce sont les sprints masqués qui sont retenus : un nouveau
   sprint est affiché par défaut.
-- **Sous-tâches** : la lecture du board demande aussi le champ `subtasks` de chaque ticket,
+- **Sous-tâches** : la lecture d'un board demande aussi le champ `subtasks` de chaque ticket,
   sans appel de plus (le filtre du board les exclut souvent). Elles sont rangées dans
   `jira_issue` avec l'id de leur ticket dans `parent`, terminées comprises. Jira ne donne ni
   leur projet, ni leur sprint, ni leur assigné : elles prennent le projet et le sprint de leur
@@ -788,8 +803,10 @@ la synchronisation, qui seule sait qu'un élément apparaît ou disparaît.
   `issue_type`, `priority`, `status`, `sprint`, `assignee`, `reporter`, `labels`, `description`
   et `comments` (les 20 derniers : `author`, `created`, `body`). La description et les
   commentaires sont en texte wiki Jira (API v2), pas en document ADF.
-- Supprimer l'intégration supprime ses tickets ; leurs tâches restent, sans lien. Changer de
-  site, de compte ou de board fait de même et repart d'une nouvelle référence.
+- Supprimer l'intégration supprime ses profils et ses tickets ; leurs tâches restent, sans lien.
+  Changer de compte fait de même pour les tickets et repart d'une nouvelle référence, en gardant
+  les profils ; changer de site supprime aussi les profils, dont les boards sont numérotés par
+  site.
 
 ## 4. Agent IA (prévu)
 
@@ -865,7 +882,7 @@ des sprints actifs, tickets non terminés de l'utilisateur, merge requests ouver
 | Appareils          | indicateur permanent, voir ci-dessous                              |
 | Accueil            |                                                                    |
 | Tâches             | section `tasks` : tableau et backlog                               |
-| Jira               | section `jira` : kanban du board                                   |
+| Jira               | section `jira` : kanban d'un profil Jira                           |
 | Merge Requests     | section `merge_requests`                                           |
 | Événements         | section `events` : lancement manuel et quick-actions               |
 | Automation         | section `automation` : planifications                              |
@@ -928,8 +945,8 @@ Les signaux du workspace portent ce qu'il faut pour cela : `history.created` (`h
 | Webhooks           | tableau des webhooks : interrupteur actif/inactif, cadenas ouvert pour un webhook non sécurisé, adresse à copier, événements, dernier appel ; création (nom, événements, sécurisé ou non, avec un avertissement) et modification (nom, événements), régénération du secret, suppression ; secret affiché une fois avec un exemple `curl` ; modale des appels (statut, IP, `User-Agent`, corps), par pages de 50 |
 | Merge Requests     | un onglet par dépôt : graphique en arbre des merge requests ouvertes, puis leur liste (approbations, commentaires, brouillon, pipeline), puis celles du dépôt fermées récemment |
 | Historique         | tableau compact des lignes du workspace (une ligne chacune : type, détail tronqué, date), les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |
-| Paramètres         | onglets verticaux à gauche, contenu à droite, onglet choisi dans l'adresse (`?tab=`) : **Compte** (changement de mot de passe) ; **Interface** (langue : auto, français ou anglais ; thème : auto, clair ou sombre ; gardés dans le navigateur, appliqués sans recharger) ; intégrations Bitbucket et Jira, chacune affichée si sa section est active : workspace ou site et board, e-mail, token, synchronisation, état de la dernière synchronisation ; bloc « Vider une section », toujours visible, qui supprime d'un coup l'intégration Jira ou Bitbucket et ses données |
-| Jira               | tickets non terminés du board, avec la pastille de leur assigné, ou seulement les siens, en kanban avec les colonnes du board ; transition par glisser-déposer, ouverture dans Jira, création de tâche |
+| Paramètres         | onglets verticaux à gauche, contenu à droite, onglet choisi dans l'adresse (`?tab=`) : **Compte** (changement de mot de passe) ; **Interface** (langue : auto, français ou anglais ; thème : auto, clair ou sombre ; gardés dans le navigateur, appliqués sans recharger) ; intégrations Bitbucket et Jira, chacune affichée si sa section est active : workspace ou site, e-mail, token, synchronisation, profils Jira (board, nom, filtre JQL ; ajout, modification, suppression, chacun suivi d'une synchronisation), état de la dernière synchronisation ; bloc « Vider une section », toujours visible, qui supprime d'un coup l'intégration Jira ou Bitbucket et ses données |
+| Jira               | tickets non terminés d'un profil, choisi dans une liste, avec la pastille de leur assigné, ou seulement les siens, en kanban avec les colonnes de son board ; transition par glisser-déposer, ouverture dans Jira, création de tâche |
 | Documentation / API | onglets verticaux comme les Paramètres, page choisie dans l'adresse (`?page=`) : accueil, événements envoyés aux appareils (enveloppe du message, variables d'environnement, chaque type avec ses champs et des exemples de payload), lancer le connecteur en service sous Linux (systemd), et sur un serveur sans écran (service détaché des sessions par le lingering, handlers en fichier, délai des handlers, commande root autorisée par sudo, dépannage). Les blocs de code sont colorés (highlight.js, avec seulement les langages utilisés) et ont un bouton pour copier leur contenu brut. Chaque page existe en français et en anglais (`views/docs/fr/`, `views/docs/en/`) ; la version de la langue active est affichée, le français sert de repli |
 | Mes workspaces     | modale ouverte par « Gérer mes workspaces » : liste et création à gauche ; à droite, le workspace choisi en trois onglets, chacun enregistré à part : **Général** (nom, couleur, passage sur ce workspace), **Fonctionnalités** (sections), **Membres** (liste, ajout par e-mail, retrait, départ) |
 
@@ -1066,8 +1083,10 @@ requêtes à vide).
 **Jira : tout un board, avec ses colonnes.** Les étapes d'un kanban Jira (leur ordre, les
 statuts de chaque colonne) sont définies par un board, pas par les tickets : suivre tous les
 tickets assignés, tous projets confondus, ne donnait que les trois catégories de statut, et une
-étape sans ticket n'avait pas de colonne. Le prix : un board à configurer, et les tickets
-assignés hors de ce board ne sont pas suivis. Tout le board est affiché, pour voir qui fait
+étape sans ticket n'avait pas de colonne. Le prix : un board par profil à configurer, et les tickets
+qui ne sont sur aucun board ne sont pas suivis. Plusieurs profils couvrent plusieurs équipes ou
+projets, et leur filtre JQL restreint un board trop large, sans perdre ses colonnes ni le sprint
+que donne l'API Jira Software ; une configuration par JQL seule aurait dû recréer les deux. Tout le board est affiché, pour voir qui fait
 quoi, mais seuls les tickets de l'utilisateur émettent des événements : l'activité de l'équipe
 noierait les appareils et l'historique.
 

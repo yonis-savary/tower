@@ -1414,7 +1414,6 @@ export type GetJiraIntegrationResponses = {
     200: {
         site: string;
         email: string;
-        board: number;
         last_synced_at: string | null;
         last_error: string | null;
     };
@@ -1426,7 +1425,6 @@ export type SaveJiraIntegrationData = {
     body: {
         site: string;
         email: string;
-        board: number;
         token?: string;
     };
     path?: never;
@@ -1458,7 +1456,6 @@ export type SaveJiraIntegrationResponses = {
     200: {
         site: string;
         email: string;
-        board: number;
         last_synced_at: string | null;
         last_error: string | null;
     };
@@ -1497,7 +1494,6 @@ export type SyncJiraIntegrationResponses = {
     200: {
         site: string;
         email: string;
-        board: number;
         last_synced_at: string | null;
         last_error: string | null;
     };
@@ -1505,14 +1501,153 @@ export type SyncJiraIntegrationResponses = {
 
 export type SyncJiraIntegrationResponse = SyncJiraIntegrationResponses[keyof SyncJiraIntegrationResponses];
 
-export type GetJiraBoardData = {
+export type CreateJiraProfileData = {
+    body: {
+        name?: string | null;
+        board: number;
+        jql?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/integrations/jira/profiles';
+};
+
+export type CreateJiraProfileErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current workspace has no Jira integration
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type CreateJiraProfileError = CreateJiraProfileErrors[keyof CreateJiraProfileErrors];
+
+export type CreateJiraProfileResponses = {
+    /**
+     * The profile
+     */
+    201: {
+        id: number;
+        name: string | null;
+        board: number;
+        board_name: string | null;
+        jql: string | null;
+        columns: Array<{
+            name: string;
+            statuses: Array<string>;
+        }>;
+    };
+};
+
+export type CreateJiraProfileResponse = CreateJiraProfileResponses[keyof CreateJiraProfileResponses];
+
+export type DeleteJiraProfileData = {
+    body?: never;
+    path: {
+        profile: number;
+    };
+    query?: never;
+    url: '/api/integrations/jira/profiles/{profile}';
+};
+
+export type DeleteJiraProfileErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such profile in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type DeleteJiraProfileError = DeleteJiraProfileErrors[keyof DeleteJiraProfileErrors];
+
+export type DeleteJiraProfileResponses = {
+    /**
+     * The profile is deleted
+     */
+    204: void;
+};
+
+export type DeleteJiraProfileResponse = DeleteJiraProfileResponses[keyof DeleteJiraProfileResponses];
+
+export type UpdateJiraProfileData = {
+    body: {
+        name?: string | null;
+        board: number;
+        jql?: string | null;
+    };
+    path: {
+        profile: number;
+    };
+    query?: never;
+    url: '/api/integrations/jira/profiles/{profile}';
+};
+
+export type UpdateJiraProfileErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such profile in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type UpdateJiraProfileError = UpdateJiraProfileErrors[keyof UpdateJiraProfileErrors];
+
+export type UpdateJiraProfileResponses = {
+    /**
+     * The profile
+     */
+    200: {
+        id: number;
+        name: string | null;
+        board: number;
+        board_name: string | null;
+        jql: string | null;
+        columns: Array<{
+            name: string;
+            statuses: Array<string>;
+        }>;
+    };
+};
+
+export type UpdateJiraProfileResponse = UpdateJiraProfileResponses[keyof UpdateJiraProfileResponses];
+
+export type ListJiraProfilesData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/jira/board';
+    url: '/api/jira/profiles';
 };
 
-export type GetJiraBoardErrors = {
+export type ListJiraProfilesErrors = {
     /**
      * No active session
      */
@@ -1521,27 +1656,35 @@ export type GetJiraBoardErrors = {
     };
 };
 
-export type GetJiraBoardError = GetJiraBoardErrors[keyof GetJiraBoardErrors];
+export type ListJiraProfilesError = ListJiraProfilesErrors[keyof ListJiraProfilesErrors];
 
-export type GetJiraBoardResponses = {
+export type ListJiraProfilesResponses = {
     /**
-     * The board, empty before the first sync
+     * The account, null before the first sync, and the profiles, without columns before their first sync
      */
     200: {
         account_id?: string;
-        columns?: Array<{
+        profiles?: Array<{
+            id?: number;
             name?: string;
-            statuses?: Array<string>;
+            board?: number;
+            board_name?: string;
+            jql?: string;
+            columns?: Array<{
+                name?: string;
+                statuses?: Array<string>;
+            }>;
         }>;
     };
 };
 
-export type GetJiraBoardResponse = GetJiraBoardResponses[keyof GetJiraBoardResponses];
+export type ListJiraProfilesResponse = ListJiraProfilesResponses[keyof ListJiraProfilesResponses];
 
 export type ListJiraIssuesData = {
     body?: never;
     path?: never;
     query?: {
+        profile?: number;
         mine?: boolean;
         status_category?: 'todo' | 'in_progress' | 'done';
     };
@@ -1586,6 +1729,7 @@ export type ListJiraIssuesResponses = {
         assignee_avatar: string | null;
         parent: number | null;
         tracked: boolean;
+        profiles: Array<unknown>;
     }>;
 };
 
@@ -1750,6 +1894,7 @@ export type TransitionJiraIssueResponses = {
         assignee_avatar: string | null;
         parent: number | null;
         tracked: boolean;
+        profiles: Array<unknown>;
     };
 };
 

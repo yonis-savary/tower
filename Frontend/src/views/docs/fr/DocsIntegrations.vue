@@ -44,13 +44,31 @@ defineEmits<{ open: [page: DocPage] }>()
     <thead><tr><th>Champ</th><th>Valeur</th></tr></thead>
     <tbody>
       <tr><td>Adresse du site</td><td><code>https://&lt;nom&gt;.atlassian.net</code> : seul Jira Cloud est pris en charge</td></tr>
-      <tr><td>Identifiant du board</td><td>le nombre dans l'adresse du board : <code>…/boards/42</code></td></tr>
       <tr><td>E-mail</td><td>celui de ton compte Atlassian</td></tr>
-      <tr><td>Token</td><td>un API token <strong>classique</strong>, créé avec <em>Créer un token API</em> : il a les droits de ton compte, et doit pouvoir lire les tickets du board et les faire changer de statut</td></tr>
+      <tr><td>Token</td><td>un API token <strong>classique</strong>, créé avec <em>Créer un token API</em> : il a les droits de ton compte, et doit pouvoir lire les tickets des boards et les faire changer de statut</td></tr>
+    </tbody>
+  </table>
+  <p>
+    Une fois l'intégration enregistrée, ajoute un <strong>profil</strong> par board à suivre :
+  </p>
+  <table>
+    <thead><tr><th>Champ</th><th>Valeur</th></tr></thead>
+    <tbody>
+      <tr><td>Identifiant du board</td><td>le nombre dans l'adresse du board : <code>…/boards/42</code></td></tr>
+      <tr><td>Nom</td><td>facultatif : sans nom, le profil prend celui du board</td></tr>
+      <tr><td>Filtre JQL</td><td>facultatif : une condition ajoutée à celle du board, sans <code>ORDER BY</code>, par exemple <code>component = Billing</code></td></tr>
     </tbody>
   </table>
   <ul>
-    <li>Tower affiche les tickets <strong>non terminés</strong> du board, avec ses colonnes, dans leur ordre.</li>
+    <li>Tower affiche les tickets <strong>non terminés</strong> d'un profil à la fois, avec les colonnes de son board, dans leur ordre.</li>
+    <li>
+      Un ticket montré par plusieurs profils n'est stocké et annoncé qu'une fois. Les tickets d'un nouveau profil ne sont
+      pas annoncés à sa première lecture.
+    </li>
+    <li>
+      Supprimer un profil, ou changer son board ou son filtre, retire sans les annoncer les tickets qu'aucun autre profil
+      ne montre. Ceux liés à une tâche restent.
+    </li>
     <li>
       Seuls les tickets <strong>assignés au compte du token</strong> émettent des événements : les autres s'affichent sans
       rien envoyer.

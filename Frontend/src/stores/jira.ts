@@ -3,22 +3,24 @@ import { computed, ref } from 'vue'
 import {
   createTaskFromJiraIssue,
   discussJiraIssue,
-  getJiraBoard,
   listJiraIssues,
   listJiraIssueTransitions,
+  listJiraProfiles,
   transitionJiraIssue,
   type ListJiraIssuesResponse,
 } from '../client'
 
 export type JiraCategory = 'todo' | 'in_progress' | 'done'
-export type JiraIssue = Omit<ListJiraIssuesResponse[number], 'status_category'> & { status_category: JiraCategory }
+// The OpenAPI document reads the profiles from a model linked to none, and cannot type their ids
+export type JiraIssue = Omit<ListJiraIssuesResponse[number], 'status_category' | 'profiles'> & { status_category: JiraCategory; profiles: number[] }
 export type JiraTransition = { id: string; name: string; status_id: string; status: string; status_category: JiraCategory }
 export type JiraColumn = { name: string; statuses: string[] }
+export type JiraProfile = { id: number; name: string | null; board: number; board_name: string | null; jql: string | null; columns: JiraColumn[] }
 export const JIRA_SEVERITIES: Record<JiraCategory, string> = { todo: 'secondary', in_progress: 'info', done: 'success' }
 
 export const useJiraStore = defineStore('jira', () => {
   const issues = ref<JiraIssue[]>([])
-  const columns = ref<JiraColumn[]>([])
+  const profiles = ref<JiraProfile[]>([])
   const accountId = ref<string | null>(null)
   const failed = ref(false)
 
@@ -33,17 +35,20 @@ export const useJiraStore = defineStore('jira', () => {
     return subtasks
   })
   const mine = computed(() => tracked.value.filter(({ assignee_id }) => assignee_id !== null && assignee_id === accountId.value))
-  // The last column of the board is its "done", whatever the category Jira gives its statuses
-  const doneStatuses = computed(() => new Set(columns.value.at(-1)?.statuses ?? []))
-  const isDone = (issue: JiraIssue) => issue.status_category === 'done' || doneStatuses.value.has(issue.status_id)
+  // The last column of a board is its "done", whatever the category Jira gives its statuses
+  const doneStatusesOf = computed(() => new Map(profiles.value.map(({ id, columns }) => [id, new Set(columns.at(-1)?.statuses ?? [])])))
+  // An issue kept for its task is shown by no profile : any of them may say it is done
+  const isDone = (issue: JiraIssue) =>
+    issue.status_category === 'done' ||
+    (issue.profiles.length ? issue.profiles : profiles.value.map(({ id }) => id)).some((profile) => doneStatusesOf.value.get(profile)?.has(issue.status_id))
 
   async function load(): Promise<void> {
-    const [issueList, board] = await Promise.all([listJiraIssues(), getJiraBoard()])
-    failed.value = !issueList.data || !board.data
+    const [issueList, profileList] = await Promise.all([listJiraIssues(), listJiraProfiles()])
+    failed.value = !issueList.data || !profileList.data
     if (issueList.data) issues.value = issueList.data as JiraIssue[]
-    if (!board.data) return
-    columns.value = (board.data.columns ?? []) as JiraColumn[]
-    accountId.value = board.data.account_id ?? null
+    if (!profileList.data) return
+    profiles.value = profileList.data.profiles as JiraProfile[]
+    accountId.value = profileList.data.account_id ?? null
   }
 
   async function transitionsOf(issue: number): Promise<JiraTransition[] | null> {
@@ -68,5 +73,5 @@ export const useJiraStore = defineStore('jira', () => {
     return !!response?.ok
   }
 
-  return { issues, columns, accountId, failed, byId, tracked, subtasksOf, mine, isDone, load, transitionsOf, transition, createTask, discuss }
+  return { issues, profiles, accountId, failed, byId, tracked, subtasksOf, mine, isDone, load, transitionsOf, transition, createTask, discuss }
 })

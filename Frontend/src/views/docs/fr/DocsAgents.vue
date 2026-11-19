@@ -79,7 +79,8 @@ const token = 'tower_…'
     <tbody>
       <tr><td><code>list_tasks</code>, <code>list_sprints</code>, <code>list_task_history</code></td><td>les tâches, les sprints et leurs liens, l'historique d'une tâche</td></tr>
       <tr><td><code>create_task</code>, <code>update_task</code>, <code>move_task</code>, <code>add_sprint_link</code></td><td>écriture : créer, modifier, changer de statut ou de sprint, ajouter un lien à un sprint</td></tr>
-      <tr><td><code>list_jira_issues</code>, <code>list_jira_transitions</code></td><td>les tickets Jira suivis et leurs sous-tâches (filtrables : les miens, par catégorie de statut), les transitions possibles d'un ticket</td></tr>
+      <tr><td><code>list_jira_profiles</code></td><td>les profils Jira (board, nom, filtre JQL, colonnes) et le compte Jira du token</td></tr>
+      <tr><td><code>list_jira_issues</code>, <code>list_jira_transitions</code></td><td>les tickets Jira suivis et leurs sous-tâches (filtrables : par profil, les miens, par catégorie de statut), les transitions possibles d'un ticket</td></tr>
       <tr><td><code>get_jira_issue</code>, <code>get_jira_attachment</code></td><td>un ticket lu dans Jira par sa clé, sur le board ou non (description, commentaires, pièces jointes), et une pièce jointe de 5 Mio au plus : une image arrive comme une image</td></tr>
       <tr><td><code>transition_jira_issue</code>, <code>create_task_from_jira_issue</code></td><td>écriture : changer le statut dans Jira, créer une tâche liée</td></tr>
       <tr><td><code>list_pull_requests</code></td><td>les merge requests ouvertes et récemment fermées</td></tr>

@@ -8,6 +8,7 @@ use App\Integrations\Jira\JiraIssueSync;
 use App\Models\History;
 use App\Models\Integration;
 use App\Models\JiraIssue;
+use App\Models\JiraProfile;
 use App\Models\Task;
 use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
@@ -28,6 +29,8 @@ class JiraTest extends CubeTestCase
     private array $issues = [];
     /** @var list<string> */
     private array $assigned = [];
+    /** @var list<string> */
+    private array $secondBoard = [];
     private ?array $refusal = null;
     private int $searchStatus = 200;
     private ?string $lastJql = null;
@@ -71,6 +74,7 @@ class JiraTest extends CubeTestCase
     }
 
     private const BOARD = 7;
+    private const SECOND_BOARD = 9;
     private const ME = ['accountId' => 'me-123', 'displayName' => 'Alice', 'avatarUrls' => ['24x24' => 'https://avatars.example/alice.png']];
     private const BOB = ['accountId' => 'bob-456', 'displayName' => 'Bob'];
     private const ATTACHMENTS = [
@@ -99,15 +103,19 @@ class JiraTest extends CubeTestCase
                 ? Response::json(self::ATTACHMENTS[$id])
                 : Response::json(['errorMessages' => ['Attachment does not exist']], 404),
             '/rest/agile/1.0/board/{int:board}/issue' => function (Request $request, int $board) {
-                if (200 !== $this->searchStatus || self::BOARD !== $board)
+                $keys = [self::BOARD => $this->assigned, self::SECOND_BOARD => $this->secondBoard][$board] ?? null;
+                if (200 !== $this->searchStatus || null === $keys)
                     return Response::json([], 200 === $this->searchStatus ? 404 : $this->searchStatus);
 
                 $this->lastJql = $request->param('jql');
                 $startAt = (int) $request->param('startAt', 0);
-                $key = $this->assigned[$startAt] ?? null;
+                $key = $keys[$startAt] ?? null;
 
-                return Response::json(['startAt' => $startAt, 'total' => count($this->assigned), 'issues' => $key ? [$this->issues[$key]] : []]);
+                return Response::json(['startAt' => $startAt, 'total' => count($keys), 'issues' => $key ? [$this->issues[$key]] : []]);
             },
+            '/rest/agile/1.0/board/{int:board}' => fn (Request $request, int $board) => in_array($board, [self::BOARD, self::SECOND_BOARD], true)
+                ? Response::json(['id' => $board, 'name' => "Board {$board}"])
+                : Response::json(['errorMessages' => ['Board does not exist']], 404),
             '/rest/agile/1.0/board/{int:board}/configuration' => fn () => Response::json(['columnConfig' => ['columns' => [
                 ['name' => 'Backlog', 'statuses' => [['id' => '11']]],
                 ['name' => 'In Progress', 'statuses' => [['id' => '21']]],
@@ -165,13 +173,25 @@ class JiraTest extends CubeTestCase
 
     private function save(array $override = []): array
     {
-        return $this->putJson('/api/integrations/jira', [
+        $integration = $this->putJson('/api/integrations/jira', [
             'site' => self::SITE,
             'email' => 'me@example.com',
-            'board' => self::BOARD,
             'token' => 'the-api-token',
             ...$override,
         ])->assertOk()->json();
+        $this->addProfile(self::BOARD);
+
+        return $integration;
+    }
+
+    private function addProfile(int $board, ?string $jql = null, ?string $name = null): int
+    {
+        return $this->postJson('/api/integrations/jira/profiles', ['board' => $board, 'jql' => $jql, 'name' => $name])->assertCreated()->json()['id'];
+    }
+
+    private function profiles(): array
+    {
+        return $this->get('/api/jira/profiles')->assertOk()->json()['profiles'];
     }
 
     private function integration(): Integration
@@ -203,9 +223,8 @@ class JiraTest extends CubeTestCase
         $this->assertStringNotContainsString('the-api-token', $this->integration()->credentials);
         $this->assertSame(self::SITE, $this->get('/api/integrations/jira')->assertOk()->json()['site']);
 
-        $this->putJson('/api/integrations/jira', ['site' => 'https://evil.example.com', 'email' => 'me@example.com', 'board' => 1, 'token' => 'x'])->assertUnprocessableContent();
-        $this->putJson('/api/integrations/jira', ['site' => 'http://team.atlassian.net', 'email' => 'me@example.com', 'board' => 1, 'token' => 'x'])->assertUnprocessableContent();
-        $this->putJson('/api/integrations/jira', ['site' => self::SITE, 'email' => 'me@example.com', 'board' => 0])->assertUnprocessableContent();
+        $this->putJson('/api/integrations/jira', ['site' => 'https://evil.example.com', 'email' => 'me@example.com', 'token' => 'x'])->assertUnprocessableContent();
+        $this->putJson('/api/integrations/jira', ['site' => 'http://team.atlassian.net', 'email' => 'me@example.com', 'token' => 'x'])->assertUnprocessableContent();
     }
 
     public function testAssignedIssuesAreReadPageByPageAndTranslated()
@@ -230,7 +249,7 @@ class JiraTest extends CubeTestCase
         $this->assertSame(self::SITE.'/browse/PLAT-2', $second->url);
         $this->assertNull($this->stored('PLAT-1')->priority);
 
-        $columns = $this->get('/api/jira/board')->assertOk()->json()['columns'];
+        $columns = $this->profiles()[0]['columns'];
         $this->assertSame(['Backlog', 'In Progress', 'Review', 'Done'], array_column($columns, 'name'));
         $this->assertSame(['22', '23'], $columns[2]['statuses']);
     }
@@ -242,13 +261,31 @@ class JiraTest extends CubeTestCase
         $this->issue('100', 'PLAT-1');
         $this->assigned = ['PLAT-1'];
         $this->sync();
+        $profile = $this->profiles()[0]['id'];
 
-        $this->putJson('/api/integrations/jira', ['site' => self::SITE, 'email' => 'me@example.com', 'board' => 8])->assertOk();
+        $this->putJson("/api/integrations/jira/profiles/{$profile}", ['board' => 8])->assertOk();
         $this->assertSame([], $this->get('/api/jira/issues')->assertOk()->json());
-        $this->assertSame([], $this->get('/api/jira/board')->assertOk()->json()['columns']);
+        $this->assertSame([[], null], [$this->profiles()[0]['columns'], $this->profiles()[0]['board_name']]);
+        $this->assertSame([], $this->historyTypes());
 
         $this->sync();
         $this->assertSame('Jira does not know the board 8', $this->integration()->last_error);
+    }
+
+    public function testAnotherSiteForgetsTheProfilesAnotherAccountKeepsThem()
+    {
+        $this->register();
+        $this->save();
+        $this->issue('100', 'PLAT-1');
+        $this->assigned = ['PLAT-1'];
+        $this->sync();
+
+        $this->putJson('/api/integrations/jira', ['site' => self::SITE, 'email' => 'other@example.com'])->assertOk();
+        $this->assertSame([], $this->get('/api/jira/issues')->assertOk()->json());
+        $this->assertCount(1, $this->profiles());
+
+        $this->putJson('/api/integrations/jira', ['site' => 'https://other-team.atlassian.net', 'email' => 'other@example.com'])->assertOk();
+        $this->assertSame([], $this->profiles());
     }
 
     public function testFirstSyncIsTheReferenceThenDifferencesAreLogged()
@@ -320,7 +357,7 @@ class JiraTest extends CubeTestCase
         $this->assigned = ['PLAT-1', 'PLAT-2', 'PLAT-3'];
         $this->sync();
 
-        $this->assertSame('me-123', $this->get('/api/jira/board')->assertOk()->json()['account_id']);
+        $this->assertSame('me-123', $this->get('/api/jira/profiles')->assertOk()->json()['account_id']);
         $issues = array_column($this->get('/api/jira/issues')->assertOk()->json(), null, 'key');
         $this->assertSame(['me-123', 'Alice', 'https://avatars.example/alice.png'], [$issues['PLAT-1']['assignee_id'], $issues['PLAT-1']['assignee_name'], $issues['PLAT-1']['assignee_avatar']]);
         $this->assertSame('Bob', $issues['PLAT-2']['assignee_name']);
@@ -599,5 +636,126 @@ class JiraTest extends CubeTestCase
 
         $this->assertNull($this->stored('PLAT-1'));
         $this->assertNull(Task::find($task['id'])->jira_issue);
+    }
+
+    public function testProfilesAreManagedInTheirWorkspaceAndValidated()
+    {
+        $this->register();
+        $this->postJson('/api/integrations/jira/profiles', ['board' => self::BOARD])->assertNotFound();
+        $this->putJson('/api/integrations/jira', ['site' => self::SITE, 'email' => 'me@example.com', 'token' => 'the-api-token'])->assertOk();
+
+        $id = $this->addProfile(self::BOARD, '  component = Billing  ', '  Billing  ');
+        $this->assertSame(['Billing', self::BOARD, 'component = Billing'], [$this->profiles()[0]['name'], $this->profiles()[0]['board'], $this->profiles()[0]['jql']]);
+
+        $updated = $this->putJson("/api/integrations/jira/profiles/{$id}", ['board' => self::BOARD, 'name' => '', 'jql' => ''])->assertOk()->json();
+        $this->assertSame([null, null], [$updated['name'], $updated['jql']]);
+
+        $this->postJson('/api/integrations/jira/profiles', ['board' => 0])->assertUnprocessableContent();
+        $this->postJson('/api/integrations/jira/profiles', ['board' => self::BOARD, 'jql' => 'project = PLAT order  by created'])->assertUnprocessableContent();
+        $this->postJson('/api/integrations/jira/profiles', ['board' => self::BOARD, 'name' => str_repeat('x', 101)])->assertUnprocessableContent();
+
+        Authentication::getInstance()->logout();
+        SelectedWorkspace::unset();
+        $this->register('bob@example.com');
+        $this->assertSame([], $this->get('/api/jira/profiles')->assertOk()->json()['profiles']);
+        $this->putJson("/api/integrations/jira/profiles/{$id}", ['board' => self::BOARD])->assertNotFound();
+        $this->delete("/api/integrations/jira/profiles/{$id}")->assertNotFound();
+        $this->assertNotNull(JiraProfile::find($id));
+    }
+
+    public function testAnIssueOnTwoProfilesIsStoredOnceAndFilteredByProfile()
+    {
+        $this->register();
+        $this->save();
+        $second = $this->addProfile(self::SECOND_BOARD, 'component = Billing');
+        $first = $this->profiles()[0]['id'];
+        $this->issue('100', 'PLAT-1');
+        $this->issue('101', 'PLAT-2');
+        $this->assigned = ['PLAT-1'];
+        $this->secondBoard = ['PLAT-1', 'PLAT-2'];
+
+        $this->sync();
+
+        $this->assertNull($this->integration()->last_error);
+        $this->assertStringStartsWith('(component = Billing) AND statusCategory != Done', $this->lastJql);
+        $this->assertSame(['Board 7', 'Board 9'], array_column($this->profiles(), 'board_name'));
+        $issues = array_column($this->get('/api/jira/issues')->assertOk()->json(), 'profiles', 'key');
+        $this->assertEqualsCanonicalizing([$first, $second], $issues['PLAT-1']);
+        $this->assertSame([$second], $issues['PLAT-2']);
+        $this->assertSame(['PLAT-1'], array_column($this->get("/api/jira/issues?profile={$first}")->assertOk()->json(), 'key'));
+        $this->assertEqualsCanonicalizing(['PLAT-1', 'PLAT-2'], array_column($this->get("/api/jira/issues?profile={$second}")->assertOk()->json(), 'key'));
+
+        $this->secondBoard = ['PLAT-2'];
+        $this->sync();
+        $this->assertSame([], $this->historyTypes());
+        $this->assertSame([$first], array_column($this->get('/api/jira/issues')->assertOk()->json(), 'profiles', 'key')['PLAT-1']);
+
+        $this->issue('100', 'PLAT-1', ['status' => self::STATUSES['31']]);
+        $this->assigned = [];
+        $this->sync();
+        $this->assertSame(['jira.issue.done'], $this->historyTypes());
+    }
+
+    public function testANewProfileIsItsOwnReference()
+    {
+        $this->register();
+        $this->save();
+        $this->issue('100', 'PLAT-1');
+        $this->assigned = ['PLAT-1'];
+        $this->sync();
+
+        $this->addProfile(self::SECOND_BOARD);
+        $this->issue('101', 'PLAT-2');
+        $this->secondBoard = ['PLAT-2'];
+        $this->sync();
+        $this->assertSame([], $this->historyTypes());
+
+        $this->issue('102', 'PLAT-3');
+        $this->secondBoard = ['PLAT-2', 'PLAT-3'];
+        $this->sync();
+        $this->assertSame(['jira.issue.assigned'], $this->historyTypes());
+    }
+
+    public function testDeletingAProfileForgetsOnlyTheIssuesNoOtherProfileShows()
+    {
+        $this->register();
+        $this->save();
+        $second = $this->addProfile(self::SECOND_BOARD);
+        $this->issue('100', 'PLAT-1');
+        $this->issue('101', 'PLAT-2');
+        $this->issue('102', 'PLAT-3');
+        $this->assigned = ['PLAT-1'];
+        $this->secondBoard = ['PLAT-1', 'PLAT-2', 'PLAT-3'];
+        $this->sync();
+        $task = $this->postJson("/api/jira/issues/{$this->stored('PLAT-3')->id}/task")->assertCreated()->json();
+
+        $this->delete("/api/integrations/jira/profiles/{$second}")->assertNoContent();
+
+        $this->assertSame(['PLAT-1'], array_column(array_filter($this->get('/api/jira/issues')->assertOk()->json(), fn (array $issue) => $issue['tracked']), 'key'));
+        $this->assertNull($this->stored('PLAT-2'));
+        $kept = $this->stored('PLAT-3');
+        $this->assertSame([false, $kept->id], [(bool) $kept->tracked, Task::find($task['id'])->jira_issue]);
+        $this->assertNull(JiraProfile::find($second));
+
+        $this->sync();
+        $this->assertSame(['task.created'], $this->historyTypes());
+    }
+
+    public function testASubtaskListedOnItsOwnIsStoredOnceUnderItsParent()
+    {
+        $this->register();
+        $this->save();
+        $subtask = ['id' => '200', 'key' => 'PLAT-10', 'fields' => ['summary' => 'Subtask PLAT-10', 'status' => self::STATUSES['21'], 'issuetype' => ['name' => 'Sub-task'], 'priority' => ['name' => 'Low']]];
+        $this->issue('200', 'PLAT-10', ['issuetype' => ['name' => 'Sub-task']]);
+        $this->issue('100', 'PLAT-1', ['subtasks' => [$subtask]]);
+        $this->assigned = ['PLAT-10', 'PLAT-1'];
+
+        $this->sync();
+        $this->sync();
+
+        $this->assertNull($this->integration()->last_error);
+        $this->assertSame(1, JiraIssue::select()->where('external_id', '200')->count());
+        $this->assertSame($this->stored('PLAT-1')->id, $this->stored('PLAT-10')->parent);
+        $this->assertSame([], $this->historyTypes());
     }
 }

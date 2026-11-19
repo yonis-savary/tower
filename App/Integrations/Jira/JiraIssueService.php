@@ -14,6 +14,7 @@ use App\Services\EventService;
 use App\Services\HistoryService;
 use App\Services\TaskService;
 use Cube\Data\Bunch;
+use Cube\Data\Database\Query;
 
 class JiraIssueService
 {
@@ -29,37 +30,30 @@ class JiraIssueService
     ) {}
 
     /**
-     * @return Bunch<int,JiraIssue>
+     * @return Bunch<int,JiraIssue> With the links to their profiles
      */
-    /**
-     * @return Bunch<int,JiraIssue>
-     */
-    public function listIssues(int $workspace, bool $mine = false, ?string $statusCategory = null): Bunch
+    public function listIssues(int $workspace, bool $mine = false, ?string $statusCategory = null, ?int $profile = null): Bunch
     {
-        $account = $mine ? $this->board($workspace)['account_id'] : null;
+        $account = $mine ? $this->accountOf($workspace) : null;
         if ($mine && null === $account)
             return Bunch::wrap([]);
 
-        $query = JiraIssue::select()->where('workspace', $workspace)->order('id', 'DESC');
+        $query = JiraIssue::select(['profiles'])->where('workspace', $workspace)->order('id', 'DESC');
         if (null !== $statusCategory)
             $query->where('status_category', $statusCategory);
         if (null !== $account)
             $query->where('assignee_id', $account);
+        if (null !== $profile)
+            $query->whereIn('id', Query::select('jira_issue_profile')->selectField('jira_issue', 'jira_issue_profile')->where('jira_profile', $profile, table: 'jira_issue_profile'));
 
         return Bunch::wrap($query->fetch());
     }
 
-    /**
-     * @return array{account_id: ?string, columns: list<array{name: string, statuses: list<string>}>}
-     */
-    public function board(int $workspace): array
+    public function accountOf(int $workspace): ?string
     {
         $integration = $this->integrations->findJira($workspace);
 
-        return [
-            'account_id' => $integration ? $this->integrations->jiraAccountOf($integration) : null,
-            'columns' => $integration ? $this->integrations->settingsOf($integration)['columns'] ?? [] : [],
-        ];
+        return $integration ? $this->integrations->jiraAccountOf($integration) : null;
     }
 
     public function findIssue(int $workspace, int $id): ?JiraIssue

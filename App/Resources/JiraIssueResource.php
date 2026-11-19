@@ -3,6 +3,7 @@
 namespace App\Resources;
 
 use App\Models\JiraIssue;
+use App\Models\JiraIssueProfile;
 use Cube\Data\Models\Model;
 use Cube\Data\Models\ModelResource;
 use Cube\Data\OpenAPI\Attributes\Nullable;
@@ -42,6 +43,7 @@ class JiraIssueResource extends ModelResource
             'assignee_avatar' => $model->assignee_avatar,
             'parent' => $model->parent,
             'tracked' => (bool) $model->tracked,
+            'profiles' => array_map(fn (JiraIssueProfile $link) => $link->jira_profile, $model->loadMissing('profiles')->profiles),
         ];
     }
 }

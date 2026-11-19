@@ -4,12 +4,15 @@ namespace App\Controllers;
 
 use App\Integrations\IntegrationService;
 use App\Integrations\Jira\JiraIssueSync;
+use App\Integrations\Jira\JiraProfileService;
 use App\Integrations\PullRequestSync;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\SaveBitbucketRequest;
+use App\Requests\SaveJiraProfileRequest;
 use App\Requests\SaveJiraRequest;
 use App\Resources\IntegrationResource;
 use App\Resources\JiraIntegrationResource;
+use App\Resources\JiraProfileResource;
 use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
@@ -31,6 +34,7 @@ class IntegrationController extends Controller
         protected IntegrationService $integrations,
         protected PullRequestSync $sync,
         protected JiraIssueSync $jiraSync,
+        protected JiraProfileService $jiraProfiles,
     ) {}
 
     public function routes(Router $router): void
@@ -44,6 +48,9 @@ class IntegrationController extends Controller
             Route::put('/integrations/jira', [self::class, 'saveJira']),
             Route::delete('/integrations/jira', [self::class, 'deleteJira']),
             Route::post('/integrations/jira/sync', [self::class, 'synchronizeJira']),
+            Route::post('/integrations/jira/profiles', [self::class, 'createJiraProfile']),
+            Route::put('/integrations/jira/profiles/{int:profile}', [self::class, 'updateJiraProfile']),
+            Route::delete('/integrations/jira/profiles/{int:profile}', [self::class, 'deleteJiraProfile']),
         ]);
     }
 
@@ -128,12 +135,12 @@ class IntegrationController extends Controller
         if (null === $token && !$this->integrations->findJira($workspace))
             return Response::json(['error' => 'A token is required'], StatusCode::UNPROCESSABLE_CONTENT);
 
-        $integration = $this->integrations->saveJira($workspace, $request->validated('site'), $request->validated('email'), $request->validated('board'), $token);
+        $integration = $this->integrations->saveJira($workspace, $request->validated('site'), $request->validated('email'), $token);
 
         return Response::json(JiraIntegrationResource::of($integration));
     }
 
-    #[Endpoint('Delete Jira integration', 'Deletes the Jira integration of the current workspace, its token and its issues. Their tasks stay, unlinked', 'deleteJiraIntegration')]
+    #[Endpoint('Delete Jira integration', 'Deletes the Jira integration of the current workspace, its token, its profiles and its issues. Their tasks stay, unlinked', 'deleteJiraIntegration')]
     #[NoContentResponse('The integration is deleted')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Jira integration')]
@@ -161,6 +168,63 @@ class IntegrationController extends Controller
         $this->jiraSync->sync($integration);
 
         return Response::json(JiraIntegrationResource::of($integration));
+    }
+
+    #[Endpoint('Create Jira profile', 'Adds a profile to the Jira integration of the current workspace : a board to follow, narrowed by an optional JQL condition. Without name, the profile shows the name of its board. Its issues are read on the next sync, without being announced', 'createJiraProfile')]
+    #[ResourceResponse(JiraProfileResource::class, responseCode: StatusCode::CREATED, description: 'The profile')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Jira integration')]
+    public function createJiraProfile(SaveJiraProfileRequest $request): Response
+    {
+        $integration = $this->integrations->findJira($this->currentWorkspaceId());
+        if (!$integration)
+            return $this->notFound();
+
+        $profile = $this->jiraProfiles->create($integration, self::textOrNull($request->validated('name')), $request->validated('board'), self::textOrNull($request->validated('jql')));
+
+        return Response::json(JiraProfileResource::of($profile), StatusCode::CREATED);
+    }
+
+    #[Endpoint('Update Jira profile', 'Changes the name, the board and the JQL condition of a Jira profile. Another board or condition is read again from a new reference : the issues no other profile shows leave without being announced', 'updateJiraProfile')]
+    #[ResourceResponse(JiraProfileResource::class, description: 'The profile')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Profile not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such profile in the current workspace')]
+    public function updateJiraProfile(SaveJiraProfileRequest $request, int $profile): Response
+    {
+        $found = $this->jiraProfiles->find($this->currentWorkspaceId(), $profile);
+        if (!$found)
+            return $this->profileNotFound();
+
+        $updated = $this->jiraProfiles->update($found, self::textOrNull($request->validated('name')), $request->validated('board'), self::textOrNull($request->validated('jql')));
+
+        return Response::json(JiraProfileResource::of($updated));
+    }
+
+    #[Endpoint('Delete Jira profile', 'Deletes a Jira profile. The issues no other profile shows leave without being announced, those linked to a task stay', 'deleteJiraProfile')]
+    #[NoContentResponse('The profile is deleted')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Profile not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such profile in the current workspace')]
+    public function deleteJiraProfile(Request $request, int $profile): Response
+    {
+        $found = $this->jiraProfiles->find($this->currentWorkspaceId(), $profile);
+        if (!$found)
+            return $this->profileNotFound();
+
+        $this->jiraProfiles->delete($found);
+
+        return Response::noContent();
+    }
+
+    private static function textOrNull(?string $text): ?string
+    {
+        $trimmed = trim((string) $text);
+
+        return '' === $trimmed ? null : $trimmed;
+    }
+
+    private function profileNotFound(): Response
+    {
+        return Response::json(['error' => 'Profile not found'], StatusCode::NOT_FOUND);
     }
 
     private function notFound(): Response

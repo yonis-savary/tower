@@ -8,7 +8,7 @@ class JiraProvider
     private const FIELDS = 'summary,status,issuetype,priority,project,sprint,assignee,subtasks';
     private const CONTENT_FIELDS = self::FIELDS.',description,assignee,reporter,labels,comment,attachment';
     private const CONTENT_COMMENTS = 20;
-    private const BOARD_JQL = 'statusCategory != Done{exclusion} ORDER BY updated DESC';
+    private const BOARD_JQL = '{filter}statusCategory != Done{exclusion} ORDER BY updated DESC';
 
     private const CATEGORIES = [
         'new' => JiraIssueData::CATEGORY_TODO,
@@ -18,7 +18,6 @@ class JiraProvider
 
     public function __construct(
         private readonly JiraClient $client,
-        private readonly int $board,
     ) {}
 
     /**
@@ -26,17 +25,18 @@ class JiraProvider
      *
      * @return list<JiraIssueData>
      */
-    public function boardIssues(array $excludedStatusIds = []): array
+    public function boardIssues(int $board, ?string $jql = null, array $excludedStatusIds = []): array
     {
-        $path = "/rest/agile/1.0/board/{$this->board}/issue";
+        $path = "/rest/agile/1.0/board/{$board}/issue";
         $issues = [];
         // Status ids come from Jira's board configuration, they are numbers : nothing else may enter the query
         $ids = array_filter($excludedStatusIds, fn (string $id) => ctype_digit($id));
         $exclusion = [] === $ids ? '' : ' AND status NOT IN ('.implode(', ', $ids).')';
-        $parameters = ['jql' => str_replace('{exclusion}', $exclusion, self::BOARD_JQL), 'fields' => self::FIELDS, 'maxResults' => self::PAGE_LENGTH, 'startAt' => 0];
+        $filter = null === $jql ? '' : "({$jql}) AND ";
+        $parameters = ['jql' => str_replace(['{filter}', '{exclusion}'], [$filter, $exclusion], self::BOARD_JQL), 'fields' => self::FIELDS, 'maxResults' => self::PAGE_LENGTH, 'startAt' => 0];
 
         while (true) {
-            $page = $this->client->read($path, $parameters) ?? throw new \RuntimeException("Jira does not know the board {$this->board}");
+            $page = $this->client->read($path, $parameters) ?? throw new \RuntimeException("Jira does not know the board {$board}");
             $values = $page['issues'] ?? [];
             array_push($issues, ...array_map(fn (array $issue) => $this->toData($issue), $values));
 
@@ -56,15 +56,22 @@ class JiraProvider
     /**
      * @return list<JiraColumn>
      */
-    public function boardColumns(): array
+    public function boardColumns(int $board): array
     {
-        $configuration = $this->client->read("/rest/agile/1.0/board/{$this->board}/configuration")
-            ?? throw new \RuntimeException("Jira does not know the board {$this->board}");
+        $configuration = $this->client->read("/rest/agile/1.0/board/{$board}/configuration")
+            ?? throw new \RuntimeException("Jira does not know the board {$board}");
 
         return array_map(fn (array $column) => new JiraColumn(
             name: (string) $column['name'],
             statusIds: array_map(fn (array $status) => (string) $status['id'], $column['statuses'] ?? []),
         ), $configuration['columnConfig']['columns'] ?? []);
+    }
+
+    public function boardName(int $board): string
+    {
+        $found = $this->client->read("/rest/agile/1.0/board/{$board}") ?? throw new \RuntimeException("Jira does not know the board {$board}");
+
+        return (string) ($found['name'] ?? '');
     }
 
     public function issue(string $key): ?JiraIssueData

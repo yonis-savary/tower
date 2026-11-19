@@ -317,7 +317,7 @@ class McpTest extends CubeTestCase
             '/rest/api/3/attachment/{id}' => fn () => Response::json(['id' => '501', 'filename' => 'mockup.png', 'mimeType' => 'image/png', 'size' => 4]),
         ]));
         $this->register();
-        $this->putJson('/api/integrations/jira', ['site' => 'https://team.atlassian.net', 'email' => 'me@example.com', 'board' => 7, 'token' => 'the-api-token'])->assertOk();
+        $this->putJson('/api/integrations/jira', ['site' => 'https://team.atlassian.net', 'email' => 'me@example.com', 'token' => 'the-api-token'])->assertOk();
         $token = $this->createToken('read')['value'];
         $this->logOut();
 

@@ -18,7 +18,6 @@ class SaveJiraRequest extends Request
                 '{key} must be the address of a Jira Cloud site, like https://my-team.atlassian.net'
             ),
             'email' => Param::email(),
-            'board' => Param::integer()->withValueCondition(fn ($board) => $board > 0, '{key} must be the id of a Jira board'),
             'token' => Param::string()->optional(),
         ];
     }
