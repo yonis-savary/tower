@@ -44,6 +44,7 @@ class WorkspaceController extends Controller
             Route::get('/current/socket', [self::class, 'socket']),
             Route::post('/', [self::class, 'create']),
             Route::put('/{int:workspace}', [self::class, 'update']),
+            Route::delete('/{int:workspace}', [self::class, 'delete']),
             Route::get('/{int:workspace}/members', [self::class, 'members']),
             Route::post('/{int:workspace}/members', [self::class, 'addMember']),
             Route::delete('/{int:workspace}/members/{int:user}', [self::class, 'removeMember']),
@@ -125,6 +126,29 @@ class WorkspaceController extends Controller
         return Response::json(WorkspaceResource::of($updated));
     }
 
+    #[Endpoint('Delete workspace', 'Deletes a workspace and everything it holds : tasks, sprints, history, integrations, webhooks, access keys, API tokens, members. Only its author can, and not their last workspace', 'deleteWorkspace')]
+    #[NoContentResponse('The workspace is deleted')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Only the author deletes a workspace'], responseCode: StatusCode::FORBIDDEN, description: 'The current user is a member but not the author')]
+    #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
+    #[RawResponse(['error' => 'Keep at least one workspace'], responseCode: StatusCode::CONFLICT, description: 'This is the last workspace the current user is a member of')]
+    public function delete(Request $request, int $workspace): Response
+    {
+        $found = $this->workspaceOfUser($workspace);
+        if (!$found)
+            return $this->workspaceNotFound();
+
+        $userId = $this->authentication->userId();
+        if ($found->author !== $userId)
+            return Response::json(['error' => 'Only the author deletes a workspace'], StatusCode::FORBIDDEN);
+        if ($this->workspaces->isLastWorkspaceOf($userId))
+            return Response::json(['error' => 'Keep at least one workspace'], StatusCode::CONFLICT);
+
+        $this->workspaces->delete($found);
+
+        return Response::noContent();
+    }
+
     #[Endpoint('List workspace members', 'The members of a workspace the current user is a member of, oldest first', 'listWorkspaceMembers')]
     #[ResourceResponse(UserResource::class, isArray: true, description: 'The members')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
@@ -158,7 +182,7 @@ class WorkspaceController extends Controller
     #[NoContentResponse('The member is removed')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist, or the current user or this user is not a member of it')]
-    #[RawResponse(['error' => 'A workspace keeps at least one member'], responseCode: StatusCode::CONFLICT, description: 'This is the last member : a workspace cannot be deleted, so it cannot be left empty')]
+    #[RawResponse(['error' => 'A workspace keeps at least one member'], responseCode: StatusCode::CONFLICT, description: 'This is the last member : a workspace is deleted, never left empty')]
     public function removeMember(Request $request, int $workspace, int $user): Response
     {
         $found = $this->workspaceOfUser($workspace);

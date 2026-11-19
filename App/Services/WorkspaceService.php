@@ -2,15 +2,30 @@
 
 namespace App\Services;
 
+use App\Integrations\IntegrationService;
+use App\Models\AccessKey;
+use App\Models\ApiToken;
+use App\Models\ConfigDownload;
+use App\Models\EventDelivery;
+use App\Models\History;
+use App\Models\Integration;
 use App\Models\NotificationRule;
 use App\Models\PushSubscription;
+use App\Models\QuickAction;
+use App\Models\ScheduledEvent;
+use App\Models\Sprint;
+use App\Models\SprintLink;
+use App\Models\Task;
 use App\Models\User;
+use App\Models\Webhook;
+use App\Models\WebhookCall;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use App\Session\SelectedWorkspace;
 use Cube\Data\Bunch;
 use Cube\Data\Database\Database;
 use Cube\Data\Database\Query;
+use Cube\Data\Models\Model;
 
 class WorkspaceService
 {
@@ -23,6 +38,7 @@ class WorkspaceService
 
     public function __construct(
         protected Database $database,
+        protected IntegrationService $integrations,
     ) {}
 
     /**
@@ -105,7 +121,7 @@ class WorkspaceService
     }
 
     /**
-     * @return bool false when the user is its last member : a workspace cannot be left empty, as it cannot be deleted
+     * @return bool false when the user is its last member : a workspace is deleted, never left empty
      */
     public function removeMember(Workspace $workspace, int $userId): bool
     {
@@ -118,6 +134,50 @@ class WorkspaceService
         PushSubscription::deleteWhere(['workspace' => $workspace->id, 'user' => $userId]);
 
         return true;
+    }
+
+    public function isLastWorkspaceOf(int $userId): bool
+    {
+        return $this->memberships($userId)->count() <= 1;
+    }
+
+    /**
+     * Opens its own transaction : Cube cannot nest them, never call it inside one.
+     */
+    public function delete(Workspace $workspace): void
+    {
+        $id = $workspace->id;
+        $failure = $this->database->transaction(function () use ($id) {
+            // No foreign key cascades : children go before the rows they reference
+            EventDelivery::delete()->whereIn('history', $this->idsOf(History::class, $id))->fetch();
+            History::delete()->where('workspace', $id)->fetch();
+            SprintLink::delete()->whereIn('sprint', $this->idsOf(Sprint::class, $id))->fetch();
+            Task::delete()->where('workspace', $id)->fetch();
+            Sprint::delete()->where('workspace', $id)->fetch();
+            foreach (Integration::select()->where('workspace', $id)->fetch() as $integration)
+                $this->integrations->delete($integration);
+            WebhookCall::delete()->whereIn('webhook', $this->idsOf(Webhook::class, $id))->fetch();
+            Webhook::delete()->where('workspace', $id)->fetch();
+            ConfigDownload::delete()->whereIn('access_key', $this->idsOf(AccessKey::class, $id))->fetch();
+
+            foreach ([AccessKey::class, ApiToken::class, QuickAction::class, ScheduledEvent::class, NotificationRule::class, PushSubscription::class, WorkspaceMember::class] as $model)
+                $model::delete()->where('workspace', $id)->fetch();
+
+            Workspace::delete()->where('id', $id)->fetch();
+        });
+
+        if ($failure)
+            throw $failure;
+    }
+
+    /**
+     * @param class-string<Model> $model
+     */
+    private function idsOf(string $model, int $workspace): Query
+    {
+        $table = $model::table();
+
+        return Query::select($table)->selectField('id', $table)->where('workspace', $workspace, table: $table);
     }
 
     /**

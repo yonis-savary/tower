@@ -8080,6 +8080,9 @@
                                             },
                                             "mcp_access": {
                                                 "type": "string"
+                                            },
+                                            "author": {
+                                                "type": "integer"
                                             }
                                         },
                                         "required": [
@@ -8087,7 +8090,8 @@
                                             "name",
                                             "accent_color",
                                             "sections",
-                                            "mcp_access"
+                                            "mcp_access",
+                                            "author"
                                         ]
                                     }
                                 },
@@ -8099,7 +8103,8 @@
                                         "sections": [
                                             "webhooks"
                                         ],
-                                        "mcp_access": "cupiditate dolores ab"
+                                        "mcp_access": "cupiditate dolores ab",
+                                        "author": 97
                                     }
                                 ]
                             }
@@ -8182,6 +8187,9 @@
                                         },
                                         "mcp_access": {
                                             "type": "string"
+                                        },
+                                        "author": {
+                                            "type": "integer"
                                         }
                                     },
                                     "required": [
@@ -8189,7 +8197,8 @@
                                         "name",
                                         "accent_color",
                                         "sections",
-                                        "mcp_access"
+                                        "mcp_access",
+                                        "author"
                                     ]
                                 },
                                 "example": {
@@ -8199,7 +8208,8 @@
                                     "sections": [
                                         "webhooks"
                                     ],
-                                    "mcp_access": "cupiditate dolores ab"
+                                    "mcp_access": "cupiditate dolores ab",
+                                    "author": 97
                                 }
                             }
                         }
@@ -8255,6 +8265,9 @@
                                         },
                                         "mcp_access": {
                                             "type": "string"
+                                        },
+                                        "author": {
+                                            "type": "integer"
                                         }
                                     },
                                     "required": [
@@ -8262,7 +8275,8 @@
                                         "name",
                                         "accent_color",
                                         "sections",
-                                        "mcp_access"
+                                        "mcp_access",
+                                        "author"
                                     ]
                                 },
                                 "example": {
@@ -8272,7 +8286,8 @@
                                     "sections": [
                                         "webhooks"
                                     ],
-                                    "mcp_access": "cupiditate dolores ab"
+                                    "mcp_access": "cupiditate dolores ab",
+                                    "author": 97
                                 }
                             }
                         }
@@ -8369,6 +8384,9 @@
                                         },
                                         "mcp_access": {
                                             "type": "string"
+                                        },
+                                        "author": {
+                                            "type": "integer"
                                         }
                                     },
                                     "required": [
@@ -8376,7 +8394,8 @@
                                         "name",
                                         "accent_color",
                                         "sections",
-                                        "mcp_access"
+                                        "mcp_access",
+                                        "author"
                                     ]
                                 },
                                 "example": {
@@ -8386,7 +8405,8 @@
                                     "sections": [
                                         "webhooks"
                                     ],
-                                    "mcp_access": "cupiditate dolores ab"
+                                    "mcp_access": "cupiditate dolores ab",
+                                    "author": 97
                                 }
                             }
                         }
@@ -8578,6 +8598,9 @@
                                         },
                                         "mcp_access": {
                                             "type": "string"
+                                        },
+                                        "author": {
+                                            "type": "integer"
                                         }
                                     },
                                     "required": [
@@ -8585,7 +8608,8 @@
                                         "name",
                                         "accent_color",
                                         "sections",
-                                        "mcp_access"
+                                        "mcp_access",
+                                        "author"
                                     ]
                                 },
                                 "example": {
@@ -8595,7 +8619,8 @@
                                     "sections": [
                                         "webhooks"
                                     ],
-                                    "mcp_access": "cupiditate dolores ab"
+                                    "mcp_access": "cupiditate dolores ab",
+                                    "author": 97
                                 }
                             }
                         }
@@ -8629,6 +8654,86 @@
                                 }
                             }
                         }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete workspace",
+                "description": "Deletes a workspace and everything it holds : tasks, sprints, history, integrations, webhooks, access keys, API tokens, members. Only its author can, and not their last workspace",
+                "operationId": "deleteWorkspace",
+                "parameters": [
+                    {
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The current user is a member but not the author",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The workspace does not exist or the user is not a member of it",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "This is the last workspace the current user is a member of",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The workspace is deleted"
                     }
                 }
             }
@@ -8875,7 +8980,7 @@
                         }
                     },
                     "409": {
-                        "description": "This is the last member : a workspace cannot be deleted, so it cannot be left empty",
+                        "description": "This is the last member : a workspace is deleted, never left empty",
                         "content": {
                             "application\/json": {
                                 "schema": {

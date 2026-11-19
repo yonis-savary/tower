@@ -17,6 +17,7 @@ import Tag from 'primevue/tag'
 import {
   addWorkspaceMember,
   createWorkspace,
+  deleteWorkspace,
   listWorkspaceMembers,
   removeWorkspaceMember,
   updateWorkspace,
@@ -32,7 +33,7 @@ const auth = useAuthStore()
 const store = useWorkspaceStore()
 
 const selectedId = ref<number | null>(null)
-const tab = ref<'general' | 'features' | 'members'>('general')
+const tab = ref<'general' | 'features' | 'members' | 'deletion'>('general')
 const members = ref<ListWorkspaceMembersResponse>([])
 const name = ref('')
 const color = ref<string | null>(null)
@@ -40,10 +41,14 @@ const sections = ref<WorkspaceSection[]>([])
 const mcpAccess = ref<McpAccess>('read')
 const newWorkspace = ref('')
 const newMember = ref('')
+const deletionName = ref('')
 const busy = ref(false)
 const error = ref<string | null>(null)
 
 const selected = computed(() => store.workspaces?.find(({ id }) => id === selectedId.value) ?? null)
+const isAuthor = computed(() => selected.value?.author === auth.user?.id)
+const isLastWorkspace = computed(() => (store.workspaces?.length ?? 0) <= 1)
+const deletionConfirmed = computed(() => deletionName.value === selected.value?.name)
 const generalUnchanged = computed(() => name.value.trim() === selected.value?.name && color.value === selected.value?.accent_color)
 const featuresUnchanged = computed(
   () =>
@@ -72,6 +77,8 @@ watch(selected, async (workspace) => {
   sections.value = [...((workspace?.sections ?? []) as WorkspaceSection[])]
   mcpAccess.value = (workspace?.mcp_access ?? 'read') as McpAccess
   newMember.value = ''
+  deletionName.value = ''
+  if (tab.value === 'deletion' && !isAuthor.value) tab.value = 'general'
   members.value = []
   if (!workspace) return
 
@@ -119,6 +126,21 @@ function save(bodyOf: (workspace: NonNullable<typeof selected.value>) => { name:
     await Promise.all([store.loadWorkspaces(), store.loadCurrent()])
     return true
   }, t('workspaces.saveError'))
+}
+
+function removeWorkspace() {
+  const workspace = selected.value
+  if (!workspace || !deletionConfirmed.value) return
+
+  return run(async () => {
+    const { response } = await deleteWorkspace({ path: { workspace: workspace.id } })
+    if (!response?.ok) return false
+
+    // The server falls back on another workspace when the current one is deleted
+    await Promise.all([store.loadWorkspaces(), store.loadCurrent()])
+    selectedId.value = store.current?.id ?? null
+    return true
+  }, t('workspaces.deleteError'))
 }
 
 function addMember() {
@@ -186,6 +208,7 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
             <Tab value="general">{{ t('workspaces.tabs.general') }}</Tab>
             <Tab value="features">{{ t('workspaces.tabs.features') }}</Tab>
             <Tab value="members">{{ t('workspaces.tabs.members') }}</Tab>
+            <Tab v-if="isAuthor" value="deletion">{{ t('workspaces.tabs.deletion') }}</Tab>
           </TabList>
           <TabPanels>
             <TabPanel value="general" class="tab-panel">
@@ -271,6 +294,20 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
                 </ul>
                 <small class="hint">{{ t('workspaces.membersHint') }}</small>
               </div>
+            </TabPanel>
+
+            <TabPanel v-if="isAuthor" value="deletion" class="tab-panel">
+              <form class="field" @submit.prevent="removeWorkspace">
+                <small class="hint">{{ t('workspaces.deleteHint') }}</small>
+                <Message v-if="isLastWorkspace" severity="secondary" size="small" :closable="false">{{ t('workspaces.deleteLast') }}</Message>
+                <template v-else>
+                  <label for="workspace-deletion">{{ t('workspaces.deleteConfirmLabel', { name: selected.name }) }}</label>
+                  <div class="inline-form">
+                    <InputText id="workspace-deletion" v-model="deletionName" autocomplete="off" fluid />
+                    <Button type="submit" :label="t('workspaces.delete')" icon="pi pi-trash" severity="danger" :disabled="!deletionConfirmed" :loading="busy" />
+                  </div>
+                </template>
+              </form>
             </TabPanel>
           </TabPanels>
         </Tabs>

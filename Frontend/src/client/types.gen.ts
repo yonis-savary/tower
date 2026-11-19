@@ -3531,6 +3531,7 @@ export type ListWorkspacesResponses = {
         accent_color: string | null;
         sections: Array<string>;
         mcp_access: string;
+        author: number;
     }>;
 };
 
@@ -3570,6 +3571,7 @@ export type CreateWorkspaceResponses = {
         accent_color: string | null;
         sections: Array<string>;
         mcp_access: string;
+        author: number;
     };
 };
 
@@ -3609,6 +3611,7 @@ export type GetCurrentWorkspaceResponses = {
         accent_color: string | null;
         sections: Array<string>;
         mcp_access: string;
+        author: number;
     };
 };
 
@@ -3654,6 +3657,7 @@ export type SelectWorkspaceResponses = {
         accent_color: string | null;
         sections: Array<string>;
         mcp_access: string;
+        author: number;
     };
 };
 
@@ -3693,6 +3697,53 @@ export type GetWorkspaceSocketResponses = {
 };
 
 export type GetWorkspaceSocketResponse = GetWorkspaceSocketResponses[keyof GetWorkspaceSocketResponses];
+
+export type DeleteWorkspaceData = {
+    body?: never;
+    path: {
+        workspace: number;
+    };
+    query?: never;
+    url: '/api/workspaces/{workspace}';
+};
+
+export type DeleteWorkspaceErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current user is a member but not the author
+     */
+    403: {
+        error?: string;
+    };
+    /**
+     * The workspace does not exist or the user is not a member of it
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * This is the last workspace the current user is a member of
+     */
+    409: {
+        error?: string;
+    };
+};
+
+export type DeleteWorkspaceError = DeleteWorkspaceErrors[keyof DeleteWorkspaceErrors];
+
+export type DeleteWorkspaceResponses = {
+    /**
+     * The workspace is deleted
+     */
+    204: void;
+};
+
+export type DeleteWorkspaceResponse = DeleteWorkspaceResponses[keyof DeleteWorkspaceResponses];
 
 export type UpdateWorkspaceData = {
     body: {
@@ -3739,6 +3790,7 @@ export type UpdateWorkspaceResponses = {
         accent_color: string | null;
         sections: Array<string>;
         mcp_access: string;
+        author: number;
     };
 };
 
@@ -3852,7 +3904,7 @@ export type RemoveWorkspaceMemberErrors = {
         error?: string;
     };
     /**
-     * This is the last member : a workspace cannot be deleted, so it cannot be left empty
+     * This is the last member : a workspace is deleted, never left empty
      */
     409: {
         error?: string;

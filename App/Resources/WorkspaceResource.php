@@ -30,6 +30,7 @@ class WorkspaceResource extends ModelResource
             'accent_color' => $model->accent_color,
             'sections' => WorkspaceService::sectionsOf($model),
             'mcp_access' => $model->mcp_access,
+            'author' => $model->author,
         ];
     }
 }

@@ -71,7 +71,8 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
 - Les appareils sont volatils : Tower ne tient pas de registre d'appareils. Un appareil
   n'existe pour Tower qu'à travers ses connexions (voir § Connexions).
 - Un workspace peut avoir plusieurs membres, et un utilisateur peut être membre de plusieurs
-  workspaces. Tous les membres ont les mêmes droits sur le workspace ; il n'y a pas de rôles.
+  workspaces. Tous les membres ont les mêmes droits sur le workspace, sauf sa suppression, réservée à
+  son auteur (`workspace.author`) ; il n'y a pas de rôles.
 - Un workspace choisit ses **sections** parmi `tasks`, `jira`, `merge_requests`, `events`, `automation`
   et `webhooks` (toutes pour un workspace jamais configuré). Une section décochée est seulement
   masquée : elle quitte la navbar et les Paramètres, et son adresse renvoie à l'accueil, mais ses données, ses
@@ -84,9 +85,12 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
 - Tout membre peut renommer le workspace, changer sa couleur, en ajouter un autre par l'e-mail de son compte Tower
   (un compte existant et actif : il n'y a pas d'invitation), retirer un membre ou le quitter.
   Un workspace créé depuis le front n'a que son créateur pour membre et n'est pas sélectionné.
-- Un workspace garde toujours au moins un membre : le dernier ne peut pas être retiré, puisqu'un
-  workspace ne se supprime pas. Quitter le workspace courant fait retomber sur un autre.
-- Un workspace ne peut pas être supprimé.
+- Un workspace garde toujours au moins un membre : le dernier ne peut pas être retiré, le
+  workspace se supprime plutôt. Quitter le workspace courant fait retomber sur un autre.
+- Seul l'auteur supprime un workspace, après en avoir retapé le nom, et jamais le dernier dont il
+  est membre. Tout ce que le workspace contient part avec lui, pour tous ses membres : tâches,
+  sprints, historique, intégrations, webhooks, clés d'accès, tokens API, règles et abonnements push.
+  Ceux qui l'avaient sélectionné retombent sur un autre. Aucun outil MCP ne l'expose.
 
 ### Tâches et sprints
 
