@@ -6,7 +6,6 @@ import Badge from 'primevue/badge'
 import Button from 'primevue/button'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
-import DevicesDialog from './DevicesDialog.vue'
 import AppIcon, { PLUG_ICON, PULL_REQUEST_ICON } from './AppIcon.vue'
 import TowerLogo from './TowerLogo.vue'
 import WorkspacesDialog from './WorkspacesDialog.vue'
@@ -82,7 +81,6 @@ const secondaryItems = computed<NavItem[]>(() => [
   { label: t('nav.settings'), icon: 'pi pi-cog', to: { name: 'settings' } },
 ])
 
-const devicesDialogVisible = ref(false)
 const workspacesDialogVisible = ref(false)
 const socketIndicator = computed(
   () =>
@@ -123,12 +121,10 @@ async function logOut() {
     <Menu ref="workspaceMenu" :model="workspaceMenuItems" popup @show="workspace.loadWorkspaces" />
     <WorkspacesDialog v-model:visible="workspacesDialogVisible" />
 
-    <button
-      type="button"
+    <RouterLink
+      :to="{ name: 'devices' }"
       class="navbar-item navbar-devices"
-      aria-haspopup="dialog"
       :title="`${t('nav.devices')} · ${socketIndicator.label}`"
-      @click="devicesDialogVisible = true"
     >
       <i class="pi pi-desktop" aria-hidden="true" />
       <span class="navbar-text">{{ t('nav.devices') }}</span>
@@ -141,8 +137,7 @@ async function logOut() {
         />
         <Badge :value="deviceSocket.activeDevices" severity="secondary" size="small" />
       </span>
-    </button>
-    <DevicesDialog v-model:visible="devicesDialogVisible" />
+    </RouterLink>
 
     <ul class="navbar-list">
       <li v-for="item in mainItems" :key="item.label">
@@ -248,7 +243,8 @@ async function logOut() {
   color: light-dark(var(--p-blue-700), var(--p-blue-200));
 }
 
-.navbar-devices:hover {
+.navbar-devices:hover,
+.navbar-devices.router-link-active {
   background: light-dark(var(--p-blue-100), color-mix(in srgb, var(--p-blue-500) 24%, transparent));
 }
 

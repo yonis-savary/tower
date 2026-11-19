@@ -93,7 +93,7 @@ machinectl shell me@
 
   <h3>1. Copy the files</h3>
   <p>
-    Downloading the connector needs you to be logged in to Tower: download it from your computer (Devices dialog,
+    Downloading the connector needs you to be logged in to Tower: download it from your computer (Devices page,
     <em>Connect a device</em> tab), create a configuration for this server, then copy both files. The configuration holds
     the secret: it must be readable by you only.
   </p>

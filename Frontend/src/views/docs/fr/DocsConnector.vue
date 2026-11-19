@@ -66,14 +66,14 @@ const chained = `
       Un appareil hors ligne au moment d'un événement ne le reçoit jamais : rien n'est mis en attente côté Tower.
     </li>
     <li>
-      Si Tower le refuse (configuration révoquée) ou le déconnecte depuis la modale Appareils, il s'arrête avec le code 1
+      Si Tower le refuse (configuration révoquée) ou le déconnecte depuis la page Appareils, il s'arrête avec le code 1
       au lieu de réessayer.
     </li>
   </ul>
 
   <h3>Le lancer</h3>
   <p>
-    La modale <strong>Appareils</strong>, onglet <em>Connecter un appareil</em>, crée une <strong>configuration</strong>. Elle
+    La page <strong>Appareils</strong>, onglet <em>Connecter un appareil</em>, crée une <strong>configuration</strong>. Elle
     se télécharge de deux façons : un fichier <code>config.json</code> à passer au connecteur, ou un
     <strong>client préconfiguré</strong> qui l'embarque et se lance sans argument. Pour l'installer depuis le terminal de
     l'appareil, <em>Télécharger depuis un terminal</em> donne une commande <code>curl</code> : le lien ne sert qu'une fois et
@@ -103,7 +103,7 @@ const chained = `
   <h3>Choisir les événements reçus</h3>
   <p>
     Une configuration n'envoie à ses appareils que les événements qu'elle <strong>écoute</strong> : 20 motifs au plus, réglés
-    dans la modale Appareils, <code>*</code> à la création. <code>*</code> correspond à n'importe quelle suite de caractères,
+    dans la page Appareils, <code>*</code> à la création. <code>*</code> correspond à n'importe quelle suite de caractères,
     points compris : <code>task.*</code>, <code>pr.pipeline.*</code>, <code>jira.issue.status_changed</code>. Une liste vide
     ne reçoit rien. Ce filtre s'applique côté Tower : un événement non écouté n'apparaît même pas dans la console du
     connecteur.

@@ -5,14 +5,15 @@ import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
-import { createAccessKey, type CreateAccessKeyResponse } from '../client'
+import { createAccessKey, type CreateAccessKeyResponse, type ListAccessKeysResponse } from '../client'
 import ConfigDownloads from './ConfigDownloads.vue'
 import EventTypeInput from './EventTypeInput.vue'
 import HandlerRulesEditor from './HandlerRulesEditor.vue'
 import { useWorkspaceStore } from '../stores/workspace'
-import { emptyRule, fromForm, scrollToFirstError, validate, type RuleForm } from '../utils/handlerRules'
+import { emptyRule, fromForm, scrollToFirstError, toForm, validate, type HandlerRule, type RuleForm } from '../utils/handlerRules'
 
 const visible = defineModel<boolean>('visible', { required: true })
+const props = defineProps<{ source?: ListAccessKeysResponse[number] | null }>()
 const emit = defineEmits<{ created: [] }>()
 
 const { t } = useI18n()
@@ -35,12 +36,14 @@ function parseListen(value: string): string[] {
   return value.split(/[\s,]+/).filter(Boolean)
 }
 
+// A duplicate starts from the listened events and the handlers of its source, with a secret of its own
 watch(visible, () => {
+  const source = props.source ?? null
   error.value = null
-  name.value = ''
-  listen.value = '*'
-  withHandlers.value = false
-  rules.value = []
+  name.value = source ? t('download.copyName', { name: source.name }).slice(0, 100) : ''
+  listen.value = source ? ((source.listen ?? []) as string[]).join(', ') : '*'
+  rules.value = source ? toForm((source.handlers ?? []) as HandlerRule[]) : []
+  withHandlers.value = rules.value.length > 0
   submitted.value = false
   created.value = null
 })
@@ -81,7 +84,7 @@ async function create() {
     modal
     :closable="created === null"
     :close-on-escape="created === null"
-    :header="created ? t('download.createdTitle') : t('download.createTab')"
+    :header="created ? t('download.createdTitle') : source ? t('download.duplicateTitle', { name: source.name }) : t('download.createTab')"
     :style="{ width: withHandlers && !created ? '52rem' : '38rem', maxWidth: 'calc(100vw - 2rem)' }"
   >
     <ConfigDownloads v-if="created" :created="created" />

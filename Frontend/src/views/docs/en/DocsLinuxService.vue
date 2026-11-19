@@ -50,7 +50,7 @@ const restart = 'systemctl --user start tower-connector'
   <ul>
     <li>
       The connector already reconnects on its own when the network or Tower goes down. It only stops by itself when you
-      disconnect it from the Devices dialog, or when Tower refuses its configuration (revoked, for instance): it then exits
+      disconnect it from the Devices page, or when Tower refuses its configuration (revoked, for instance): it then exits
       with code <code>1</code>, and the service leaves it stopped. Otherwise, the <em>Disconnect</em> button would be useless.
     </li>
     <li>

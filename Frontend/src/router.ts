@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from './components/AppLayout.vue'
 import AutomationView from './views/AutomationView.vue'
 import { useAuthStore } from './stores/auth'
+import DevicesView from './views/DevicesView.vue'
 import DocsView from './views/DocsView.vue'
 import EventsView from './views/EventsView.vue'
 import HistoryView from './views/HistoryView.vue'
@@ -26,6 +27,8 @@ const router = createRouter({
         { path: 'events', name: 'events', component: EventsView, meta: { title: 'nav.events', section: 'events' } },
         { path: 'automation', name: 'automation', component: AutomationView, meta: { title: 'nav.automation', section: 'automation' } },
         { path: 'webhooks', name: 'webhooks', component: WebhooksView, meta: { title: 'nav.webhooks', section: 'webhooks' } },
+        // Not /devices : that path is the websocket of the connectors, often behind the same domain
+        { path: 'connected-devices', name: 'devices', component: DevicesView, meta: { title: 'nav.devices' } },
         { path: 'history', name: 'history', component: HistoryView, meta: { title: 'nav.history' } },
         { path: 'jira', name: 'jira', component: JiraView, meta: { title: 'nav.jira', section: 'jira' } },
         { path: 'merge-requests', name: 'merge-requests', component: MergeRequestsView, meta: { title: 'nav.mergeRequests', section: 'merge_requests' } },

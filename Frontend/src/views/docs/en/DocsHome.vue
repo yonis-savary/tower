@@ -21,7 +21,7 @@ defineEmits<{ open: [page: DocPage] }>()
 
   <h3>Getting started</h3>
   <ol>
-    <li>Open the <strong>Devices</strong> dialog, <em>Connect a device</em> tab.</li>
+    <li>Open the <strong>Devices</strong> page, <em>Connect a device</em> tab.</li>
     <li>Download the connector, and the basic handler if you want Claude discussions.</li>
     <li>Create a configuration: it gives the file that identifies the device to Tower.</li>
     <li>Run the connector with this file, by hand or <a href="#" @click.prevent="$emit('open', 'linux-service')">as a service</a>.</li>

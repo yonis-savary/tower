@@ -93,7 +93,7 @@ machinectl shell moi@
 
   <h3>1. Copier les fichiers</h3>
   <p>
-    Le téléchargement du connecteur demande d'être connecté à Tower : télécharge-le depuis ton poste (modale Appareils,
+    Le téléchargement du connecteur demande d'être connecté à Tower : télécharge-le depuis ton poste (page Appareils,
     onglet <em>Connecter un appareil</em>), crée une configuration pour ce serveur, puis copie les deux fichiers. La
     configuration contient le secret : elle ne doit être lisible que par toi.
   </p>

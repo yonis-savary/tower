@@ -64,14 +64,14 @@ const chained = `
     </li>
     <li>A device offline when an event happens never receives it: Tower keeps nothing waiting.</li>
     <li>
-      When Tower refuses it (revoked configuration) or disconnects it from the Devices dialog, it stops with exit code 1
+      When Tower refuses it (revoked configuration) or disconnects it from the Devices page, it stops with exit code 1
       instead of retrying.
     </li>
   </ul>
 
   <h3>Running it</h3>
   <p>
-    The <strong>Devices</strong> dialog, <em>Connect a device</em> tab, creates a <strong>configuration</strong>. It downloads
+    The <strong>Devices</strong> page, <em>Connect a device</em> tab, creates a <strong>configuration</strong>. It downloads
     two ways: a <code>config.json</code> file to give the connector, or a <strong>preconfigured client</strong> embedding it,
     which runs without any argument. To install it from the device's terminal, <em>Download from a terminal</em> gives a
     <code>curl</code> command: the link works once and expires after 15 minutes.
@@ -208,7 +208,7 @@ const chained = `
     </li>
     <li>
       An unknown key in the object (<code>reponse</code> for instance) makes the file invalid: the previous version is kept
-      and the connector says so. It needs an up-to-date connector, downloaded again from the Devices dialog.
+      and the connector says so. It needs an up-to-date connector, downloaded again from the Devices page.
     </li>
     <li>
       The server administrator can turn chaining off in <code>cube.php</code>:

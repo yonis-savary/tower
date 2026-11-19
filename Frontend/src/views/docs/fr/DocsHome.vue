@@ -21,7 +21,7 @@ defineEmits<{ open: [page: DocPage] }>()
 
   <h3>Pour commencer</h3>
   <ol>
-    <li>Ouvre la modale <strong>Appareils</strong>, onglet <em>Connecter un appareil</em>.</li>
+    <li>Ouvre la page <strong>Appareils</strong>, onglet <em>Connecter un appareil</em>.</li>
     <li>Télécharge le connecteur, et le handler de base si tu veux les discussions Claude.</li>
     <li>Crée une configuration : elle donne le fichier qui identifie l'appareil auprès de Tower.</li>
     <li>Lance le connecteur avec ce fichier, à la main ou <a href="#" @click.prevent="$emit('open', 'linux-service')">en service</a>.</li>

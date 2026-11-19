@@ -201,11 +201,17 @@ statut et sa propre réponse : un événement en a autant que d'appareils contac
 
 ### Configurations
 
-Une configuration est créée dans le front (modale des appareils, onglet « Connecter un
+Une configuration est créée dans le front (page des appareils, onglet « Connecter un
 appareil »). Elle donne un `client_id`
 (`twr_…`) et un secret de 256 bits, affiché une seule fois ; Tower n'en garde que le SHA-256.
 Elle peut servir sur plusieurs appareils et se révoque depuis le front : les appareils qui
 l'utilisent sont déconnectés.
+
+Une configuration se **duplique** depuis le front : la modale de création s'ouvre avec ses
+abonnements et ses règles de handler, sous le nom « <nom> (copie) », modifiable. La copie est
+une nouvelle configuration, avec son propre `client_id` et son propre secret : chaque appareil
+se révoque, change de secret ou de handlers sans couper l'autre. Rien n'est ajouté côté API,
+la création accepte déjà `listen` et `handlers`.
 
 Chaque configuration porte ses **abonnements** (`listen`) : une liste de motifs, réglée dans
 le front, à la création ou ensuite. `*` par défaut, liste vide pour ne rien recevoir.
@@ -384,7 +390,7 @@ connecteur. Le périmètre détaillé est dans `ROADMAP/notification.md`.
 
 ### Déconnexion forcée
 
-Depuis la modale Appareils, un utilisateur peut déconnecter un appareil. Tower lui envoie un
+Depuis la page Appareils, un utilisateur peut déconnecter un appareil. Tower lui envoie un
 message `disconnect` : le connecteur s'arrête et **ne tente pas de se reconnecter**. Il faut le
 relancer sur l'appareil. Contrairement à la révocation, la configuration reste valide.
 
@@ -473,7 +479,7 @@ La connexion est supposée instable (veille, changement de réseau, redémarrage
 Le connecteur est livré en un seul fichier zipapp (`tower-connector.pyz`, module `zipapp` de
 la stdlib) qui embarque ses dépendances, et se lance avec `python3 tower-connector.pyz`, sans
 pip ni venv. Ça évite la PEP 668 (`externally-managed-environment`) sur les distributions
-récentes. Il est construit dans l'image Docker et se télécharge depuis la modale des appareils.
+récentes. Il est construit dans l'image Docker et se télécharge depuis la page des appareils.
 
 Contrainte : seules des dépendances en Python pur peuvent être embarquées, une extension
 compilée ne serait pas portable d'une architecture à l'autre. `websockets` est en Python pur.
@@ -570,7 +576,7 @@ la sortie n'est pas un terminal ou que `NO_COLOR` est défini.
 ### Handler de base
 
 Tower fournit un handler prêt à l'emploi, `tower-handler.pyz` (source dans `Handler/src`),
-construit dans l'image et téléchargeable depuis la modale des appareils. Il n'utilise que la
+construit dans l'image et téléchargeable depuis la page des appareils. Il n'utilise que la
 bibliothèque standard et se branche comme n'importe quel handler :
 
 ```sh
@@ -896,7 +902,8 @@ des sprints actifs, tickets non terminés de l'utilisateur, merge requests ouver
 Toujours présent dans la navbar. Il affiche l'état de la connexion temps réel du navigateur
 et le nombre d'appareils connectés au workspace, mis à jour en direct.
 
-Un clic ouvre la **modale des appareils**, à deux onglets. *Appareils connectés* : pour chaque
+Un clic ouvre la **page des appareils** (`/connected-devices` : `/devices` est le chemin WebSocket des
+connecteurs, souvent derrière le même domaine), à deux onglets, l'onglet choisi dans l'adresse (`?tab=`). *Appareils connectés* : pour chaque
 appareil, une icône de son type, son nom de machine, sa configuration, son système, l'heure de
 connexion et un bouton **Déconnecter**. *Connecter un appareil* : voir ci-dessous.
 
@@ -952,7 +959,7 @@ Les signaux du workspace portent ce qu'il faut pour cela : `history.created` (`h
 
 ### Connecter un appareil
 
-Second onglet de la modale des appareils :
+Second onglet de la page des appareils :
 
 - trois boutons :
   - **Télécharger le connecteur** : `tower-connector.pyz`, à lancer avec un fichier de

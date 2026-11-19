@@ -32,6 +32,7 @@ const editedListen = ref('')
 const savingListen = ref(false)
 const downloading = ref<'connector' | 'handler' | null>(null)
 const createVisible = ref(false)
+const duplicated = ref<AccessKey | null>(null)
 const handlerVisible = ref(false)
 const error = ref<string | null>(null)
 // The key whose handler rules are edited
@@ -108,6 +109,11 @@ function handlersLabel(key: AccessKey): string {
   return count ? t('handlers.count', { count }, count) : t('handlers.none')
 }
 
+function openCreate(source: AccessKey | null) {
+  duplicated.value = source
+  createVisible.value = true
+}
+
 function editHandlers(key: AccessKey) {
   handlersKey.value = key
   handlersVisible.value = true
@@ -149,7 +155,7 @@ async function revoke(id: number, keyName: string) {
   <div class="connect-actions">
     <Button :label="t('nav.downloadClient')" icon="pi pi-download" severity="secondary" outlined :loading="downloading === 'connector'" @click="downloadClient" />
     <Button :label="t('nav.downloadHandler')" icon="pi pi-comments" severity="secondary" outlined :loading="downloading === 'handler'" @click="downloadBasicHandler" />
-    <Button :label="t('download.createTab')" icon="pi pi-plus" @click="createVisible = true" />
+    <Button :label="t('download.createTab')" icon="pi pi-plus" @click="openCreate(null)" />
   </div>
 
   <h3 class="configs-title">{{ t('download.manageTab') }}</h3>
@@ -178,6 +184,7 @@ async function revoke(id: number, keyName: string) {
         </small>
       </div>
       <div class="key-actions">
+        <Button :label="t('download.duplicate')" icon="pi pi-copy" severity="secondary" text size="small" @click="openCreate(key)" />
         <Button :label="t('handlers.rotate')" icon="pi pi-refresh" severity="secondary" text size="small" :loading="rotating === key.id" @click="rotate(key)" />
         <Button :label="t('download.revokeButton')" icon="pi pi-ban" severity="danger" text size="small" @click="revoke(key.id!, key.name!)" />
       </div>
@@ -185,7 +192,7 @@ async function revoke(id: number, keyName: string) {
   </ul>
   <EmptyState v-else icon="pi pi-key" :title="t('download.emptyTitle')" :hint="t('download.emptyHint')" compact />
 
-  <ConfigCreateDialog v-model:visible="createVisible" @created="loadKeys" />
+  <ConfigCreateDialog v-model:visible="createVisible" :source="duplicated" @created="loadKeys" />
   <HandlerDialog v-model:visible="handlerVisible" />
   <HandlersDialog v-model:visible="handlersVisible" :access-key="handlersKey" @saved="onRotated" />
   <ConfigSecretDialog v-model="rotated" />

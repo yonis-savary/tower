@@ -52,7 +52,7 @@ const restart = 'systemctl --user start tower-connector'
   <ul>
     <li>
       Le connecteur se reconnecte déjà tout seul quand le réseau ou Tower tombe. Il ne s'arrête de lui-même que si tu le
-      déconnectes depuis la modale Appareils, ou si Tower refuse sa configuration (révoquée par exemple) : il sort alors avec
+      déconnectes depuis la page Appareils, ou si Tower refuse sa configuration (révoquée par exemple) : il sort alors avec
       le code <code>1</code>, et le service le laisse arrêté. Sinon, le bouton <em>Déconnecter</em> ne servirait à rien.
     </li>
     <li>

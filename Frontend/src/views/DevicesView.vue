@@ -1,32 +1,36 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import Button from 'primevue/button'
-import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
 import Tab from 'primevue/tab'
 import TabList from 'primevue/tablist'
 import TabPanel from 'primevue/tabpanel'
 import TabPanels from 'primevue/tabpanels'
 import Tabs from 'primevue/tabs'
-import ConnectDevicePanel from './ConnectDevicePanel.vue'
-import EmptyState from './EmptyState.vue'
+import ConnectDevicePanel from '../components/ConnectDevicePanel.vue'
+import EmptyState from '../components/EmptyState.vue'
 import { disconnectDevice } from '../client'
 import { useDeviceSocketStore, type ConnectedDevice } from '../stores/deviceSocket'
 
-const visible = defineModel<boolean>('visible', { required: true })
+type DevicesTab = 'connected' | 'connect'
+
+const TABS: DevicesTab[] = ['connected', 'connect']
 
 const { t, d } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const deviceSocket = useDeviceSocketStore()
 const error = ref<string | null>(null)
-const tab = ref('connected')
+
+// In the address, so that a tab can be linked to and survives a reload
+const tab = computed<DevicesTab>({
+  get: () => TABS.find((value) => value === route.query.tab) ?? 'connected',
+  set: (value) => void router.replace({ query: { ...route.query, tab: value } }),
+})
 
 const icons = { desktop: 'pi-desktop', mobile: 'pi-mobile', unknown: 'pi-question-circle' }
-
-watch(visible, () => {
-  error.value = null
-  tab.value = 'connected'
-})
 
 function hostname(device: ConnectedDevice): string {
   return device.hostname ?? t('devices.unknownHost')
@@ -42,12 +46,9 @@ async function disconnect(device: ConnectedDevice) {
 </script>
 
 <template>
-  <Dialog
-    v-model:visible="visible"
-    modal
-    :header="t('devices.title')"
-    :style="{ width: '40rem', maxWidth: 'calc(100vw - 2rem)' }"
-  >
+  <h1 class="page-title">{{ t('devices.title') }}</h1>
+
+  <section class="panel">
     <Tabs v-model:value="tab" class="devices-tabs">
       <TabList>
         <Tab value="connected">{{ t('devices.connectedTab') }}</Tab>
@@ -106,12 +107,28 @@ async function disconnect(device: ConnectedDevice) {
         </TabPanel>
       </TabPanels>
     </Tabs>
-  </Dialog>
+  </section>
 </template>
 
 <style scoped>
+.page-title {
+  margin: 0 0 1.25rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.panel {
+  max-width: 60rem;
+  margin-bottom: 1.25rem;
+  padding: 1.25rem;
+  background: var(--p-content-background);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius);
+}
+
 .devices-tabs :deep(.p-tabpanels) {
   padding: 1rem 0 0;
+  background: transparent;
 }
 
 .dialog-error {
@@ -119,10 +136,8 @@ async function disconnect(device: ConnectedDevice) {
 }
 
 .devices {
-  max-height: 26rem;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
   list-style: none;
 }
 
