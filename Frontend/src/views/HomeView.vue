@@ -7,6 +7,7 @@ import EmptyState from '../components/EmptyState.vue'
 import HomeActivity from '../components/HomeActivity.vue'
 import HomeFlow from '../components/HomeFlow.vue'
 import HomeQuickActions from '../components/HomeQuickActions.vue'
+import HomeSchedules from '../components/HomeSchedules.vue'
 import HomeTaskBoard from '../components/HomeTaskBoard.vue'
 import TaskDialog from '../components/TaskDialog.vue'
 import { useDeviceSocketStore, type WorkspaceSignal } from '../stores/deviceSocket'
@@ -33,12 +34,23 @@ const dialogTask = ref<Task | null>(null)
 
 const showTasks = computed(() => workspace.hasSection('tasks'))
 const showQuickActions = computed(() => workspace.hasSection('events'))
+const showSchedules = computed(() => workspace.hasSection('automation'))
 const showActivity = computed(() => workspace.hasSection('events') || workspace.hasSection('webhooks') || workspace.hasSection('automation'))
 
 // Each block hides itself while empty : null until it has loaded
-const filled = ref<{ tasks: boolean | null; quickActions: boolean | null; activity: boolean | null }>({ tasks: null, quickActions: null, activity: null })
+const filled = ref<{ tasks: boolean | null; quickActions: boolean | null; schedules: boolean | null; activity: boolean | null }>({
+  tasks: null,
+  quickActions: null,
+  schedules: null,
+  activity: null,
+})
 const isEmpty = computed(() => {
-  const shown = [showTasks.value && filled.value.tasks, showQuickActions.value && filled.value.quickActions, showActivity.value && filled.value.activity]
+  const shown = [
+    showTasks.value && filled.value.tasks,
+    showQuickActions.value && filled.value.quickActions,
+    showSchedules.value && filled.value.schedules,
+    showActivity.value && filled.value.activity,
+  ]
   return !shown.includes(null) && !shown.includes(true)
 })
 
@@ -109,8 +121,12 @@ function openTask(task: Task) {
   <div class="home">
     <HomeTaskBoard v-if="showTasks" v-model:filled="filled.tasks" @open="openTask" />
 
-    <div v-if="showQuickActions || showActivity" class="home-row">
-      <HomeQuickActions v-if="showQuickActions" v-model:filled="filled.quickActions" />
+    <div v-if="showQuickActions || showSchedules || showActivity" class="home-row">
+      <!-- What can be launched, and what will launch itself -->
+      <div v-if="(showQuickActions && filled.quickActions !== false) || (showSchedules && filled.schedules !== false)" class="home-side">
+        <HomeQuickActions v-if="showQuickActions" v-model:filled="filled.quickActions" />
+        <HomeSchedules v-if="showSchedules" v-model:filled="filled.schedules" />
+      </div>
       <HomeActivity v-if="showActivity" ref="activity" v-model:filled="filled.activity" />
     </div>
   </div>
@@ -135,6 +151,13 @@ function openTask(task: Task) {
   grid-template-columns: minmax(16rem, 1fr) minmax(0, 2fr);
   align-items: start;
   gap: 1.25rem;
+}
+
+.home-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
 }
 
 /* A single block takes the whole row */

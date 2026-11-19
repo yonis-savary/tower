@@ -516,7 +516,7 @@ export default {
     },
   },
   automation: {
-    title: 'Automation',
+    title: 'Automatisations',
     tabs: {
       schedules: 'Planifications',
       notifications: 'Notifications',
@@ -650,6 +650,7 @@ export default {
     deleteError: "La règle n'a pas pu être supprimée.",
   },
   home: {
+    upcomingSchedules: 'Planification (à venir)',
     flow: {
       title: 'Circuit',
       live: 'En direct',
@@ -754,7 +755,7 @@ export default {
       jira: 'Jira',
       merge_requests: 'Merge Requests',
       events: 'Évènements',
-      automation: 'Automation',
+      automation: 'Automatisations',
       webhooks: 'Webhooks',
     },
     switch: 'Passer sur ce workspace',
@@ -810,7 +811,7 @@ export default {
     home: 'Accueil',
     tasks: 'Tâches',
     events: 'Évènements',
-    automation: 'Automation',
+    automation: 'Automatisations',
     jira: 'Jira',
     mergeRequests: 'Merge Requests',
     webhooks: 'Webhooks',

@@ -652,6 +652,7 @@ export default {
     deleteError: 'The rule could not be deleted.',
   },
   home: {
+    upcomingSchedules: 'Schedules (upcoming)',
     flow: {
       title: 'Circuit',
       live: 'Live',

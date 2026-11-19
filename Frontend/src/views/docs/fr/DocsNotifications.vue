@@ -24,7 +24,7 @@ VAPID_SUBJECT=mailto:toi@example.com
   <h3>Activer un navigateur</h3>
   <ul>
     <li>
-      Dans <strong>Automation → Notifications</strong>, clique sur <em>Activer les notifications</em> et accepte la demande du
+      Dans <strong>Automatisations → Notifications</strong>, clique sur <em>Activer les notifications</em> et accepte la demande du
       navigateur. À faire dans chaque workspace, sur chaque appareil et chaque navigateur où tu veux les recevoir.
     </li>
     <li>Le bouton d'envoi à côté de chaque navigateur envoie une notification de test.</li>

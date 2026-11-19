@@ -923,7 +923,7 @@ des sprints actifs, tickets non terminés de l'utilisateur, merge requests ouver
 | Jira               | section `jira` : kanban d'un profil Jira                           |
 | Merge Requests     | section `merge_requests`                                           |
 | Événements         | section `events` : lancement manuel et quick-actions               |
-| Automation         | section `automation` : planifications                              |
+| Automatisations    | section `automation` : planifications                              |
 | Webhooks           | section `webhooks`                                                 |
 | Historique         | en bas                                                             |
 | Documentation / API | en bas, voir § Écrans                                             |
@@ -950,7 +950,7 @@ Le premier bloc de l'accueil dessine le workspace comme un circuit électronique
 de 64rem de large : ni affiché ni abonné aux signaux sur mobile.
 
 - **Puces** : Tower au centre ; à gauche les sources, par catégorie (Interface, Agents IA : un
-  jeton du workspace par puce, de tous les membres, Intégrations, Webhooks, Planifications ; une catégorie vide ne prend pas de place) ; à droite les sorties :
+  jeton du workspace par puce, de tous les membres, Intégrations, Webhooks, Planifications **régulières** : une ponctuelle n'est pas une puce, l'accueil la liste à part ; une catégorie vide ne prend pas de place) ; à droite les sorties :
   les appareils **actuellement connectés** (WebSocket) et les règles de notification de
   l'utilisateur (Push, si les clés VAPID sont en place). Chaque puce a une LED : verte, grise si
   désactivée ; pour un appareil, la couleur de sa dernière livraison pendant 4 s.
@@ -964,7 +964,7 @@ de 64rem de large : ni affiché ni abonné aux signaux sur mobile.
   qu'il lance n'allume pas en plus la puce Interface).
 - Au-delà de **12 puces** (Tower exclue), le circuit reste affiché mais statique, avec un message
   qui l'explique : animer chaque événement coûterait trop cher.
-- Un clic sur une puce ouvre son écran (Jira, Merge Requests, Webhooks, Automation, Paramètres → Agents IA).
+- Un clic sur une puce ouvre son écran (Jira, Merge Requests, Webhooks, Automatisations, Paramètres → Agents IA).
 - Le bloc se replie sur son titre ; le choix est gardé dans le navigateur. Replié, le circuit
   n'est pas dessiné et rien n'est animé.
 
@@ -977,10 +977,10 @@ Les signaux du workspace portent ce qu'il faut pour cela : `history.created` (`h
 
 | Écran              | Contenu                                                              |
 |--------------------|----------------------------------------------------------------------|
-| Accueil            | sur écran large, en premier et sur toute la largeur, le **circuit** (voir § Circuit) ; puis les sprints en cours, les quick-actions et les derniers événements |
+| Accueil            | sur écran large, en premier et sur toute la largeur, le **circuit** (voir § Circuit) ; puis les sprints en cours, les quick-actions, les planifications ponctuelles à venir (activées et pas encore passées, la plus proche d'abord, avec leur date et le délai restant ; le bloc disparaît quand il n'y en a aucune) et les derniers événements |
 | Tâches             | onglet Tableau (un kanban de cinq colonnes par sprint actif, repliable, choix gardé dans le navigateur par workspace ; une tâche se glisse d'un sprint actif à l'autre ; annulées à part) et onglet Backlog (sprints ouverts et planifiés, backlog, sprints clôturés repliés) ; fiche de tâche avec son historique |
 | Événements         | deux cartes côte à côte, l'une sous l'autre quand la place manque : lancer un événement (type et payload JSON) ; créer, lancer et supprimer des quick-actions |
-| Automation         | onglets, choisi dans l'adresse (`?tab=`) ; onglet **Planifications** : tableau des planifications : interrupteur actif/inactif (bloqué pour une ponctuelle passée), nom, événement, fréquence en clair, dernier déclenchement ; création et modification (nom, événement, régulière avec sa fréquence ou ponctuelle avec sa date), lancement immédiat, suppression ; rechargé quand un événement est lancé |
+| Automatisations    | onglets, choisi dans l'adresse (`?tab=`) ; onglet **Planifications** : tableau des planifications : interrupteur actif/inactif (bloqué pour une ponctuelle passée), nom, événement, fréquence en clair, dernier déclenchement ; création et modification (nom, événement, régulière avec sa fréquence ou ponctuelle avec sa date), lancement immédiat, suppression ; rechargé quand un événement est lancé |
 | Webhooks           | tableau des webhooks : interrupteur actif/inactif, cadenas ouvert pour un webhook non sécurisé, adresse à copier, événements, dernier appel ; création (nom, événements, sécurisé ou non, avec un avertissement) et modification (nom, événements), régénération du secret, suppression ; secret affiché une fois avec un exemple `curl` ; modale des appels (statut, IP, `User-Agent`, corps), par pages de 50 |
 | Merge Requests     | un onglet par dépôt : graphique en arbre des merge requests ouvertes, puis leur liste (approbations, commentaires, brouillon, pipeline), puis celles du dépôt fermées récemment |
 | Historique         | tableau compact des lignes du workspace (une ligne chacune : type, détail tronqué, date ; un bloc par ligne sur téléphone), les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |

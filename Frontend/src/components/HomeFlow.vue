@@ -96,7 +96,8 @@ const sourceGroups = computed<FlowGroup[]>(() => {
       key: 'schedules',
       label: t('home.flow.schedulesGroup'),
       empty: '',
-      chips: schedules.value.map((schedule) => ({ key: `schedule:${schedule.id}`, kind: 'schedule', label: schedule.name, detail: schedule.type, enabled: schedule.enabled })),
+      // A one-time schedule is not part of the wiring : the home lists it among the upcoming ones
+      chips: schedules.value.filter((schedule) => schedule.run_at === null).map((schedule) => ({ key: `schedule:${schedule.id}`, kind: 'schedule', label: schedule.name, detail: schedule.type, enabled: schedule.enabled })),
     },
   ]
 
