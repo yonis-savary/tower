@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import MultiSelect from 'primevue/multiselect'
 import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
+import { TOUCH_DRAG } from '../utils/touchDrag'
 import SprintLinks from './SprintLinks.vue'
 import TaskCard from './TaskCard.vue'
 import { useTasksStore, type Task, type TaskStatus } from '../stores/tasks'
@@ -106,7 +107,7 @@ async function drop(status: TaskStatus, event: { data: Task }) {
           class="column-list"
           group="home-board"
           :animation="150"
-          :force-fallback="true"
+          :force-fallback="true" v-bind="TOUCH_DRAG"
           filter="a, button"
           :prevent-on-filter="false"
           ghost-class="task-ghost"
@@ -131,7 +132,7 @@ async function drop(status: TaskStatus, event: { data: Task }) {
 <style scoped>
 .panel {
   min-width: 0;
-  padding: 1.25rem;
+  padding: var(--panel-padding);
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius);
@@ -199,5 +200,23 @@ async function drop(status: TaskStatus, event: { data: Task }) {
 
 :deep(.task-ghost) {
   opacity: 0.4;
+}
+
+/* A phone : one column at a time, snapped while swiping, the next one peeking from the edge of the screen */
+@media (max-width: 48rem) {
+  .board {
+    grid-template-columns: repeat(4, min(17.5rem, 82vw));
+    margin-inline: calc(-1 * var(--panel-padding));
+    padding-inline: var(--panel-padding);
+    scroll-padding-inline: var(--panel-padding);
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    /* The next column peeking from the edge says there is more */
+    scrollbar-width: none;
+  }
+
+  .column {
+    scroll-snap-align: start;
+  }
 }
 </style>

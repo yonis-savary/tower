@@ -732,7 +732,7 @@ export default {
     color: 'Couleur',
     noColor: 'Aucune couleur',
     removeColor: 'Retirer la couleur',
-    colorHint: 'Affichée en bordure à gauche de la page quand ce workspace est le courant.',
+    colorHint: 'Affichée en bordure à gauche de la page (sous la barre du haut sur un téléphone) quand ce workspace est le courant.',
     icon: 'Icône',
     uploadIcon: 'Choisir une image',
     removeIcon: 'Retirer l’icône',
@@ -801,6 +801,8 @@ export default {
     },
   },
   nav: {
+    mergeRequestsShort: 'MR',
+    more: 'Plus',
     label: 'Navigation principale',
     workspace: 'Workspace',
     manageWorkspaces: 'Gérer mes workspaces',

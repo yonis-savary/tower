@@ -141,4 +141,12 @@ async function copyKey() {
   gap: 0.375rem;
   margin-left: auto;
 }
+
+/* A long press moves the card (see utils/touchDrag) : it must not select its text or open the menu of the browser */
+@media (hover: none) {
+  .issue-card {
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
 </style>

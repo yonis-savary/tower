@@ -77,12 +77,6 @@ function createTask(sprint: number | null) {
 </template>
 
 <style scoped>
-.page-title {
-  margin: 0 0 1.25rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
 .load-error {
   margin-bottom: 1rem;
 }

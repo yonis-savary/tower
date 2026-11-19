@@ -79,7 +79,7 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
   synchronisations et ses événements continuent. Accueil, Historique, Paramètres et
   les appareils sont toujours là.
 - Un workspace peut avoir une couleur (`accent_color`, `#rrggbb`) : quand il est le workspace
-  courant, la page porte une bordure de cette couleur à gauche, et la barre du navigateur mobile
+  courant, la page porte une bordure de cette couleur à gauche (sur un téléphone, elle souligne la barre du haut), et la barre du navigateur mobile
   la prend (`<meta name="theme-color">`) ; sans couleur, rien, et la barre garde le bleu de Tower.
   L'application installée garde la couleur de `manifest.json`, lue une fois à l'installation.
 - Un workspace peut avoir une icône (`icon`, nul par défaut) : une image PNG ou JPEG d'1 Mio au plus,
@@ -883,8 +883,31 @@ cache, sortie), les outils appelés et l'issue, pour pouvoir mesurer et ajuster.
 
 ### Navbar
 
-Navbar verticale à gauche, toujours visible ; sur un écran étroit, elle se réduit à ses
-icônes.
+Navbar verticale à gauche, toujours visible, au-delà de 48rem de large.
+
+**Sur un téléphone** (48rem et moins, `MobileNav`), elle laisse place à deux barres, au format
+des applications natives :
+
+- **en haut**, le sélecteur de workspace (icône et nom) et l'indicateur Appareils, en pastille ;
+  la couleur du workspace souligne la barre ;
+- **en bas**, une barre d'onglets fixe : Accueil, les trois premières sections du workspace (avec
+  leurs compteurs), et **Plus**, qui ouvre une feuille montant du bas avec le reste (autres
+  sections, Appareils, Historique, Documentation, Paramètres, e-mail et déconnexion). Un compteur
+  rangé dans la feuille s'additionne sur le bouton Plus.
+
+Les deux barres tiennent compte des zones sûres (encoche, barre d'accueil : `viewport-fit=cover`).
+Les éléments, compteurs et actions sont les mêmes partout (`utils/navigation.ts`).
+
+À la même largeur, le reste du front s'adapte :
+
+- marges de page et de panneau resserrées (`--page-gutter`, `--panel-padding` dans `style.css`) ;
+- les modales deviennent des feuilles montant du bas, sur toute la largeur ;
+- les kanbans (Accueil, Tâches, Jira) montrent une colonne à la fois, aimantée au défilement, la
+  suivante dépassant du bord ;
+- au doigt, une carte se déplace après un **appui long** (250 ms, `utils/touchDrag.ts`) : un
+  glissé fait défiler la page ou le kanban ;
+- les onglets verticaux (Paramètres, Documentation) deviennent une rangée de pastilles qui défile ;
+- chaque ligne de l'Historique devient un bloc : libellé, détail, puis date.
 
 En haut, les éléments principaux ; en bas, les secondaires, puis l'e-mail et la déconnexion.
 Tâches, Jira, Merge Requests et Événements n'apparaissent que si le workspace courant a cette
@@ -960,7 +983,7 @@ Les signaux du workspace portent ce qu'il faut pour cela : `history.created` (`h
 | Automation         | onglets, choisi dans l'adresse (`?tab=`) ; onglet **Planifications** : tableau des planifications : interrupteur actif/inactif (bloqué pour une ponctuelle passée), nom, événement, fréquence en clair, dernier déclenchement ; création et modification (nom, événement, régulière avec sa fréquence ou ponctuelle avec sa date), lancement immédiat, suppression ; rechargé quand un événement est lancé |
 | Webhooks           | tableau des webhooks : interrupteur actif/inactif, cadenas ouvert pour un webhook non sécurisé, adresse à copier, événements, dernier appel ; création (nom, événements, sécurisé ou non, avec un avertissement) et modification (nom, événements), régénération du secret, suppression ; secret affiché une fois avec un exemple `curl` ; modale des appels (statut, IP, `User-Agent`, corps), par pages de 50 |
 | Merge Requests     | un onglet par dépôt : graphique en arbre des merge requests ouvertes, puis leur liste (approbations, commentaires, brouillon, pipeline), puis celles du dépôt fermées récemment |
-| Historique         | tableau compact des lignes du workspace (une ligne chacune : type, détail tronqué, date), les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |
+| Historique         | tableau compact des lignes du workspace (une ligne chacune : type, détail tronqué, date ; un bloc par ligne sur téléphone), les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |
 | Paramètres         | onglets verticaux à gauche, contenu à droite, onglet choisi dans l'adresse (`?tab=`) : **Compte** (changement de mot de passe) ; **Interface** (langue : auto, français ou anglais ; thème : auto, clair ou sombre ; gardés dans le navigateur, appliqués sans recharger) ; intégrations Bitbucket et Jira, chacune affichée si sa section est active : workspace ou site, e-mail, token, synchronisation, profils Jira (board, nom, filtre JQL ; ajout, modification, suppression, chacun suivi d'une synchronisation), état de la dernière synchronisation ; bloc « Vider une section », toujours visible, qui supprime d'un coup l'intégration Jira ou Bitbucket et ses données |
 | Jira               | tickets non terminés d'un profil, choisi dans une liste, avec la pastille de leur assigné, ou seulement les siens, en kanban avec les colonnes de son board ; transition par glisser-déposer, ouverture dans Jira, création de tâche |
 | Documentation / API | onglets verticaux comme les Paramètres, page choisie dans l'adresse (`?page=`) : accueil, événements envoyés aux appareils (enveloppe du message, variables d'environnement, chaque type avec ses champs et des exemples de payload), lancer le connecteur en service sous Linux (systemd), et sur un serveur sans écran (service détaché des sessions par le lingering, handlers en fichier, délai des handlers, commande root autorisée par sudo, dépannage). Les blocs de code sont colorés (highlight.js, avec seulement les langages utilisés) et ont un bouton pour copier leur contenu brut. Chaque page existe en français et en anglais (`views/docs/fr/`, `views/docs/en/`) ; la version de la langue active est affichée, le français sert de repli |

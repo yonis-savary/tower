@@ -203,15 +203,9 @@ async function toggle(line: Line) {
 </template>
 
 <style scoped>
-.page-title {
-  margin: 0 0 1.25rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
 .panel {
   max-width: 72rem;
-  padding: 1.25rem;
+  padding: var(--panel-padding);
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius);
@@ -332,5 +326,90 @@ async function toggle(line: Line) {
 .load-more {
   display: flex;
   margin: 1rem auto 0;
+}
+
+/* A phone : each line is a small block, the detail and the date under the label, instead of columns out of sight */
+@media (max-width: 48rem) {
+  .panel {
+    padding-block: 0.25rem;
+  }
+
+  .lines thead {
+    display: none;
+  }
+
+  .lines,
+  .lines tbody {
+    display: block;
+  }
+
+  .line {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      'icon label toggle'
+      'icon detail toggle'
+      'icon date toggle';
+    align-items: center;
+    column-gap: 0.5rem;
+    padding: 0.625rem 0;
+    border-bottom: 1px solid var(--p-content-border-color);
+  }
+
+  .lines tbody .line:last-of-type,
+  .line-open {
+    border-bottom: 0;
+  }
+
+  .lines .line td {
+    display: block;
+    width: auto;
+    max-width: none;
+    padding: 0;
+    border: 0;
+  }
+
+  .lines .line-icon {
+    grid-area: icon;
+    align-self: start;
+    padding-top: 0.125rem;
+  }
+
+  .line-label {
+    grid-area: label;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .line-detail {
+    grid-area: detail;
+  }
+
+  .line-detail:empty {
+    display: none !important;
+  }
+
+  .line-date {
+    grid-area: date;
+    font-size: 0.75rem;
+  }
+
+  .lines .line-toggle {
+    grid-area: toggle;
+  }
+
+  .deliveries-row {
+    display: block;
+    border-bottom: 1px solid var(--p-content-border-color);
+  }
+
+  .deliveries-row td {
+    display: block;
+    padding: 0 0 0.5rem;
+  }
+
+  .deliveries {
+    margin-left: 0.5rem;
+  }
 }
 </style>

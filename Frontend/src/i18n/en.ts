@@ -734,7 +734,7 @@ export default {
     color: 'Color',
     noColor: 'No color',
     removeColor: 'Remove the color',
-    colorHint: 'Shown as a border on the left of the page while this workspace is the current one.',
+    colorHint: 'Shown as a border on the left of the page (under the top bar on a phone) while this workspace is the current one.',
     icon: 'Icon',
     uploadIcon: 'Choose an image',
     removeIcon: 'Remove the icon',
@@ -803,6 +803,8 @@ export default {
     },
   },
   nav: {
+    mergeRequestsShort: 'MRs',
+    more: 'More',
     label: 'Main navigation',
     workspace: 'Workspace',
     manageWorkspaces: 'Manage my workspaces',

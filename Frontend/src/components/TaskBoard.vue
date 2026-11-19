@@ -5,6 +5,7 @@ import Button from 'primevue/button'
 import ToggleSwitch from 'primevue/toggleswitch'
 import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
+import { TOUCH_DRAG } from '../utils/touchDrag'
 import SprintLinks from './SprintLinks.vue'
 import TaskCard from './TaskCard.vue'
 import EmptyState from './EmptyState.vue'
@@ -96,7 +97,7 @@ async function close(sprint: Sprint) {
               class="column-list"
               group="tasks-board"
               :animation="150"
-              :force-fallback="true"
+              :force-fallback="true" v-bind="TOUCH_DRAG"
               filter="a, button"
               :prevent-on-filter="false"
               ghost-class="task-ghost"
@@ -244,5 +245,23 @@ async function close(sprint: Sprint) {
 .empty,
 :deep(.task-ghost) {
   opacity: 0.4;
+}
+
+/* A phone : one column at a time, snapped while swiping, the next one peeking from the edge of the screen */
+@media (max-width: 48rem) {
+  .board {
+    grid-template-columns: repeat(5, min(17.5rem, 82vw));
+    margin-inline: calc(-1 * var(--page-gutter));
+    padding-inline: var(--page-gutter);
+    scroll-padding-inline: var(--page-gutter);
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    /* The next column peeking from the edge says there is more */
+    scrollbar-width: none;
+  }
+
+  .column {
+    scroll-snap-align: start;
+  }
 }
 </style>

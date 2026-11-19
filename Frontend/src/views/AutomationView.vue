@@ -55,12 +55,6 @@ watch(
 </template>
 
 <style scoped>
-.page-title {
-  margin: 0 0 1.25rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
 /* Down to the bottom of the page, so that an empty tab centers its empty state in it */
 .automation-tabs,
 .automation-tabs :deep(.p-tabpanels),

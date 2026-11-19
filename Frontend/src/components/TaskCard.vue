@@ -132,4 +132,12 @@ async function discuss() {
   overflow-wrap: anywhere;
 }
 
+
+/* A long press moves the card (see utils/touchDrag) : it must not select its text or open the menu of the browser */
+@media (hover: none) {
+  .task-card {
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
 </style>

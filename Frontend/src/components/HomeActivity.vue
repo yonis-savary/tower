@@ -105,7 +105,7 @@ defineExpose({ load })
 <style scoped>
 .panel {
   min-width: 0;
-  padding: 1.25rem;
+  padding: var(--panel-padding);
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius);

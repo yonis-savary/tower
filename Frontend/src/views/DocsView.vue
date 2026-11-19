@@ -34,14 +34,8 @@ const content = computed(() => {
 </template>
 
 <style scoped>
-.page-title {
-  margin: 0 0 1.25rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
 .doc {
-  padding: 1.25rem 1.5rem;
+  padding: var(--panel-padding) calc(var(--panel-padding) + 0.25rem);
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius);

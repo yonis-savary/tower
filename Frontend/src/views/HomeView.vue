@@ -119,12 +119,6 @@ function openTask(task: Task) {
 </template>
 
 <style scoped>
-.page-title {
-  margin: 0 0 1.25rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
 .home-flow {
   margin-bottom: 1.25rem;
 }

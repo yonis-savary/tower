@@ -111,16 +111,10 @@ async function disconnect(device: ConnectedDevice) {
 </template>
 
 <style scoped>
-.page-title {
-  margin: 0 0 1.25rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
 .panel {
   max-width: 80rem;
   margin-bottom: 1.25rem;
-  padding: 1.25rem;
+  padding: var(--panel-padding);
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius);

@@ -6,6 +6,7 @@ import Tag from 'primevue/tag'
 import ToggleSwitch from 'primevue/toggleswitch'
 import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
+import { TOUCH_DRAG } from '../utils/touchDrag'
 import SprintLinks from './SprintLinks.vue'
 import TaskCard from './TaskCard.vue'
 import { useTasksStore, type Sprint, type Task } from '../stores/tasks'
@@ -98,7 +99,7 @@ function notifySprintError() {
       class="task-list"
       group="tasks-backlog"
       :animation="150"
-      :force-fallback="true"
+      :force-fallback="true" v-bind="TOUCH_DRAG"
       filter="a, button"
       :prevent-on-filter="false"
       ghost-class="task-ghost"
@@ -128,7 +129,7 @@ function notifySprintError() {
           :group="CLOSED_SPRINT_GROUP"
           :sort="false"
           :animation="150"
-          :force-fallback="true"
+          :force-fallback="true" v-bind="TOUCH_DRAG"
           filter="a, button"
           :prevent-on-filter="false"
           ghost-class="task-ghost"
@@ -162,7 +163,7 @@ function notifySprintError() {
 .panel {
   max-width: 48rem;
   margin-bottom: 1rem;
-  padding: 1rem 1.25rem;
+  padding: 1rem var(--panel-padding);
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius);

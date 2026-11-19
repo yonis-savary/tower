@@ -185,12 +185,6 @@ async function save() {
 </template>
 
 <style scoped>
-.page-title {
-  margin: 0 0 1.25rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
 .panels {
   display: flex;
   flex-wrap: wrap;
@@ -203,7 +197,7 @@ async function save() {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 1.25rem;
+  padding: var(--panel-padding);
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius);

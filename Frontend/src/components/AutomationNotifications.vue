@@ -384,7 +384,7 @@ watch(
 .panel {
   max-width: 72rem;
   margin-bottom: 1.25rem;
-  padding: 1.25rem;
+  padding: var(--panel-padding);
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius);

@@ -10,6 +10,7 @@ import MultiSelect from 'primevue/multiselect'
 import Select from 'primevue/select'
 import { useToast } from 'primevue/usetoast'
 import { VueDraggable } from 'vue-draggable-plus'
+import { TOUCH_DRAG } from '../utils/touchDrag'
 import EmptyState from '../components/EmptyState.vue'
 import JiraIssueCard from '../components/JiraIssueCard.vue'
 import { syncJiraIntegration } from '../client'
@@ -278,7 +279,7 @@ async function discuss(issue: JiraIssue) {
         class="column-list"
         group="jira-board"
         :animation="150"
-        :force-fallback="true"
+        :force-fallback="true" v-bind="TOUCH_DRAG"
         :disabled="moving"
         :sort="false"
         filter="a, button"
@@ -309,7 +310,7 @@ async function discuss(issue: JiraIssue) {
         class="column-list"
         :group="{ name: 'jira-board', put: false }"
         :animation="150"
-        :force-fallback="true"
+        :force-fallback="true" v-bind="TOUCH_DRAG"
         :disabled="moving"
         :sort="false"
         filter="a, button"
@@ -364,11 +365,9 @@ async function discuss(issue: JiraIssue) {
   margin-bottom: 1.25rem;
 }
 
-.page-title {
+.page-header .page-title {
   flex: 1 1 auto;
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
 }
 
 .board-option {
@@ -436,5 +435,35 @@ async function discuss(issue: JiraIssue) {
 
 :deep(.issue-ghost) {
   opacity: 0.4;
+}
+
+/* A phone : one column at a time, snapped while swiping, the next one peeking from the edge of the screen */
+@media (max-width: 48rem) {
+  .board {
+    grid-template-columns: repeat(var(--columns), min(17.5rem, 82vw));
+    margin-inline: calc(-1 * var(--page-gutter));
+    padding-inline: var(--page-gutter);
+    scroll-padding-inline: var(--page-gutter);
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    /* The next column peeking from the edge says there is more */
+    scrollbar-width: none;
+  }
+
+  .column {
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 48rem) {
+  /* The title on its own line, the filters wrapping below it */
+  .page-header .page-title {
+    flex-basis: 100%;
+  }
+
+  .page-header {
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 1rem;
+  }
 }
 </style>

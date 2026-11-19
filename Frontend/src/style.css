@@ -1,6 +1,17 @@
 :root {
   color-scheme: light dark;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Around the content of a screen, and inside its panels : tighter on a phone */
+  --page-gutter: 1.5rem;
+  --panel-padding: 1.25rem;
+}
+
+/* 48rem is the phone layout of the whole application (AppLayout switches its navigation there too) */
+@media (max-width: 48rem) {
+  :root {
+    --page-gutter: 0.875rem;
+    --panel-padding: 1rem;
+  }
 }
 
 body {
@@ -54,4 +65,47 @@ a {
 .card-action .pi,
 .card-action .app-icon {
   font-size: 0.9rem;
+}
+
+.page-title {
+  margin: 0 0 1.25rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+@media (max-width: 48rem) {
+  .page-title {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+
+  /* Dialogs become sheets rising from the bottom, within reach of the thumb. !important : their width is inline */
+  .p-dialog-mask {
+    align-items: flex-end !important;
+  }
+
+  .p-dialog-mask .p-dialog {
+    width: 100% !important;
+    max-width: 100%;
+    max-height: calc(100dvh - 2rem - env(safe-area-inset-top));
+    margin: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .p-dialog-mask .p-dialog.p-dialog-maximized {
+    max-height: none;
+  }
+
+  .p-dialog-header,
+  .p-dialog-content,
+  .p-dialog-footer {
+    padding-inline: 1rem;
+  }
+}
+
+/* No tap flash on the custom buttons : they have their own pressed state */
+button {
+  -webkit-tap-highlight-color: transparent;
 }
