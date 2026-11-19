@@ -33,6 +33,30 @@ watch(
 )
 onBeforeUnmount(() => themeColor?.setAttribute('content', towerColor ?? ''))
 
+// The tab shows the icon of the workspace (its image, else the logo in its color) : the icons of index.html step aside meanwhile
+const towerIcons = [...document.querySelectorAll<HTMLLinkElement>('link[rel="icon"]')]
+const workspaceIcon = document.createElement('link')
+workspaceIcon.rel = 'icon'
+watch(
+  () => workspace.current?.favicon_url,
+  (url) => {
+    if (!url) {
+      workspaceIcon.remove()
+      towerIcons.forEach((icon) => document.head.append(icon))
+      return
+    }
+
+    towerIcons.forEach((icon) => icon.remove())
+    workspaceIcon.href = url
+    document.head.append(workspaceIcon)
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => {
+  workspaceIcon.remove()
+  towerIcons.forEach((icon) => document.head.append(icon))
+})
+
 // A screen of a section the workspace does not use : opened by its address, or left open while switching workspace
 watch(
   () => [route.meta.section as WorkspaceSection | undefined, workspace.current] as const,

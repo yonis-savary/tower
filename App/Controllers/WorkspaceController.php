@@ -12,9 +12,11 @@ use App\Requests\WorkspaceNameRequest;
 use App\Resources\UserResource;
 use App\Resources\WorkspaceResource;
 use App\Security\WorkspaceSocketToken;
+use App\Services\WorkspaceIconService;
 use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
+use Cube\Data\OpenAPI\Attributes\RawBody;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
 use Cube\Data\OpenAPI\Attributes\ResourceResponse;
 use Cube\Security\Authentication;
@@ -33,6 +35,7 @@ class WorkspaceController extends Controller
         protected WorkspaceService $workspaces,
         protected WorkspaceSocketToken $socketTokens,
         protected WorkspaceDevicesChannel $devicesChannel,
+        protected WorkspaceIconService $icons,
     ) {}
 
     public function routes(Router $router): void
@@ -45,6 +48,9 @@ class WorkspaceController extends Controller
             Route::post('/', [self::class, 'create']),
             Route::put('/{int:workspace}', [self::class, 'update']),
             Route::delete('/{int:workspace}', [self::class, 'delete']),
+            Route::get('/{int:workspace}/icon', [self::class, 'icon']),
+            Route::put('/{int:workspace}/icon', [self::class, 'setIcon']),
+            Route::delete('/{int:workspace}/icon', [self::class, 'removeIcon']),
             Route::get('/{int:workspace}/members', [self::class, 'members']),
             Route::post('/{int:workspace}/members', [self::class, 'addMember']),
             Route::delete('/{int:workspace}/members/{int:user}', [self::class, 'removeMember']),
@@ -147,6 +153,60 @@ class WorkspaceController extends Controller
         $this->workspaces->delete($found);
 
         return Response::noContent();
+    }
+
+    #[Endpoint('Get workspace icon', 'The icon of a workspace : the image a member uploaded (PNG or JPEG), else the logo of Tower in the workspace color (SVG). The page uses it as its favicon', 'getWorkspaceIcon')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
+    public function icon(Request $request, int $workspace): Response
+    {
+        $found = $this->workspaceOfUser($workspace);
+        if (!$found)
+            return $this->workspaceNotFound();
+
+        $icon = $this->icons->of($found);
+
+        return new Response(StatusCode::OK, $icon->body, [
+            'Content-Type' => $icon->type,
+            // Its address changes with the icon (see WorkspaceResource) : a cached one never goes stale
+            'Cache-Control' => 'private, max-age=31536000, immutable',
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+        ]);
+    }
+
+    #[Endpoint('Set workspace icon', 'Replaces the icon of a workspace the current user is a member of. The body is the image itself, PNG or JPEG, 1 MiB at most', 'setWorkspaceIcon')]
+    #[RawBody('image/png', 'A PNG or JPEG image, 1 MiB at most')]
+    #[ResourceResponse(WorkspaceResource::class, description: 'The workspace')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
+    #[RawResponse(['error' => 'The icon must be a PNG or JPEG image'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'Not a PNG or JPEG image, or larger than 1 MiB')]
+    public function setIcon(Request $request, int $workspace): Response
+    {
+        $found = $this->workspaceOfUser($workspace);
+        if (!$found)
+            return $this->workspaceNotFound();
+
+        $content = $request->getBody();
+        if (strlen($content) > WorkspaceIconService::MAX_SIZE)
+            return Response::json(['error' => 'The icon must not exceed 1 MiB'], StatusCode::UNPROCESSABLE_CONTENT);
+
+        $type = $this->icons->typeOf($content);
+        if (!$type)
+            return Response::json(['error' => 'The icon must be a PNG or JPEG image'], StatusCode::UNPROCESSABLE_CONTENT);
+
+        return Response::json(WorkspaceResource::of($this->icons->set($found, $content, $type)));
+    }
+
+    #[Endpoint('Remove workspace icon', 'Removes the uploaded icon of a workspace : it gets the logo of Tower in its color back', 'removeWorkspaceIcon')]
+    #[ResourceResponse(WorkspaceResource::class, description: 'The workspace')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
+    public function removeIcon(Request $request, int $workspace): Response
+    {
+        $found = $this->workspaceOfUser($workspace);
+
+        return $found ? Response::json(WorkspaceResource::of($this->icons->remove($found))) : $this->workspaceNotFound();
     }
 
     #[Endpoint('List workspace members', 'The members of a workspace the current user is a member of, oldest first', 'listWorkspaceMembers')]

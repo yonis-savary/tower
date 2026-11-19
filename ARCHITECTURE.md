@@ -82,7 +82,16 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
   courant, la page porte une bordure de cette couleur à gauche, et la barre du navigateur mobile
   la prend (`<meta name="theme-color">`) ; sans couleur, rien, et la barre garde le bleu de Tower.
   L'application installée garde la couleur de `manifest.json`, lue une fois à l'installation.
-- Tout membre peut renommer le workspace, changer sa couleur, en ajouter un autre par l'e-mail de son compte Tower
+- Un workspace peut avoir une icône (`icon`, nul par défaut) : une image PNG ou JPEG d'1 Mio au plus,
+  envoyée telle quelle en corps de `PUT /api/workspaces/{id}/icon` (type vérifié sur le contenu) et
+  rangée dans `Storage/WorkspaceIcons` sous un nom neuf à chaque envoi ; l'ancienne est effacée, et
+  la suppression du workspace l'emporte aussi. `GET /api/workspaces/{id}/icon` la sert, ou à défaut
+  le logo de Tower en SVG, généré à la couleur du workspace : la base ne stocke jamais d'icône par
+  défaut. Quand le workspace est le courant, cette route sert de favicon à la page, et l'image
+  remplace le logo dans la navbar. Son adresse porte une version (`favicon_url`, `?v=`) qui change
+  avec l'image ou la couleur, ce qui permet au navigateur de la garder en cache sans limite. Pas d'outil MCP :
+  un agent n'envoie pas d'image.
+- Tout membre peut renommer le workspace, changer sa couleur et son icône, en ajouter un autre par l'e-mail de son compte Tower
   (un compte existant et actif : il n'y a pas d'invitation), retirer un membre ou le quitter.
   Un workspace créé depuis le front n'a que son créateur pour membre et n'est pas sélectionné.
 - Un workspace garde toujours au moins un membre : le dernier ne peut pas être retiré, le

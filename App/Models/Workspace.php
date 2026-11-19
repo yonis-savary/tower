@@ -16,6 +16,7 @@ use Cube\Utils\Attributes\Generated;
  * @property int $author
  * @property string $sections
  * @property string $mcp_access
+ * @property string $icon
  * @property User $_author
  * @property AccessKey[] $accessKeies
  * @property ApiToken[] $apiTokens
@@ -60,7 +61,8 @@ class Workspace extends Model
             'accent_color' => (new ModelField('accent_color'))->type('STRING')->nullable()->default(NULL),
             'author' => (new ModelField('author'))->type('INTEGER')->notNull()->hasDefault(false)->references(User::class,'id'),
             'sections' => (new ModelField('sections'))->type('STRING')->nullable()->default(NULL),
-            'mcp_access' => (new ModelField('mcp_access'))->type('STRING')->notNull()->default(NULL)
+            'mcp_access' => (new ModelField('mcp_access'))->type('STRING')->notNull()->default(NULL),
+            'icon' => (new ModelField('icon'))->type('STRING')->nullable()->default(NULL)
         ];
     }
 

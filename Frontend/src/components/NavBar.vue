@@ -114,7 +114,8 @@ async function logOut() {
       :title="workspaceLabel"
       @click="workspaceMenu?.toggle($event)"
     >
-      <TowerLogo :color="workspace.current?.accent_color" />
+      <img v-if="workspace.current?.icon" :src="workspace.current.icon" alt="" class="navbar-workspace-icon" />
+      <TowerLogo v-else :color="workspace.current?.accent_color" />
       <span class="navbar-text">{{ workspaceLabel }}</span>
       <i class="pi pi-angle-down navbar-text" aria-hidden="true" />
     </button>
@@ -216,6 +217,15 @@ async function logOut() {
 .navbar-workspace {
   padding: 0.5rem;
   font-weight: 600;
+}
+
+.navbar-workspace-icon {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  /* Same rounding as the logo it replaces */
+  border-radius: 22%;
+  object-fit: cover;
 }
 
 .navbar-workspace span.navbar-text {

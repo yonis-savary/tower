@@ -39,6 +39,7 @@ class WorkspaceService
     public function __construct(
         protected Database $database,
         protected IntegrationService $integrations,
+        protected WorkspaceIconService $icons,
     ) {}
 
     /**
@@ -168,6 +169,9 @@ class WorkspaceService
 
         if ($failure)
             throw $failure;
+
+        // Once the row is gone : a failed deletion keeps its icon
+        $this->icons->deleteFile($workspace);
     }
 
     /**

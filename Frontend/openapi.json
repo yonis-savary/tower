@@ -8485,6 +8485,15 @@
                                             },
                                             "author": {
                                                 "type": "integer"
+                                            },
+                                            "icon": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "favicon_url": {
+                                                "type": "string"
                                             }
                                         },
                                         "required": [
@@ -8493,7 +8502,9 @@
                                             "accent_color",
                                             "sections",
                                             "mcp_access",
-                                            "author"
+                                            "author",
+                                            "icon",
+                                            "favicon_url"
                                         ]
                                     }
                                 },
@@ -8506,7 +8517,9 @@
                                             "webhooks"
                                         ],
                                         "mcp_access": "cupiditate dolores ab",
-                                        "author": 97
+                                        "author": 97,
+                                        "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
+                                        "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
                                     }
                                 ]
                             }
@@ -8592,6 +8605,15 @@
                                         },
                                         "author": {
                                             "type": "integer"
+                                        },
+                                        "icon": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "favicon_url": {
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
@@ -8600,7 +8622,9 @@
                                         "accent_color",
                                         "sections",
                                         "mcp_access",
-                                        "author"
+                                        "author",
+                                        "icon",
+                                        "favicon_url"
                                     ]
                                 },
                                 "example": {
@@ -8611,7 +8635,9 @@
                                         "webhooks"
                                     ],
                                     "mcp_access": "cupiditate dolores ab",
-                                    "author": 97
+                                    "author": 97,
+                                    "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
+                                    "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
                                 }
                             }
                         }
@@ -8670,6 +8696,15 @@
                                         },
                                         "author": {
                                             "type": "integer"
+                                        },
+                                        "icon": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "favicon_url": {
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
@@ -8678,7 +8713,9 @@
                                         "accent_color",
                                         "sections",
                                         "mcp_access",
-                                        "author"
+                                        "author",
+                                        "icon",
+                                        "favicon_url"
                                     ]
                                 },
                                 "example": {
@@ -8689,7 +8726,9 @@
                                         "webhooks"
                                     ],
                                     "mcp_access": "cupiditate dolores ab",
-                                    "author": 97
+                                    "author": 97,
+                                    "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
+                                    "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
                                 }
                             }
                         }
@@ -8789,6 +8828,15 @@
                                         },
                                         "author": {
                                             "type": "integer"
+                                        },
+                                        "icon": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "favicon_url": {
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
@@ -8797,7 +8845,9 @@
                                         "accent_color",
                                         "sections",
                                         "mcp_access",
-                                        "author"
+                                        "author",
+                                        "icon",
+                                        "favicon_url"
                                     ]
                                 },
                                 "example": {
@@ -8808,7 +8858,9 @@
                                         "webhooks"
                                     ],
                                     "mcp_access": "cupiditate dolores ab",
-                                    "author": 97
+                                    "author": 97,
+                                    "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
+                                    "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
                                 }
                             }
                         }
@@ -9003,6 +9055,15 @@
                                         },
                                         "author": {
                                             "type": "integer"
+                                        },
+                                        "icon": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "favicon_url": {
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
@@ -9011,7 +9072,9 @@
                                         "accent_color",
                                         "sections",
                                         "mcp_access",
-                                        "author"
+                                        "author",
+                                        "icon",
+                                        "favicon_url"
                                     ]
                                 },
                                 "example": {
@@ -9022,7 +9085,9 @@
                                         "webhooks"
                                     ],
                                     "mcp_access": "cupiditate dolores ab",
-                                    "author": 97
+                                    "author": 97,
+                                    "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
+                                    "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
                                 }
                             }
                         }
@@ -9136,6 +9201,310 @@
                     },
                     "204": {
                         "description": "The workspace is deleted"
+                    }
+                }
+            }
+        },
+        "\/api\/workspaces\/{workspace}\/icon": {
+            "get": {
+                "summary": "Get workspace icon",
+                "description": "The icon of a workspace : the image a member uploaded (PNG or JPEG), else the logo of Tower in the workspace color (SVG). The page uses it as its favicon",
+                "operationId": "getWorkspaceIcon",
+                "parameters": [
+                    {
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The workspace does not exist or the user is not a member of it",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Set workspace icon",
+                "description": "Replaces the icon of a workspace the current user is a member of. The body is the image itself, PNG or JPEG, 1 MiB at most",
+                "operationId": "setWorkspaceIcon",
+                "parameters": [
+                    {
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "image\/png": {
+                            "schema": {
+                                "type": "string",
+                                "format": "binary"
+                            }
+                        }
+                    },
+                    "description": "A PNG or JPEG image, 1 MiB at most"
+                },
+                "responses": {
+                    "200": {
+                        "description": "The workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "accent_color": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "sections": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "mcp_access": {
+                                            "type": "string"
+                                        },
+                                        "author": {
+                                            "type": "integer"
+                                        },
+                                        "icon": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "favicon_url": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "accent_color",
+                                        "sections",
+                                        "mcp_access",
+                                        "author",
+                                        "icon",
+                                        "favicon_url"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 432,
+                                    "name": "voluptatibus adipisci sapiente",
+                                    "accent_color": "#9e881c",
+                                    "sections": [
+                                        "webhooks"
+                                    ],
+                                    "mcp_access": "cupiditate dolores ab",
+                                    "author": 97,
+                                    "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
+                                    "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The workspace does not exist or the user is not a member of it",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Not a PNG or JPEG image, or larger than 1 MiB",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Remove workspace icon",
+                "description": "Removes the uploaded icon of a workspace : it gets the logo of Tower in its color back",
+                "operationId": "removeWorkspaceIcon",
+                "parameters": [
+                    {
+                        "name": "workspace",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "accent_color": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "sections": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "mcp_access": {
+                                            "type": "string"
+                                        },
+                                        "author": {
+                                            "type": "integer"
+                                        },
+                                        "icon": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "favicon_url": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "accent_color",
+                                        "sections",
+                                        "mcp_access",
+                                        "author",
+                                        "icon",
+                                        "favicon_url"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 432,
+                                    "name": "voluptatibus adipisci sapiente",
+                                    "accent_color": "#9e881c",
+                                    "sections": [
+                                        "webhooks"
+                                    ],
+                                    "mcp_access": "cupiditate dolores ab",
+                                    "author": 97,
+                                    "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
+                                    "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The workspace does not exist or the user is not a member of it",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

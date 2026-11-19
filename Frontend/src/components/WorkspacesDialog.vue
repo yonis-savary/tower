@@ -19,10 +19,13 @@ import {
   createWorkspace,
   deleteWorkspace,
   listWorkspaceMembers,
+  removeWorkspaceIcon,
   removeWorkspaceMember,
+  setWorkspaceIcon,
   updateWorkspace,
   type ListWorkspaceMembersResponse,
 } from '../client'
+import TowerLogo from './TowerLogo.vue'
 import { useAuthStore } from '../stores/auth'
 import { MCP_ACCESSES, WORKSPACE_SECTIONS, useWorkspaceStore, type McpAccess, type WorkspaceSection } from '../stores/workspace'
 
@@ -42,6 +45,7 @@ const mcpAccess = ref<McpAccess>('read')
 const newWorkspace = ref('')
 const newMember = ref('')
 const deletionName = ref('')
+const iconInput = ref<HTMLInputElement | null>(null)
 const busy = ref(false)
 const error = ref<string | null>(null)
 
@@ -126,6 +130,45 @@ function save(bodyOf: (workspace: NonNullable<typeof selected.value>) => { name:
     await Promise.all([store.loadWorkspaces(), store.loadCurrent()])
     return true
   }, t('workspaces.saveError'))
+}
+
+// Same limits as the server : a wrong file is told at once, without an upload
+const ICON_TYPES = ['image/png', 'image/jpeg']
+const ICON_MAX_SIZE = 1024 * 1024
+
+// The icon is saved as soon as it is chosen : it has nothing to do with the form of the tab
+function uploadIcon(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  const workspace = selected.value
+  if (!file || !workspace) return
+
+  if (!ICON_TYPES.includes(file.type) || file.size > ICON_MAX_SIZE) {
+    error.value = t('workspaces.iconInvalid')
+    return
+  }
+
+  return run(async () => {
+    const { data } = await setWorkspaceIcon({ path: { workspace: workspace.id }, body: file, headers: { 'Content-Type': file.type } })
+    if (!data) return false
+
+    await Promise.all([store.loadWorkspaces(), store.loadCurrent()])
+    return true
+  }, t('workspaces.iconError'))
+}
+
+function removeIcon() {
+  const workspace = selected.value
+  if (!workspace) return
+
+  return run(async () => {
+    const { data } = await removeWorkspaceIcon({ path: { workspace: workspace.id } })
+    if (!data) return false
+
+    await Promise.all([store.loadWorkspaces(), store.loadCurrent()])
+    return true
+  }, t('workspaces.iconError'))
 }
 
 function removeWorkspace() {
@@ -229,6 +272,19 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
                 </div>
                 <Button type="submit" :label="t('workspaces.save')" severity="secondary" class="save" :disabled="generalUnchanged" :loading="busy" />
               </form>
+
+              <div class="field icon-field">
+                <span class="label">{{ t('workspaces.icon') }}</span>
+                <div class="icon-row">
+                  <img v-if="selected.icon" :src="selected.icon" alt="" class="icon-preview" />
+                  <TowerLogo v-else :color="selected.accent_color" :size="48" />
+                  <small v-if="!selected.icon">{{ t('workspaces.noIcon') }}</small>
+                  <input ref="iconInput" type="file" accept="image/png,image/jpeg" hidden @change="uploadIcon" />
+                  <Button :label="t('workspaces.uploadIcon')" icon="pi pi-upload" severity="secondary" outlined size="small" :loading="busy" @click="iconInput?.click()" />
+                  <Button v-if="selected.icon" :label="t('workspaces.removeIcon')" severity="secondary" text size="small" :disabled="busy" @click="removeIcon" />
+                </div>
+                <small class="hint">{{ t('workspaces.iconHint') }}</small>
+              </div>
 
               <Button
                 v-if="selected.id !== store.current?.id"
@@ -445,6 +501,26 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
   gap: 0.5rem;
 }
 
+.icon-field {
+  padding-top: 1rem;
+  border-top: 1px solid var(--p-content-border-color);
+}
+
+.icon-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.icon-preview {
+  width: 48px;
+  height: 48px;
+  border-radius: 22%;
+  object-fit: contain;
+}
+
+.icon-row small,
 .color-row small {
   color: var(--p-text-muted-color);
 }

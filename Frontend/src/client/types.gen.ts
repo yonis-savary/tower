@@ -3677,6 +3677,8 @@ export type ListWorkspacesResponses = {
         sections: Array<string>;
         mcp_access: string;
         author: number;
+        icon: string | null;
+        favicon_url: string;
     }>;
 };
 
@@ -3717,6 +3719,8 @@ export type CreateWorkspaceResponses = {
         sections: Array<string>;
         mcp_access: string;
         author: number;
+        icon: string | null;
+        favicon_url: string;
     };
 };
 
@@ -3757,6 +3761,8 @@ export type GetCurrentWorkspaceResponses = {
         sections: Array<string>;
         mcp_access: string;
         author: number;
+        icon: string | null;
+        favicon_url: string;
     };
 };
 
@@ -3803,6 +3809,8 @@ export type SelectWorkspaceResponses = {
         sections: Array<string>;
         mcp_access: string;
         author: number;
+        icon: string | null;
+        favicon_url: string;
     };
 };
 
@@ -3936,10 +3944,135 @@ export type UpdateWorkspaceResponses = {
         sections: Array<string>;
         mcp_access: string;
         author: number;
+        icon: string | null;
+        favicon_url: string;
     };
 };
 
 export type UpdateWorkspaceResponse = UpdateWorkspaceResponses[keyof UpdateWorkspaceResponses];
+
+export type RemoveWorkspaceIconData = {
+    body?: never;
+    path: {
+        workspace: number;
+    };
+    query?: never;
+    url: '/api/workspaces/{workspace}/icon';
+};
+
+export type RemoveWorkspaceIconErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The workspace does not exist or the user is not a member of it
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type RemoveWorkspaceIconError = RemoveWorkspaceIconErrors[keyof RemoveWorkspaceIconErrors];
+
+export type RemoveWorkspaceIconResponses = {
+    /**
+     * The workspace
+     */
+    200: {
+        id: number;
+        name: string;
+        accent_color: string | null;
+        sections: Array<string>;
+        mcp_access: string;
+        author: number;
+        icon: string | null;
+        favicon_url: string;
+    };
+};
+
+export type RemoveWorkspaceIconResponse = RemoveWorkspaceIconResponses[keyof RemoveWorkspaceIconResponses];
+
+export type GetWorkspaceIconData = {
+    body?: never;
+    path: {
+        workspace: number;
+    };
+    query?: never;
+    url: '/api/workspaces/{workspace}/icon';
+};
+
+export type GetWorkspaceIconErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The workspace does not exist or the user is not a member of it
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type GetWorkspaceIconError = GetWorkspaceIconErrors[keyof GetWorkspaceIconErrors];
+
+export type SetWorkspaceIconData = {
+    /**
+     * A PNG or JPEG image, 1 MiB at most
+     */
+    body: Blob | File;
+    path: {
+        workspace: number;
+    };
+    query?: never;
+    url: '/api/workspaces/{workspace}/icon';
+};
+
+export type SetWorkspaceIconErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The workspace does not exist or the user is not a member of it
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * Not a PNG or JPEG image, or larger than 1 MiB
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type SetWorkspaceIconError = SetWorkspaceIconErrors[keyof SetWorkspaceIconErrors];
+
+export type SetWorkspaceIconResponses = {
+    /**
+     * The workspace
+     */
+    200: {
+        id: number;
+        name: string;
+        accent_color: string | null;
+        sections: Array<string>;
+        mcp_access: string;
+        author: number;
+        icon: string | null;
+        favicon_url: string;
+    };
+};
+
+export type SetWorkspaceIconResponse = SetWorkspaceIconResponses[keyof SetWorkspaceIconResponses];
 
 export type ListWorkspaceMembersData = {
     body?: never;

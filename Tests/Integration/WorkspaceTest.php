@@ -26,12 +26,21 @@ use App\Models\WebhookCall;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use App\Session\SelectedWorkspace;
+use Cube\Env\Storage;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
+use Cube\Test\ResponseAssert;
+use Cube\Web\Http\Request;
 
 class WorkspaceTest extends CubeTestCase
 {
     private const PASSWORD = 'correct horse battery';
+
+    // A 1x1 JPEG
+    private const JPEG = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/2wBDAQMDAwQDBAgEBAgQCwkLEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAARCAABAAEDAREAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAACP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/xAAVAQEBAAAAAAAAAAAAAAAAAAAHCf/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/ADoDFU3/2Q==';
+
+    // A 1x1 PNG
+    private const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
     protected function setUp(): void
     {
@@ -101,7 +110,7 @@ class WorkspaceTest extends CubeTestCase
     {
         $this->register('alice@example.com');
 
-        $this->assertEquals(['id', 'name', 'accent_color', 'sections', 'mcp_access', 'author'], array_keys($this->get('/api/workspaces')->assertOk()->json()[0]));
+        $this->assertEquals(['id', 'name', 'accent_color', 'sections', 'mcp_access', 'author', 'icon', 'favicon_url'], array_keys($this->get('/api/workspaces')->assertOk()->json()[0]));
     }
 
     public function testRegisterSelectsDefaultWorkspace()
@@ -282,9 +291,13 @@ class WorkspaceTest extends CubeTestCase
         $deleted = $this->fillWorkspace($doomed, $alice);
         $untouched = $this->fillWorkspace($kept, $alice);
 
+        $this->putIcon($doomed, base64_decode(self::PNG))->assertOk();
+        $iconFile = Workspace::find($doomed)->icon;
+
         $this->delete("/api/workspaces/{$doomed}")->assertNoContent();
 
         $this->assertNull(Workspace::find($doomed));
+        $this->assertFalse($this->icons()->isFile($iconFile));
         $this->assertFalse(WorkspaceMember::existsWhere(['workspace' => $doomed]));
         foreach ($deleted as $model => $id)
             $this->assertNull($model::find($id), "{$model} #{$id} survived the deletion");
@@ -317,5 +330,93 @@ class WorkspaceTest extends CubeTestCase
 
         $this->delete("/api/workspaces/{$workspace}")->assertConflict();
         $this->assertNotNull(Workspace::find($workspace));
+    }
+
+    private function putIcon(int $workspace, string $content, string $type = 'image/png'): ResponseAssert
+    {
+        return $this->assertResponseOf(new Request('PUT', "/api/workspaces/{$workspace}/icon", [], [], ['content-type' => $type], body: $content));
+    }
+
+    private function icons(): Storage
+    {
+        return Storage::getInstance()->child('WorkspaceIcons');
+    }
+
+    public function testWorkspaceWithoutIconServesTheLogoInItsColor()
+    {
+        $alice = $this->register('alice@example.com');
+        $workspace = $this->defaultWorkspaceId($alice);
+
+        $current = $this->get('/api/workspaces/current')->assertOk()->json();
+        $this->assertNull($current['icon']);
+        $this->assertNull(Workspace::find($workspace)->icon);
+
+        $logo = $this->get("/api/workspaces/{$workspace}/icon")->assertOk()->assertHeaderEqual('Content-Type', 'image/svg+xml');
+        $this->assertStringContainsString('fill="#2190FF"', $logo->body());
+
+        $this->putJson("/api/workspaces/{$workspace}", ['name' => 'Perso', 'accent_color' => '#3b82f6'])->assertOk();
+        $this->assertStringContainsString('fill="#3b82f6"', $this->get("/api/workspaces/{$workspace}/icon")->assertOk()->body());
+        // A new color, a new address : the browser does not keep the old favicon
+        $this->assertNotSame($current['favicon_url'], $this->get('/api/workspaces/current')->json()['favicon_url']);
+    }
+
+    public function testMembersUploadAndRemoveAnIcon()
+    {
+        $alice = $this->register('alice@example.com');
+        $workspace = $this->defaultWorkspaceId($alice);
+        $png = base64_decode(self::PNG);
+
+        $updated = $this->putIcon($workspace, $png)->assertOk()->json();
+        $this->assertNotNull($updated['icon']);
+        $this->assertSame($updated['icon'], $updated['favicon_url']);
+        $first = Workspace::find($workspace)->icon;
+        $this->assertTrue($this->icons()->isFile($first));
+
+        $icon = $this->get("/api/workspaces/{$workspace}/icon")->assertOk()->assertHeaderEqual('Content-Type', 'image/png');
+        $this->assertSame($png, $icon->body());
+
+        // A new upload replaces the file
+        $this->putIcon($workspace, $png)->assertOk();
+        $second = Workspace::find($workspace)->icon;
+        $this->assertNotSame($first, $second);
+        $this->assertFalse($this->icons()->isFile($first));
+
+        $removed = $this->delete("/api/workspaces/{$workspace}/icon")->assertOk()->json();
+        $this->assertNull($removed['icon']);
+        $this->assertNull(Workspace::find($workspace)->icon);
+        $this->assertFalse($this->icons()->isFile($second));
+        $this->get("/api/workspaces/{$workspace}/icon")->assertOk()->assertHeaderEqual('Content-Type', 'image/svg+xml');
+    }
+
+    public function testIconMustBeASmallPngOrJpeg()
+    {
+        $alice = $this->register('alice@example.com');
+        $workspace = $this->defaultWorkspaceId($alice);
+
+        $this->putIcon($workspace, '<svg xmlns="http://www.w3.org/2000/svg"/>', 'image/png')->assertUnprocessableContent();
+        $this->putIcon($workspace, "GIF89a\x01\x00\x01\x00", 'image/png')->assertUnprocessableContent();
+        // A PNG signature over something else
+        $this->putIcon($workspace, "\x89PNG\r\n\x1a\n".str_repeat('x', 64))->assertUnprocessableContent();
+        $this->putIcon($workspace, base64_decode(self::PNG).str_repeat("\0", 1024 * 1024))->assertUnprocessableContent();
+        $this->assertNull(Workspace::find($workspace)->icon);
+
+        $this->putIcon($workspace, base64_decode(self::JPEG), 'image/jpeg')->assertOk();
+        $this->get("/api/workspaces/{$workspace}/icon")->assertOk()->assertHeaderEqual('Content-Type', 'image/jpeg');
+    }
+
+    public function testOnlyMembersSeeOrChangeTheIcon()
+    {
+        $bob = $this->register('bob@example.com');
+        $bobWorkspace = $this->defaultWorkspaceId($bob);
+        $this->logOut();
+        $this->register('alice@example.com');
+
+        $this->get("/api/workspaces/{$bobWorkspace}/icon")->assertNotFound();
+        $this->putIcon($bobWorkspace, base64_decode(self::PNG))->assertNotFound();
+        $this->delete("/api/workspaces/{$bobWorkspace}/icon")->assertNotFound();
+        $this->assertNull(Workspace::find($bobWorkspace)->icon);
+
+        $this->logOut();
+        $this->get("/api/workspaces/{$bobWorkspace}/icon")->assertUnauthorized();
     }
 }
