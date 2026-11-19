@@ -118,7 +118,7 @@ async function disconnect(device: ConnectedDevice) {
 }
 
 .panel {
-  max-width: 60rem;
+  max-width: 80rem;
   margin-bottom: 1.25rem;
   padding: 1.25rem;
   background: var(--p-content-background);

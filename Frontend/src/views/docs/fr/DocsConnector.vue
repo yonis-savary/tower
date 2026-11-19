@@ -118,7 +118,7 @@ const chained = `
   <CodeBlock :code="config" language="json" filename="config.json" />
   <p>
     Plutôt que d'écrire ce JSON à la main, tu peux le construire dans Tower : <strong>Configurer les handlers</strong> à la
-    création d'une configuration, ou <strong>Modifier</strong> à côté de ses handlers ensuite. Un formulaire par handler
+    création d'une configuration, ou dans le détail de la configuration ensuite, sur la page <strong>Appareils</strong>. Un formulaire par handler
     donne son motif, ses commandes, sa réponse et ses événements suivants, et vérifie tout ce que le connecteur refuserait.
     Tower les écrit dans le fichier téléchargé : il ne les envoie jamais à un appareil. Les enregistrer donne donc un
     nouveau secret à la configuration, et il faut remplacer le fichier sur chaque appareil.

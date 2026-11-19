@@ -114,7 +114,7 @@ const chained = `
   <CodeBlock :code="config" language="json" filename="config.json" />
   <p>
     Rather than writing this JSON by hand, you can build it in Tower: <strong>Configure handlers</strong> when creating a
-    configuration, or <strong>Edit</strong> next to its handlers afterwards. A form per handler gives its pattern, its
+    configuration, or in the details of the configuration afterwards, on the <strong>Devices</strong> page. A form per handler gives its pattern, its
     commands, its answer and its next events, and checks everything the connector would refuse. Tower writes them into the
     downloaded file: it never sends them to a device. Saving them therefore gives the configuration a new secret, and the
     file must be replaced on each device.

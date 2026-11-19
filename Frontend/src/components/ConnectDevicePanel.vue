@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
@@ -8,16 +8,13 @@ import {
   downloadHandler,
   listAccessKeys,
   revokeAccessKey,
-  rotateAccessKeySecret,
-  updateAccessKeyListen,
   type CreateAccessKeyResponse,
   type ListAccessKeysResponse,
 } from '../client'
-import EventTypeInput from './EventTypeInput.vue'
 import { saveFile } from '../utils/saveFile'
 import ConfigCreateDialog from './ConfigCreateDialog.vue'
+import ConfigDetail from './ConfigDetail.vue'
 import ConfigSecretDialog from './ConfigSecretDialog.vue'
-import HandlersDialog from './HandlersDialog.vue'
 import EmptyState from './EmptyState.vue'
 import HandlerDialog from './HandlerDialog.vue'
 
@@ -26,21 +23,16 @@ type AccessKey = ListAccessKeysResponse[number]
 const { t, d } = useI18n()
 
 const keys = ref<ListAccessKeysResponse>([])
-// The key whose listened events are being edited
-const editing = ref<number | null>(null)
-const editedListen = ref('')
-const savingListen = ref(false)
+const selectedId = ref<number | null>(null)
 const downloading = ref<'connector' | 'handler' | null>(null)
 const createVisible = ref(false)
 const duplicated = ref<AccessKey | null>(null)
 const handlerVisible = ref(false)
 const error = ref<string | null>(null)
-// The key whose handler rules are edited
-const handlersKey = ref<AccessKey | null>(null)
-const handlersVisible = ref(false)
-const rotating = ref<number | null>(null)
 // The configuration with its new secret, shown once
 const rotated = ref<CreateAccessKeyResponse | null>(null)
+
+const selected = computed(() => keys.value.find(({ id }) => id === selectedId.value) ?? keys.value[0] ?? null)
 
 async function loadKeys() {
   const { data } = await listAccessKeys()
@@ -74,49 +66,9 @@ async function downloadBasicHandler() {
   handlerVisible.value = true
 }
 
-function parseListen(value: string): string[] {
-  return value.split(/[\s,]+/).filter(Boolean)
-}
-
-function listenLabel(key: AccessKey): string {
-  const patterns = (key.listen ?? []) as string[]
-  return patterns.length ? patterns.join(', ') : t('download.listenNothing')
-}
-
-function editListen(key: AccessKey) {
-  editing.value = key.id!
-  editedListen.value = ((key.listen ?? []) as string[]).join(', ')
-}
-
-async function saveListen(id: number) {
-  savingListen.value = true
-  error.value = null
-
-  const { response } = await updateAccessKeyListen({ path: { key: id }, body: { listen: parseListen(editedListen.value) } })
-  savingListen.value = false
-
-  if (!response?.ok) {
-    error.value = t('download.listenError')
-    return
-  }
-
-  editing.value = null
-  await loadKeys()
-}
-
-function handlersLabel(key: AccessKey): string {
-  const count = (key.handlers ?? []).length
-  return count ? t('handlers.count', { count }, count) : t('handlers.none')
-}
-
 function openCreate(source: AccessKey | null) {
   duplicated.value = source
   createVisible.value = true
-}
-
-function editHandlers(key: AccessKey) {
-  handlersKey.value = key
-  handlersVisible.value = true
 }
 
 async function onRotated(created: CreateAccessKeyResponse) {
@@ -124,26 +76,11 @@ async function onRotated(created: CreateAccessKeyResponse) {
   await loadKeys()
 }
 
-async function rotate(key: AccessKey) {
-  if (!window.confirm(t('handlers.rotateConfirm', { name: key.name }))) return
+async function revoke(key: AccessKey) {
+  if (!window.confirm(t('download.revokeConfirm', { name: key.name }))) return
 
-  rotating.value = key.id
   error.value = null
-  const { data } = await rotateAccessKeySecret({ path: { key: key.id } })
-  rotating.value = null
-
-  if (!data) {
-    error.value = t('handlers.rotateError')
-    return
-  }
-
-  await onRotated(data)
-}
-
-async function revoke(id: number, keyName: string) {
-  if (!window.confirm(t('download.revokeConfirm', { name: keyName }))) return
-
-  const { response } = await revokeAccessKey({ path: { key: id } })
+  const { response } = await revokeAccessKey({ path: { key: key.id } })
   if (!response?.ok) error.value = t('download.revokeError')
   await loadKeys()
 }
@@ -158,43 +95,29 @@ async function revoke(id: number, keyName: string) {
     <Button :label="t('download.createTab')" icon="pi pi-plus" @click="openCreate(null)" />
   </div>
 
-  <h3 class="configs-title">{{ t('download.manageTab') }}</h3>
-  <ul v-if="keys.length" class="keys">
-    <li v-for="key in keys" :key="key.id">
-      <div class="key-identity">
-        <strong>{{ key.name }}</strong>
-        <code>{{ key.client_id }}</code>
-        <small>
-          {{ key.last_used_at ? t('download.lastUsed', { date: d(new Date(key.last_used_at), 'short') }) : t('download.neverUsed') }}
-        </small>
-        <form v-if="editing === key.id" class="listen-form" @submit.prevent="saveListen(key.id!)">
-          <EventTypeInput v-model="editedListen" :aria-label="t('download.listenLabel')" size="small" list suggest-patterns autofocus />
-          <Button type="submit" :label="t('download.listenSave')" size="small" :loading="savingListen" />
-          <Button :label="t('download.listenCancel')" severity="secondary" text size="small" @click="editing = null" />
-        </form>
-        <small v-else class="key-listen">
-          <i class="pi pi-bell" aria-hidden="true" />
-          {{ t('download.listening', { events: listenLabel(key) }) }}
-          <Button :label="t('download.listenEdit')" link size="small" class="listen-edit" @click="editListen(key)" />
-        </small>
-        <small class="key-listen">
-          <i class="pi pi-cog" aria-hidden="true" />
-          {{ handlersLabel(key) }}
-          <Button :label="t('handlers.edit')" link size="small" class="listen-edit" @click="editHandlers(key)" />
-        </small>
-      </div>
-      <div class="key-actions">
-        <Button :label="t('download.duplicate')" icon="pi pi-copy" severity="secondary" text size="small" @click="openCreate(key)" />
-        <Button :label="t('handlers.rotate')" icon="pi pi-refresh" severity="secondary" text size="small" :loading="rotating === key.id" @click="rotate(key)" />
-        <Button :label="t('download.revokeButton')" icon="pi pi-ban" severity="danger" text size="small" @click="revoke(key.id!, key.name!)" />
-      </div>
-    </li>
-  </ul>
+  <div v-if="keys.length" class="configs">
+    <aside class="config-list">
+      <h3 class="configs-title">{{ t('download.manageTab') }}</h3>
+      <ul>
+        <li v-for="key in keys" :key="key.id" :class="{ selected: key.id === selected?.id }">
+          <button type="button" class="config-item" :aria-current="key.id === selected?.id" @click="selectedId = key.id">
+            <strong>{{ key.name }}</strong>
+            <small>{{ key.last_used_at ? t('download.lastUsed', { date: d(new Date(key.last_used_at), 'short') }) : t('download.neverUsed') }}</small>
+          </button>
+          <div class="config-actions">
+            <Button icon="pi pi-copy" severity="secondary" text rounded size="small" :aria-label="t('download.duplicate')" :title="t('download.duplicate')" @click="openCreate(key)" />
+            <Button icon="pi pi-ban" severity="danger" text rounded size="small" :aria-label="t('download.revokeButton')" :title="t('download.revokeButton')" @click="revoke(key)" />
+          </div>
+        </li>
+      </ul>
+    </aside>
+
+    <ConfigDetail v-if="selected" :access-key="selected" class="config-pane" @changed="loadKeys" @rotated="onRotated" />
+  </div>
   <EmptyState v-else icon="pi pi-key" :title="t('download.emptyTitle')" :hint="t('download.emptyHint')" compact />
 
   <ConfigCreateDialog v-model:visible="createVisible" :source="duplicated" @created="loadKeys" />
   <HandlerDialog v-model:visible="handlerVisible" />
-  <HandlersDialog v-model:visible="handlersVisible" :access-key="handlersKey" @saved="onRotated" />
   <ConfigSecretDialog v-model="rotated" />
 </template>
 
@@ -209,80 +132,87 @@ async function revoke(id: number, keyName: string) {
   gap: 0.5rem;
 }
 
+.configs {
+  display: grid;
+  grid-template-columns: minmax(13rem, 17rem) minmax(0, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 48rem) {
+  .configs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .configs-title {
-  margin: 1.25rem 0 0.25rem;
+  margin: 0 0 0.5rem;
   font-size: 0.9375rem;
   font-weight: 600;
 }
 
-.keys {
-  max-height: 20rem;
+.config-list ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
   list-style: none;
 }
 
-.keys li {
+.config-list li {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 0;
-  border-top: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius);
 }
 
-.keys li:first-child {
-  border-top: 0;
+.config-list li:hover {
+  background: var(--p-content-hover-background);
 }
 
-.key-identity {
-  flex-basis: 14rem;
+.config-list li.selected {
+  background: var(--p-highlight-background);
+  color: var(--p-highlight-color);
+}
+
+.config-item {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
   min-width: 0;
+  padding: 0.5rem 0.625rem;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.key-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.key-identity code {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 0.8125rem;
-}
-
-.key-identity small {
-  color: var(--p-text-muted-color);
-}
-
-.key-listen {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.375rem;
+.config-item strong {
   overflow-wrap: anywhere;
 }
 
-.key-listen .listen-edit {
-  padding: 0;
-  font-size: inherit;
+.config-item small {
+  color: var(--p-text-muted-color);
 }
 
-.listen-form {
+.config-actions {
+  flex: none;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-  margin-top: 0.25rem;
 }
 
-.listen-form :deep(input) {
-  flex: 1 1 10rem;
+.config-pane {
+  padding-left: 1.5rem;
+  border-left: 1px solid var(--p-content-border-color);
+}
+
+@media (max-width: 48rem) {
+  .config-pane {
+    padding: 1.25rem 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--p-content-border-color);
+  }
 }
 </style>

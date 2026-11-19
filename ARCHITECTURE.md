@@ -971,8 +971,11 @@ Second onglet de la page des appareils :
     n'est affiché qu'une fois ; la sous-modale ne se ferme pas tant que l'utilisateur ne l'a pas
     confirmé, et propose le fichier de configuration ou le **client préconfiguré**
     (`tower-<configuration>-<workspace>.pyz`) ;
-- en dessous, les configurations du workspace : leur dernière utilisation, leurs abonnements
-  (modifiables sur place) et un bouton de révocation.
+- en dessous, les configurations du workspace en deux colonnes. À gauche, leur liste : nom,
+  dernière utilisation, et des boutons **Dupliquer** et **Révoquer**. À droite, la configuration
+  choisie (la première par défaut) : son nom, son `client_id`, sa dernière utilisation, un
+  bouton **Nouveau secret**, ses abonnements et ses handlers, modifiables sur place, chacun
+  enregistré à part. Sur un écran étroit, le détail passe sous la liste.
 
 ## 6. Modèle de données
 
