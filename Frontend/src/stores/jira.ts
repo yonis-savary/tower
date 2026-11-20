@@ -34,7 +34,8 @@ export const useJiraStore = defineStore('jira', () => {
       .forEach((issue) => subtasks.set(issue.parent!, [...(subtasks.get(issue.parent!) ?? []), issue]))
     return subtasks
   })
-  const mine = computed(() => tracked.value.filter(({ assignee_id }) => assignee_id !== null && assignee_id === accountId.value))
+  const isMine = ({ assignee_id }: JiraIssue) => assignee_id !== null && assignee_id === accountId.value
+  const mine = computed(() => tracked.value.filter(isMine))
   // The last column of a board is its "done", whatever the category Jira gives its statuses
   const doneStatusesOf = computed(() => new Map(profiles.value.map(({ id, columns }) => [id, new Set(columns.at(-1)?.statuses ?? [])])))
   // An issue kept for its task is shown by no profile : any of them may say it is done
@@ -73,5 +74,5 @@ export const useJiraStore = defineStore('jira', () => {
     return !!response?.ok
   }
 
-  return { issues, profiles, accountId, failed, byId, tracked, subtasksOf, mine, isDone, load, transitionsOf, transition, createTask, discuss }
+  return { issues, profiles, accountId, failed, byId, tracked, subtasksOf, isMine, mine, isDone, load, transitionsOf, transition, createTask, discuss }
 })

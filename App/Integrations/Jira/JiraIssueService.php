@@ -91,7 +91,7 @@ class JiraIssueService
         null === $issue->parent ? $issue->copyFrom($current) : $issue->copyStatusFrom($current);
         $issue->save();
 
-        if ($issue->assignee_id !== $this->integrations->jiraAccountOf(Integration::find($issue->integration)))
+        if (null !== $issue->parent || $issue->assignee_id !== $this->integrations->jiraAccountOf(Integration::find($issue->integration)))
             return null;
 
         $this->integrationEvents->announce(array_map(

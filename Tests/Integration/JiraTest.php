@@ -31,6 +31,8 @@ class JiraTest extends CubeTestCase
     private array $assigned = [];
     /** @var list<string> */
     private array $secondBoard = [];
+    /** @var array<string,array> */
+    private array $subtaskAssignees = [];
     private ?array $refusal = null;
     private int $searchStatus = 200;
     private ?string $lastJql = null;
@@ -112,6 +114,14 @@ class JiraTest extends CubeTestCase
                 $key = $keys[$startAt] ?? null;
 
                 return Response::json(['startAt' => $startAt, 'total' => count($keys), 'issues' => $key ? [$this->issues[$key]] : []]);
+            },
+            '/rest/api/3/search/jql' => function (Request $request) {
+                preg_match_all('/\d+/', (string) $request->param('jql'), $ids);
+
+                return Response::json(['issues' => array_map(
+                    fn (string $id) => ['id' => $id, 'fields' => ['assignee' => $this->subtaskAssignees[$id] ?? null]],
+                    $ids[0],
+                ), 'isLast' => true]);
             },
             '/rest/agile/1.0/board/{int:board}' => fn (Request $request, int $board) => in_array($board, [self::BOARD, self::SECOND_BOARD], true)
                 ? Response::json(['id' => $board, 'name' => "Board {$board}"])
@@ -467,7 +477,9 @@ class JiraTest extends CubeTestCase
         $this->issue('100', 'PLAT-1', [
             'sprint' => ['id' => 7, 'name' => 'Sprint 7', 'state' => 'active'],
             'subtasks' => [$subtask('200', 'PLAT-10', '21'), $subtask('201', 'PLAT-11', '31')],
+            'assignee' => self::BOB,
         ]);
+        $this->subtaskAssignees = ['200' => self::ME];
         $this->assigned = ['PLAT-1'];
         $this->sync();
         $this->sync();
@@ -475,16 +487,17 @@ class JiraTest extends CubeTestCase
         $parent = $this->stored('PLAT-1');
         $issues = array_column($this->get('/api/jira/issues')->assertOk()->json(), null, 'key');
         $this->assertCount(3, $issues);
-        $this->assertSame([$parent->id, 'Sprint 7', 'Platform', 'In Progress', null], [$issues['PLAT-10']['parent'], $issues['PLAT-10']['sprint_name'], $issues['PLAT-10']['project'], $issues['PLAT-10']['status'], $issues['PLAT-10']['assignee_id']]);
-        $this->assertSame('done', $issues['PLAT-11']['status_category']);
+        $this->assertSame([$parent->id, 'Sprint 7', 'Platform', 'In Progress', 'me-123'], [$issues['PLAT-10']['parent'], $issues['PLAT-10']['sprint_name'], $issues['PLAT-10']['project'], $issues['PLAT-10']['status'], $issues['PLAT-10']['assignee_id']]);
+        $this->assertSame(['done', null], [$issues['PLAT-11']['status_category'], $issues['PLAT-11']['assignee_id']]);
         $this->assertNull($issues['PLAT-1']['parent']);
+        $this->assertSame(['PLAT-10'], array_column($this->get('/api/jira/issues?mine=1')->assertOk()->json(), 'key'));
         $this->assertSame([], $this->historyTypes());
 
-        // Read alone, a subtask has its own assignee and sprint : the transition only takes its status
-        $this->issue('200', 'PLAT-10', ['sprint' => ['id' => 9, 'name' => 'Other', 'state' => 'future']]);
+        // Read alone, a subtask has its own sprint : the transition only takes its status, and a subtask is never announced
+        $this->issue('200', 'PLAT-10', ['sprint' => ['id' => 9, 'name' => 'Other', 'state' => 'future'], 'assignee' => self::BOB]);
         $this->postJson("/api/jira/issues/{$issues['PLAT-10']['id']}/transitions", ['transition' => '22'])->assertOk();
         $moved = $this->stored('PLAT-10');
-        $this->assertSame(['In Review', 'Sprint 7', null], [$moved->status, $moved->sprint_name, $moved->assignee_id]);
+        $this->assertSame(['In Review', 'Sprint 7', 'me-123'], [$moved->status, $moved->sprint_name, $moved->assignee_id]);
         $this->assertSame([], $this->historyTypes());
 
         $task = $this->postJson("/api/jira/issues/{$issues['PLAT-11']['id']}/task")->assertCreated()->json();

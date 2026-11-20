@@ -95,7 +95,7 @@ class JiraIssueSync
                 continue;
             $doneStatuses = array_merge([], ...array_map(fn (int $profile) => $readings[$profile]->doneStatuses, $linked[$row->id] ?? []));
             // Only the issues of the account are announced : the others need no last reading
-            $left[] = [$row, $row->assignee_id === $account->accountId ? $provider->issue($row->issue_key) : null, $doneStatuses];
+            $left[] = [$row, null === $row->parent && $row->assignee_id === $account->accountId ? $provider->issue($row->issue_key) : null, $doneStatuses];
         }
         // A parent can only be deleted once its subtasks are
         usort($left, fn (array $a, array $b) => (null === $a[0]->parent) <=> (null === $b[0]->parent));
@@ -155,7 +155,7 @@ class JiraIssueSync
         $this->relink($changes['profiles'], $links);
 
         foreach ($changes['left'] as [$row, $final, $doneStatuses]) {
-            $wasMine = $row->assignee_id === $account;
+            $wasMine = null === $row->parent && $row->assignee_id === $account;
             if ($final)
                 $row->copyFrom($final);
 
@@ -189,7 +189,7 @@ class JiraIssueSync
                 JiraIssueProfile::fromArray(['jira_issue' => $issue, 'jira_profile' => $profile])->save();
     }
 
-    // Jira does not give the assignee of a subtask : it is shown under its parent, never announced
+    // A subtask is shown on the board, never announced
     private function storeSubtask(Integration $integration, ?JiraIssue $row, JiraIssueData $subtask, JiraIssue $parent): JiraIssue
     {
         $row ??= new JiraIssue(['workspace' => $integration->workspace, 'integration' => $integration->id]);

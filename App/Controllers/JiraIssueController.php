@@ -52,7 +52,7 @@ class JiraIssueController extends Controller
         ]);
     }
 
-    #[Endpoint('List Jira issues', 'The unfinished issues of the Jira profiles (`tracked`), whoever they are assigned to, with the ids of the profiles showing each one in `profiles`, and the issues kept because a task is linked to them. The subtasks of these issues, done or not, carry the id of their issue in `parent` and no assignee. A board often holds hundreds : narrow with `profile` (see list_jira_profiles), `mine` (assigned to the Jira account of the integration) and `status_category`', 'listJiraIssues')]
+    #[Endpoint('List Jira issues', 'The unfinished issues of the Jira profiles (`tracked`), whoever they are assigned to, with the ids of the profiles showing each one in `profiles`, and the issues kept because a task is linked to them. The subtasks of these issues, done or not, carry the id of their issue in `parent` and their own assignee. A board often holds hundreds : narrow with `profile` (see list_jira_profiles), `mine` (assigned to the Jira account of the integration) and `status_category`', 'listJiraIssues')]
     #[ResourceResponse(JiraIssueResource::class, isArray: true, description: 'The stored issues')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[McpTool('list_jira_issues')]

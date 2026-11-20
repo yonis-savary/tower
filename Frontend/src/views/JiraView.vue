@@ -50,8 +50,14 @@ const taskOf = computed(() => new Map(tasks.tasks.filter(({ jira_issue }) => jir
 const onlyMine = storedFlag(computed(() => `tower.jira.onlyMine.${workspace.current?.id}`))
 const showSubtasks = storedFlag(computed(() => `tower.jira.showSubtasks.${workspace.current?.id}`))
 
+function hasCard(issue: JiraIssue): boolean {
+  return !onlyMine.value || store.isMine(issue)
+}
+
+// Under someone else's issue, only my own subtasks are shown
 function subtasksOf(issue: JiraIssue): JiraIssue[] {
-  return showSubtasks.value ? store.subtasksOf.get(issue.id) ?? [] : []
+  const subtasks = showSubtasks.value ? store.subtasksOf.get(issue.id) ?? [] : []
+  return hasCard(issue) ? subtasks : subtasks.filter(store.isMine)
 }
 
 const selectedProfileId = ref<number | null>(null)
@@ -80,7 +86,8 @@ function selectProfile(id: number) {
   }
 }
 
-const boardIssues = computed(() => (onlyMine.value ? store.mine : store.tracked).filter((issue) => profile.value !== null && issue.profiles.includes(profile.value.id)))
+const boardIssues = computed(() => store.tracked.filter((issue) =>
+  profile.value !== null && issue.profiles.includes(profile.value.id) && (hasCard(issue) || subtasksOf(issue).length > 0)))
 
 // The hidden sprints are kept rather than the shown ones, so that a new sprint shows up
 const hiddenSprints = ref<string[]>([])
@@ -135,7 +142,7 @@ watch(() => workspace.current?.id, (id) => { if (id) void load() }, { immediate:
 function itemsOf(issues: JiraIssue[], inColumn: (issue: JiraIssue) => boolean): BoardItem[] {
   return issues.flatMap((issue) => {
     const subtasks = subtasksOf(issue).filter(inColumn)
-    const head: BoardItem[] = inColumn(issue) ? [{ kind: 'issue', issue }] : subtasks.length ? [{ kind: 'parent', issue }] : []
+    const head: BoardItem[] = inColumn(issue) && hasCard(issue) ? [{ kind: 'issue', issue }] : subtasks.length ? [{ kind: 'parent', issue }] : []
     return [...head, ...subtasks.map((subtask): BoardItem => ({ kind: 'subtask', issue: subtask }))]
   })
 }
@@ -146,7 +153,7 @@ function countOf(items: BoardItem[] | undefined): number {
 
 // The lists are copies : the drag library writes into them before Jira has answered
 watch(
-  () => [shownIssues.value, columns.value, showSubtasks.value, store.subtasksOf] as const,
+  () => [shownIssues.value, columns.value, showSubtasks.value, onlyMine.value, store.subtasksOf] as const,
   ([issues, columns]) => {
     // A status the board maps to no column : Jira hides these issues, Tower keeps them visible in a last list
     const mapped = new Set(columns.flatMap(({ statuses }) => statuses))

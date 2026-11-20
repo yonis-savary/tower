@@ -420,7 +420,7 @@ export const listJiraProfiles = <ThrowOnError extends boolean = false>(options?:
 /**
  * List Jira issues
  *
- * The unfinished issues of the Jira profiles (`tracked`), whoever they are assigned to, with the ids of the profiles showing each one in `profiles`, and the issues kept because a task is linked to them. The subtasks of these issues, done or not, carry the id of their issue in `parent` and no assignee. A board often holds hundreds : narrow with `profile` (see list_jira_profiles), `mine` (assigned to the Jira account of the integration) and `status_category`
+ * The unfinished issues of the Jira profiles (`tracked`), whoever they are assigned to, with the ids of the profiles showing each one in `profiles`, and the issues kept because a task is linked to them. The subtasks of these issues, done or not, carry the id of their issue in `parent` and their own assignee. A board often holds hundreds : narrow with `profile` (see list_jira_profiles), `mine` (assigned to the Jira account of the integration) and `status_category`
  */
 export const listJiraIssues = <ThrowOnError extends boolean = false>(options?: Options<ListJiraIssuesData, ThrowOnError>): RequestResult<ListJiraIssuesResponses, ListJiraIssuesErrors, ThrowOnError> => (options?.client ?? client).get<ListJiraIssuesResponses, ListJiraIssuesErrors, ThrowOnError>({ url: '/api/jira/issues', ...options });
 

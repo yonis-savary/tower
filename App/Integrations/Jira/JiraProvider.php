@@ -38,12 +38,37 @@ class JiraProvider
         while (true) {
             $page = $this->client->read($path, $parameters) ?? throw new \RuntimeException("Jira does not know the board {$board}");
             $values = $page['issues'] ?? [];
-            array_push($issues, ...array_map(fn (array $issue) => $this->toData($issue), $values));
+            array_push($issues, ...$values);
 
             $parameters['startAt'] += count($values);
             if ([] === $values || $parameters['startAt'] >= ($page['total'] ?? 0))
-                return $issues;
+                break;
         }
+
+        $assignees = $this->subtaskAssignees(array_merge([], ...array_map(fn (array $issue) => array_column($issue['fields']['subtasks'] ?? [], 'id'), $issues)));
+
+        return array_map(fn (array $issue) => $this->toData($issue, $assignees), $issues);
+    }
+
+    /**
+     * @param list<string> $ids
+     *
+     * @return array<string,?array> The assignee field of each subtask, by subtask id
+     */
+    private function subtaskAssignees(array $ids): array
+    {
+        $assignees = [];
+        // Issue ids come from Jira, they are numbers : nothing else may enter the query
+        $ids = array_filter(array_unique(array_map('strval', $ids)), fn (string $id) => ctype_digit($id));
+
+        foreach (array_chunk($ids, self::PAGE_LENGTH) as $chunk) {
+            $parameters = ['jql' => 'id IN ('.implode(', ', $chunk).')', 'fields' => 'assignee', 'maxResults' => self::PAGE_LENGTH];
+            $page = $this->client->read('/rest/api/3/search/jql', $parameters) ?? [];
+            foreach ($page['issues'] ?? [] as $issue)
+                $assignees[(string) $issue['id']] = $issue['fields']['assignee'] ?? null;
+        }
+
+        return $assignees;
     }
 
     public function myself(): JiraUser
@@ -161,7 +186,10 @@ class JiraProvider
         return [] === $messages ? $this->client->describeFailure($response, $path) : implode(' ', $messages);
     }
 
-    private function toData(array $issue): JiraIssueData
+    /**
+     * @param array<string,?array> $subtaskAssignees
+     */
+    private function toData(array $issue, array $subtaskAssignees = []): JiraIssueData
     {
         $fields = $issue['fields'] ?? [];
         $key = (string) $issue['key'];
@@ -183,9 +211,9 @@ class JiraProvider
                 state: (string) ($fields['sprint']['state'] ?? ''),
             ) : null,
             assignee: isset($fields['assignee']['accountId']) ? $this->toUser($fields['assignee']) : null,
-            // Jira gives a subtask without its project, sprint nor assignee : it is in the sprint of its parent
+            // Jira gives a subtask without its project, sprint nor assignee : it is in the sprint of its parent, its assignee is read apart
             subtasks: array_map(
-                fn (array $subtask) => $this->toData([...$subtask, 'fields' => [...$subtask['fields'] ?? [], 'project' => $fields['project'] ?? null, 'sprint' => $fields['sprint'] ?? null]]),
+                fn (array $subtask) => $this->toData([...$subtask, 'fields' => [...$subtask['fields'] ?? [], 'project' => $fields['project'] ?? null, 'sprint' => $fields['sprint'] ?? null, 'assignee' => $subtaskAssignees[(string) $subtask['id']] ?? null]]),
                 $fields['subtasks'] ?? [],
             ),
         );
