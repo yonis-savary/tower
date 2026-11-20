@@ -86,7 +86,7 @@ machinectl shell me@
     </li>
     <li>
       It reconnects on its own when the network or Tower goes down, and only stops when you disconnect it from the Devices
-      dialog, or when Tower refuses its configuration (revoked, for instance): it then exits with code <code>1</code>, and
+      page, or when Tower refuses its configuration (revoked, for instance): it then exits with code <code>1</code>, and
       the service leaves it stopped.
     </li>
   </ul>

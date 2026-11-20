@@ -100,7 +100,7 @@ const chained = `
   <h3>Choosing the events received</h3>
   <p>
     A configuration only sends its devices the events it <strong>listens</strong> to: up to 20 patterns, set in the Devices
-    dialog, <code>*</code> when created. <code>*</code> matches any sequence of characters, dots included:
+    page, <code>*</code> when created. <code>*</code> matches any sequence of characters, dots included:
     <code>task.*</code>, <code>pr.pipeline.*</code>, <code>jira.issue.status_changed</code>. An empty list receives nothing.
     This filter applies on Tower's side: an event not listened to does not even show in the connector's console.
   </p>

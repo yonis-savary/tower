@@ -215,7 +215,7 @@ const chained = `
     </li>
     <li>
       Une clé inconnue dans l'objet (<code>reponse</code> par exemple) rend le fichier invalide : la version précédente
-      est gardée et le connecteur l'affiche. Il faut un connecteur à jour, téléchargé à nouveau depuis la modale
+      est gardée et le connecteur l'affiche. Il faut un connecteur à jour, téléchargé à nouveau depuis la page
       Appareils.
     </li>
     <li>

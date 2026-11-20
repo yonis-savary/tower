@@ -85,7 +85,7 @@ machinectl shell moi@
       action qui demande root, autorise cette seule commande (voir plus bas).
     </li>
     <li>
-      Il se reconnecte seul quand le réseau ou Tower tombe, et ne s'arrête que si tu le déconnectes depuis la modale
+      Il se reconnecte seul quand le réseau ou Tower tombe, et ne s'arrête que si tu le déconnectes depuis la page
       Appareils, ou si Tower refuse sa configuration (révoquée par exemple) : il sort alors avec le code <code>1</code>, et
       le service le laisse arrêté.
     </li>

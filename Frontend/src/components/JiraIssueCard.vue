@@ -3,10 +3,9 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import JiraAssignee from './JiraAssignee.vue'
 import PullRequestButton from './PullRequestButton.vue'
-import JiraStatusButton from './JiraStatusButton.vue'
 import type { JiraIssue } from '../stores/jira'
 
-const props = defineProps<{ issue: JiraIssue; subtasks: JiraIssue[]; taskId: number | null; creatingTask: boolean; discussing: boolean; showAssignee: boolean }>()
+const props = defineProps<{ issue: JiraIssue; taskId: number | null; creatingTask: boolean; discussing: boolean; showAssignee: boolean }>()
 defineEmits<{ createTask: []; openTask: []; discuss: [] }>()
 
 const { t } = useI18n()
@@ -55,14 +54,6 @@ async function copyKey() {
         <JiraAssignee v-if="showAssignee" :name="issue.assignee_name" :avatar="issue.assignee_avatar" />
       </span>
     </footer>
-
-    <ul v-if="subtasks.length" class="subtasks" :aria-label="t('jira.subtasks')">
-      <li v-for="subtask in subtasks" :key="subtask.id" class="subtask" :title="`${subtask.key} ${subtask.summary}`">
-        <a :href="subtask.url" target="_blank" rel="noopener noreferrer" class="issue-key">{{ subtask.key }}</a>
-        <span class="subtask-summary">{{ subtask.summary }}</span>
-        <JiraStatusButton :issue="subtask" />
-      </li>
-    </ul>
   </article>
 </template>
 
@@ -102,37 +93,6 @@ async function copyKey() {
   font-size: 0.9em;
   overflow-wrap: anywhere;
   font-weight: 500;
-}
-
-.subtasks {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin: 0.25rem 0 0;
-  padding: 0.375rem 0 0;
-  border-top: 1px solid var(--p-content-border-color);
-  list-style: none;
-}
-
-.subtask {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  font-size: 0.8125rem;
-}
-
-.subtask .issue-key {
-  flex: none;
-  font-size: 0.8125rem;
-}
-
-.subtask-summary {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .issue-actions {
