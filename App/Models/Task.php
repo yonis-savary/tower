@@ -22,6 +22,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $status
  * @property int $position
  * @property int $jira_issue
+ * @property string $link
  * @property Workspace $_workspace
  * @property Sprint $_sprint
  * @property JiraIssue $_jira_issue
@@ -60,7 +61,8 @@ class Task extends Model
             'description' => (new ModelField('description'))->type('STRING')->notNull()->hasDefault(false),
             'status' => (new ModelField('status'))->type('STRING')->notNull()->hasDefault(false),
             'position' => (new ModelField('position'))->type('INTEGER')->notNull()->hasDefault(false),
-            'jira_issue' => (new ModelField('jira_issue'))->type('INTEGER')->nullable()->default(NULL)->references(JiraIssue::class,'id')
+            'jira_issue' => (new ModelField('jira_issue'))->type('INTEGER')->nullable()->default(NULL)->references(JiraIssue::class,'id'),
+            'link' => (new ModelField('link'))->type('STRING')->nullable()->default(NULL)
         ];
     }
 

@@ -354,6 +354,7 @@ export default {
     dialogEdit: 'Tâche',
     titleLabel: 'Titre',
     descriptionLabel: 'Description',
+    linkLabel: 'Lien (facultatif)',
     statusLabel: 'Statut',
     sprintLabel: 'Sprint',
     links: {
@@ -370,6 +371,7 @@ export default {
     save: 'Enregistrer',
     historyTitle: 'Historique de la tâche',
     openIssue: 'Ouvrir {key} dans Jira',
+    openLink: 'Ouvrir le lien',
     issueStatus: 'Statut de {key} dans Jira',
     status: {
       todo: 'À faire',

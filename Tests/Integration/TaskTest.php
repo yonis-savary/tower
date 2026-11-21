@@ -168,6 +168,22 @@ class TaskTest extends CubeTestCase
         $this->assertSame(['todo', 'in_progress'], [$payload['from'], $payload['to']]);
     }
 
+    public function testATaskKeepsASingleLink()
+    {
+        $this->register();
+        $task = $this->postJson('/api/tasks', ['title' => 'Spec', 'link' => 'https://example.com/spec'])->assertCreated()->json();
+        $this->assertSame('https://example.com/spec', $task['link']);
+        $this->assertNull($this->task('No link')['link']);
+
+        // Left out, the link is kept; null removes it
+        $this->assertSame('https://example.com/spec', $this->putJson("/api/tasks/{$task['id']}", ['title' => 'Spec v2'])->assertOk()->json()['link']);
+        $this->assertSame('https://example.com/v3', $this->putJson("/api/tasks/{$task['id']}", ['title' => 'Spec', 'link' => 'https://example.com/v3'])->assertOk()->json()['link']);
+        $this->assertNull($this->putJson("/api/tasks/{$task['id']}", ['title' => 'Spec', 'link' => null])->assertOk()->json()['link']);
+
+        $this->postJson('/api/tasks', ['title' => 'Bad', 'link' => 'javascript:alert(1)'])->assertUnprocessableContent();
+        $this->putJson("/api/tasks/{$task['id']}", ['title' => 'Bad', 'link' => 'not an address'])->assertUnprocessableContent();
+    }
+
     public function testInvalidValuesAreRefused()
     {
         $this->register();

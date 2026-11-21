@@ -1976,6 +1976,7 @@ export type CreateTaskFromJiraIssueResponses = {
         status: string;
         position: number;
         jira_issue: number | null;
+        link: string | null;
     };
 };
 
@@ -2762,6 +2763,7 @@ export type ListTasksResponses = {
         status: string;
         position: number;
         jira_issue: number | null;
+        link: string | null;
     }>;
 };
 
@@ -2771,6 +2773,7 @@ export type CreateTaskData = {
     body: {
         title: string;
         description?: string;
+        link?: string | null;
         sprint?: number | null;
     };
     path?: never;
@@ -2807,6 +2810,7 @@ export type CreateTaskResponses = {
         status: string;
         position: number;
         jira_issue: number | null;
+        link: string | null;
     };
 };
 
@@ -2816,6 +2820,7 @@ export type UpdateTaskData = {
     body: {
         title: string;
         description?: string;
+        link?: string | null;
     };
     path: {
         task: number;
@@ -2857,6 +2862,7 @@ export type UpdateTaskResponses = {
         status: string;
         position: number;
         jira_issue: number | null;
+        link: string | null;
     };
 };
 
@@ -2910,6 +2916,7 @@ export type MoveTaskResponses = {
         status: string;
         position: number;
         jira_issue: number | null;
+        link: string | null;
     };
 };
 

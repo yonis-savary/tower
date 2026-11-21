@@ -39,24 +39,39 @@ async function discuss() {
     </div>
     <small v-if="sprintName" class="task-card-sprint">{{ sprintName }}</small>
 
-    <footer v-if="issue" class="task-card-footer">
-      <span class="task-card-issue">
+    <footer v-if="issue || task.link" class="task-card-footer">
+      <span v-if="issue" class="task-card-issue">
         <a :href="issue.url" target="_blank" rel="noopener noreferrer" :title="t('jira.openInJira')" @click.stop @keydown.enter.stop>{{ issue.key }}</a>
         <small :title="t('tasks.issueStatus', { key: issue.key })">({{ issue.status }})</small>
       </span>
       <span class="task-card-actions">
-        <PullRequestButton :issue-key="issue.key" />
-        <button
-          type="button"
+        <a
+          v-if="task.link"
+          :href="task.link"
+          target="_blank"
+          rel="noopener noreferrer"
           class="card-action"
-          :aria-label="t('jira.discuss')"
-          :title="t('jira.discuss')"
-          :disabled="discussing"
-          @click.stop="discuss"
+          :aria-label="t('tasks.openLink')"
+          :title="task.link"
+          @click.stop
           @keydown.enter.stop
         >
-          <i :class="['pi', discussing ? 'pi-spin pi-spinner' : 'pi-comments']" aria-hidden="true" />
-        </button>
+          <i class="pi pi-external-link" aria-hidden="true" />
+        </a>
+        <template v-if="issue">
+          <PullRequestButton :issue-key="issue.key" />
+          <button
+            type="button"
+            class="card-action"
+            :aria-label="t('jira.discuss')"
+            :title="t('jira.discuss')"
+            :disabled="discussing"
+            @click.stop="discuss"
+            @keydown.enter.stop
+          >
+            <i :class="['pi', discussing ? 'pi-spin pi-spinner' : 'pi-comments']" aria-hidden="true" />
+          </button>
+        </template>
       </span>
     </footer>
   </div>

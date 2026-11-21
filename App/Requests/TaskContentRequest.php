@@ -2,6 +2,7 @@
 
 namespace App\Requests;
 
+use App\Requests\Rules\WebAddress;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Rules\Param;
 
@@ -20,6 +21,8 @@ class TaskContentRequest extends Request
                 fn ($description) => mb_strlen((string) $description) <= self::MAX_DESCRIPTION,
                 '{key} is too long'
             )->optional(),
+            // Left out, an update keeps the current link; null removes it
+            'link' => WebAddress::param(nullable: true)->optional(),
         ];
     }
 }

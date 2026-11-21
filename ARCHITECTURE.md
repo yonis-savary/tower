@@ -118,6 +118,7 @@ tâche, et c'est l'utilisateur qui déplace la tâche.
 | `position`     | ordre dans sa liste ; l'ordre tient lieu de priorité    |
 | `color`        | pastille de couleur (pas encore utilisée)               |
 | `jira_issue`   | ticket Jira d'origine, s'il y en a un (voir § Jira)     |
+| `link`         | lien unique http(s), facultatif, ouvert depuis la carte |
 | `done_at`      | renseigné quand la tâche passe à `done`, vidé sinon     |
 | `created_at`, `updated_at` |                                             |
 

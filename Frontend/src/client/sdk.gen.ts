@@ -658,14 +658,14 @@ export const triggerScheduledEvent = <ThrowOnError extends boolean = false>(opti
 /**
  * List tasks
  *
- * Every task of the current workspace, in their order
+ * Every task of the current workspace, in their order, with their link when they have one
  */
 export const listTasks = <ThrowOnError extends boolean = false>(options?: Options<ListTasksData, ThrowOnError>): RequestResult<ListTasksResponses, ListTasksErrors, ThrowOnError> => (options?.client ?? client).get<ListTasksResponses, ListTasksErrors, ThrowOnError>({ url: '/api/tasks', ...options });
 
 /**
  * Create task
  *
- * Adds a task at the end of the backlog or of a sprint
+ * Adds a task at the end of the backlog or of a sprint, optionally with a single http(s) link to a page it is about
  */
 export const createTask = <ThrowOnError extends boolean = false>(options: Options<CreateTaskData, ThrowOnError>): RequestResult<CreateTaskResponses, CreateTaskErrors, ThrowOnError> => (options.client ?? client).post<CreateTaskResponses, CreateTaskErrors, ThrowOnError>({
     url: '/api/tasks',
@@ -679,7 +679,7 @@ export const createTask = <ThrowOnError extends boolean = false>(options: Option
 /**
  * Update task
  *
- * Changes the title and the description of a task
+ * Changes the title, the description and the link of a task. A left out link is kept, a null link is removed
  */
 export const updateTask = <ThrowOnError extends boolean = false>(options: Options<UpdateTaskData, ThrowOnError>): RequestResult<UpdateTaskResponses, UpdateTaskErrors, ThrowOnError> => (options.client ?? client).put<UpdateTaskResponses, UpdateTaskErrors, ThrowOnError>({
     url: '/api/tasks/{task}',

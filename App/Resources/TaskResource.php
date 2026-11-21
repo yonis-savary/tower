@@ -10,7 +10,7 @@ use Cube\Data\OpenAPI\Attributes\Nullable;
 /**
  * @extends ModelResource<Task>
  */
-#[Nullable(['sprint', 'jira_issue'])]
+#[Nullable(['sprint', 'jira_issue', 'link'])]
 class TaskResource extends ModelResource
 {
     public static function getModelClass(): string
@@ -31,6 +31,7 @@ class TaskResource extends ModelResource
             'status' => $model->status,
             'position' => $model->position,
             'jira_issue' => $model->jira_issue,
+            'link' => $model->link,
         ];
     }
 }

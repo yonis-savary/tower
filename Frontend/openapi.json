@@ -4422,6 +4422,12 @@
                                                 "integer",
                                                 "null"
                                             ]
+                                        },
+                                        "link": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -4431,7 +4437,8 @@
                                         "description",
                                         "status",
                                         "position",
-                                        "jira_issue"
+                                        "jira_issue",
+                                        "link"
                                     ]
                                 },
                                 "example": {
@@ -4441,7 +4448,8 @@
                                     "description": "est fugiat neque",
                                     "status": "aliquid ullam nesciunt",
                                     "position": 719,
-                                    "jira_issue": 452
+                                    "jira_issue": 452,
+                                    "link": "odit ut reprehenderit"
                                 }
                             }
                         }
@@ -6202,7 +6210,7 @@
         "\/api\/tasks": {
             "get": {
                 "summary": "List tasks",
-                "description": "Every task of the current workspace, in their order",
+                "description": "Every task of the current workspace, in their order, with their link when they have one",
                 "operationId": "listTasks",
                 "responses": {
                     "200": {
@@ -6240,6 +6248,12 @@
                                                     "integer",
                                                     "null"
                                                 ]
+                                            },
+                                            "link": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
                                             }
                                         },
                                         "required": [
@@ -6249,7 +6263,8 @@
                                             "description",
                                             "status",
                                             "position",
-                                            "jira_issue"
+                                            "jira_issue",
+                                            "link"
                                         ]
                                     }
                                 },
@@ -6261,7 +6276,8 @@
                                         "description": "est fugiat neque",
                                         "status": "aliquid ullam nesciunt",
                                         "position": 719,
-                                        "jira_issue": 452
+                                        "jira_issue": 452,
+                                        "link": "odit ut reprehenderit"
                                     }
                                 ]
                             }
@@ -6286,7 +6302,7 @@
             },
             "post": {
                 "summary": "Create task",
-                "description": "Adds a task at the end of the backlog or of a sprint",
+                "description": "Adds a task at the end of the backlog or of a sprint, optionally with a single http(s) link to a page it is about",
                 "operationId": "createTask",
                 "requestBody": {
                     "required": true,
@@ -6300,6 +6316,12 @@
                                     },
                                     "description": {
                                         "type": "string"
+                                    },
+                                    "link": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
                                     },
                                     "sprint": {
                                         "type": [
@@ -6364,6 +6386,12 @@
                                                 "integer",
                                                 "null"
                                             ]
+                                        },
+                                        "link": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -6373,7 +6401,8 @@
                                         "description",
                                         "status",
                                         "position",
-                                        "jira_issue"
+                                        "jira_issue",
+                                        "link"
                                     ]
                                 },
                                 "example": {
@@ -6383,7 +6412,8 @@
                                     "description": "est fugiat neque",
                                     "status": "aliquid ullam nesciunt",
                                     "position": 719,
-                                    "jira_issue": 452
+                                    "jira_issue": 452,
+                                    "link": "odit ut reprehenderit"
                                 }
                             }
                         }
@@ -6409,7 +6439,7 @@
         "\/api\/tasks\/{task}": {
             "put": {
                 "summary": "Update task",
-                "description": "Changes the title and the description of a task",
+                "description": "Changes the title, the description and the link of a task. A left out link is kept, a null link is removed",
                 "operationId": "updateTask",
                 "parameters": [
                     {
@@ -6433,6 +6463,12 @@
                                     },
                                     "description": {
                                         "type": "string"
+                                    },
+                                    "link": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
                                     }
                                 },
                                 "required": [
@@ -6486,6 +6522,12 @@
                                                 "integer",
                                                 "null"
                                             ]
+                                        },
+                                        "link": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -6495,7 +6537,8 @@
                                         "description",
                                         "status",
                                         "position",
-                                        "jira_issue"
+                                        "jira_issue",
+                                        "link"
                                     ]
                                 },
                                 "example": {
@@ -6505,7 +6548,8 @@
                                     "description": "est fugiat neque",
                                     "status": "aliquid ullam nesciunt",
                                     "position": 719,
-                                    "jira_issue": 452
+                                    "jira_issue": 452,
+                                    "link": "odit ut reprehenderit"
                                 }
                             }
                         }
@@ -6646,6 +6690,12 @@
                                                 "integer",
                                                 "null"
                                             ]
+                                        },
+                                        "link": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -6655,7 +6705,8 @@
                                         "description",
                                         "status",
                                         "position",
-                                        "jira_issue"
+                                        "jira_issue",
+                                        "link"
                                     ]
                                 },
                                 "example": {
@@ -6665,7 +6716,8 @@
                                     "description": "est fugiat neque",
                                     "status": "aliquid ullam nesciunt",
                                     "position": 719,
-                                    "jira_issue": 452
+                                    "jira_issue": 452,
+                                    "link": "odit ut reprehenderit"
                                 }
                             }
                         }

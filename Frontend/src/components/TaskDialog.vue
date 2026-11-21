@@ -23,7 +23,7 @@ const jira = useJiraStore()
 
 const issue = computed(() => (props.task?.jira_issue ? jira.byId.get(props.task.jira_issue) : undefined))
 
-const form = ref({ title: '', description: '', status: 'todo' as TaskStatus, sprint: null as number | null })
+const form = ref({ title: '', description: '', link: '', status: 'todo' as TaskStatus, sprint: null as number | null })
 const history = ref<ListTaskHistoryResponse>([])
 const saving = ref(false)
 const error = ref<string | null>(null)
@@ -45,6 +45,7 @@ watch(visible, async (shown) => {
   form.value = {
     title: props.task?.title ?? '',
     description: props.task?.description ?? '',
+    link: props.task?.link ?? '',
     status: props.task?.status ?? 'todo',
     sprint: props.task ? props.task.sprint : props.sprint,
   }
@@ -69,8 +70,8 @@ function lineLabel(type: string): string {
 }
 
 async function persist(): Promise<boolean> {
-  const { title, description, status, sprint } = form.value
-  const body = { title: title.trim(), description }
+  const { title, description, link, status, sprint } = form.value
+  const body = { title: title.trim(), description, link: link.trim() || null }
 
   if (!props.task) {
     const { response, data } = await createTask({ body: { ...body, sprint } })
@@ -113,6 +114,10 @@ async function save() {
       <div class="field">
         <label for="task-description">{{ t('tasks.descriptionLabel') }}</label>
         <Textarea id="task-description" v-model="form.description" rows="5" fluid />
+      </div>
+      <div class="field">
+        <label for="task-link">{{ t('tasks.linkLabel') }}</label>
+        <InputText id="task-link" v-model="form.link" type="url" maxlength="2000" fluid />
       </div>
       <div class="field-row">
         <div class="field">

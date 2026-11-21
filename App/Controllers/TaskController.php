@@ -56,7 +56,7 @@ class TaskController extends Controller
         ]);
     }
 
-    #[Endpoint('List tasks', 'Every task of the current workspace, in their order', 'listTasks')]
+    #[Endpoint('List tasks', 'Every task of the current workspace, in their order, with their link when they have one', 'listTasks')]
     #[ResourceResponse(TaskResource::class, isArray: true, description: 'The tasks')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[McpTool('list_tasks')]
@@ -65,7 +65,7 @@ class TaskController extends Controller
         return Response::json(TaskResource::of($this->tasks->listTasks($this->workspace())));
     }
 
-    #[Endpoint('Create task', 'Adds a task at the end of the backlog or of a sprint', 'createTask')]
+    #[Endpoint('Create task', 'Adds a task at the end of the backlog or of a sprint, optionally with a single http(s) link to a page it is about', 'createTask')]
     #[ResourceResponse(TaskResource::class, responseCode: StatusCode::CREATED, description: 'The task')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'This sprint cannot receive tasks'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'Unknown or closed sprint, or an invalid field')]
@@ -78,6 +78,7 @@ class TaskController extends Controller
             $request->validated('title'),
             $request->validated('description') ?? '',
             $request->validated('sprint'),
+            link: $request->validated('link'),
         );
 
         return $task
@@ -85,7 +86,7 @@ class TaskController extends Controller
             : $this->invalidMove();
     }
 
-    #[Endpoint('Update task', 'Changes the title and the description of a task', 'updateTask')]
+    #[Endpoint('Update task', 'Changes the title, the description and the link of a task. A left out link is kept, a null link is removed', 'updateTask')]
     #[ResourceResponse(TaskResource::class, description: 'The task')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Task not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such task in the current workspace')]
@@ -96,7 +97,8 @@ class TaskController extends Controller
         if (!$found)
             return $this->taskNotFound();
 
-        $this->tasks->updateTask($found, $this->authentication->userId(), $request->validated('title'), $request->validated('description') ?? '');
+        $link = array_key_exists('link', $request->validated()) ? $request->validated('link') : $found->link;
+        $this->tasks->updateTask($found, $this->authentication->userId(), $request->validated('title'), $request->validated('description') ?? '', $link);
 
         return Response::json(TaskResource::of($found));
     }
