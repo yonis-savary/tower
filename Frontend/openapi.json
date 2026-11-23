@@ -2491,7 +2491,7 @@
             },
             "delete": {
                 "summary": "Delete documentation page",
-                "description": "Deletes a page with all its sub-pages and their versions. Only the member who created the page can delete it",
+                "description": "Deletes a page with all its sub-pages and their versions. Only the member who created the page, or the author of the workspace, can delete it",
                 "operationId": "deleteDocPage",
                 "parameters": [
                     {
@@ -2520,7 +2520,7 @@
                         }
                     },
                     "403": {
-                        "description": "The current user did not create the page",
+                        "description": "The current user neither created the page nor the workspace",
                         "content": {
                             "application\/json": {
                                 "schema": {
@@ -9943,8 +9943,8 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 321,
-                                    "name": "consequatur labore delectus",
+                                    "id": 848,
+                                    "name": "sit repellat beatae",
                                     "accent_color": "#7436c4",
                                     "sections": [
                                         "jira",
@@ -9955,10 +9955,10 @@
                                         "tasks",
                                         "merge_requests"
                                     ],
-                                    "mcp_access": "sequi qui consequatur",
-                                    "author": 301,
-                                    "icon": "\/api\/workspaces\/321\/icon?v=aut consequatur qui",
-                                    "favicon_url": "\/api\/workspaces\/321\/icon?v=aut consequatur qui"
+                                    "mcp_access": "libero voluptatibus sit",
+                                    "author": 341,
+                                    "icon": "\/api\/workspaces\/848\/icon?v=consequatur qui quia",
+                                    "favicon_url": "\/api\/workspaces\/848\/icon?v=consequatur qui quia"
                                 }
                             }
                         }

@@ -246,7 +246,7 @@ class DocumentationTest extends CubeTestCase
         $this->assertSame(['doc.page.deleted', 2], [$line->type, json_decode($line->details, true)['sub_pages']]);
     }
 
-    public function testOnlyTheAuthorDeletesAPage()
+    public function testAnotherMemberCannotDeleteAPage()
     {
         $this->register('bob@example.com');
         $this->logOut();
@@ -278,5 +278,25 @@ class DocumentationTest extends CubeTestCase
         $this->assertSame([], DocPage::select()->where('workspace', $workspace)->fetch());
         $this->assertNull(DocImage::find($image['id']));
         $this->assertFalse(Storage::getInstance()->child('DocImages')->isFile($file));
+    }
+
+    public function testTheAuthorOfTheWorkspaceDeletesAnyPage()
+    {
+        $this->register('bob@example.com');
+        $this->logOut();
+        $this->register();
+        $workspace = SelectedWorkspace::get();
+        $this->postJson("/api/workspaces/{$workspace}/members", ['email' => 'bob@example.com'])->assertOk();
+        $this->logOut();
+
+        $this->postJson('/api/auth/login', ['email' => 'bob@example.com', 'password' => 'correct horse battery'])->assertOk();
+        $this->putJson('/api/workspaces/current', ['workspace' => $workspace])->assertOk();
+        $page = $this->page('Written by Bob');
+        $this->logOut();
+
+        $this->postJson('/api/auth/login', ['email' => 'alice@example.com', 'password' => 'correct horse battery'])->assertOk();
+        $this->putJson('/api/workspaces/current', ['workspace' => $workspace])->assertOk();
+        $this->delete("/api/docs/pages/{$page['id']}")->assertNoContent();
+        $this->assertSame([], $this->titles());
     }
 }

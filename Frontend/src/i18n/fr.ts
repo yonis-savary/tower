@@ -736,7 +736,7 @@ export default {
     delete: 'Supprimer',
     deleteConfirm: 'Supprimer définitivement la page « {title} » et ses versions ?',
     deleteConfirmBranch: 'Supprimer définitivement la page « {title} », sa sous-page (même écrite par un autre membre) et leurs versions ? | Supprimer définitivement la page « {title} », ses {count} sous-pages (y compris celles écrites par d’autres membres) et leurs versions ?',
-    deleteError: "La page n'a pas pu être supprimée : seul le membre qui l'a créée peut le faire.",
+    deleteError: "La page n'a pas pu être supprimée : seuls le membre qui l'a créée et l'auteur du workspace peuvent le faire.",
     noMatch: 'Aucune page ne correspond.',
     emptyTitle: 'Aucune page pour le moment',
     emptyHint: 'La documentation du workspace : des pages en Markdown, avec du code coloré, des diagrammes Mermaid et des images. Les agents IA peuvent aussi la lire et la modifier.',

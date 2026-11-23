@@ -4,6 +4,7 @@ namespace App\Documentation;
 
 use App\Models\DocPage;
 use App\Models\DocPageVersion;
+use App\Models\Workspace;
 use App\Services\HistoryActor;
 use App\Services\HistoryConfiguration;
 use App\Services\HistoryService;
@@ -145,8 +146,8 @@ class DocumentationService
      */
     public function deletePage(DocPage $page, int $user): ?DocumentationRefusal
     {
-        if ($page->created_by !== $user)
-            return DocumentationRefusal::notAuthor($page->id);
+        if (!$this->canDelete($page, $user))
+            return DocumentationRefusal::cannotDelete($page->id);
 
         $branch = $this->branchOf($page);
         $failure = Database::getInstance()->transaction(fn () => $this->deletePages($branch));
@@ -156,6 +157,14 @@ class DocumentationService
         $this->history->log($page->workspace, 'doc.page.deleted', ['title' => $page->title, 'page' => $page->id, 'sub_pages' => count($branch) - 1], user: $user);
 
         return null;
+    }
+
+    /**
+     * The member who created the page, or the author of its workspace.
+     */
+    public function canDelete(DocPage $page, int $user): bool
+    {
+        return $page->created_by === $user || Workspace::find($page->workspace)->author === $user;
     }
 
     /**

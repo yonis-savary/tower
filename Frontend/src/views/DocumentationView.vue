@@ -70,7 +70,8 @@ function open(id: number | null) {
 }
 
 const extraFilters = computed(() => (tag.value !== null ? 1 : 0) + (includeArchived.value ? 1 : 0))
-const isAuthor = computed(() => current.value !== null && current.value.created_by === auth.user?.id)
+// Same rule as the API : the member who created the page, or the author of the workspace
+const canDelete = computed(() => current.value !== null && auth.user !== null && [current.value.created_by, workspace.current?.author].includes(auth.user.id))
 const filtered = computed(() => search.value.trim() !== '' || tag.value !== null)
 const knownTags = computed(() => [...new Set(pages.value.flatMap(({ tags }) => tags))].sort())
 
@@ -281,7 +282,7 @@ onBeforeUnmount(() => {
               :loading="archiving"
               @click="toggleArchived"
             />
-            <Button v-if="isAuthor" :label="t('documentation.delete')" icon="pi pi-trash" size="small" severity="danger" text :loading="deleting" @click="remove" />
+            <Button v-if="canDelete" :label="t('documentation.delete')" icon="pi pi-trash" size="small" severity="danger" text :loading="deleting" @click="remove" />
           </div>
         </header>
 

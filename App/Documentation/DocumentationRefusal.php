@@ -31,9 +31,9 @@ final class DocumentationRefusal
         return new self(StatusCode::UNPROCESSABLE_CONTENT, "The content would weigh {$bytes} bytes, ".DocumentationService::MAX_CONTENT_BYTES.' at most');
     }
 
-    public static function notAuthor(int $page): self
+    public static function cannotDelete(int $page): self
     {
-        return new self(StatusCode::FORBIDDEN, "Only the member who created page {$page} can delete it");
+        return new self(StatusCode::FORBIDDEN, "Only the member who created page {$page}, or the author of the workspace, can delete it");
     }
 
     public static function notAnImage(): self

@@ -252,7 +252,7 @@ export const createDocPage = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Delete documentation page
  *
- * Deletes a page with all its sub-pages and their versions. Only the member who created the page can delete it
+ * Deletes a page with all its sub-pages and their versions. Only the member who created the page, or the author of the workspace, can delete it
  */
 export const deleteDocPage = <ThrowOnError extends boolean = false>(options: Options<DeleteDocPageData, ThrowOnError>): RequestResult<DeleteDocPageResponses, DeleteDocPageErrors, ThrowOnError> => (options.client ?? client).delete<DeleteDocPageResponses, DeleteDocPageErrors, ThrowOnError>({ url: '/api/docs/pages/{page}', ...options });
 

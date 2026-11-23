@@ -738,7 +738,7 @@ export default {
     delete: 'Delete',
     deleteConfirm: 'Delete the page “{title}” and its versions for good?',
     deleteConfirmBranch: 'Delete the page “{title}”, its sub-page (even if written by another member) and their versions for good? | Delete the page “{title}”, its {count} sub-pages (including those written by other members) and their versions for good?',
-    deleteError: 'The page could not be deleted: only the member who created it can.',
+    deleteError: 'The page could not be deleted: only the member who created it and the author of the workspace can.',
     noMatch: 'No page matches.',
     emptyTitle: 'No page yet',
     emptyHint: 'The documentation of the workspace : Markdown pages, with highlighted code, Mermaid diagrams and images. AI agents can read and change it too.',

@@ -980,7 +980,7 @@ export type DeleteDocPageErrors = {
         error?: string;
     };
     /**
-     * The current user did not create the page
+     * The current user neither created the page nor the workspace
      */
     403: {
         error?: string;

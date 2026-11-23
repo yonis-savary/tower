@@ -129,10 +129,10 @@ class DocumentationController extends Controller
         return $this->answer($updated);
     }
 
-    #[Endpoint('Delete documentation page', 'Deletes a page with all its sub-pages and their versions. Only the member who created the page can delete it', 'deleteDocPage')]
+    #[Endpoint('Delete documentation page', 'Deletes a page with all its sub-pages and their versions. Only the member who created the page, or the author of the workspace, can delete it', 'deleteDocPage')]
     #[NoContentResponse('The page and its sub-pages are deleted')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
-    #[RawResponse(['error' => 'Only the member who created page 12 can delete it'], responseCode: StatusCode::FORBIDDEN, description: 'The current user did not create the page')]
+    #[RawResponse(['error' => 'Only the member who created page 12, or the author of the workspace, can delete it'], responseCode: StatusCode::FORBIDDEN, description: 'The current user neither created the page nor the workspace')]
     #[RawResponse(['error' => 'Page not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such page in the current workspace')]
     public function delete(Request $request, int $page): Response
     {
