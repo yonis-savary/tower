@@ -138,6 +138,25 @@ Le tableau montre chaque sprint actif en cinq colonnes, du plus ancien au plus r
 planifiés puis les tâches sans sprint. Les tâches se déplacent par glisser-déposer, entre les
 listes et à l'intérieur d'une liste.
 
+**Prise de notes.** Une grande modale, ouverte par « Prise de notes » à côté de « Nouvelle
+tâche », crée plusieurs tâches d'un coup à partir de notes prises en réunion. Une ligne sans
+indentation est le titre d'une tâche, les lignes indentées en dessous (tabulations ou espaces)
+sa description, leur indentation commune retirée ; une ligne commençant par `//` est ignorée.
+Le sprint se choisit une fois pour tout le lot. La saisie est ponctuelle : la note n'est pas
+gardée une fois les tâches créées, seul un brouillon vit dans le `localStorage` (un par
+workspace) tant qu'elles ne le sont pas.
+
+- `App/TaskNotes/TaskNotesParser` est la **seule** implémentation de la syntaxe.
+  `POST /api/tasks/notes/preview` renvoie les tâches et les erreurs par ligne sans rien créer :
+  le front l'appelle après une pause de frappe pour l'aperçu, qui ne peut donc pas annoncer
+  autre chose que ce qui sera créé.
+- `POST /api/tasks/notes` crée tout ou rien, dans une transaction, dans l'ordre des notes, en
+  `todo` à la fin de la liste. Des notes avec une erreur (titre de plus de 255 caractères,
+  description de plus de 20 000, description avant le premier titre, plus de 50 tâches) ou sans
+  tâche ne créent rien.
+- Chaque tâche a l'historique d'une création ordinaire (`task.created`).
+- Outils MCP : `preview_task_notes` et `create_tasks_from_notes`.
+
 **Liens d'un sprint** (table `sprint_link`) : des pages pratiques à garder sous la main pendant
 le sprint (board, maquette, document), une adresse http(s) et un libellé facultatif (sans
 libellé, le nom du site). Ils se gèrent dans le backlog tant que le sprint n'est pas clôturé, et

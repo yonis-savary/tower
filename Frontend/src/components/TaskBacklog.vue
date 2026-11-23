@@ -11,7 +11,7 @@ import SprintLinks from './SprintLinks.vue'
 import TaskCard from './TaskCard.vue'
 import { useTasksStore, type Sprint, type Task } from '../stores/tasks'
 
-const emit = defineEmits<{ open: [task: Task]; create: [sprint: number | null] }>()
+const emit = defineEmits<{ open: [task: Task]; create: [sprint: number | null]; notes: [sprint: number | null] }>()
 
 type Section = { sprint: Sprint | null; tasks: Task[] }
 
@@ -91,6 +91,7 @@ function notifySprintError() {
       <span class="section-actions">
         <Button v-if="item.sprint?.state === 'planned'" :label="t('tasks.openSprint')" icon="pi pi-play" severity="secondary" text size="small" @click="open(item.sprint)" />
         <Button v-if="item.sprint?.state === 'active'" :label="t('tasks.closeSprint')" icon="pi pi-flag" severity="secondary" text size="small" @click="close(item.sprint)" />
+        <Button icon="pi pi-list" severity="secondary" text size="small" :aria-label="t('tasks.notes.open')" :title="t('tasks.notes.open')" @click="emit('notes', item.sprint?.id ?? null)" />
         <Button icon="pi pi-plus" severity="secondary" text size="small" :aria-label="t('tasks.newTask')" :title="t('tasks.newTask')" @click="emit('create', item.sprint?.id ?? null)" />
       </span>
     </header>

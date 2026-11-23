@@ -8,13 +8,14 @@ use Cube\Web\Http\Rules\Param;
 
 class TaskContentRequest extends Request
 {
-    private const MAX_DESCRIPTION = 20000;
+    public const MAX_TITLE = 255;
+    public const MAX_DESCRIPTION = 20000;
 
     public function getRules(): array
     {
         return [
             'title' => Param::string()->withValueCondition(
-                fn ($title) => '' !== (string) $title && mb_strlen((string) $title) <= 255,
+                fn ($title) => '' !== (string) $title && mb_strlen((string) $title) <= self::MAX_TITLE,
                 '{key} must contain between 1 and 255 characters'
             ),
             'description' => Param::string()->withValueCondition(

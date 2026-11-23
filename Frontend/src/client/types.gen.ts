@@ -3290,6 +3290,99 @@ export type CreateTaskResponses = {
 
 export type CreateTaskResponse = CreateTaskResponses[keyof CreateTaskResponses];
 
+export type PreviewTaskNotesData = {
+    body: {
+        text: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/tasks/notes/preview';
+};
+
+export type PreviewTaskNotesErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type PreviewTaskNotesError = PreviewTaskNotesErrors[keyof PreviewTaskNotesErrors];
+
+export type PreviewTaskNotesResponses = {
+    /**
+     * The tasks found, and the errors (title_too_long, description_too_long, description_without_task, too_many_tasks)
+     */
+    200: {
+        tasks?: Array<{
+            line?: number;
+            title?: string;
+            description?: string;
+        }>;
+        errors?: Array<{
+            line?: number;
+            error?: string;
+        }>;
+    };
+};
+
+export type PreviewTaskNotesResponse = PreviewTaskNotesResponses[keyof PreviewTaskNotesResponses];
+
+export type CreateTaskNotesData = {
+    body: {
+        text: string;
+        sprint?: number | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/tasks/notes';
+};
+
+export type CreateTaskNotesErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * Notes with an error or without any task, an unknown or closed sprint
+     */
+    422: {
+        error?: string;
+        tasks?: Array<unknown>;
+        errors?: Array<{
+            line?: number;
+            error?: string;
+        }>;
+    };
+};
+
+export type CreateTaskNotesError = CreateTaskNotesErrors[keyof CreateTaskNotesErrors];
+
+export type CreateTaskNotesResponses = {
+    /**
+     * The tasks, in the order of the notes
+     */
+    201: Array<{
+        id: number;
+        sprint: number | null;
+        title: string;
+        description: string;
+        status: string;
+        position: number;
+        jira_issue: number | null;
+        link: string | null;
+    }>;
+};
+
+export type CreateTaskNotesResponse = CreateTaskNotesResponses[keyof CreateTaskNotesResponses];
+
 export type UpdateTaskData = {
     body: {
         title: string;

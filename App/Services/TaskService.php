@@ -6,6 +6,7 @@ use App\Models\History;
 use App\Models\Sprint;
 use App\Models\SprintLink;
 use App\Models\Task;
+use App\TaskNotes\NoteTask;
 use Cube\Data\Bunch;
 use Cube\Data\Database\Database;
 
@@ -64,6 +65,49 @@ class TaskService
         $this->log($task, 'task.created', $user);
 
         return $task;
+    }
+
+    /**
+     * @param list<NoteTask> $notes
+     *
+     * @return ?list<Task> null when the sprint cannot receive tasks
+     */
+    public function createTasks(int $workspace, int $user, array $notes, ?int $sprint): ?array
+    {
+        if (!$this->acceptsTasks($workspace, $sprint))
+            return null;
+
+        $tasks = [];
+        $announcements = [];
+        $failure = Database::getInstance()->transaction(function () use ($workspace, $user, $notes, $sprint, &$tasks, &$announcements) {
+            $now = date('Y-m-d H:i:s');
+            $position = $this->nextPosition($workspace, $sprint);
+
+            foreach ($notes as $note) {
+                $task = (new Task([
+                    'workspace' => $workspace,
+                    'sprint' => $sprint,
+                    'title' => $note->title,
+                    'description' => $note->description,
+                    'status' => self::STATUS_TODO,
+                    'position' => $position++,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]))->save();
+
+                $tasks[] = $task;
+                $announcements[] = $this->log($task, 'task.created', $user, announce: false);
+            }
+        });
+
+        if ($failure)
+            throw $failure;
+
+        // Only once committed : the websocket server writes the deliveries against these history lines
+        foreach ($announcements as [$line, $payload])
+            $this->announce($line, $payload);
+
+        return $tasks;
     }
 
     public function updateTask(Task $task, int $user, string $title, string $description, ?string $link): Task

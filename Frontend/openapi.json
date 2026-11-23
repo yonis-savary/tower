@@ -7693,6 +7693,251 @@
                 }
             }
         },
+        "\/api\/tasks\/notes\/preview": {
+            "post": {
+                "summary": "Preview tasks from notes",
+                "description": "Reads meeting notes and answers the tasks they describe and their errors by line, without creating anything. A line without indentation is a task title, the indented lines below it are its description (their common indentation removed), a line starting with \/\/ is ignored. At most 50 tasks",
+                "operationId": "previewTaskNotes",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "text": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "text"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The tasks found, and the errors (title_too_long, description_too_long, description_without_task, too_many_tasks)",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "tasks": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "line": {
+                                                        "type": "integer"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "line": {
+                                                        "type": "integer"
+                                                    },
+                                                    "error": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/tasks\/notes": {
+            "post": {
+                "summary": "Create tasks from notes",
+                "description": "Creates every task described by meeting notes (same syntax as previewTaskNotes) at the end of the backlog or of a sprint, all or none : notes with an error or without any task create nothing",
+                "operationId": "createTaskNotes",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "text": {
+                                        "type": "string"
+                                    },
+                                    "sprint": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "text"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "Notes with an error or without any task, an unknown or closed sprint",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        },
+                                        "tasks": {
+                                            "type": "array"
+                                        },
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "line": {
+                                                        "type": "integer"
+                                                    },
+                                                    "error": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The tasks, in the order of the notes",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "sprint": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ]
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            },
+                                            "position": {
+                                                "type": "integer"
+                                            },
+                                            "jira_issue": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ]
+                                            },
+                                            "link": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "sprint",
+                                            "title",
+                                            "description",
+                                            "status",
+                                            "position",
+                                            "jira_issue",
+                                            "link"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 212,
+                                        "sprint": 770,
+                                        "title": "ea assumenda voluptatem",
+                                        "description": "est fugiat neque",
+                                        "status": "aliquid ullam nesciunt",
+                                        "position": 719,
+                                        "jira_issue": 452,
+                                        "link": "odit ut reprehenderit"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/api\/tasks\/{task}": {
             "put": {
                 "summary": "Update task",
@@ -9943,8 +10188,8 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 592,
-                                    "name": "iure sint pariatur",
+                                    "id": 274,
+                                    "name": "placeat nisi commodi",
                                     "accent_color": "#7436c4",
                                     "sections": [
                                         "jira",
@@ -9955,10 +10200,10 @@
                                         "tasks",
                                         "merge_requests"
                                     ],
-                                    "mcp_access": "totam iste ut",
-                                    "author": 412,
-                                    "icon": "\/api\/workspaces\/592\/icon?v=cumque dolorum amet",
-                                    "favicon_url": "\/api\/workspaces\/592\/icon?v=cumque dolorum amet"
+                                    "mcp_access": "animi earum facere",
+                                    "author": 729,
+                                    "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
+                                    "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
                                 }
                             }
                         }

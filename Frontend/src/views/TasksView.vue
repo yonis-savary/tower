@@ -11,6 +11,7 @@ import Tabs from 'primevue/tabs'
 import TaskBacklog from '../components/TaskBacklog.vue'
 import TaskBoard from '../components/TaskBoard.vue'
 import TaskDialog from '../components/TaskDialog.vue'
+import TaskNotesDialog from '../components/TaskNotesDialog.vue'
 import { useJiraStore } from '../stores/jira'
 import { useTasksStore, type Task } from '../stores/tasks'
 import { useWorkspaceStore } from '../stores/workspace'
@@ -26,6 +27,8 @@ const tab = ref('board')
 const dialogVisible = ref(false)
 const dialogTask = ref<Task | null>(null)
 const dialogSprint = ref<number | null>(null)
+const notesVisible = ref(false)
+const notesSprint = ref<number | null>(null)
 
 watch(() => workspace.current?.id, (id) => { if (id) void Promise.all([store.load(), jira.load()]) }, { immediate: true })
 
@@ -52,6 +55,11 @@ function createTask(sprint: number | null) {
   dialogSprint.value = sprint
   dialogVisible.value = true
 }
+
+function takeNotes(sprint: number | null) {
+  notesSprint.value = sprint
+  notesVisible.value = true
+}
 </script>
 
 <template>
@@ -65,15 +73,16 @@ function createTask(sprint: number | null) {
     </TabList>
     <TabPanels>
       <TabPanel value="board">
-        <TaskBoard @open="openTask" @create="createTask" @backlog="tab = 'backlog'" />
+        <TaskBoard @open="openTask" @create="createTask" @notes="takeNotes" @backlog="tab = 'backlog'" />
       </TabPanel>
       <TabPanel value="backlog">
-        <TaskBacklog @open="openTask" @create="createTask" />
+        <TaskBacklog @open="openTask" @create="createTask" @notes="takeNotes" />
       </TabPanel>
     </TabPanels>
   </Tabs>
 
   <TaskDialog v-model:visible="dialogVisible" :task="dialogTask" :sprint="dialogSprint" />
+  <TaskNotesDialog v-model:visible="notesVisible" :sprint="notesSprint" />
 </template>
 
 <style scoped>

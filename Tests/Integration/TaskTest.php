@@ -247,4 +247,59 @@ class TaskTest extends CubeTestCase
         $this->putJson("/api/sprints/links/{$board['id']}", ['url' => 'https://example.com'])->assertNotFound();
         $this->get("/api/sprints/links/{$board['id']}/icon")->assertNotFound();
     }
+
+    public function testNotesRoutesRequireAuthentication()
+    {
+        $this->postJson('/api/tasks/notes/preview', ['text' => 'Task'])->assertUnauthorized();
+        $this->postJson('/api/tasks/notes', ['text' => 'Task'])->assertUnauthorized();
+    }
+
+    public function testNotesPreviewCreatesNothing()
+    {
+        $this->register();
+
+        $preview = $this->postJson('/api/tasks/notes/preview', ['text' => "\tsans tâche\nPréparer la démo\n\t- slides"])->assertOk()->json();
+
+        $this->assertSame([['line' => 2, 'title' => 'Préparer la démo', 'description' => '- slides']], $preview['tasks']);
+        $this->assertSame([['line' => 1, 'error' => 'description_without_task']], $preview['errors']);
+        $this->assertSame([], $this->titles());
+    }
+
+    public function testNotesCreateEveryTaskInOrderAtTheEndOfTheSprint()
+    {
+        $this->register();
+        $sprint = $this->sprint();
+        $this->task('Already there', $sprint['id']);
+
+        $created = $this->postJson('/api/tasks/notes', ['text' => "First\n\tdetails\n// ignored\nSecond", 'sprint' => $sprint['id']])->assertCreated()->json();
+
+        $this->assertSame(['First', 'Second'], array_column($created, 'title'));
+        $this->assertSame(['details', ''], array_column($created, 'description'));
+        $this->assertSame([$sprint['id'], $sprint['id']], array_column($created, 'sprint'));
+        $this->assertSame(['todo', 'todo'], array_column($created, 'status'));
+        $this->assertSame(['Already there', 'First', 'Second'], $this->titles());
+        $this->assertSame(['sprint.created', 'task.created', 'task.created', 'task.created'], array_column($this->broadcast->emitted, 'event'));
+    }
+
+    public function testNotesWithAnErrorOrWithoutTaskCreateNothing()
+    {
+        $this->register();
+
+        $refused = $this->postJson('/api/tasks/notes', ['text' => "Fine\n" . str_repeat('t', 256)])->assertUnprocessableContent()->json();
+        $this->assertSame([['line' => 2, 'error' => 'title_too_long']], $refused['errors']);
+
+        $this->postJson('/api/tasks/notes', ['text' => "// only a note"])->assertUnprocessableContent();
+        $this->assertSame([], $this->titles());
+    }
+
+    public function testNotesIntoAClosedSprintCreateNothing()
+    {
+        $this->register();
+        $sprint = $this->sprint();
+        $this->postJson("/api/sprints/{$sprint['id']}/open", [])->assertOk();
+        $this->postJson("/api/sprints/{$sprint['id']}/close", [])->assertOk();
+
+        $this->postJson('/api/tasks/notes', ['text' => 'Late', 'sprint' => $sprint['id']])->assertUnprocessableContent();
+        $this->assertSame([], $this->titles());
+    }
 }

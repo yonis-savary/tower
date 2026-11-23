@@ -6,16 +6,19 @@ use App\Favicons\FaviconService;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\CreateSprintRequest;
+use App\Requests\CreateTaskNotesRequest;
 use App\Requests\CreateTaskRequest;
 use App\Requests\MoveTaskRequest;
 use App\Requests\SaveSprintLinkRequest;
 use App\Requests\TaskContentRequest;
+use App\Requests\TaskNotesRequest;
 use App\Resources\SprintLinkResource;
 use App\Resources\SprintResource;
 use App\Resources\TaskHistoryResource;
 use App\Resources\TaskResource;
 use App\Services\TaskService;
 use App\Services\WorkspaceService;
+use App\TaskNotes\TaskNotesParser;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
@@ -35,6 +38,7 @@ class TaskController extends Controller
         protected WorkspaceService $workspaces,
         protected TaskService $tasks,
         protected FaviconService $favicons,
+        protected TaskNotesParser $notesParser,
     ) {}
 
     public function routes(Router $router): void
@@ -42,6 +46,8 @@ class TaskController extends Controller
         $router->group('/api', middlewares: [IsAuthenticated::class], routes: [
             Route::get('/tasks', [self::class, 'list']),
             Route::post('/tasks', [self::class, 'create']),
+            Route::post('/tasks/notes/preview', [self::class, 'previewNotes']),
+            Route::post('/tasks/notes', [self::class, 'createFromNotes']),
             Route::put('/tasks/{int:task}', [self::class, 'update']),
             Route::put('/tasks/{int:task}/move', [self::class, 'move']),
             Route::get('/tasks/{int:task}/history', [self::class, 'history']),
@@ -84,6 +90,33 @@ class TaskController extends Controller
         return $task
             ? Response::json(TaskResource::of($task), StatusCode::CREATED)
             : $this->invalidMove();
+    }
+
+    #[Endpoint('Preview tasks from notes', 'Reads meeting notes and answers the tasks they describe and their errors by line, without creating anything. A line without indentation is a task title, the indented lines below it are its description (their common indentation removed), a line starting with // is ignored. At most 50 tasks', 'previewTaskNotes')]
+    #[RawResponse(['tasks' => [['line' => 1, 'title' => 'Prepare the demo', 'description' => "- slides\n- dataset"]], 'errors' => [['line' => 4, 'error' => 'title_too_long']]], description: 'The tasks found, and the errors (title_too_long, description_too_long, description_without_task, too_many_tasks)')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[McpTool('preview_task_notes')]
+    public function previewNotes(TaskNotesRequest $request): Response
+    {
+        return Response::json($this->notesParser->parse($request->validated('text'))->toArray());
+    }
+
+    #[Endpoint('Create tasks from notes', 'Creates every task described by meeting notes (same syntax as previewTaskNotes) at the end of the backlog or of a sprint, all or none : notes with an error or without any task create nothing', 'createTaskNotes')]
+    #[ResourceResponse(TaskResource::class, isArray: true, responseCode: StatusCode::CREATED, description: 'The tasks, in the order of the notes')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'Invalid notes', 'tasks' => [], 'errors' => [['line' => 1, 'error' => 'description_without_task']]], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'Notes with an error or without any task, an unknown or closed sprint')]
+    #[McpTool('create_tasks_from_notes', write: true)]
+    public function createFromNotes(CreateTaskNotesRequest $request): Response
+    {
+        $notes = $this->notesParser->parse($request->validated('text'));
+        if (!$notes->isCreatable())
+            return Response::json(['error' => 'Invalid notes', ...$notes->toArray()], StatusCode::UNPROCESSABLE_CONTENT);
+
+        $tasks = $this->tasks->createTasks($this->workspace(), $this->authentication->userId(), $notes->tasks, $request->validated('sprint'));
+
+        return null === $tasks
+            ? $this->invalidMove()
+            : Response::json(TaskResource::of($tasks), StatusCode::CREATED);
     }
 
     #[Endpoint('Update task', 'Changes the title, the description and the link of a task. A left out link is kept, a null link is removed', 'updateTask')]

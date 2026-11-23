@@ -12,7 +12,7 @@ import EmptyState from './EmptyState.vue'
 import { BOARD_STATUSES, useTasksStore, type Sprint, type Task, type TaskStatus } from '../stores/tasks'
 import { useWorkspaceStore } from '../stores/workspace'
 
-const emit = defineEmits<{ open: [task: Task]; create: [sprint: number]; backlog: [] }>()
+const emit = defineEmits<{ open: [task: Task]; create: [sprint: number]; notes: [sprint: number]; backlog: [] }>()
 
 type Board = { sprint: Sprint; columns: Record<string, Task[]>; cancelled: Task[]; count: number }
 
@@ -85,6 +85,7 @@ async function close(sprint: Sprint) {
           <span class="count">{{ item.count }}</span>
         </button>
         <Button :label="t('tasks.closeSprint')" icon="pi pi-flag" severity="secondary" outlined size="small" @click="close(item.sprint)" />
+        <Button :label="t('tasks.notes.open')" icon="pi pi-list" severity="secondary" outlined size="small" @click="emit('notes', item.sprint.id)" />
         <Button :label="t('tasks.newTask')" icon="pi pi-plus" size="small" @click="emit('create', item.sprint.id)" />
       </header>
 
