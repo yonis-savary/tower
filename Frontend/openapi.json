@@ -2302,7 +2302,7 @@
             },
             "put": {
                 "summary": "Update documentation page",
-                "description": "Changes the title, the whole content, the tags, the parent (null for a top-level page) or the archived state of a page. A left out field is kept. Give the version read with readDocPage : the change is refused with a 409 if the page changed since. To change a few passages of a long page, prefer editDocPage",
+                "description": "Changes the title, the whole content, the tags, the parent (null for a top-level page) or the archived state of a page : archiving or restoring a page does the same to all its sub-pages. A left out field is kept. Give the version read with readDocPage : the change is refused with a 409 if the page changed since. To change a few passages of a long page, prefer editDocPage",
                 "operationId": "updateDocPage",
                 "parameters": [
                     {
@@ -9943,8 +9943,8 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 848,
-                                    "name": "sit repellat beatae",
+                                    "id": 592,
+                                    "name": "iure sint pariatur",
                                     "accent_color": "#7436c4",
                                     "sections": [
                                         "jira",
@@ -9955,10 +9955,10 @@
                                         "tasks",
                                         "merge_requests"
                                     ],
-                                    "mcp_access": "libero voluptatibus sit",
-                                    "author": 341,
-                                    "icon": "\/api\/workspaces\/848\/icon?v=consequatur qui quia",
-                                    "favicon_url": "\/api\/workspaces\/848\/icon?v=consequatur qui quia"
+                                    "mcp_access": "totam iste ut",
+                                    "author": 412,
+                                    "icon": "\/api\/workspaces\/592\/icon?v=cumque dolorum amet",
+                                    "favicon_url": "\/api\/workspaces\/592\/icon?v=cumque dolorum amet"
                                 }
                             }
                         }

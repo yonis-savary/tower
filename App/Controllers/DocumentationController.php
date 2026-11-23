@@ -101,7 +101,7 @@ class DocumentationController extends Controller
         return $found ? Response::json(DocPageResource::of($found)) : $this->pageNotFound();
     }
 
-    #[Endpoint('Update documentation page', 'Changes the title, the whole content, the tags, the parent (null for a top-level page) or the archived state of a page. A left out field is kept. Give the version read with readDocPage : the change is refused with a 409 if the page changed since. To change a few passages of a long page, prefer editDocPage', 'updateDocPage')]
+    #[Endpoint('Update documentation page', 'Changes the title, the whole content, the tags, the parent (null for a top-level page) or the archived state of a page : archiving or restoring a page does the same to all its sub-pages. A left out field is kept. Give the version read with readDocPage : the change is refused with a 409 if the page changed since. To change a few passages of a long page, prefer editDocPage', 'updateDocPage')]
     #[ResourceResponse(DocPageResource::class, description: 'The page')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Page not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such page in the current workspace')]

@@ -409,6 +409,8 @@ export default {
     payload: 'Données',
     response: 'Réponse',
     noResponse: 'Pas de réponse',
+    subPage: 'et sa sous-page',
+    subPages: 'et ses {count} sous-pages',
     type: {
       task_created: 'Tâche créée',
       task_updated: 'Tâche modifiée',

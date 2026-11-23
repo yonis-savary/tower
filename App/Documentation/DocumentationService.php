@@ -76,6 +76,7 @@ class DocumentationService
 
     /**
      * A change of title, content or tags makes a new version. A move or an archiving does not.
+     * Archiving or restoring a page does the same to all its sub-pages.
      *
      * @param ?int         $expectedVersion the version the change was made from : null overwrites whatever is there
      * @param list<string> $tags
@@ -114,9 +115,33 @@ class DocumentationService
         if ($moved)
             $this->log($page, 'doc.page.moved', $user, ['parent' => null === $parent ? null : DocPage::find($parent)?->title]);
         if ($archiving)
-            $this->log($page, $archived ? 'doc.page.archived' : 'doc.page.restored', $user);
+            $this->log($page, $archived ? 'doc.page.archived' : 'doc.page.restored', $user, ['sub_pages' => $this->archiveBelow($page, $user, $archived)]);
 
         return $this->findPage($page->workspace, $page->id);
+    }
+
+    /**
+     * @return int The number of sub-pages that changed state
+     */
+    private function archiveBelow(DocPage $page, int $user, bool $archived): int
+    {
+        $below = array_slice($this->branchOf($page), 1);
+        if (!$below)
+            return 0;
+
+        $changing = DocPage::select()->whereIn('id', $below)->whereRaw($archived ? 'archived_at IS NULL' : 'archived_at IS NOT NULL')->fetch();
+        if (!$changing)
+            return 0;
+
+        $now = date('Y-m-d H:i:s');
+        DocPage::update()
+            ->set('archived_at', $archived ? $now : null)
+            ->set('updated_by', $user)
+            ->set('updated_at', $now)
+            ->whereIn('id', array_map(fn (DocPage $child) => $child->id, $changing))
+            ->fetch();
+
+        return count($changing);
     }
 
     /**

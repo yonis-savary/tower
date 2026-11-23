@@ -171,7 +171,8 @@ s'écrit dans le front ou par un agent (voir § Serveur MCP), par les mêmes rou
   `POST /api/docs/pages/{id}/edits` remplace des passages (chacun présent exactement une fois,
   tous ou aucun) : un agent n'a pas à réécrire une longue page pour en changer une ligne.
 - **Archivage** : une page archivée (`archived_at`) disparaît de la liste tant que les pages
-  archivées sont masquées ; elle reste lisible et se désarchive.
+  archivées sont masquées ; elle reste lisible et se désarchive. Archiver ou désarchiver une page
+  fait de même pour toutes ses sous-pages ; la ligne d'historique en donne le nombre (`sub_pages`).
 - **Suppression** : réservée au membre qui a créé la page (`created_by`) et à l'auteur du
   workspace, qui a ainsi la main sur toutes les pages, même celles d'un membre parti (sinon `403`).
   Modifier, déplacer et archiver restent ouverts à tous les membres. Elle
@@ -208,7 +209,7 @@ y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les l
 | `webhook.created`, `webhook.enabled`, `webhook.disabled`, `webhook.deleted`, `webhook.secret_regenerated` | gestion des webhooks |
 | `schedule.created`, `schedule.enabled`, `schedule.disabled`, `schedule.deleted` | gestion des planifications |
 | `token.created`, `token.revoked` | création et révocation d'un jeton d'agent (voir § Serveur MCP) |
-| `doc.page.created`, `doc.page.updated`, `doc.page.moved`, `doc.page.archived`, `doc.page.restored`, `doc.page.deleted` | pages de la documentation (`title`, `page`, `version` ; `sub_pages` pour une suppression) |
+| `doc.page.created`, `doc.page.updated`, `doc.page.moved`, `doc.page.archived`, `doc.page.restored`, `doc.page.deleted` | pages de la documentation (`title`, `page`, `version` ; `sub_pages` pour un archivage, un désarchivage ou une suppression) |
 
 Les lignes `task.*`, `sprint.*` et `event.triggered` sont aussi envoyées aux appareils
 connectés comme des événements du même type (voir § Événements), comme les lignes `pr.*` et

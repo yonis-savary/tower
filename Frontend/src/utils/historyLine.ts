@@ -100,7 +100,7 @@ function describe({ t, te }: HistoryI18n, type: string, parsed: Details): string
   if (type.startsWith('sprint.link_')) return `${parsed.name} · ${parsed.link}`
 
   if (type === 'doc.page.moved') return `${parsed.title} → ${parsed.parent ?? '∅'}`
-  if (type.startsWith('doc.page.')) return parsed.title
+  if (type.startsWith('doc.page.')) return parsed.sub_pages ? `${parsed.title} · ${t(parsed.sub_pages === 1 ? 'history.subPage' : 'history.subPages', { count: parsed.sub_pages })}` : parsed.title
 
   if (type.startsWith('task.')) {
     const change = taskChange(t, type, parsed)

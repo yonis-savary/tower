@@ -411,6 +411,8 @@ export default {
     payload: 'Data',
     response: 'Response',
     noResponse: 'No response',
+    subPage: 'and its sub-page',
+    subPages: 'and its {count} sub-pages',
     type: {
       task_created: 'Task created',
       task_updated: 'Task updated',

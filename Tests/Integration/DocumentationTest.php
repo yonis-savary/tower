@@ -299,4 +299,20 @@ class DocumentationTest extends CubeTestCase
         $this->delete("/api/docs/pages/{$page['id']}")->assertNoContent();
         $this->assertSame([], $this->titles());
     }
+
+    public function testArchivingAPageArchivesItsSubPages()
+    {
+        $this->register();
+        $root = $this->page('Guides');
+        $child = $this->page('Setup', parent: $root['id']);
+        $this->page('Linux', parent: $child['id']);
+        $this->page('Kept');
+
+        $this->putJson("/api/docs/pages/{$root['id']}", ['archived' => true])->assertOk();
+        $this->assertSame(['Kept'], $this->titles());
+        $this->assertSame(2, json_decode(History::select()->order('id', 'DESC')->first()->details, true)['sub_pages']);
+
+        $this->putJson("/api/docs/pages/{$root['id']}", ['archived' => false])->assertOk();
+        $this->assertSame(['Guides', 'Kept', 'Linux', 'Setup'], $this->titles());
+    }
 }

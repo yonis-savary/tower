@@ -266,7 +266,7 @@ export const readDocPage = <ThrowOnError extends boolean = false>(options: Optio
 /**
  * Update documentation page
  *
- * Changes the title, the whole content, the tags, the parent (null for a top-level page) or the archived state of a page. A left out field is kept. Give the version read with readDocPage : the change is refused with a 409 if the page changed since. To change a few passages of a long page, prefer editDocPage
+ * Changes the title, the whole content, the tags, the parent (null for a top-level page) or the archived state of a page : archiving or restoring a page does the same to all its sub-pages. A left out field is kept. Give the version read with readDocPage : the change is refused with a 409 if the page changed since. To change a few passages of a long page, prefer editDocPage
  */
 export const updateDocPage = <ThrowOnError extends boolean = false>(options: Options<UpdateDocPageData, ThrowOnError>): RequestResult<UpdateDocPageResponses, UpdateDocPageErrors, ThrowOnError> => (options.client ?? client).put<UpdateDocPageResponses, UpdateDocPageErrors, ThrowOnError>({
     url: '/api/docs/pages/{page}',
