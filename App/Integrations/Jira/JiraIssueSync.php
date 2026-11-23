@@ -14,6 +14,7 @@ use App\Models\Task;
 use Cube\Data\Bunch;
 use Cube\Data\Database\Database;
 use Cube\Env\Logger\Logger;
+use Cube\Env\Storage;
 
 class JiraIssueSync
 {
@@ -33,6 +34,23 @@ class JiraIssueSync
     }
 
     public function sync(Integration $integration): void
+    {
+        // Two runs at once would both insert the issues new to the stored state : the second one waits.
+        // flock() is tied to the open file : the system releases it when a run dies without unlocking
+        $lock = fopen(Storage::getInstance()->child('Jira')->path("sync-{$integration->id}.lock"), 'c');
+        flock($lock, LOCK_EX);
+
+        try {
+            // The run that held the lock has changed it : last_synced_at decides what is announced
+            $integration->reload();
+            $this->syncUnlocked($integration);
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
+    private function syncUnlocked(Integration $integration): void
     {
         try {
             // Everything is read first : a failing Jira must leave the stored state untouched
