@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import InputText from 'primevue/inputtext'
+import Menu from 'primevue/menu'
+import type { MenuItem } from 'primevue/menuitem'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
 import Tag from 'primevue/tag'
@@ -29,6 +31,8 @@ import MarkdownView from '../components/MarkdownView.vue'
 import { useAuthStore } from '../stores/auth'
 import { useDeviceSocketStore, type WorkspaceSignal } from '../stores/deviceSocket'
 import { useWorkspaceStore } from '../stores/workspace'
+import { saveFile } from '../utils/saveFile'
+import { slugify } from '../utils/slugify'
 
 const SEARCH_DELAY_MS = 300
 
@@ -56,6 +60,7 @@ const archiving = ref(false)
 const deleting = ref(false)
 const deleteError = ref(false)
 const filtersOpen = ref(false)
+const actionsMenu = useTemplateRef<InstanceType<typeof Menu>>('actionsMenu')
 const collapsed = ref(new Set<string>())
 
 // In the address, so that a page can be linked to and survives a reload
@@ -135,6 +140,35 @@ async function toggleArchived() {
   archiving.value = false
   if (data) current.value = data
   await loadPages()
+}
+
+const pageActions = computed<MenuItem[]>(() => {
+  const page = current.value
+  if (!page) return []
+
+  return [
+    { label: t('documentation.newSubPage'), icon: 'pi pi-plus', command: () => (editing.value = { page: null, parent: page.id }) },
+    { label: t('documentation.history'), icon: 'pi pi-history', command: () => (historyVisible.value = true) },
+    { label: t('documentation.download'), icon: 'pi pi-download', command: download },
+    {
+      label: t(page.archived_at ? 'documentation.restore' : 'documentation.archive'),
+      icon: page.archived_at ? 'pi pi-replay' : 'pi pi-inbox',
+      disabled: archiving.value,
+      command: () => void toggleArchived(),
+    },
+    ...(canDelete.value
+      ? [{ separator: true }, { label: t('documentation.delete'), icon: 'pi pi-trash', class: 'menu-item-danger', disabled: deleting.value, command: () => void remove() }]
+      : []),
+  ]
+})
+
+// What is shown : the current page, or the past version being read
+function download() {
+  const shown = version.value ?? current.value
+  if (!shown) return
+
+  const name = slugify(shown.title) || 'page'
+  saveFile(new Blob([shown.content], { type: 'text/markdown;charset=utf-8' }), version.value ? `${name}-v${version.value.version}.md` : `${name}.md`)
 }
 
 async function remove() {
@@ -271,18 +305,18 @@ onBeforeUnmount(() => {
           </div>
           <div class="page-actions">
             <Button :label="t('documentation.edit')" icon="pi pi-pencil" size="small" :disabled="!!version" @click="editing = { page: current, parent: null }" />
-            <Button :label="t('documentation.newSubPage')" icon="pi pi-plus" size="small" severity="secondary" outlined @click="editing = { page: null, parent: current.id }" />
-            <Button :label="t('documentation.history')" icon="pi pi-history" size="small" severity="secondary" outlined @click="historyVisible = true" />
             <Button
-              :label="t(current.archived_at ? 'documentation.restore' : 'documentation.archive')"
-              :icon="current.archived_at ? 'pi pi-replay' : 'pi pi-inbox'"
+              icon="pi pi-bars"
               size="small"
               severity="secondary"
-              text
-              :loading="archiving"
-              @click="toggleArchived"
+              outlined
+              :aria-label="t('documentation.moreActions')"
+              :title="t('documentation.moreActions')"
+              aria-haspopup="true"
+              :loading="archiving || deleting"
+              @click="actionsMenu?.toggle($event)"
             />
-            <Button v-if="canDelete" :label="t('documentation.delete')" icon="pi pi-trash" size="small" severity="danger" text :loading="deleting" @click="remove" />
+            <Menu ref="actionsMenu" :model="pageActions" popup />
           </div>
         </header>
 
@@ -375,6 +409,11 @@ onBeforeUnmount(() => {
 .page-tree {
   padding: 0;
   background: none;
+}
+
+/* PrimeVue only hides the toggle of a page without sub-pages : it would still take its width */
+.page-tree :deep(.p-tree-node-leaf > .p-tree-node-content .p-tree-node-toggle-button) {
+  display: none;
 }
 
 .page-tree :deep(.archived .p-tree-node-label),

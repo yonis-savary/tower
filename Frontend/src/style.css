@@ -239,3 +239,9 @@ button {
 .hljs-punctuation {
   color: var(--p-text-muted-color);
 }
+
+/* A destructive entry of a popup menu (the menu is teleported to the body : no scoped style reaches it) */
+.p-menu .menu-item-danger .p-menu-item-label,
+.p-menu .menu-item-danger .p-menu-item-icon {
+  color: var(--p-red-500);
+}

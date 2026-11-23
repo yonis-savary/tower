@@ -748,6 +748,8 @@ export default {
     loadError: "La documentation n'a pas pu être chargée.",
     edit: 'Modifier',
     history: 'Historique',
+    download: 'Télécharger',
+    moreActions: 'Autres actions',
     archive: 'Archiver',
     restore: 'Désarchiver',
     archived: 'Page archivée le {date}. Elle reste lisible, mais disparaît de la liste tant que les pages archivées sont masquées.',

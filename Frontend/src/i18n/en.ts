@@ -750,6 +750,8 @@ export default {
     loadError: 'The documentation could not be loaded.',
     edit: 'Edit',
     history: 'History',
+    download: 'Download',
+    moreActions: 'More actions',
     archive: 'Archive',
     restore: 'Restore',
     archived: 'Page archived on {date}. It can still be read, but leaves the list while archived pages are hidden.',
