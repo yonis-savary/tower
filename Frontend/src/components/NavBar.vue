@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useTemplateRef } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import Badge from 'primevue/badge'
@@ -11,6 +11,7 @@ import { useAuthStore } from '../stores/auth'
 import { useDeviceSocketStore } from '../stores/deviceSocket'
 import { useWorkspaceStore } from '../stores/workspace'
 import { useNavigation } from '../utils/navigation'
+import { GLOBAL_SHORTCUTS } from '../utils/globalShortcuts'
 
 // The navigation of a wide screen : the phones have MobileNav
 const auth = useAuthStore()
@@ -18,6 +19,8 @@ const workspace = useWorkspaceStore()
 const deviceSocket = useDeviceSocketStore()
 const { t } = useI18n()
 const { workspaceLabel, workspaceMenuItems, mainItems, secondaryItems, socketIndicator, logOut } = useNavigation()
+
+const shortcuts = computed(() => GLOBAL_SHORTCUTS.filter(({ section }) => workspace.hasSection(section)))
 
 const workspaceMenu = useTemplateRef<InstanceType<typeof Menu>>('workspaceMenu')
 </script>
@@ -67,6 +70,15 @@ const workspaceMenu = useTemplateRef<InstanceType<typeof Menu>>('workspaceMenu')
     </ul>
 
     <div class="navbar-secondary">
+      <section v-if="shortcuts.length" class="navbar-shortcuts" :aria-label="t('nav.shortcuts')">
+        <h2>{{ t('nav.shortcuts') }}</h2>
+        <dl>
+          <div v-for="shortcut in shortcuts" :key="shortcut.key">
+            <dt><kbd>{{ shortcut.key.toUpperCase() }}</kbd></dt>
+            <dd>{{ t(shortcut.label) }}</dd>
+          </div>
+        </dl>
+      </section>
       <ul class="navbar-list">
         <li v-for="item in secondaryItems" :key="item.name">
           <RouterLink :to="item.to" class="navbar-item" :title="item.label">
@@ -218,6 +230,45 @@ const workspaceMenu = useTemplateRef<InstanceType<typeof Menu>>('workspaceMenu')
   flex-direction: column;
   gap: 0.375rem;
   margin-top: auto;
+}
+
+.navbar-shortcuts {
+  padding: 0 0.75rem 0.375rem;
+  color: var(--p-text-muted-color);
+  font-size: 0.75rem;
+}
+
+.navbar-shortcuts h2 {
+  margin: 0 0 0.25rem;
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.navbar-shortcuts dl {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.navbar-shortcuts dl > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-shortcuts dd {
+  margin: 0;
+}
+
+.navbar-shortcuts kbd {
+  display: inline-block;
+  min-width: 1.25rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 4px;
+  font-family: inherit;
+  text-align: center;
 }
 
 .navbar-user {

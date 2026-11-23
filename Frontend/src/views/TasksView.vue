@@ -15,6 +15,7 @@ import TaskNotesDialog from '../components/TaskNotesDialog.vue'
 import { useJiraStore } from '../stores/jira'
 import { useTasksStore, type Task } from '../stores/tasks'
 import { useWorkspaceStore } from '../stores/workspace'
+import { NOTES_QUERY } from '../utils/globalShortcuts'
 
 const { t } = useI18n()
 const workspace = useWorkspaceStore()
@@ -45,6 +46,19 @@ watch(
     if (!task) return
 
     openTask(task)
+    void router.replace({ query: {} })
+  },
+  { immediate: true },
+)
+
+// Opened by the keyboard shortcut, once the sprints are known : on the most recent active sprint
+watch(
+  () => [route.query[NOTES_QUERY], store.loaded] as const,
+  ([notes, loaded]) => {
+    if (!notes || !loaded) return
+
+    const latest = store.activeSprints.reduce<number | null>((found, { id }) => Math.max(found ?? id, id), null)
+    takeNotes(latest)
     void router.replace({ query: {} })
   },
   { immediate: true },

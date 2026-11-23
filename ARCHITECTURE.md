@@ -156,6 +156,10 @@ workspace) tant qu'elles ne le sont pas.
   tâche ne créent rien.
 - Chaque tâche a l'historique d'une création ordinaire (`task.created`).
 - Outils MCP : `preview_task_notes` et `create_tasks_from_notes`.
+- **Raccourci global `N`**, depuis n'importe quel écran : il mène aux tâches et ouvre la prise de
+  notes sur le plus récent des sprints actifs (le backlog s'il n'y en a pas). Il est ignoré dans
+  un champ de saisie, dans une modale, avec une touche de modification, ou quand la section tâches
+  est désactivée (`Frontend/src/utils/globalShortcuts.ts`).
 
 **Liens d'un sprint** (table `sprint_link`) : des pages pratiques à garder sous la main pendant
 le sprint (board, maquette, document), une adresse http(s) et un libellé facultatif (sans

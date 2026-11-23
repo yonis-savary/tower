@@ -14,6 +14,7 @@ import { useTasksStore } from '../stores/tasks'
 import { useWorkspaceStore, type WorkspaceSection } from '../stores/workspace'
 import { useMediaQuery } from '../utils/mediaQuery'
 import { useNavigation } from '../utils/navigation'
+import { useGlobalShortcuts } from '../utils/globalShortcuts'
 
 const workspace = useWorkspaceStore()
 const push = usePushStore()
@@ -27,6 +28,7 @@ const { workspacesDialogVisible } = useNavigation()
 const phone = useMediaQuery('(max-width: 48rem)')
 
 onMounted(workspace.loadCurrent)
+useGlobalShortcuts()
 
 // Loaded with the page rather than with each screen, for the counters of the navigation
 watch(

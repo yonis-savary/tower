@@ -58,6 +58,7 @@ function writeDraft(value: string) {
 let previewTimer: ReturnType<typeof setTimeout> | undefined
 let previewRequest = 0
 
+// Immediate : the keyboard shortcut can ask for the dialog open before it is even mounted
 watch(visible, (shown) => {
   if (!shown) return
 
@@ -66,7 +67,7 @@ watch(visible, (shown) => {
   sprint.value = props.sprint
   text.value = readDraft()
   refreshPreview()
-})
+}, { immediate: true })
 
 watch(text, (value) => {
   writeDraft(value)
