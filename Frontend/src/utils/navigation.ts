@@ -34,10 +34,10 @@ export function useNavigation() {
   const workspaceMenuItems = computed<MenuItem[]>(() => [
     ...(workspace.workspaces === null
       ? [{ label: t('nav.loadingWorkspaces'), disabled: true }]
-      : workspace.workspaces.map(({ id, name }) => ({
+      : workspace.workspaces.map(({ id, name, icon, accent_color }) => ({
           label: name,
-          // pi-fw alone keeps the labels aligned with the checked one
-          icon: id === workspace.current?.id ? 'pi pi-fw pi-check' : 'pi pi-fw',
+          workspace: { icon, accent_color },
+          current: id === workspace.current?.id,
           command: () => workspace.select(id),
         }))),
     { separator: true },

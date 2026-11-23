@@ -5,9 +5,9 @@ import { RouterLink, useRoute } from 'vue-router'
 import Badge from 'primevue/badge'
 import Button from 'primevue/button'
 import Drawer from 'primevue/drawer'
-import Menu from 'primevue/menu'
 import AppIcon from './AppIcon.vue'
-import TowerLogo from './TowerLogo.vue'
+import WorkspaceIcon from './WorkspaceIcon.vue'
+import WorkspaceMenu from './WorkspaceMenu.vue'
 import { useAuthStore } from '../stores/auth'
 import { useDeviceSocketStore } from '../stores/deviceSocket'
 import { useWorkspaceStore } from '../stores/workspace'
@@ -21,9 +21,9 @@ const workspace = useWorkspaceStore()
 const deviceSocket = useDeviceSocketStore()
 const route = useRoute()
 const { t } = useI18n()
-const { workspaceLabel, workspaceMenuItems, home, sectionItems, devicesItem, secondaryItems, socketIndicator, logOut } = useNavigation()
+const { workspaceLabel, home, sectionItems, devicesItem, secondaryItems, socketIndicator, logOut } = useNavigation()
 
-const workspaceMenu = useTemplateRef<InstanceType<typeof Menu>>('workspaceMenu')
+const workspaceMenu = useTemplateRef<InstanceType<typeof WorkspaceMenu>>('workspaceMenu')
 const sheetVisible = ref(false)
 
 const tabItems = computed<NavItem[]>(() => [home.value, ...sectionItems.value.slice(0, TAB_SECTIONS)])
@@ -43,12 +43,11 @@ watch(() => route.fullPath, () => (sheetVisible.value = false))
 <template>
   <header class="mobile-topbar">
     <button type="button" class="topbar-workspace" aria-haspopup="true" :title="workspaceLabel" @click="workspaceMenu?.toggle($event)">
-      <img v-if="workspace.current?.icon" :src="workspace.current.icon" alt="" class="topbar-workspace-icon" />
-      <TowerLogo v-else :color="workspace.current?.accent_color" :size="30" />
+      <WorkspaceIcon :icon="workspace.current?.icon" :color="workspace.current?.accent_color" :size="30" />
       <span class="topbar-workspace-name">{{ workspaceLabel }}</span>
       <i class="pi pi-angle-down" aria-hidden="true" />
     </button>
-    <Menu ref="workspaceMenu" :model="workspaceMenuItems" popup @show="workspace.loadWorkspaces" />
+    <WorkspaceMenu ref="workspaceMenu" />
 
     <RouterLink :to="devicesItem.to" class="topbar-devices" :title="`${t('nav.devices')} · ${socketIndicator.label}`" :aria-label="`${t('nav.devices')} · ${socketIndicator.label}`">
       <i class="pi pi-desktop" aria-hidden="true" />
@@ -140,13 +139,6 @@ watch(() => route.fullPath, () => (sheetVisible.value = false))
   background: var(--p-content-hover-background);
 }
 
-.topbar-workspace-icon {
-  flex: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 22%;
-  object-fit: cover;
-}
 
 .topbar-workspace-name {
   min-width: 0;

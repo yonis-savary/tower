@@ -4,9 +4,9 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import Badge from 'primevue/badge'
 import Button from 'primevue/button'
-import Menu from 'primevue/menu'
 import AppIcon from './AppIcon.vue'
-import TowerLogo from './TowerLogo.vue'
+import WorkspaceIcon from './WorkspaceIcon.vue'
+import WorkspaceMenu from './WorkspaceMenu.vue'
 import { useAuthStore } from '../stores/auth'
 import { useDeviceSocketStore } from '../stores/deviceSocket'
 import { useWorkspaceStore } from '../stores/workspace'
@@ -18,11 +18,11 @@ const auth = useAuthStore()
 const workspace = useWorkspaceStore()
 const deviceSocket = useDeviceSocketStore()
 const { t } = useI18n()
-const { workspaceLabel, workspaceMenuItems, mainItems, secondaryItems, socketIndicator, logOut } = useNavigation()
+const { workspaceLabel, mainItems, secondaryItems, socketIndicator, logOut } = useNavigation()
 
 const shortcuts = computed(() => GLOBAL_SHORTCUTS.filter(({ section }) => workspace.hasSection(section)))
 
-const workspaceMenu = useTemplateRef<InstanceType<typeof Menu>>('workspaceMenu')
+const workspaceMenu = useTemplateRef<InstanceType<typeof WorkspaceMenu>>('workspaceMenu')
 </script>
 
 <template>
@@ -34,12 +34,11 @@ const workspaceMenu = useTemplateRef<InstanceType<typeof Menu>>('workspaceMenu')
       :title="workspaceLabel"
       @click="workspaceMenu?.toggle($event)"
     >
-      <img v-if="workspace.current?.icon" :src="workspace.current.icon" alt="" class="navbar-workspace-icon" />
-      <TowerLogo v-else :color="workspace.current?.accent_color" />
+      <WorkspaceIcon :icon="workspace.current?.icon" :color="workspace.current?.accent_color" />
       <span class="navbar-text">{{ workspaceLabel }}</span>
       <i class="pi pi-angle-down navbar-text" aria-hidden="true" />
     </button>
-    <Menu ref="workspaceMenu" :model="workspaceMenuItems" popup @show="workspace.loadWorkspaces" />
+    <WorkspaceMenu ref="workspaceMenu" />
 
     <RouterLink
       :to="{ name: 'devices' }"
@@ -142,14 +141,6 @@ const workspaceMenu = useTemplateRef<InstanceType<typeof Menu>>('workspaceMenu')
   font-weight: 600;
 }
 
-.navbar-workspace-icon {
-  flex: none;
-  width: 28px;
-  height: 28px;
-  /* Same rounding as the logo it replaces */
-  border-radius: 22%;
-  object-fit: cover;
-}
 
 .navbar-workspace span.navbar-text {
   flex: 1;
