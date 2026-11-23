@@ -3,8 +3,8 @@ import AppLayout from './components/AppLayout.vue'
 import AutomationView from './views/AutomationView.vue'
 import { useAuthStore } from './stores/auth'
 import DevicesView from './views/DevicesView.vue'
-import DocsView from './views/DocsView.vue'
 import EventsView from './views/EventsView.vue'
+import HelpView from './views/HelpView.vue'
 import HistoryView from './views/HistoryView.vue'
 import HomeView from './views/HomeView.vue'
 import JiraView from './views/JiraView.vue'
@@ -32,7 +32,9 @@ const router = createRouter({
         { path: 'history', name: 'history', component: HistoryView, meta: { title: 'nav.history' } },
         { path: 'jira', name: 'jira', component: JiraView, meta: { title: 'nav.jira', section: 'jira' } },
         { path: 'merge-requests', name: 'merge-requests', component: MergeRequestsView, meta: { title: 'nav.mergeRequests', section: 'merge_requests' } },
-        { path: 'docs', name: 'docs', component: DocsView, meta: { title: 'nav.docs' } },
+        // Loaded on demand : markdown, highlight.js and mermaid weigh more than the rest of the application
+        { path: 'docs', name: 'documentation', component: () => import('./views/DocumentationView.vue'), meta: { title: 'nav.documentation', section: 'documentation' } },
+        { path: 'help', name: 'help', component: HelpView, meta: { title: 'nav.help' } },
         { path: 'settings', name: 'settings', component: SettingsView, meta: { title: 'nav.settings' } },
       ],
     },

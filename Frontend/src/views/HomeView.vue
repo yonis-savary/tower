@@ -113,7 +113,7 @@ function openTask(task: Task) {
     <RouterLink v-if="showTasks" v-slot="{ navigate }" :to="{ name: 'tasks' }" custom>
       <Button :label="t('home.emptyTasks')" icon="pi pi-check-square" @click="navigate" />
     </RouterLink>
-    <RouterLink v-slot="{ navigate }" :to="{ name: 'docs' }" custom>
+    <RouterLink v-slot="{ navigate }" :to="{ name: 'help' }" custom>
       <Button :label="t('home.emptyDocs')" icon="pi pi-book" severity="secondary" outlined @click="navigate" />
     </RouterLink>
   </EmptyState>

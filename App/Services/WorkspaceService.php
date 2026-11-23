@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Documentation\DocumentationImages;
+use App\Documentation\DocumentationService;
 use App\Integrations\IntegrationService;
 use App\Models\AccessKey;
 use App\Models\ApiToken;
 use App\Models\ConfigDownload;
+use App\Models\DocImage;
 use App\Models\EventDelivery;
 use App\Models\History;
 use App\Models\Integration;
@@ -29,7 +32,7 @@ use Cube\Data\Models\Model;
 
 class WorkspaceService
 {
-    public const SECTIONS = ['tasks', 'jira', 'merge_requests', 'events', 'automation', 'webhooks'];
+    public const SECTIONS = ['tasks', 'jira', 'merge_requests', 'events', 'automation', 'webhooks', 'documentation'];
 
     public const MCP_BLOCKED = 'blocked';
     public const MCP_READ = 'read';
@@ -40,6 +43,8 @@ class WorkspaceService
         protected Database $database,
         protected IntegrationService $integrations,
         protected WorkspaceIconService $icons,
+        protected DocumentationService $documentation,
+        protected DocumentationImages $docImages,
     ) {}
 
     /**
@@ -148,6 +153,7 @@ class WorkspaceService
     public function delete(Workspace $workspace): void
     {
         $id = $workspace->id;
+        $imageFiles = $this->docImages->filesOf($id);
         $failure = $this->database->transaction(function () use ($id) {
             // No foreign key cascades : children go before the rows they reference
             EventDelivery::delete()->whereIn('history', $this->idsOf(History::class, $id))->fetch();
@@ -160,8 +166,9 @@ class WorkspaceService
             WebhookCall::delete()->whereIn('webhook', $this->idsOf(Webhook::class, $id))->fetch();
             Webhook::delete()->where('workspace', $id)->fetch();
             ConfigDownload::delete()->whereIn('access_key', $this->idsOf(AccessKey::class, $id))->fetch();
+            $this->documentation->deleteWorkspacePages($id);
 
-            foreach ([AccessKey::class, ApiToken::class, QuickAction::class, ScheduledEvent::class, NotificationRule::class, PushSubscription::class, WorkspaceMember::class] as $model)
+            foreach ([AccessKey::class, ApiToken::class, QuickAction::class, ScheduledEvent::class, NotificationRule::class, PushSubscription::class, DocImage::class, WorkspaceMember::class] as $model)
                 $model::delete()->where('workspace', $id)->fetch();
 
             Workspace::delete()->where('id', $id)->fetch();
@@ -170,8 +177,9 @@ class WorkspaceService
         if ($failure)
             throw $failure;
 
-        // Once the row is gone : a failed deletion keeps its icon
+        // Once the rows are gone : a failed deletion keeps its files
         $this->icons->deleteFile($workspace);
+        $this->docImages->deleteFiles($imageFiles);
     }
 
     /**

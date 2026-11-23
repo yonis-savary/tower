@@ -77,7 +77,7 @@ function dateOf(value: string | null | undefined): string {
     <h2>{{ t('settings.agents.title') }}</h2>
     <p class="description">
       {{ t('settings.agents.description', { workspace: workspace.current?.name ?? '' }) }}
-      <RouterLink :to="{ name: 'docs', query: { page: 'agents' } }">{{ t('settings.agents.docsLink') }}</RouterLink>
+      <RouterLink :to="{ name: 'help', query: { page: 'agents' } }">{{ t('settings.agents.docsLink') }}</RouterLink>
     </p>
 
     <div class="field">

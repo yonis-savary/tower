@@ -65,6 +65,7 @@ export function useNavigation() {
         { name: 'events', label: t('nav.events'), icon: 'pi pi-bolt', to: { name: 'events' }, section: 'events' },
         { name: 'automation', label: t('nav.automation'), icon: PLUG_ICON, to: { name: 'automation' }, section: 'automation' },
         { name: 'webhooks', label: t('nav.webhooks'), icon: 'pi pi-globe', to: { name: 'webhooks' }, section: 'webhooks' },
+        { name: 'documentation', label: t('nav.documentation'), short: t('nav.documentationShort'), icon: 'pi pi-book', to: { name: 'documentation' }, section: 'documentation' },
       ] satisfies NavItem[]
     ).filter(({ section }) => workspace.hasSection(section)),
   )
@@ -75,7 +76,7 @@ export function useNavigation() {
 
   const secondaryItems = computed<NavItem[]>(() => [
     { name: 'history', label: t('nav.history'), icon: 'pi pi-history', to: { name: 'history' } },
-    { name: 'docs', label: t('nav.docs'), icon: 'pi pi-book', to: { name: 'docs' } },
+    { name: 'help', label: t('nav.help'), icon: 'pi pi-question-circle', to: { name: 'help' } },
     { name: 'settings', label: t('nav.settings'), icon: 'pi pi-cog', to: { name: 'settings' } },
   ])
 

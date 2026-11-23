@@ -59,6 +59,12 @@ export const HISTORY_ICONS: Record<string, string> = {
   'sprint.link_added': 'pi pi-link',
   'sprint.link_updated': 'pi pi-link',
   'sprint.link_removed': 'pi pi-link',
+  'doc.page.created': 'pi pi-file-plus',
+  'doc.page.updated': 'pi pi-file-edit',
+  'doc.page.moved': 'pi pi-arrow-right',
+  'doc.page.archived': 'pi pi-inbox',
+  'doc.page.restored': 'pi pi-replay',
+  'doc.page.deleted': 'pi pi-trash',
 }
 
 export const DELIVERY_SEVERITY: Record<string, string> = { succeeded: 'success', received: 'success', failed: 'danger', running: 'info', pending: 'warn' }
@@ -92,6 +98,9 @@ function describe({ t, te }: HistoryI18n, type: string, parsed: Details): string
   if (type.startsWith('jira.issue.')) return `${parsed.key} · ${parsed.summary}${integrationChange(type, parsed)}`
 
   if (type.startsWith('sprint.link_')) return `${parsed.name} · ${parsed.link}`
+
+  if (type === 'doc.page.moved') return `${parsed.title} → ${parsed.parent ?? '∅'}`
+  if (type.startsWith('doc.page.')) return parsed.title
 
   if (type.startsWith('task.')) {
     const change = taskChange(t, type, parsed)

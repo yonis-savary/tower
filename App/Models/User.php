@@ -16,6 +16,10 @@ use Cube\Utils\Attributes\Generated;
  * @property \DateTime $created_at
  * @property \DateTime $disabled_at
  * @property ApiToken[] $apiTokens
+ * @property DocImage[] $docImages
+ * @property DocPage[] $docPages
+ * @property DocPage[] $_docPages
+ * @property DocPageVersion[] $docPageVersions
  * @property History[] $histories
  * @property NotificationRule[] $notificationRules
  * @property PushSubscription[] $pushSubscriptions
@@ -59,6 +63,30 @@ class User extends Model
     }
 
     #[Generated]
+    public function docImages(): HasMany
+    {
+        return $this->hasMany('docImages', DocImage::class, 'user', 'id');
+    }
+
+    #[Generated]
+    public function docPages(): HasMany
+    {
+        return $this->hasMany('docPages', DocPage::class, 'created_by', 'id');
+    }
+
+    #[Generated]
+    public function _docPages(): HasMany
+    {
+        return $this->hasMany('_docPages', DocPage::class, 'updated_by', 'id');
+    }
+
+    #[Generated]
+    public function docPageVersions(): HasMany
+    {
+        return $this->hasMany('docPageVersions', DocPageVersion::class, 'user', 'id');
+    }
+
+    #[Generated]
     public function histories(): HasMany
     {
         return $this->hasMany('histories', History::class, 'user', 'id');
@@ -93,6 +121,10 @@ class User extends Model
     {
         return [
             "apiTokens",
+            "docImages",
+            "docPages",
+            "_docPages",
+            "docPageVersions",
             "histories",
             "notificationRules",
             "pushSubscriptions",

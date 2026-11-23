@@ -87,6 +87,9 @@ const token = 'tower_…'
       <tr><td><code>list_history</code>, <code>list_event_deliveries</code></td><td>l'historique du workspace, les appareils qu'un évènement a touchés</td></tr>
       <tr><td><code>suggest_event_types</code>, <code>list_quick_actions</code>, <code>list_scheduled_events</code></td><td>les types d'évènements connus, les quick-actions, les planifications</td></tr>
       <tr><td><code>trigger_event</code>, <code>trigger_quick_action</code></td><td>écriture : lancer un évènement vers les appareils</td></tr>
+      <tr><td><code>list_doc_pages</code>, <code>get_doc_page</code></td><td>les pages de la documentation sans leur contenu (filtrables : recherche, tag, archivées), puis une page en Markdown avec sa version</td></tr>
+      <tr><td><code>list_doc_page_versions</code>, <code>get_doc_page_version</code>, <code>get_doc_image</code></td><td>les versions d'une page gardées 31 jours et leurs auteurs, une version complète, une image de la documentation : elle arrive comme une image</td></tr>
+      <tr><td><code>create_doc_page</code>, <code>update_doc_page</code>, <code>edit_doc_page</code>, <code>upload_doc_image</code></td><td>écriture : créer une page, la modifier en entier (titre, contenu, tags, parent, archivage), remplacer quelques passages, envoyer une image en base64. Avec la version lue, un changement fait entre-temps est refusé plutôt qu'écrasé</td></tr>
     </tbody>
   </table>
   <p>

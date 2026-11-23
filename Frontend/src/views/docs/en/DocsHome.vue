@@ -5,7 +5,7 @@ defineEmits<{ open: [page: DocPage] }>()
 </script>
 
 <template>
-  <h2>Documentation</h2>
+  <h2>Help</h2>
   <p class="lead">How to connect your devices to Tower, and how to make them react to what happens in your workspaces.</p>
 
   <h3>In a nutshell</h3>

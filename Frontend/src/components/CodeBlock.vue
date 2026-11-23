@@ -75,36 +75,4 @@ pre {
   font-size: 0.8125rem;
   line-height: 1.55;
 }
-
-.code-block :deep(.hljs-comment) {
-  color: var(--p-text-muted-color);
-  font-style: italic;
-}
-
-.code-block :deep(.hljs-section),
-.code-block :deep(.hljs-built_in) {
-  color: light-dark(var(--p-purple-700), var(--p-purple-300));
-  font-weight: 600;
-}
-
-.code-block :deep(.hljs-attr),
-.code-block :deep(.hljs-keyword) {
-  color: light-dark(var(--p-blue-700), var(--p-blue-300));
-}
-
-.code-block :deep(.hljs-string),
-.code-block :deep(.hljs-variable),
-.code-block :deep(.hljs-template-variable) {
-  color: light-dark(var(--p-green-700), var(--p-green-300));
-}
-
-.code-block :deep(.hljs-number),
-.code-block :deep(.hljs-literal) {
-  color: light-dark(var(--p-orange-700), var(--p-orange-300));
-}
-
-.code-block :deep(.hljs-meta),
-.code-block :deep(.hljs-punctuation) {
-  color: var(--p-text-muted-color);
-}
 </style>

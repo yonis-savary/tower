@@ -84,6 +84,9 @@ const token = 'tower_…'
       <tr><td><code>list_history</code>, <code>list_event_deliveries</code></td><td>the workspace history, the devices an event reached</td></tr>
       <tr><td><code>suggest_event_types</code>, <code>list_quick_actions</code>, <code>list_scheduled_events</code></td><td>the known event types, the quick actions, the schedules</td></tr>
       <tr><td><code>trigger_event</code>, <code>trigger_quick_action</code></td><td>write: send an event to the devices</td></tr>
+      <tr><td><code>list_doc_pages</code>, <code>get_doc_page</code></td><td>the documentation pages without their content (filterable: search, tag, archived), then a page in Markdown with its version</td></tr>
+      <tr><td><code>list_doc_page_versions</code>, <code>get_doc_page_version</code>, <code>get_doc_image</code></td><td>the versions of a page kept for 31 days and their authors, a full version, an image of the documentation: it comes as an image</td></tr>
+      <tr><td><code>create_doc_page</code>, <code>update_doc_page</code>, <code>edit_doc_page</code>, <code>upload_doc_image</code></td><td>write: create a page, rewrite it (title, content, tags, parent, archiving), replace a few passages, send an image in base64. Given the version read, a change made in the meantime is refused rather than overwritten</td></tr>
     </tbody>
   </table>
   <p>

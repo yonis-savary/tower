@@ -24,10 +24,10 @@ const content = computed(() => {
 </script>
 
 <template>
-  <h1 class="page-title">{{ t('nav.docs') }}</h1>
+  <h1 class="page-title">{{ t('nav.help') }}</h1>
 
-  <SideTabs v-model="page" :items="items" :label="t('nav.docs')">
-    <article class="doc">
+  <SideTabs v-model="page" :items="items" :label="t('nav.help')">
+    <article class="doc prose">
       <component :is="content" @open="(target: DocPage) => (page = target)" />
     </article>
   </SideTabs>
@@ -39,58 +39,14 @@ const content = computed(() => {
   background: var(--p-content-background);
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius);
-  line-height: 1.6;
 }
 
 .doc :deep(h2) {
-  margin: 0 0 0.5rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.doc :deep(h3) {
-  margin: 1.5rem 0 0.25rem;
-  font-size: 1.0625rem;
-  font-weight: 600;
-}
-
-.doc :deep(p),
-.doc :deep(ul),
-.doc :deep(ol) {
-  margin: 0.5rem 0;
+  margin-top: 0;
 }
 
 .doc :deep(.lead) {
   color: var(--p-text-muted-color);
-}
-
-.doc :deep(:not(pre) > code) {
-  padding: 0.0625rem 0.3125rem;
-  background: var(--p-content-hover-background);
-  border-radius: 0.25rem;
-  font-size: 0.875em;
-}
-
-.doc :deep(table) {
-  display: block;
-  max-width: 100%;
-  margin: 0.75rem 0;
-  overflow-x: auto;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-
-.doc :deep(th),
-.doc :deep(td) {
-  padding: 0.375rem 0.5rem;
-  border-bottom: 1px solid var(--p-content-border-color);
-  text-align: left;
-  vertical-align: top;
-}
-
-.doc :deep(th) {
-  color: var(--p-text-muted-color);
-  font-weight: 500;
 }
 
 .doc :deep(td:first-child) {

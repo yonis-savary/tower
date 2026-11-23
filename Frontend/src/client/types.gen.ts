@@ -869,6 +869,480 @@ export type DisconnectDeviceResponses = {
 
 export type DisconnectDeviceResponse = DisconnectDeviceResponses[keyof DisconnectDeviceResponses];
 
+export type ListDocPagesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        search?: string;
+        tag?: string;
+        include_archived?: boolean;
+    };
+    url: '/api/docs/pages';
+};
+
+export type ListDocPagesErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type ListDocPagesError = ListDocPagesErrors[keyof ListDocPagesErrors];
+
+export type ListDocPagesResponses = {
+    /**
+     * The pages
+     */
+    200: Array<{
+        id: number;
+        parent: number | null;
+        title: string;
+        tags: Array<string>;
+        version: number;
+        created_by: number;
+        archived_at: string | null;
+        updated_by: unknown;
+        updated_at: string;
+    }>;
+};
+
+export type ListDocPagesResponse = ListDocPagesResponses[keyof ListDocPagesResponses];
+
+export type CreateDocPageData = {
+    body: {
+        title: string;
+        content?: string;
+        parent?: number | null;
+        tags?: Array<string>;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/docs/pages';
+};
+
+export type CreateDocPageErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * Unknown parent, or an invalid field
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type CreateDocPageError = CreateDocPageErrors[keyof CreateDocPageErrors];
+
+export type CreateDocPageResponses = {
+    /**
+     * The page, at version 1
+     */
+    201: {
+        id: number;
+        parent: number | null;
+        title: string;
+        tags: Array<string>;
+        version: number;
+        created_by: number;
+        archived_at: string | null;
+        updated_by: unknown;
+        updated_at: string;
+        content: string;
+    };
+};
+
+export type CreateDocPageResponse = CreateDocPageResponses[keyof CreateDocPageResponses];
+
+export type DeleteDocPageData = {
+    body?: never;
+    path: {
+        page: number;
+    };
+    query?: never;
+    url: '/api/docs/pages/{page}';
+};
+
+export type DeleteDocPageErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current user did not create the page
+     */
+    403: {
+        error?: string;
+    };
+    /**
+     * No such page in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type DeleteDocPageError = DeleteDocPageErrors[keyof DeleteDocPageErrors];
+
+export type DeleteDocPageResponses = {
+    /**
+     * The page and its sub-pages are deleted
+     */
+    204: void;
+};
+
+export type DeleteDocPageResponse = DeleteDocPageResponses[keyof DeleteDocPageResponses];
+
+export type ReadDocPageData = {
+    body?: never;
+    path: {
+        page: number;
+    };
+    query?: never;
+    url: '/api/docs/pages/{page}';
+};
+
+export type ReadDocPageErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such page in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type ReadDocPageError = ReadDocPageErrors[keyof ReadDocPageErrors];
+
+export type ReadDocPageResponses = {
+    /**
+     * The page
+     */
+    200: {
+        id: number;
+        parent: number | null;
+        title: string;
+        tags: Array<string>;
+        version: number;
+        created_by: number;
+        archived_at: string | null;
+        updated_by: unknown;
+        updated_at: string;
+        content: string;
+    };
+};
+
+export type ReadDocPageResponse = ReadDocPageResponses[keyof ReadDocPageResponses];
+
+export type UpdateDocPageData = {
+    body: {
+        title?: string;
+        content?: string;
+        tags?: Array<string>;
+        parent?: number | null;
+        archived?: boolean;
+        version?: number;
+    };
+    path: {
+        page: number;
+    };
+    query?: never;
+    url: '/api/docs/pages/{page}';
+};
+
+export type UpdateDocPageErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such page in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The page is no longer at the given version
+     */
+    409: {
+        error?: string;
+    };
+    /**
+     * Unknown parent, the page itself or one of its sub-pages, or an invalid field
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type UpdateDocPageError = UpdateDocPageErrors[keyof UpdateDocPageErrors];
+
+export type UpdateDocPageResponses = {
+    /**
+     * The page
+     */
+    200: {
+        id: number;
+        parent: number | null;
+        title: string;
+        tags: Array<string>;
+        version: number;
+        created_by: number;
+        archived_at: string | null;
+        updated_by: unknown;
+        updated_at: string;
+        content: string;
+    };
+};
+
+export type UpdateDocPageResponse = UpdateDocPageResponses[keyof UpdateDocPageResponses];
+
+export type EditDocPageData = {
+    body: {
+        edits: Array<{
+            old_text: string;
+            new_text: string;
+        }>;
+        version?: number;
+    };
+    path: {
+        page: number;
+    };
+    query?: never;
+    url: '/api/docs/pages/{page}/edits';
+};
+
+export type EditDocPageErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such page in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The page is no longer at the given version
+     */
+    409: {
+        error?: string;
+    };
+    /**
+     * A passage is missing or ambiguous, or the content would be too long
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type EditDocPageError = EditDocPageErrors[keyof EditDocPageErrors];
+
+export type EditDocPageResponses = {
+    /**
+     * The page
+     */
+    200: {
+        id: number;
+        parent: number | null;
+        title: string;
+        tags: Array<string>;
+        version: number;
+        created_by: number;
+        archived_at: string | null;
+        updated_by: unknown;
+        updated_at: string;
+        content: string;
+    };
+};
+
+export type EditDocPageResponse = EditDocPageResponses[keyof EditDocPageResponses];
+
+export type ListDocPageVersionsData = {
+    body?: never;
+    path: {
+        page: number;
+    };
+    query?: never;
+    url: '/api/docs/pages/{page}/versions';
+};
+
+export type ListDocPageVersionsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such page in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type ListDocPageVersionsError = ListDocPageVersionsErrors[keyof ListDocPageVersionsErrors];
+
+export type ListDocPageVersionsResponses = {
+    /**
+     * The versions
+     */
+    200: Array<{
+        id: number;
+        page: number;
+        version: number;
+        title: string;
+        tags: Array<string>;
+        author: unknown;
+        token: string | null;
+        created_at: string;
+    }>;
+};
+
+export type ListDocPageVersionsResponse = ListDocPageVersionsResponses[keyof ListDocPageVersionsResponses];
+
+export type ReadDocPageVersionData = {
+    body?: never;
+    path: {
+        version: number;
+    };
+    query?: never;
+    url: '/api/docs/versions/{version}';
+};
+
+export type ReadDocPageVersionErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such version in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type ReadDocPageVersionError = ReadDocPageVersionErrors[keyof ReadDocPageVersionErrors];
+
+export type ReadDocPageVersionResponses = {
+    /**
+     * The version
+     */
+    200: {
+        id: number;
+        page: number;
+        version: number;
+        title: string;
+        tags: Array<string>;
+        author: unknown;
+        token: string | null;
+        created_at: string;
+        content: string;
+    };
+};
+
+export type ReadDocPageVersionResponse = ReadDocPageVersionResponses[keyof ReadDocPageVersionResponses];
+
+export type UploadDocImageData = {
+    body: {
+        name: string;
+        content: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/docs/images';
+};
+
+export type UploadDocImageErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * Over 5 MiB
+     */
+    413: {
+        error?: string;
+    };
+    /**
+     * Not base64, or not an accepted image
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type UploadDocImageError = UploadDocImageErrors[keyof UploadDocImageErrors];
+
+export type UploadDocImageResponses = {
+    /**
+     * The image
+     */
+    201: {
+        id: number;
+        name: string;
+        type: string;
+        size: number;
+        url: string;
+        markdown: string;
+    };
+};
+
+export type UploadDocImageResponse = UploadDocImageResponses[keyof UploadDocImageResponses];
+
+export type GetDocImageData = {
+    body?: never;
+    path: {
+        image: number;
+    };
+    query?: never;
+    url: '/api/docs/images/{image}';
+};
+
+export type GetDocImageErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such image in the current workspace
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type GetDocImageError = GetDocImageErrors[keyof GetDocImageErrors];
+
 export type TriggerEventData = {
     body: {
         type: string;
@@ -3909,7 +4383,7 @@ export type UpdateWorkspaceData = {
     body: {
         name: string;
         accent_color: string | null;
-        sections?: Array<'tasks' | 'jira' | 'merge_requests' | 'events' | 'automation' | 'webhooks'>;
+        sections?: Array<'tasks' | 'jira' | 'merge_requests' | 'events' | 'automation' | 'webhooks' | 'documentation'>;
         mcp_access?: 'blocked' | 'read' | 'write';
     };
     path: {

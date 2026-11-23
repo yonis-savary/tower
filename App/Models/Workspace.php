@@ -20,6 +20,8 @@ use Cube\Utils\Attributes\Generated;
  * @property User $_author
  * @property AccessKey[] $accessKeies
  * @property ApiToken[] $apiTokens
+ * @property DocImage[] $docImages
+ * @property DocPage[] $docPages
  * @property History[] $histories
  * @property Integration[] $integrations
  * @property JiraIssue[] $jiraIssues
@@ -82,6 +84,18 @@ class Workspace extends Model
     public function apiTokens(): HasMany
     {
         return $this->hasMany('apiTokens', ApiToken::class, 'workspace', 'id');
+    }
+
+    #[Generated]
+    public function docImages(): HasMany
+    {
+        return $this->hasMany('docImages', DocImage::class, 'workspace', 'id');
+    }
+
+    #[Generated]
+    public function docPages(): HasMany
+    {
+        return $this->hasMany('docPages', DocPage::class, 'workspace', 'id');
     }
 
     #[Generated]
@@ -168,6 +182,8 @@ class Workspace extends Model
         return [
             "accessKeies",
             "apiTokens",
+            "docImages",
+            "docPages",
             "histories",
             "integrations",
             "jiraIssues",

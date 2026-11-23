@@ -1894,6 +1894,1263 @@
                 }
             }
         },
+        "\/api\/docs\/pages": {
+            "get": {
+                "summary": "List documentation pages",
+                "description": "The pages of the documentation of the current workspace, sorted by title, without their content : read one with readDocPage. A page with a parent is a sub-page of it. Narrow the list with search (in the title and the content), tag, and include_archived to see archived pages too",
+                "operationId": "listDocPages",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "tag",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "include_archived",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The pages",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "parent": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ]
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "tags": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "version": {
+                                                "type": "integer"
+                                            },
+                                            "created_by": {
+                                                "type": "integer"
+                                            },
+                                            "archived_at": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "updated_by": {},
+                                            "updated_at": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "parent",
+                                            "title",
+                                            "tags",
+                                            "version",
+                                            "created_by",
+                                            "archived_at",
+                                            "updated_by",
+                                            "updated_at"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 700,
+                                        "parent": 266,
+                                        "title": "Quis numquam aut.",
+                                        "tags": [
+                                            "dicta",
+                                            "rerum"
+                                        ],
+                                        "version": 213,
+                                        "created_by": 310,
+                                        "archived_at": "2014-11-28T00:00:00+00:00",
+                                        "updated_by": null,
+                                        "updated_at": "2010-07-24T00:00:00+00:00"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create documentation page",
+                "description": "Adds a page to the documentation of the current workspace. The content is Markdown : fenced code blocks are highlighted, ```mermaid blocks are drawn as diagrams, and images uploaded with uploadDocImage are shown with their markdown snippet. Give a parent to make it a sub-page",
+                "operationId": "createDocPage",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "content": {
+                                        "type": "string"
+                                    },
+                                    "parent": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "tags": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "title"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "Unknown parent, or an invalid field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The page, at version 1",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "parent": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "tags": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "version": {
+                                            "type": "integer"
+                                        },
+                                        "created_by": {
+                                            "type": "integer"
+                                        },
+                                        "archived_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "updated_by": {},
+                                        "updated_at": {
+                                            "type": "string"
+                                        },
+                                        "content": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "parent",
+                                        "title",
+                                        "tags",
+                                        "version",
+                                        "created_by",
+                                        "archived_at",
+                                        "updated_by",
+                                        "updated_at",
+                                        "content"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 700,
+                                    "parent": 266,
+                                    "title": "Quis numquam aut.",
+                                    "tags": [
+                                        "dicta",
+                                        "rerum"
+                                    ],
+                                    "version": 213,
+                                    "created_by": 310,
+                                    "archived_at": "2014-11-28T00:00:00+00:00",
+                                    "updated_by": null,
+                                    "updated_at": "2010-07-24T00:00:00+00:00",
+                                    "content": "# Qui consequatur ut debitis minima.\n\nRatione placeat totam commodi modi et facilis itaque. Praesentium eum tenetur voluptatem delectus. Aspernatur dignissimos neque possimus dolor tenetur similique omnis."
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/docs\/pages\/{page}": {
+            "get": {
+                "summary": "Read documentation page",
+                "description": "A page of the documentation with its Markdown content and its version : give that version back when changing the page, so that a change made in the meantime is not overwritten",
+                "operationId": "readDocPage",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The page",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "parent": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "tags": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "version": {
+                                            "type": "integer"
+                                        },
+                                        "created_by": {
+                                            "type": "integer"
+                                        },
+                                        "archived_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "updated_by": {},
+                                        "updated_at": {
+                                            "type": "string"
+                                        },
+                                        "content": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "parent",
+                                        "title",
+                                        "tags",
+                                        "version",
+                                        "created_by",
+                                        "archived_at",
+                                        "updated_by",
+                                        "updated_at",
+                                        "content"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 700,
+                                    "parent": 266,
+                                    "title": "Quis numquam aut.",
+                                    "tags": [
+                                        "dicta",
+                                        "rerum"
+                                    ],
+                                    "version": 213,
+                                    "created_by": 310,
+                                    "archived_at": "2014-11-28T00:00:00+00:00",
+                                    "updated_by": null,
+                                    "updated_at": "2010-07-24T00:00:00+00:00",
+                                    "content": "# Qui consequatur ut debitis minima.\n\nRatione placeat totam commodi modi et facilis itaque. Praesentium eum tenetur voluptatem delectus. Aspernatur dignissimos neque possimus dolor tenetur similique omnis."
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such page in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Update documentation page",
+                "description": "Changes the title, the whole content, the tags, the parent (null for a top-level page) or the archived state of a page. A left out field is kept. Give the version read with readDocPage : the change is refused with a 409 if the page changed since. To change a few passages of a long page, prefer editDocPage",
+                "operationId": "updateDocPage",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "content": {
+                                        "type": "string"
+                                    },
+                                    "tags": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "parent": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    },
+                                    "archived": {
+                                        "type": "boolean"
+                                    },
+                                    "version": {
+                                        "type": "integer"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "Unknown parent, the page itself or one of its sub-pages, or an invalid field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The page",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "parent": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "tags": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "version": {
+                                            "type": "integer"
+                                        },
+                                        "created_by": {
+                                            "type": "integer"
+                                        },
+                                        "archived_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "updated_by": {},
+                                        "updated_at": {
+                                            "type": "string"
+                                        },
+                                        "content": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "parent",
+                                        "title",
+                                        "tags",
+                                        "version",
+                                        "created_by",
+                                        "archived_at",
+                                        "updated_by",
+                                        "updated_at",
+                                        "content"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 700,
+                                    "parent": 266,
+                                    "title": "Quis numquam aut.",
+                                    "tags": [
+                                        "dicta",
+                                        "rerum"
+                                    ],
+                                    "version": 213,
+                                    "created_by": 310,
+                                    "archived_at": "2014-11-28T00:00:00+00:00",
+                                    "updated_by": null,
+                                    "updated_at": "2010-07-24T00:00:00+00:00",
+                                    "content": "# Qui consequatur ut debitis minima.\n\nRatione placeat totam commodi modi et facilis itaque. Praesentium eum tenetur voluptatem delectus. Aspernatur dignissimos neque possimus dolor tenetur similique omnis."
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such page in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The page is no longer at the given version",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete documentation page",
+                "description": "Deletes a page with all its sub-pages and their versions. Only the member who created the page can delete it",
+                "operationId": "deleteDocPage",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The current user did not create the page",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such page in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The page and its sub-pages are deleted"
+                    }
+                }
+            }
+        },
+        "\/api\/docs\/pages\/{page}\/edits": {
+            "post": {
+                "summary": "Edit documentation page",
+                "description": "Replaces passages of the content of a page : each old_text must appear exactly once in the content, and is replaced by its new_text. The edits apply in order, all or none. Give the version read with readDocPage to be refused with a 409 if the page changed since",
+                "operationId": "editDocPage",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "edits": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "old_text": {
+                                                    "type": "string"
+                                                },
+                                                "new_text": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "old_text",
+                                                "new_text"
+                                            ]
+                                        }
+                                    },
+                                    "version": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "edits"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "A passage is missing or ambiguous, or the content would be too long",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The page",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "parent": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "tags": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "version": {
+                                            "type": "integer"
+                                        },
+                                        "created_by": {
+                                            "type": "integer"
+                                        },
+                                        "archived_at": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "updated_by": {},
+                                        "updated_at": {
+                                            "type": "string"
+                                        },
+                                        "content": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "parent",
+                                        "title",
+                                        "tags",
+                                        "version",
+                                        "created_by",
+                                        "archived_at",
+                                        "updated_by",
+                                        "updated_at",
+                                        "content"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 700,
+                                    "parent": 266,
+                                    "title": "Quis numquam aut.",
+                                    "tags": [
+                                        "dicta",
+                                        "rerum"
+                                    ],
+                                    "version": 213,
+                                    "created_by": 310,
+                                    "archived_at": "2014-11-28T00:00:00+00:00",
+                                    "updated_by": null,
+                                    "updated_at": "2010-07-24T00:00:00+00:00",
+                                    "content": "# Qui consequatur ut debitis minima.\n\nRatione placeat totam commodi modi et facilis itaque. Praesentium eum tenetur voluptatem delectus. Aspernatur dignissimos neque possimus dolor tenetur similique omnis."
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such page in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The page is no longer at the given version",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/docs\/pages\/{page}\/versions": {
+            "get": {
+                "summary": "List documentation page versions",
+                "description": "The versions of a page kept for 31 days, newest first, without their content : who wrote each one, and through which agent token. Read one with readDocPageVersion",
+                "operationId": "listDocPageVersions",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The versions",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "page": {
+                                                "type": "integer"
+                                            },
+                                            "version": {
+                                                "type": "integer"
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "tags": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "author": {},
+                                            "token": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "created_at": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "page",
+                                            "version",
+                                            "title",
+                                            "tags",
+                                            "author",
+                                            "token",
+                                            "created_at"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 186,
+                                        "page": 339,
+                                        "version": 360,
+                                        "title": "Harum repellat dolore eos.",
+                                        "tags": [
+                                            "vel",
+                                            "quibusdam"
+                                        ],
+                                        "author": null,
+                                        "token": "voluptas id quae",
+                                        "created_at": "2028-02-05T00:00:00+00:00"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such page in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/docs\/versions\/{version}": {
+            "get": {
+                "summary": "Read documentation page version",
+                "description": "A past version of a page, with its whole Markdown content",
+                "operationId": "readDocPageVersion",
+                "parameters": [
+                    {
+                        "name": "version",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The version",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "page": {
+                                            "type": "integer"
+                                        },
+                                        "version": {
+                                            "type": "integer"
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "tags": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "author": {},
+                                        "token": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "created_at": {
+                                            "type": "string"
+                                        },
+                                        "content": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "page",
+                                        "version",
+                                        "title",
+                                        "tags",
+                                        "author",
+                                        "token",
+                                        "created_at",
+                                        "content"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 186,
+                                    "page": 339,
+                                    "version": 360,
+                                    "title": "Harum repellat dolore eos.",
+                                    "tags": [
+                                        "vel",
+                                        "quibusdam"
+                                    ],
+                                    "author": null,
+                                    "token": "voluptas id quae",
+                                    "created_at": "2028-02-05T00:00:00+00:00",
+                                    "content": "# Et natus est.\n\nAtque suscipit mollitia laudantium consequuntur. Voluptatem dolorem magnam nemo dolorum velit qui enim exercitationem. Maxime voluptas eligendi qui quis animi non delectus. Veritatis quo sunt maxime in dicta."
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such version in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/docs\/images": {
+            "post": {
+                "summary": "Upload documentation image",
+                "description": "Stores an image for the documentation of the current workspace : PNG, JPEG, GIF or WebP, 5 MiB at most, its bytes encoded in base64. Put the markdown snippet of the answer in a page to show it",
+                "operationId": "uploadDocImage",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "content": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "name",
+                                    "content"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "Not base64, or not an accepted image",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The image",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "size": {
+                                            "type": "integer"
+                                        },
+                                        "url": {
+                                            "type": "string"
+                                        },
+                                        "markdown": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "type",
+                                        "size",
+                                        "url",
+                                        "markdown"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 540,
+                                    "name": "dolorum magnam maxime",
+                                    "type": "ut ipsam et",
+                                    "size": 257,
+                                    "url": "\/api\/docs\/images\/540",
+                                    "markdown": "![dolorum magnam maxime](\/api\/docs\/images\/540)"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "Over 5 MiB",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/docs\/images\/{image}": {
+            "get": {
+                "summary": "Get documentation image",
+                "description": "An image of the documentation, as referenced by the pages (\/api\/docs\/images\/{image})",
+                "operationId": "getDocImage",
+                "parameters": [
+                    {
+                        "name": "image",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such image in the current workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/api\/events": {
             "post": {
                 "summary": "Trigger event",
@@ -8562,16 +9819,22 @@
                                 },
                                 "example": [
                                     {
-                                        "id": 432,
-                                        "name": "voluptatibus adipisci sapiente",
-                                        "accent_color": "#9e881c",
+                                        "id": 274,
+                                        "name": "placeat nisi commodi",
+                                        "accent_color": "#7436c4",
                                         "sections": [
-                                            "webhooks"
+                                            "jira",
+                                            "webhooks",
+                                            "documentation",
+                                            "events",
+                                            "automation",
+                                            "tasks",
+                                            "merge_requests"
                                         ],
-                                        "mcp_access": "cupiditate dolores ab",
-                                        "author": 97,
-                                        "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
-                                        "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
+                                        "mcp_access": "animi earum facere",
+                                        "author": 729,
+                                        "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
+                                        "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
                                     }
                                 ]
                             }
@@ -8680,16 +9943,22 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 432,
-                                    "name": "voluptatibus adipisci sapiente",
-                                    "accent_color": "#9e881c",
+                                    "id": 321,
+                                    "name": "consequatur labore delectus",
+                                    "accent_color": "#7436c4",
                                     "sections": [
-                                        "webhooks"
+                                        "jira",
+                                        "webhooks",
+                                        "documentation",
+                                        "events",
+                                        "automation",
+                                        "tasks",
+                                        "merge_requests"
                                     ],
-                                    "mcp_access": "cupiditate dolores ab",
-                                    "author": 97,
-                                    "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
-                                    "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
+                                    "mcp_access": "sequi qui consequatur",
+                                    "author": 301,
+                                    "icon": "\/api\/workspaces\/321\/icon?v=aut consequatur qui",
+                                    "favicon_url": "\/api\/workspaces\/321\/icon?v=aut consequatur qui"
                                 }
                             }
                         }
@@ -8771,16 +10040,22 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 432,
-                                    "name": "voluptatibus adipisci sapiente",
-                                    "accent_color": "#9e881c",
+                                    "id": 274,
+                                    "name": "placeat nisi commodi",
+                                    "accent_color": "#7436c4",
                                     "sections": [
-                                        "webhooks"
+                                        "jira",
+                                        "webhooks",
+                                        "documentation",
+                                        "events",
+                                        "automation",
+                                        "tasks",
+                                        "merge_requests"
                                     ],
-                                    "mcp_access": "cupiditate dolores ab",
-                                    "author": 97,
-                                    "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
-                                    "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
+                                    "mcp_access": "animi earum facere",
+                                    "author": 729,
+                                    "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
+                                    "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
                                 }
                             }
                         }
@@ -8903,16 +10178,22 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 432,
-                                    "name": "voluptatibus adipisci sapiente",
-                                    "accent_color": "#9e881c",
+                                    "id": 274,
+                                    "name": "placeat nisi commodi",
+                                    "accent_color": "#7436c4",
                                     "sections": [
-                                        "webhooks"
+                                        "jira",
+                                        "webhooks",
+                                        "documentation",
+                                        "events",
+                                        "automation",
+                                        "tasks",
+                                        "merge_requests"
                                     ],
-                                    "mcp_access": "cupiditate dolores ab",
-                                    "author": 97,
-                                    "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
-                                    "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
+                                    "mcp_access": "animi earum facere",
+                                    "author": 729,
+                                    "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
+                                    "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
                                 }
                             }
                         }
@@ -9045,7 +10326,8 @@
                                                 "merge_requests",
                                                 "events",
                                                 "automation",
-                                                "webhooks"
+                                                "webhooks",
+                                                "documentation"
                                             ]
                                         }
                                     },
@@ -9130,16 +10412,22 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 432,
-                                    "name": "voluptatibus adipisci sapiente",
-                                    "accent_color": "#9e881c",
+                                    "id": 274,
+                                    "name": "placeat nisi commodi",
+                                    "accent_color": "#7436c4",
                                     "sections": [
-                                        "webhooks"
+                                        "jira",
+                                        "webhooks",
+                                        "documentation",
+                                        "events",
+                                        "automation",
+                                        "tasks",
+                                        "merge_requests"
                                     ],
-                                    "mcp_access": "cupiditate dolores ab",
-                                    "author": 97,
-                                    "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
-                                    "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
+                                    "mcp_access": "animi earum facere",
+                                    "author": 729,
+                                    "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
+                                    "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
                                 }
                             }
                         }
@@ -9385,16 +10673,22 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 432,
-                                    "name": "voluptatibus adipisci sapiente",
-                                    "accent_color": "#9e881c",
+                                    "id": 274,
+                                    "name": "placeat nisi commodi",
+                                    "accent_color": "#7436c4",
                                     "sections": [
-                                        "webhooks"
+                                        "jira",
+                                        "webhooks",
+                                        "documentation",
+                                        "events",
+                                        "automation",
+                                        "tasks",
+                                        "merge_requests"
                                     ],
-                                    "mcp_access": "cupiditate dolores ab",
-                                    "author": 97,
-                                    "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
-                                    "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
+                                    "mcp_access": "animi earum facere",
+                                    "author": 729,
+                                    "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
+                                    "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
                                 }
                             }
                         }
@@ -9514,16 +10808,22 @@
                                     ]
                                 },
                                 "example": {
-                                    "id": 432,
-                                    "name": "voluptatibus adipisci sapiente",
-                                    "accent_color": "#9e881c",
+                                    "id": 274,
+                                    "name": "placeat nisi commodi",
+                                    "accent_color": "#7436c4",
                                     "sections": [
-                                        "webhooks"
+                                        "jira",
+                                        "webhooks",
+                                        "documentation",
+                                        "events",
+                                        "automation",
+                                        "tasks",
+                                        "merge_requests"
                                     ],
-                                    "mcp_access": "cupiditate dolores ab",
-                                    "author": 97,
-                                    "icon": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias",
-                                    "favicon_url": "\/api\/workspaces\/432\/icon?v=ut ducimus molestias"
+                                    "mcp_access": "animi earum facere",
+                                    "author": 729,
+                                    "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
+                                    "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
                                 }
                             }
                         }

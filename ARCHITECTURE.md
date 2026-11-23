@@ -73,8 +73,8 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
 - Un workspace peut avoir plusieurs membres, et un utilisateur peut être membre de plusieurs
   workspaces. Tous les membres ont les mêmes droits sur le workspace, sauf sa suppression, réservée à
   son auteur (`workspace.author`) ; il n'y a pas de rôles.
-- Un workspace choisit ses **sections** parmi `tasks`, `jira`, `merge_requests`, `events`, `automation`
-  et `webhooks` (toutes pour un workspace jamais configuré). Une section décochée est seulement
+- Un workspace choisit ses **sections** parmi `tasks`, `jira`, `merge_requests`, `events`, `automation`,
+  `webhooks` et `documentation` (toutes pour un workspace jamais configuré). Une section décochée est seulement
   masquée : elle quitte la navbar et les Paramètres, et son adresse renvoie à l'accueil, mais ses données, ses
   synchronisations et ses événements continuent. Accueil, Historique, Paramètres et
   les appareils sont toujours là.
@@ -151,6 +151,38 @@ vérifiée puis épinglée, redirections revérifiées, 5 s, 1 Mio par page et 2
 un lien ne doit pas faire lire à Tower son propre réseau. Sans icône, le front affiche une
 pastille avec l'initiale, d'une couleur tirée du nom du site.
 
+### Documentation
+
+Chaque workspace a sa documentation interne : des pages en Markdown (table `doc_page`), rangées
+en arborescence (`parent`, nul pour une page de premier niveau) et classées par **tags**. Elle
+s'écrit dans le front ou par un agent (voir § Serveur MCP), par les mêmes routes (`/api/docs/...`).
+
+- **Rendu** côté front : `markdown-it` sans HTML brut (tout HTML écrit dans une page s'affiche
+  comme du texte, et les liens `javascript:` sont refusés), code coloré par highlight.js, blocs
+  ```` ```mermaid ```` dessinés par mermaid (`securityLevel: 'strict'`), chargé seulement par
+  une page qui en contient. L'écran est chargé à la demande pour ne pas alourdir le reste.
+- **Versions** (table `doc_page_version`) : chaque changement de titre, de contenu ou de tags
+  incrémente `doc_page.version` et garde une copie complète de la page, avec son auteur et le
+  nom du jeton d'agent s'il passe par le MCP. Déplacer ou archiver une page n'en crée pas.
+  Elles sont gardées **31 jours** (même `HistoryConfiguration` que l'historique), sauf celle où
+  la page est, toujours gardée.
+- **Conflits** : une modification peut donner la `version` lue ; si la page a changé depuis,
+  elle est refusée en `409` au lieu d'écraser. Le front le fait toujours et propose d'écraser.
+  `POST /api/docs/pages/{id}/edits` remplace des passages (chacun présent exactement une fois,
+  tous ou aucun) : un agent n'a pas à réécrire une longue page pour en changer une ligne.
+- **Archivage** : une page archivée (`archived_at`) disparaît de la liste tant que les pages
+  archivées sont masquées ; elle reste lisible et se désarchive.
+- **Suppression** : réservée au membre qui a créé la page (`created_by`, sinon `403`). Elle
+  emporte toutes ses sous-pages, même écrites par d'autres, et leurs versions, après une
+  confirmation qui les compte. Elle n'est pas exposée aux agents. Supprimer un workspace supprime
+  aussi ses pages, leurs versions et ses images (fichiers compris).
+- **Images** (table `doc_image`, fichiers dans `Storage/DocImages`) : PNG, JPEG, GIF ou WebP de
+  5 Mio au plus, envoyées en base64 dans du JSON (le même appel sert au front et aux agents),
+  servies par `GET /api/docs/images/{id}` aux membres du workspace. Jamais de SVG, qui peut
+  porter du script. nginx accepte 8 Mo par requête pour cela. Une image n'est pas supprimée
+  quand plus aucune page ne la cite.
+- Le contenu d'une page est limité à 64 Kio (colonne `TEXT`).
+
 ### Historique
 
 Toute action notable écrit une ligne dans la table `history` : `workspace`, `type`,
@@ -174,6 +206,7 @@ y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les l
 | `webhook.created`, `webhook.enabled`, `webhook.disabled`, `webhook.deleted`, `webhook.secret_regenerated` | gestion des webhooks |
 | `schedule.created`, `schedule.enabled`, `schedule.disabled`, `schedule.deleted` | gestion des planifications |
 | `token.created`, `token.revoked` | création et révocation d'un jeton d'agent (voir § Serveur MCP) |
+| `doc.page.created`, `doc.page.updated`, `doc.page.moved`, `doc.page.archived`, `doc.page.restored`, `doc.page.deleted` | pages de la documentation (`title`, `page`, `version` ; `sub_pages` pour une suppression) |
 
 Les lignes `task.*`, `sprint.*` et `event.triggered` sont aussi envoyées aux appareils
 connectés comme des événements du même type (voir § Événements), comme les lignes `pr.*` et
@@ -186,7 +219,7 @@ lignes postérieures à son dernier run.
 
 Une tâche planifiée quotidienne supprime les lignes d'historique et leurs livraisons, ainsi que
 les traces d'appels des webhooks, plus anciennes que **31 jours** (configuration PHP, `HistoryConfiguration`). Une autre supprime
-les merge requests fermées depuis plus de **30 jours**. Les tâches, les sprints et l'état
+les merge requests fermées depuis plus de **30 jours**, une autre les versions de pages de documentation de plus de **31 jours**. Les tâches, les sprints et l'état
 courant des intégrations ne sont jamais supprimés par ce nettoyage.
 
 ## 2. Appareils
@@ -926,8 +959,9 @@ des sprints actifs, tickets non terminés de l'utilisateur, merge requests ouver
 | Événements         | section `events` : lancement manuel et quick-actions               |
 | Automatisations    | section `automation` : planifications                              |
 | Webhooks           | section `webhooks`                                                 |
+| Documentation      | section `documentation` : pages du workspace                       |
 | Historique         | en bas                                                             |
-| Documentation / API | en bas, voir § Écrans                                             |
+| Aide / API         | en bas, voir § Écrans                                              |
 | Paramètres         | en bas                                                             |
 
 ### Indicateur Appareils
@@ -987,7 +1021,8 @@ Les signaux du workspace portent ce qu'il faut pour cela : `history.created` (`h
 | Historique         | tableau compact des lignes du workspace (une ligne chacune : type, détail tronqué, date ; un bloc par ligne sur téléphone), les plus récentes d'abord, par pages de 50 ; pour une ligne envoyée aux appareils, les livraisons avec statut, code de sortie et réponse |
 | Paramètres         | onglets verticaux à gauche, contenu à droite, onglet choisi dans l'adresse (`?tab=`) : **Compte** (changement de mot de passe) ; **Interface** (langue : auto, français ou anglais ; thème : auto, clair ou sombre ; gardés dans le navigateur, appliqués sans recharger) ; intégrations Bitbucket et Jira, chacune affichée si sa section est active : workspace ou site, e-mail, token, synchronisation, profils Jira (board, nom, filtre JQL ; ajout, modification, suppression, chacun suivi d'une synchronisation), état de la dernière synchronisation ; bloc « Vider une section », toujours visible, qui supprime d'un coup l'intégration Jira ou Bitbucket et ses données |
 | Jira               | tickets non terminés d'un profil, choisi dans une liste, avec la pastille de leur assigné, ou seulement les siens, en kanban avec les colonnes de son board ; transition par glisser-déposer, ouverture dans Jira, création de tâche |
-| Documentation / API | onglets verticaux comme les Paramètres, page choisie dans l'adresse (`?page=`) : accueil, événements envoyés aux appareils (enveloppe du message, variables d'environnement, chaque type avec ses champs et des exemples de payload), lancer le connecteur en service sous Linux (systemd), et sur un serveur sans écran (service détaché des sessions par le lingering, handlers en fichier, délai des handlers, commande root autorisée par sudo, dépannage). Les blocs de code sont colorés (highlight.js, avec seulement les langages utilisés) et ont un bouton pour copier leur contenu brut. Chaque page existe en français et en anglais (`views/docs/fr/`, `views/docs/en/`) ; la version de la langue active est affichée, le français sert de repli |
+| Documentation      | section du workspace, à l'adresse `/docs` (`?page=`) : à gauche, la recherche (titre et contenu) et le bouton « + » d'une nouvelle page, puis « Filtres supplémentaires », repliés par défaut avec le nombre de filtres actifs (tag, pages archivées), puis l'arborescence ; à droite, la page rendue avec ses tags, son dernier auteur et ses actions (modifier, sous-page, historique, archiver ou désarchiver, supprimer pour son créateur). L'édition montre le Markdown et son aperçu côte à côte ; une image s'ajoute par bouton ou par collage. L'historique est un volet des versions (auteur, jeton, date) : en choisir une l'affiche à la place de la page. Rechargée quand une page change (signal `history.created`), sauf pendant une édition. Sur téléphone, la page remplace la liste |
+| Aide / API         | à l'adresse `/help`, onglets verticaux comme les Paramètres, page choisie dans l'adresse (`?page=`) : accueil, événements envoyés aux appareils (enveloppe du message, variables d'environnement, chaque type avec ses champs et des exemples de payload), lancer le connecteur en service sous Linux (systemd), et sur un serveur sans écran (service détaché des sessions par le lingering, handlers en fichier, délai des handlers, commande root autorisée par sudo, dépannage). Les blocs de code sont colorés (highlight.js, avec seulement les langages utilisés) et ont un bouton pour copier leur contenu brut. Chaque page existe en français et en anglais (`views/docs/fr/`, `views/docs/en/`) ; la version de la langue active est affichée, le français sert de repli |
 | Mes workspaces     | modale ouverte par « Gérer mes workspaces » : liste et création à gauche ; à droite, le workspace choisi en trois onglets, chacun enregistré à part : **Général** (nom, couleur, passage sur ce workspace), **Fonctionnalités** (sections), **Membres** (liste, ajout par e-mail, retrait, départ) |
 
 ### Connecter un appareil
@@ -1035,6 +1070,9 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `integration`     | `workspace`, `type`, `settings` (JSON), `credentials` (chiffré), `last_synced_at`, `last_error` |
 | `pull_request`    | `workspace`, `integration`, `external_id`, `repository`, branches source et cible, `source_commit`, `url`, `title`, `author`, `state`, `draft`, `comment_count`, `pipeline_status`, `synced_at` |
 | `pull_request_approvals` | `pull_request`, `external_user_id`, `display_name`, `status`        |
+| `doc_page`        | `workspace`, `parent`, `title`, `content`, `tags` (JSON), `version`, `archived_at`, `created_by`, `updated_by`, `created_at`, `updated_at` |
+| `doc_page_version` | `page`, `version` (unique avec `page`), `title`, `content`, `tags`, `user`, `token` (nom du jeton d'agent), `created_at` |
+| `doc_image`       | `workspace`, `name`, `type`, `size`, `file`, `user`, `created_at`          |
 | `jira_issue`      | `workspace`, `integration`, `external_id`, `issue_key`, `summary`, `url`, `project`, `issue_type`, `priority`, `status_id`, `status`, `status_category` (`todo`, `in_progress`, `done`), `sprint_id`, `sprint_name`, `sprint_state`, `assignee_id`, `assignee_name`, `assignee_avatar`, `parent` (ticket parent d'une sous-tâche), `tracked`, `synced_at` |
 
 **(prévu)** `job`, `device_connection`, `agent_run`, `agent_memory`.

@@ -4,6 +4,7 @@ namespace Tests\Integration;
 
 use App\Integrations\Jira\JiraClient;
 use App\Models\ApiToken;
+use App\Models\DocPageVersion;
 use App\Models\History;
 use App\Models\Task;
 use App\Models\User;
@@ -324,6 +325,30 @@ class McpTest extends CubeTestCase
         $content = $this->callTool($token, 'get_jira_attachment', ['attachment' => 501])['content'][0];
 
         $this->assertSame(['image', 'image/png', base64_encode("\x89PNG")], [$content['type'], $content['mimeType'], $content['data']]);
+    }
+
+    public function testAnAgentIllustratesAndEditsTheDocumentation()
+    {
+        $png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        $this->register();
+        $this->setMcpAccess('write');
+        $token = $this->createToken()['value'];
+        $this->logOut();
+
+        $uploaded = $this->callTool($token, 'upload_doc_image', ['name' => 'schema.png', 'content' => $png]);
+        $image = json_decode($uploaded['content'][0]['text'], true);
+
+        $content = $this->callTool($token, 'get_doc_image', ['image' => $image['id']])['content'][0];
+        $this->assertSame(['image', 'image/png', $png], [$content['type'], $content['mimeType'], $content['data']]);
+
+        $created = json_decode($this->callTool($token, 'create_doc_page', ['title' => 'Architecture', 'content' => "Draft\n\n{$image['markdown']}"])['content'][0]['text'], true);
+        $edited = $this->callTool($token, 'edit_doc_page', ['page' => $created['id'], 'version' => 1, 'edits' => [['old_text' => 'Draft', 'new_text' => 'Final']]]);
+        $this->assertFalse($edited['isError'] ?? false);
+
+        $version = DocPageVersion::findWhere(['page' => $created['id'], 'version' => 2]);
+        $this->assertSame("Final\n\n{$image['markdown']}", $version->content);
+        $this->assertSame('Claude Code', $version->token);
+        $this->assertSame('mcp', History::findWhere(['type' => 'doc.page.updated'])->origin);
     }
 
     public function testEachCallIsSignaledToTheCircuit()
