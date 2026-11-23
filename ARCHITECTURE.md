@@ -862,9 +862,10 @@ la synchronisation, qui seule sait qu'un élément apparaît ou disparaît.
   parent et restent sans assigné, donc jamais annoncées. Elles quittent l'ensemble suivi avec
   leur parent (gardées hors du kanban et sans parent si elles ont une tâche). La case
   « Sous-tâches », décochée par défaut et gardée dans le navigateur par workspace, les
-  affiche sous la carte de leur parent : clé, résumé, statut. Cliquer sur le statut lit les
-  transitions possibles et applique celle choisie ; la sous-tâche ne reprend de la lecture
-  qui suit que son statut, pas le sprint ni l'assigné que Jira lui donne seule.
+  affiche juste après leur parent, avec la même carte qu'un ticket (mêmes actions : copier la
+  clé, en faire une tâche, merge request, discussion) et un label « Enfant de <clé> ». Elles
+  changent de statut par glisser-déposer, comme un ticket ; la sous-tâche ne reprend de la
+  lecture qui suit que son statut, pas le sprint ni l'assigné que Jira lui donne seule.
 - Chaque ticket s'ouvre dans Jira, dans un nouvel onglet.
 - Un ticket peut être transformé en tâche, à la fin du backlog : son titre est `<clé> <résumé>`,
   sa description le lien du ticket. Un ticket a au plus une tâche. La tâche affiche le statut

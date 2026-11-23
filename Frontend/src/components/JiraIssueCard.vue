@@ -5,7 +5,10 @@ import JiraAssignee from './JiraAssignee.vue'
 import PullRequestButton from './PullRequestButton.vue'
 import type { JiraIssue } from '../stores/jira'
 
-const props = defineProps<{ issue: JiraIssue; taskId: number | null; creatingTask: boolean; discussing: boolean; showAssignee: boolean }>()
+const props = withDefaults(
+  defineProps<{ issue: JiraIssue; parent?: JiraIssue | null; taskId: number | null; creatingTask: boolean; discussing: boolean; showAssignee: boolean }>(),
+  { parent: null },
+)
 defineEmits<{ createTask: []; openTask: []; discuss: [] }>()
 
 const { t } = useI18n()
@@ -23,6 +26,9 @@ async function copyKey() {
 
 <template>
   <article class="issue-card">
+    <a v-if="parent" :href="parent.url" target="_blank" rel="noopener noreferrer" class="issue-parent" :title="`${parent.key} ${parent.summary}`">
+      {{ t('jira.childOf', { key: parent.key }) }}
+    </a>
     <span class="issue-summary">{{ issue.summary }}</span>
 
     <footer class="issue-card-footer">
@@ -86,6 +92,20 @@ async function copyKey() {
 
 .issue-key .pi {
   font-size: 0.75rem;
+}
+
+.issue-parent {
+  align-self: flex-start;
+  padding: 0 0.375rem;
+  border-radius: var(--p-content-border-radius);
+  background: var(--p-content-hover-background);
+  color: var(--p-text-muted-color);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.issue-parent:hover {
+  color: var(--p-text-color);
 }
 
 .issue-summary {

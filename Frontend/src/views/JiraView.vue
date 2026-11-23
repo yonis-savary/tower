@@ -13,7 +13,6 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { TOUCH_DRAG } from '../utils/touchDrag'
 import EmptyState from '../components/EmptyState.vue'
 import JiraIssueCard from '../components/JiraIssueCard.vue'
-import JiraSubtaskCard from '../components/JiraSubtaskCard.vue'
 import { syncJiraIntegration } from '../client'
 import { useJiraStore, type JiraColumn, type JiraIssue, type JiraProfile, type JiraTransition } from '../stores/jira'
 import { useTasksStore } from '../stores/tasks'
@@ -23,7 +22,7 @@ import { storedFlag } from '../utils/storedFlag'
 type Refusal = { issue: JiraIssue; message: string }
 type Choice = { issue: JiraIssue; transitions: JiraTransition[] }
 type SprintOption = { value: string; label: string }
-type BoardItem = { kind: 'issue' | 'parent' | 'subtask'; issue: JiraIssue }
+type BoardItem = { issue: JiraIssue; parent: JiraIssue | null }
 type BoardSection = { name: string; column: JiraColumn | null }
 
 const NO_SPRINT = 'none'
@@ -142,13 +141,13 @@ watch(() => workspace.current?.id, (id) => { if (id) void load() }, { immediate:
 function itemsOf(issues: JiraIssue[], inColumn: (issue: JiraIssue) => boolean): BoardItem[] {
   return issues.flatMap((issue) => {
     const subtasks = subtasksOf(issue).filter(inColumn)
-    const head: BoardItem[] = inColumn(issue) && hasCard(issue) ? [{ kind: 'issue', issue }] : subtasks.length ? [{ kind: 'parent', issue }] : []
-    return [...head, ...subtasks.map((subtask): BoardItem => ({ kind: 'subtask', issue: subtask }))]
+    const head: BoardItem[] = inColumn(issue) && hasCard(issue) ? [{ issue, parent: null }] : []
+    return [...head, ...subtasks.map((subtask): BoardItem => ({ issue: subtask, parent: issue }))]
   })
 }
 
 function countOf(items: BoardItem[] | undefined): number {
-  return items?.filter(({ kind }) => kind !== 'parent').length ?? 0
+  return items?.length ?? 0
 }
 
 // The lists are copies : the drag library writes into them before Jira has answered
@@ -310,15 +309,15 @@ async function discuss(issue: JiraIssue) {
         :force-fallback="true" v-bind="TOUCH_DRAG"
         :disabled="moving"
         :sort="false"
-        filter="a, button, .parent-reminder"
+        filter="a, button"
         :prevent-on-filter="false"
         ghost-class="issue-ghost"
         @add="drop(section.column!, $event)"
       >
-        <template v-for="item in lists[index]" :key="`${item.kind}-${item.issue.id}`">
+        <template v-for="item in lists[index]" :key="item.issue.id">
           <JiraIssueCard
-            v-if="item.kind === 'issue'"
             :issue="item.issue"
+            :parent="item.parent"
             :task-id="taskOf.get(item.issue.id) ?? null"
             :show-assignee="!onlyMine"
             :creating-task="creatingTask === item.issue.id"
@@ -327,11 +326,6 @@ async function discuss(issue: JiraIssue) {
             @open-task="openTask(item.issue)"
             @discuss="discuss(item.issue)"
           />
-          <div v-else-if="item.kind === 'parent'" class="parent-reminder" :title="`${item.issue.key} ${item.issue.summary}`">
-            <a :href="item.issue.url" target="_blank" rel="noopener noreferrer">{{ item.issue.key }}</a>
-            <span>{{ item.issue.summary }}</span>
-          </div>
-          <JiraSubtaskCard v-else :subtask="item.issue" />
         </template>
       </VueDraggable>
     </section>
@@ -430,23 +424,6 @@ async function discuss(issue: JiraIssue) {
   min-height: 6rem;
 }
 
-.parent-reminder {
-  display: flex;
-  gap: 0.5rem;
-  min-width: 0;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.8125rem;
-  color: var(--p-text-muted-color);
-  border: 1px dashed var(--p-content-border-color);
-  border-radius: var(--p-content-border-radius);
-}
-
-.parent-reminder span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 .choices {
   display: flex;
