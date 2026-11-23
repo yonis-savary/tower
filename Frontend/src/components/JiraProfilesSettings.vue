@@ -56,6 +56,8 @@ async function save() {
   }
 
   dialogVisible.value = false
+  // The synchronization that follows can take a while : the list must not wait for it
+  await store.load()
   emit('changed')
 }
 
@@ -69,6 +71,7 @@ async function remove(profile: JiraProfile) {
     return
   }
 
+  await store.load()
   emit('changed')
 }
 </script>
