@@ -513,6 +513,276 @@ export type DownloadFromConfigLinkResponses = {
 
 export type DownloadFromConfigLinkResponse = DownloadFromConfigLinkResponses[keyof DownloadFromConfigLinkResponses];
 
+export type ListAgendaItemsData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+        workspaces?: string;
+        participants?: string;
+    };
+    url: '/api/agenda/items';
+};
+
+export type ListAgendaItemsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current user is not a member of a listed workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type ListAgendaItemsError = ListAgendaItemsErrors[keyof ListAgendaItemsErrors];
+
+export type ListAgendaItemsResponses = {
+    /**
+     * The agenda items
+     */
+    200: Array<{
+        id: number;
+        workspace: number;
+        title: string;
+        description: string;
+        starts_at: string;
+        ends_at: string;
+        all_day: boolean;
+        link: string | null;
+        color: string | null;
+        participants: Array<{
+            id: number;
+            email: string;
+        }>;
+        created_by: number;
+    }>;
+};
+
+export type ListAgendaItemsResponse = ListAgendaItemsResponses[keyof ListAgendaItemsResponses];
+
+export type CreateAgendaItemData = {
+    body: {
+        title: string;
+        description?: string | null;
+        starts_at: string;
+        ends_at: string;
+        all_day?: boolean;
+        link?: string | null;
+        color?: string | null;
+        participants?: Array<number>;
+        workspace?: number;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/agenda/items';
+};
+
+export type CreateAgendaItemErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current user is not a member of this workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * A participant is not a member of the workspace, or an invalid field
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type CreateAgendaItemError = CreateAgendaItemErrors[keyof CreateAgendaItemErrors];
+
+export type CreateAgendaItemResponses = {
+    /**
+     * The agenda item
+     */
+    201: {
+        id: number;
+        workspace: number;
+        title: string;
+        description: string;
+        starts_at: string;
+        ends_at: string;
+        all_day: boolean;
+        link: string | null;
+        color: string | null;
+        participants: Array<{
+            id: number;
+            email: string;
+        }>;
+        created_by: number;
+    };
+};
+
+export type CreateAgendaItemResponse = CreateAgendaItemResponses[keyof CreateAgendaItemResponses];
+
+export type DeleteAgendaItemData = {
+    body?: never;
+    path: {
+        item: number;
+    };
+    query?: never;
+    url: '/api/agenda/items/{item}';
+};
+
+export type DeleteAgendaItemErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such item in a workspace of the current user
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type DeleteAgendaItemError = DeleteAgendaItemErrors[keyof DeleteAgendaItemErrors];
+
+export type DeleteAgendaItemResponses = {
+    /**
+     * The agenda item is deleted
+     */
+    204: void;
+};
+
+export type DeleteAgendaItemResponse = DeleteAgendaItemResponses[keyof DeleteAgendaItemResponses];
+
+export type UpdateAgendaItemData = {
+    body: {
+        title: string;
+        description?: string | null;
+        starts_at: string;
+        ends_at: string;
+        all_day?: boolean;
+        link?: string | null;
+        color?: string | null;
+        participants?: Array<number>;
+    };
+    path: {
+        item: number;
+    };
+    query?: never;
+    url: '/api/agenda/items/{item}';
+};
+
+export type UpdateAgendaItemErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No such item in a workspace of the current user
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * A participant is not a member of the workspace, or an invalid field
+     */
+    422: {
+        error?: string;
+    };
+};
+
+export type UpdateAgendaItemError = UpdateAgendaItemErrors[keyof UpdateAgendaItemErrors];
+
+export type UpdateAgendaItemResponses = {
+    /**
+     * The agenda item
+     */
+    200: {
+        id: number;
+        workspace: number;
+        title: string;
+        description: string;
+        starts_at: string;
+        ends_at: string;
+        all_day: boolean;
+        link: string | null;
+        color: string | null;
+        participants: Array<{
+            id: number;
+            email: string;
+        }>;
+        created_by: number;
+    };
+};
+
+export type UpdateAgendaItemResponse = UpdateAgendaItemResponses[keyof UpdateAgendaItemResponses];
+
+export type ListAgendaSchedulesData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+        workspaces?: string;
+    };
+    url: '/api/agenda/schedules';
+};
+
+export type ListAgendaSchedulesErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The current user is not a member of a listed workspace
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type ListAgendaSchedulesError = ListAgendaSchedulesErrors[keyof ListAgendaSchedulesErrors];
+
+export type ListAgendaSchedulesResponses = {
+    /**
+     * The occurrences
+     */
+    200: Array<{
+        schedule?: number;
+        workspace?: number;
+        name?: string;
+        type?: string;
+        at?: string;
+        frequent?: boolean;
+        runs?: number;
+    }>;
+};
+
+export type ListAgendaSchedulesResponse = ListAgendaSchedulesResponses[keyof ListAgendaSchedulesResponses];
+
 export type ListApiTokensData = {
     body?: never;
     path?: never;
@@ -4250,6 +4520,7 @@ export type ListWorkspacesResponses = {
         accent_color: string | null;
         sections: Array<string>;
         mcp_access: string;
+        agenda_reminder_minutes: number | null;
         author: number;
         icon: string | null;
         favicon_url: string;
@@ -4292,6 +4563,7 @@ export type CreateWorkspaceResponses = {
         accent_color: string | null;
         sections: Array<string>;
         mcp_access: string;
+        agenda_reminder_minutes: number | null;
         author: number;
         icon: string | null;
         favicon_url: string;
@@ -4334,6 +4606,7 @@ export type GetCurrentWorkspaceResponses = {
         accent_color: string | null;
         sections: Array<string>;
         mcp_access: string;
+        agenda_reminder_minutes: number | null;
         author: number;
         icon: string | null;
         favicon_url: string;
@@ -4382,6 +4655,7 @@ export type SelectWorkspaceResponses = {
         accent_color: string | null;
         sections: Array<string>;
         mcp_access: string;
+        agenda_reminder_minutes: number | null;
         author: number;
         icon: string | null;
         favicon_url: string;
@@ -4476,8 +4750,9 @@ export type UpdateWorkspaceData = {
     body: {
         name: string;
         accent_color: string | null;
-        sections?: Array<'tasks' | 'jira' | 'merge_requests' | 'events' | 'automation' | 'webhooks' | 'documentation'>;
+        sections?: Array<'tasks' | 'jira' | 'merge_requests' | 'events' | 'automation' | 'webhooks' | 'documentation' | 'agenda'>;
         mcp_access?: 'blocked' | 'read' | 'write';
+        agenda_reminder_minutes?: number | null;
     };
     path: {
         workspace: number;
@@ -4517,6 +4792,7 @@ export type UpdateWorkspaceResponses = {
         accent_color: string | null;
         sections: Array<string>;
         mcp_access: string;
+        agenda_reminder_minutes: number | null;
         author: number;
         icon: string | null;
         favicon_url: string;
@@ -4561,6 +4837,7 @@ export type RemoveWorkspaceIconResponses = {
         accent_color: string | null;
         sections: Array<string>;
         mcp_access: string;
+        agenda_reminder_minutes: number | null;
         author: number;
         icon: string | null;
         favicon_url: string;
@@ -4640,6 +4917,7 @@ export type SetWorkspaceIconResponses = {
         accent_color: string | null;
         sections: Array<string>;
         mcp_access: string;
+        agenda_reminder_minutes: number | null;
         author: number;
         icon: string | null;
         favicon_url: string;

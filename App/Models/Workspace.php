@@ -17,8 +17,10 @@ use Cube\Utils\Attributes\Generated;
  * @property string $sections
  * @property string $mcp_access
  * @property string $icon
+ * @property int $agenda_reminder_minutes
  * @property User $_author
  * @property AccessKey[] $accessKeies
+ * @property AgendaItem[] $agendaItems
  * @property ApiToken[] $apiTokens
  * @property DocImage[] $docImages
  * @property DocPage[] $docPages
@@ -64,7 +66,8 @@ class Workspace extends Model
             'author' => (new ModelField('author'))->type('INTEGER')->notNull()->hasDefault(false)->references(User::class,'id'),
             'sections' => (new ModelField('sections'))->type('STRING')->nullable()->default(NULL),
             'mcp_access' => (new ModelField('mcp_access'))->type('STRING')->notNull()->default(NULL),
-            'icon' => (new ModelField('icon'))->type('STRING')->nullable()->default(NULL)
+            'icon' => (new ModelField('icon'))->type('STRING')->nullable()->default(NULL),
+            'agenda_reminder_minutes' => (new ModelField('agenda_reminder_minutes'))->type('INTEGER')->nullable()->default(NULL)
         ];
     }
 
@@ -78,6 +81,12 @@ class Workspace extends Model
     public function accessKeies(): HasMany
     {
         return $this->hasMany('accessKeies', AccessKey::class, 'workspace', 'id');
+    }
+
+    #[Generated]
+    public function agendaItems(): HasMany
+    {
+        return $this->hasMany('agendaItems', AgendaItem::class, 'workspace', 'id');
     }
 
     #[Generated]
@@ -181,6 +190,7 @@ class Workspace extends Model
     {
         return [
             "accessKeies",
+            "agendaItems",
             "apiTokens",
             "docImages",
             "docPages",

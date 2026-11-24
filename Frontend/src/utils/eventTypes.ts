@@ -14,6 +14,7 @@ const SECTION_OF_PREFIX: [string, WorkspaceSection][] = [
   ['pr.', 'merge_requests'],
   ['jira.issue.', 'jira'],
   ['ai.', 'jira'],
+  ['agenda.', 'agenda'],
 ]
 
 export function sectionOf(type: string): WorkspaceSection | undefined {

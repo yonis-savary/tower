@@ -43,6 +43,8 @@ const agents = ref<ListWorkspaceApiTokensResponse>([])
 const jiraSite = ref<string | null>(null)
 const bitbucketWorkspace = ref<string | null>(null)
 
+const agendaReminder = computed(() => (workspace.hasSection('agenda') ? (workspace.current?.agenda_reminder_minutes ?? null) : null))
+
 const glows = ref<Glow[]>([])
 const deviceLeds = ref<Record<string, ChipLed>>({})
 let nextGlow = 0
@@ -98,6 +100,14 @@ const sourceGroups = computed<FlowGroup[]>(() => {
       empty: '',
       // A one-time schedule is not part of the wiring : the home lists it among the upcoming ones
       chips: schedules.value.filter((schedule) => schedule.run_at === null).map((schedule) => ({ key: `schedule:${schedule.id}`, kind: 'schedule', label: schedule.name, detail: schedule.type, enabled: schedule.enabled })),
+    },
+    {
+      key: 'agenda',
+      label: t('home.flow.agendaGroup'),
+      empty: '',
+      chips: agendaReminder.value === null
+        ? []
+        : [{ key: 'agenda', kind: 'agenda', label: t('home.flow.agenda'), detail: t('home.flow.agendaDetail', { minutes: agendaReminder.value }), enabled: true }],
     },
   ]
 
@@ -168,6 +178,7 @@ const LINKS: Partial<Record<Chip['kind'], RouteLocationRaw>> = {
   webhook: { name: 'webhooks' },
   schedule: { name: 'automation', query: { tab: 'schedules' } },
   rule: { name: 'automation', query: { tab: 'notifications' } },
+  agenda: { name: 'agenda' },
   agent: { name: 'settings', query: { tab: 'agents' } },
 }
 
@@ -188,6 +199,7 @@ function removeGlow(id: number) {
 function sourceOf(signal: Extract<WorkspaceSignal, { type: 'history.created' }>): string {
   if (signal.origin === 'webhook') return `webhook:${signal.source}`
   if (signal.origin === 'schedule') return `schedule:${signal.source}`
+  if (signal.origin === 'agenda') return 'agenda'
   if (signal.origin === 'integration') return signal.history_type.startsWith('jira.') ? 'jira' : 'bitbucket'
   if (signal.origin === 'device') return `device:${signal.device}`
   // Its call already lit the chip of the agent, through `mcp.called`

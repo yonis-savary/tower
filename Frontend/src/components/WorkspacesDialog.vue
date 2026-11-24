@@ -5,6 +5,7 @@ import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import ColorPicker from 'primevue/colorpicker'
 import Dialog from 'primevue/dialog'
+import InputNumber from 'primevue/inputnumber'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import RadioButton from 'primevue/radiobutton'
@@ -42,6 +43,7 @@ const name = ref('')
 const color = ref<string | null>(null)
 const sections = ref<WorkspaceSection[]>([])
 const mcpAccess = ref<McpAccess>('read')
+const agendaReminder = ref<number | null>(null)
 const newWorkspace = ref('')
 const newMember = ref('')
 const deletionName = ref('')
@@ -57,6 +59,7 @@ const generalUnchanged = computed(() => name.value.trim() === selected.value?.na
 const featuresUnchanged = computed(
   () =>
     mcpAccess.value === selected.value?.mcp_access &&
+    agendaReminder.value === selected.value?.agenda_reminder_minutes &&
     WORKSPACE_SECTIONS.every((section) => sections.value.includes(section) === selected.value?.sections.includes(section)),
 )
 
@@ -80,6 +83,7 @@ watch(selected, async (workspace) => {
   color.value = workspace?.accent_color ?? null
   sections.value = [...((workspace?.sections ?? []) as WorkspaceSection[])]
   mcpAccess.value = (workspace?.mcp_access ?? 'read') as McpAccess
+  agendaReminder.value = workspace?.agenda_reminder_minutes ?? null
   newMember.value = ''
   deletionName.value = ''
   if (tab.value === 'deletion' && !isAuthor.value) tab.value = 'general'
@@ -116,10 +120,24 @@ function saveGeneral() {
 }
 
 function saveFeatures() {
-  return save((workspace) => ({ name: workspace.name, accent_color: workspace.accent_color, sections: sections.value, mcp_access: mcpAccess.value }))
+  return save((workspace) => ({
+    name: workspace.name,
+    accent_color: workspace.accent_color,
+    sections: sections.value,
+    mcp_access: mcpAccess.value,
+    agenda_reminder_minutes: agendaReminder.value,
+  }))
 }
 
-function save(bodyOf: (workspace: NonNullable<typeof selected.value>) => { name: string; accent_color: string | null; sections?: WorkspaceSection[]; mcp_access?: McpAccess }) {
+function save(
+  bodyOf: (workspace: NonNullable<typeof selected.value>) => {
+    name: string
+    accent_color: string | null
+    sections?: WorkspaceSection[]
+    mcp_access?: McpAccess
+    agenda_reminder_minutes?: number | null
+  },
+) {
   const workspace = selected.value
   if (!workspace) return
 
@@ -134,6 +152,8 @@ function save(bodyOf: (workspace: NonNullable<typeof selected.value>) => { name:
 
 // Same limits as the server : a wrong file is told at once, without an upload
 const ICON_TYPES = ['image/png', 'image/jpeg']
+// One week, the limit of the server
+const AGENDA_REMINDER_MAX_MINUTES = 10080
 const ICON_MAX_SIZE = 1024 * 1024
 
 // The icon is saved as soon as it is chosen : it has nothing to do with the form of the tab
@@ -308,6 +328,19 @@ function removeMember(member: ListWorkspaceMembersResponse[number]) {
                   </label>
                   <small class="hint">{{ t('workspaces.sectionsHint') }}</small>
                 </fieldset>
+                <div v-if="sections.includes('agenda')" class="field">
+                  <label for="agenda-reminder" class="label">{{ t('workspaces.agendaReminder') }}</label>
+                  <InputNumber
+                    v-model="agendaReminder"
+                    input-id="agenda-reminder"
+                    :min="1"
+                    :max="AGENDA_REMINDER_MAX_MINUTES"
+                    :suffix="t('workspaces.agendaReminderSuffix')"
+                    :placeholder="t('workspaces.agendaReminderOff')"
+                    show-clear
+                  />
+                  <small class="hint">{{ t('workspaces.agendaReminderHint') }}</small>
+                </div>
                 <fieldset class="field sections">
                   <legend class="label">{{ t('workspaces.mcpAccess') }}</legend>
                   <label v-for="access in MCP_ACCESSES" :key="access" class="section-option">

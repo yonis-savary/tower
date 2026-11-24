@@ -3,12 +3,14 @@
 namespace Tests\Integration;
 
 use App\Integrations\Jira\JiraClient;
+use App\Models\AgendaItem;
 use App\Models\ApiToken;
 use App\Models\DocPageVersion;
 use App\Models\History;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceMember;
 use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
@@ -263,6 +265,29 @@ class McpTest extends CubeTestCase
         $this->logOut();
 
         $this->mcp($token, 'tools/list')->assertUnauthorized();
+    }
+
+    public function testAnAgendaToolStaysInTheWorkspaceOfTheToken()
+    {
+        $this->register();
+        $this->setMcpAccess('write');
+        $workspace = SelectedWorkspace::get();
+        $alice = User::findWhere(['email' => 'alice@example.com'])->id;
+        $perso = Workspace::fromArray(['name' => 'Perso', 'author' => $alice])->save()->id;
+        WorkspaceMember::fromArray(['workspace' => $perso, 'user' => $alice])->save();
+        $token = $this->createToken()['value'];
+        $this->logOut();
+
+        $item = ['title' => 'Planned by an agent', 'starts_at' => '2026-12-01 09:00:00', 'ends_at' => '2026-12-01 10:00:00'];
+        $this->assertFalse($this->callTool($token, 'create_agenda_item', $item)['isError'] ?? false);
+        $this->assertSame($workspace, AgendaItem::findWhere(['title' => 'Planned by an agent'])->workspace);
+
+        $this->assertTrue($this->callTool($token, 'create_agenda_item', [...$item, 'workspace' => $perso])['isError']);
+        $this->assertTrue($this->callTool($token, 'list_agenda_items', ['from' => '2026-11-30 00:00:00', 'to' => '2026-12-07 00:00:00', 'workspaces' => "{$workspace},{$perso}"])['isError']);
+
+        $listed = $this->callTool($token, 'list_agenda_items', ['from' => '2026-11-30 00:00:00', 'to' => '2026-12-07 00:00:00']);
+        $this->assertStringContainsString('Planned by an agent', $listed['content'][0]['text']);
+        $this->assertSame(1, AgendaItem::select()->count());
     }
 
     public function testNoSessionIsOpenedForAToken()

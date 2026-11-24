@@ -1188,6 +1188,771 @@
                 }
             }
         },
+        "\/api\/agenda\/items": {
+            "get": {
+                "summary": "List agenda items",
+                "description": "The agenda items overlapping [from, to) (ISO 8601 with their offset, or server time without one ; at most 62 days apart), earliest first, with their participants. `workspaces` lists the ids to read, separated by commas : the current workspace when left out. `participants` (user ids, separated by commas) keeps the items one of them takes part in, plus those without participants. An agent only reads the workspace of its token",
+                "operationId": "listAgendaItems",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "workspaces",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "participants",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The agenda items",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "workspace": {
+                                                "type": "integer"
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "starts_at": {
+                                                "type": "string"
+                                            },
+                                            "ends_at": {
+                                                "type": "string"
+                                            },
+                                            "all_day": {
+                                                "type": "boolean"
+                                            },
+                                            "link": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "color": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "participants": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "email": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "email"
+                                                    ]
+                                                }
+                                            },
+                                            "created_by": {
+                                                "type": "integer"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "workspace",
+                                            "title",
+                                            "description",
+                                            "starts_at",
+                                            "ends_at",
+                                            "all_day",
+                                            "link",
+                                            "color",
+                                            "participants",
+                                            "created_by"
+                                        ]
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "id": 797,
+                                        "workspace": 467,
+                                        "title": "quasi aut placeat",
+                                        "description": "id est soluta",
+                                        "starts_at": "2002-12-05T00:00:00+00:00",
+                                        "ends_at": "2028-06-15T00:00:00+00:00",
+                                        "all_day": false,
+                                        "link": "aliquid sit aut",
+                                        "color": "minus necessitatibus cupiditate",
+                                        "participants": [
+                                            {
+                                                "id": 98,
+                                                "email": "quaerat molestias fuga"
+                                            }
+                                        ],
+                                        "created_by": 252
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The current user is not a member of a listed workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create agenda item",
+                "description": "Adds an item to the agenda of `workspace` (the current workspace when left out). Dates are ISO 8601 with their offset, or server time without one ; `ends_at` is exclusive : an all-day item of one day ends at midnight the next day. Participants are members of that workspace. `color` (#rrggbb) replaces the color of the workspace, null keeps it",
+                "operationId": "createAgendaItem",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "starts_at": {
+                                        "type": "string"
+                                    },
+                                    "ends_at": {
+                                        "type": "string"
+                                    },
+                                    "all_day": {
+                                        "type": "boolean"
+                                    },
+                                    "link": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "color": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "participants": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "workspace": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "required": [
+                                    "title",
+                                    "starts_at",
+                                    "ends_at"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "A participant is not a member of the workspace, or an invalid field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "The agenda item",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "workspace": {
+                                            "type": "integer"
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "starts_at": {
+                                            "type": "string"
+                                        },
+                                        "ends_at": {
+                                            "type": "string"
+                                        },
+                                        "all_day": {
+                                            "type": "boolean"
+                                        },
+                                        "link": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "color": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "participants": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "email": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "email"
+                                                ]
+                                            }
+                                        },
+                                        "created_by": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "workspace",
+                                        "title",
+                                        "description",
+                                        "starts_at",
+                                        "ends_at",
+                                        "all_day",
+                                        "link",
+                                        "color",
+                                        "participants",
+                                        "created_by"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 797,
+                                    "workspace": 467,
+                                    "title": "quasi aut placeat",
+                                    "description": "id est soluta",
+                                    "starts_at": "2002-12-05T00:00:00+00:00",
+                                    "ends_at": "2028-06-15T00:00:00+00:00",
+                                    "all_day": false,
+                                    "link": "aliquid sit aut",
+                                    "color": "minus necessitatibus cupiditate",
+                                    "participants": [
+                                        {
+                                            "id": 98,
+                                            "email": "quaerat molestias fuga"
+                                        }
+                                    ],
+                                    "created_by": 252
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The current user is not a member of this workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/agenda\/items\/{item}": {
+            "put": {
+                "summary": "Update agenda item",
+                "description": "Replaces the title, description, dates, link, color and participants of an agenda item. It stays in its workspace",
+                "operationId": "updateAgendaItem",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application\/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "starts_at": {
+                                        "type": "string"
+                                    },
+                                    "ends_at": {
+                                        "type": "string"
+                                    },
+                                    "all_day": {
+                                        "type": "boolean"
+                                    },
+                                    "link": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "color": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "participants": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "title",
+                                    "starts_at",
+                                    "ends_at"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "422": {
+                        "description": "A participant is not a member of the workspace, or an invalid field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The agenda item",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "workspace": {
+                                            "type": "integer"
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "starts_at": {
+                                            "type": "string"
+                                        },
+                                        "ends_at": {
+                                            "type": "string"
+                                        },
+                                        "all_day": {
+                                            "type": "boolean"
+                                        },
+                                        "link": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "color": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "participants": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "email": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "email"
+                                                ]
+                                            }
+                                        },
+                                        "created_by": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "workspace",
+                                        "title",
+                                        "description",
+                                        "starts_at",
+                                        "ends_at",
+                                        "all_day",
+                                        "link",
+                                        "color",
+                                        "participants",
+                                        "created_by"
+                                    ]
+                                },
+                                "example": {
+                                    "id": 797,
+                                    "workspace": 467,
+                                    "title": "quasi aut placeat",
+                                    "description": "id est soluta",
+                                    "starts_at": "2002-12-05T00:00:00+00:00",
+                                    "ends_at": "2028-06-15T00:00:00+00:00",
+                                    "all_day": false,
+                                    "link": "aliquid sit aut",
+                                    "color": "minus necessitatibus cupiditate",
+                                    "participants": [
+                                        {
+                                            "id": 98,
+                                            "email": "quaerat molestias fuga"
+                                        }
+                                    ],
+                                    "created_by": 252
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such item in a workspace of the current user",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete agenda item",
+                "description": "Deletes an agenda item and its participants",
+                "operationId": "deleteAgendaItem",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such item in a workspace of the current user",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "The agenda item is deleted"
+                    }
+                }
+            }
+        },
+        "\/api\/agenda\/schedules": {
+            "get": {
+                "summary": "List schedule occurrences",
+                "description": "The runs of the enabled scheduled events in [from, to) (ISO 8601 with their offset, or server time without one ; at most 62 days apart), earliest first. A schedule running several times an hour gives one `frequent` occurrence a day, at its first run, with its number of `runs` that day",
+                "operationId": "listAgendaSchedules",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "workspaces",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The occurrences",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "schedule": {
+                                                "type": "integer"
+                                            },
+                                            "workspace": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "at": {
+                                                "type": "string"
+                                            },
+                                            "frequent": {
+                                                "type": "boolean"
+                                            },
+                                            "runs": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The current user is not a member of a listed workspace",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/api\/tokens": {
             "get": {
                 "summary": "List API tokens",
@@ -10037,6 +10802,12 @@
                                             "mcp_access": {
                                                 "type": "string"
                                             },
+                                            "agenda_reminder_minutes": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ]
+                                            },
                                             "author": {
                                                 "type": "integer"
                                             },
@@ -10056,6 +10827,7 @@
                                             "accent_color",
                                             "sections",
                                             "mcp_access",
+                                            "agenda_reminder_minutes",
                                             "author",
                                             "icon",
                                             "favicon_url"
@@ -10064,22 +10836,23 @@
                                 },
                                 "example": [
                                     {
-                                        "id": 274,
-                                        "name": "placeat nisi commodi",
-                                        "accent_color": "#7436c4",
+                                        "id": 703,
+                                        "name": "commodi quas animi",
+                                        "accent_color": "#01e19f",
                                         "sections": [
-                                            "jira",
-                                            "webhooks",
-                                            "documentation",
                                             "events",
-                                            "automation",
+                                            "webhooks",
+                                            "agenda",
+                                            "merge_requests",
                                             "tasks",
-                                            "merge_requests"
+                                            "automation",
+                                            "jira"
                                         ],
-                                        "mcp_access": "animi earum facere",
-                                        "author": 729,
-                                        "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
-                                        "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
+                                        "mcp_access": "facere quam maxime",
+                                        "agenda_reminder_minutes": 652,
+                                        "author": 659,
+                                        "icon": "\/api\/workspaces\/703\/icon?v=nam sunt quos",
+                                        "favicon_url": "\/api\/workspaces\/703\/icon?v=nam sunt quos"
                                     }
                                 ]
                             }
@@ -10163,6 +10936,12 @@
                                         "mcp_access": {
                                             "type": "string"
                                         },
+                                        "agenda_reminder_minutes": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
                                         "author": {
                                             "type": "integer"
                                         },
@@ -10182,28 +10961,30 @@
                                         "accent_color",
                                         "sections",
                                         "mcp_access",
+                                        "agenda_reminder_minutes",
                                         "author",
                                         "icon",
                                         "favicon_url"
                                     ]
                                 },
                                 "example": {
-                                    "id": 274,
-                                    "name": "placeat nisi commodi",
-                                    "accent_color": "#7436c4",
+                                    "id": 703,
+                                    "name": "commodi quas animi",
+                                    "accent_color": "#01e19f",
                                     "sections": [
-                                        "jira",
-                                        "webhooks",
-                                        "documentation",
                                         "events",
-                                        "automation",
+                                        "webhooks",
+                                        "agenda",
+                                        "merge_requests",
                                         "tasks",
-                                        "merge_requests"
+                                        "automation",
+                                        "jira"
                                     ],
-                                    "mcp_access": "animi earum facere",
-                                    "author": 729,
-                                    "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
-                                    "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
+                                    "mcp_access": "facere quam maxime",
+                                    "agenda_reminder_minutes": 652,
+                                    "author": 659,
+                                    "icon": "\/api\/workspaces\/703\/icon?v=nam sunt quos",
+                                    "favicon_url": "\/api\/workspaces\/703\/icon?v=nam sunt quos"
                                 }
                             }
                         }
@@ -10260,6 +11041,12 @@
                                         "mcp_access": {
                                             "type": "string"
                                         },
+                                        "agenda_reminder_minutes": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
                                         "author": {
                                             "type": "integer"
                                         },
@@ -10279,28 +11066,30 @@
                                         "accent_color",
                                         "sections",
                                         "mcp_access",
+                                        "agenda_reminder_minutes",
                                         "author",
                                         "icon",
                                         "favicon_url"
                                     ]
                                 },
                                 "example": {
-                                    "id": 274,
-                                    "name": "placeat nisi commodi",
-                                    "accent_color": "#7436c4",
+                                    "id": 703,
+                                    "name": "commodi quas animi",
+                                    "accent_color": "#01e19f",
                                     "sections": [
-                                        "jira",
-                                        "webhooks",
-                                        "documentation",
                                         "events",
-                                        "automation",
+                                        "webhooks",
+                                        "agenda",
+                                        "merge_requests",
                                         "tasks",
-                                        "merge_requests"
+                                        "automation",
+                                        "jira"
                                     ],
-                                    "mcp_access": "animi earum facere",
-                                    "author": 729,
-                                    "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
-                                    "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
+                                    "mcp_access": "facere quam maxime",
+                                    "agenda_reminder_minutes": 652,
+                                    "author": 659,
+                                    "icon": "\/api\/workspaces\/703\/icon?v=nam sunt quos",
+                                    "favicon_url": "\/api\/workspaces\/703\/icon?v=nam sunt quos"
                                 }
                             }
                         }
@@ -10398,6 +11187,12 @@
                                         "mcp_access": {
                                             "type": "string"
                                         },
+                                        "agenda_reminder_minutes": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
                                         "author": {
                                             "type": "integer"
                                         },
@@ -10417,28 +11212,30 @@
                                         "accent_color",
                                         "sections",
                                         "mcp_access",
+                                        "agenda_reminder_minutes",
                                         "author",
                                         "icon",
                                         "favicon_url"
                                     ]
                                 },
                                 "example": {
-                                    "id": 274,
-                                    "name": "placeat nisi commodi",
-                                    "accent_color": "#7436c4",
+                                    "id": 703,
+                                    "name": "commodi quas animi",
+                                    "accent_color": "#01e19f",
                                     "sections": [
-                                        "jira",
-                                        "webhooks",
-                                        "documentation",
                                         "events",
-                                        "automation",
+                                        "webhooks",
+                                        "agenda",
+                                        "merge_requests",
                                         "tasks",
-                                        "merge_requests"
+                                        "automation",
+                                        "jira"
                                     ],
-                                    "mcp_access": "animi earum facere",
-                                    "author": 729,
-                                    "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
-                                    "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
+                                    "mcp_access": "facere quam maxime",
+                                    "agenda_reminder_minutes": 652,
+                                    "author": 659,
+                                    "icon": "\/api\/workspaces\/703\/icon?v=nam sunt quos",
+                                    "favicon_url": "\/api\/workspaces\/703\/icon?v=nam sunt quos"
                                 }
                             }
                         }
@@ -10533,7 +11330,7 @@
         "\/api\/workspaces\/{workspace}": {
             "put": {
                 "summary": "Update workspace",
-                "description": "Changes the name, the accent color and, when given, the sections and the MCP access of a workspace the current user is a member of",
+                "description": "Changes the name, the accent color and, when given, the sections, the MCP access and the agenda reminder (minutes before an item starts, null for none) of a workspace the current user is a member of",
                 "operationId": "updateWorkspace",
                 "parameters": [
                     {
@@ -10572,7 +11369,8 @@
                                                 "events",
                                                 "automation",
                                                 "webhooks",
-                                                "documentation"
+                                                "documentation",
+                                                "agenda"
                                             ]
                                         }
                                     },
@@ -10582,6 +11380,12 @@
                                             "blocked",
                                             "read",
                                             "write"
+                                        ]
+                                    },
+                                    "agenda_reminder_minutes": {
+                                        "type": [
+                                            "integer",
+                                            "null"
                                         ]
                                     }
                                 },
@@ -10632,6 +11436,12 @@
                                         "mcp_access": {
                                             "type": "string"
                                         },
+                                        "agenda_reminder_minutes": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
                                         "author": {
                                             "type": "integer"
                                         },
@@ -10651,28 +11461,30 @@
                                         "accent_color",
                                         "sections",
                                         "mcp_access",
+                                        "agenda_reminder_minutes",
                                         "author",
                                         "icon",
                                         "favicon_url"
                                     ]
                                 },
                                 "example": {
-                                    "id": 274,
-                                    "name": "placeat nisi commodi",
-                                    "accent_color": "#7436c4",
+                                    "id": 703,
+                                    "name": "commodi quas animi",
+                                    "accent_color": "#01e19f",
                                     "sections": [
-                                        "jira",
-                                        "webhooks",
-                                        "documentation",
                                         "events",
-                                        "automation",
+                                        "webhooks",
+                                        "agenda",
+                                        "merge_requests",
                                         "tasks",
-                                        "merge_requests"
+                                        "automation",
+                                        "jira"
                                     ],
-                                    "mcp_access": "animi earum facere",
-                                    "author": 729,
-                                    "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
-                                    "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
+                                    "mcp_access": "facere quam maxime",
+                                    "agenda_reminder_minutes": 652,
+                                    "author": 659,
+                                    "icon": "\/api\/workspaces\/703\/icon?v=nam sunt quos",
+                                    "favicon_url": "\/api\/workspaces\/703\/icon?v=nam sunt quos"
                                 }
                             }
                         }
@@ -10893,6 +11705,12 @@
                                         "mcp_access": {
                                             "type": "string"
                                         },
+                                        "agenda_reminder_minutes": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
                                         "author": {
                                             "type": "integer"
                                         },
@@ -10912,28 +11730,30 @@
                                         "accent_color",
                                         "sections",
                                         "mcp_access",
+                                        "agenda_reminder_minutes",
                                         "author",
                                         "icon",
                                         "favicon_url"
                                     ]
                                 },
                                 "example": {
-                                    "id": 274,
-                                    "name": "placeat nisi commodi",
-                                    "accent_color": "#7436c4",
+                                    "id": 703,
+                                    "name": "commodi quas animi",
+                                    "accent_color": "#01e19f",
                                     "sections": [
-                                        "jira",
-                                        "webhooks",
-                                        "documentation",
                                         "events",
-                                        "automation",
+                                        "webhooks",
+                                        "agenda",
+                                        "merge_requests",
                                         "tasks",
-                                        "merge_requests"
+                                        "automation",
+                                        "jira"
                                     ],
-                                    "mcp_access": "animi earum facere",
-                                    "author": 729,
-                                    "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
-                                    "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
+                                    "mcp_access": "facere quam maxime",
+                                    "agenda_reminder_minutes": 652,
+                                    "author": 659,
+                                    "icon": "\/api\/workspaces\/703\/icon?v=nam sunt quos",
+                                    "favicon_url": "\/api\/workspaces\/703\/icon?v=nam sunt quos"
                                 }
                             }
                         }
@@ -11028,6 +11848,12 @@
                                         "mcp_access": {
                                             "type": "string"
                                         },
+                                        "agenda_reminder_minutes": {
+                                            "type": [
+                                                "integer",
+                                                "null"
+                                            ]
+                                        },
                                         "author": {
                                             "type": "integer"
                                         },
@@ -11047,28 +11873,30 @@
                                         "accent_color",
                                         "sections",
                                         "mcp_access",
+                                        "agenda_reminder_minutes",
                                         "author",
                                         "icon",
                                         "favicon_url"
                                     ]
                                 },
                                 "example": {
-                                    "id": 274,
-                                    "name": "placeat nisi commodi",
-                                    "accent_color": "#7436c4",
+                                    "id": 703,
+                                    "name": "commodi quas animi",
+                                    "accent_color": "#01e19f",
                                     "sections": [
-                                        "jira",
-                                        "webhooks",
-                                        "documentation",
                                         "events",
-                                        "automation",
+                                        "webhooks",
+                                        "agenda",
+                                        "merge_requests",
                                         "tasks",
-                                        "merge_requests"
+                                        "automation",
+                                        "jira"
                                     ],
-                                    "mcp_access": "animi earum facere",
-                                    "author": 729,
-                                    "icon": "\/api\/workspaces\/274\/icon?v=quam maxime nam",
-                                    "favicon_url": "\/api\/workspaces\/274\/icon?v=quam maxime nam"
+                                    "mcp_access": "facere quam maxime",
+                                    "agenda_reminder_minutes": 652,
+                                    "author": 659,
+                                    "icon": "\/api\/workspaces\/703\/icon?v=nam sunt quos",
+                                    "favicon_url": "\/api\/workspaces\/703\/icon?v=nam sunt quos"
                                 }
                             }
                         }

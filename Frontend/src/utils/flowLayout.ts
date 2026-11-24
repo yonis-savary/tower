@@ -1,6 +1,6 @@
 export type Point = { x: number; y: number }
 
-export type FlowChipKind = 'interface' | 'agent' | 'jira' | 'bitbucket' | 'webhook' | 'schedule' | 'device' | 'rule'
+export type FlowChipKind = 'interface' | 'agent' | 'jira' | 'bitbucket' | 'webhook' | 'schedule' | 'agenda' | 'device' | 'rule'
 
 export type FlowChip = {
   key: string

@@ -59,6 +59,7 @@ export function useNavigation() {
   const sectionItems = computed<NavItem[]>(() =>
     (
       [
+        { name: 'agenda', label: t('nav.agenda'), icon: 'pi pi-calendar', to: { name: 'agenda' }, section: 'agenda' },
         { name: 'tasks', label: t('nav.tasks'), icon: 'pi pi-check-square', to: { name: 'tasks' }, count: remainingTasks.value, section: 'tasks' },
         { name: 'jira', label: t('nav.jira'), icon: 'pi pi-objects-column', to: { name: 'jira' }, count: openIssues.value, section: 'jira' },
         { name: 'merge-requests', label: t('nav.mergeRequests'), short: t('nav.mergeRequestsShort'), icon: PULL_REQUEST_ICON, to: { name: 'merge-requests' }, count: pullRequests.open.length, section: 'merge_requests' },

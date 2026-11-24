@@ -12,7 +12,7 @@ use Cube\Data\OpenAPI\Attributes\Nullable;
 /**
  * @extends ModelResource<Workspace>
  */
-#[Nullable(['accent_color', 'icon'])]
+#[Nullable(['accent_color', 'icon', 'agenda_reminder_minutes'])]
 class WorkspaceResource extends ModelResource
 {
     public function __construct(
@@ -35,6 +35,7 @@ class WorkspaceResource extends ModelResource
             'accent_color' => $model->accent_color,
             'sections' => WorkspaceService::sectionsOf($model),
             'mcp_access' => $model->mcp_access,
+            'agenda_reminder_minutes' => $model->agenda_reminder_minutes,
             'author' => $model->author,
             // The uploaded image, null when there is none
             'icon' => null === $model->icon ? null : $this->iconUrl($model),

@@ -74,7 +74,8 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
   workspaces. Tous les membres ont les mêmes droits sur le workspace, sauf sa suppression, réservée à
   son auteur (`workspace.author`) ; il n'y a pas de rôles.
 - Un workspace choisit ses **sections** parmi `tasks`, `jira`, `merge_requests`, `events`, `automation`,
-  `webhooks` et `documentation` (toutes pour un workspace jamais configuré). Une section décochée est seulement
+  `webhooks`, `documentation` et `agenda` (toutes pour un workspace jamais configuré ; un workspace déjà
+  configuré reçoit une nouvelle section décochée). Une section décochée est seulement
   masquée : elle quitte la navbar et les Paramètres, et son adresse renvoie à l'accueil, mais ses données, ses
   synchronisations et ses événements continuent. Accueil, Historique, Paramètres et
   les appareils sont toujours là.
@@ -98,7 +99,8 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
   workspace se supprime plutôt. Quitter le workspace courant fait retomber sur un autre.
 - Seul l'auteur supprime un workspace, après en avoir retapé le nom, et jamais le dernier dont il
   est membre. Tout ce que le workspace contient part avec lui, pour tous ses membres : tâches,
-  sprints, historique, intégrations, webhooks, clés d'accès, tokens API, règles et abonnements push.
+  sprints, historique, intégrations, webhooks, clés d'accès, tokens API, règles et abonnements push,
+  agenda.
   Ceux qui l'avaient sélectionné retombent sur un autre. Aucun outil MCP ne l'expose.
 
 ### Tâches et sprints
@@ -209,10 +211,57 @@ s'écrit dans le front ou par un agent (voir § Serveur MCP), par les mêmes rou
   quand plus aucune page ne la cite.
 - Le contenu d'une page est limité à 64 Kio (colonne `TEXT`).
 
+### Agenda
+
+Chaque workspace a son agenda : des éléments (table `agenda_item`) avec un titre, une
+description, un début, une fin, un drapeau « toute la journée », un lien http(s) facultatif, une
+couleur facultative et des participants (table `agenda_item_participant`), membres du workspace de l'élément. Pas de
+récurrence.
+
+- **Dates** : un élément avec une heure voyage comme un instant, en ISO 8601 avec son décalage
+  (`2026-12-01T09:00:00+01:00`), converti à l'heure du serveur à l'entrée (`App/Requests/Rules/Instant`) ;
+  l'API répond en ISO 8601 avec le décalage du serveur. Un navigateur et un serveur sur deux fuseaux
+  voient donc le même moment. Un élément d'une journée entière voyage comme ses jours
+  (`Y-m-d 00:00:00`, sans décalage), lus tels quels des deux côtés. `Y-m-d H:i:s` sans décalage
+  reste accepté partout, lu à l'heure du serveur. La fin est
+  **exclusive**, comme la lit FullCalendar : un élément d'une journée entière finit à minuit le
+  lendemain. Le formulaire montre le dernier jour et ajoute un jour à l'envoi.
+- **Plusieurs workspaces sans en changer.** Les routes `/api/agenda/...` ne s'appuient pas sur le
+  workspace courant : la liste prend `workspaces` (identifiants séparés par des virgules, le
+  courant par défaut), la création prend `workspace`, la modification et la suppression trouvent
+  l'élément dans n'importe quel workspace dont l'utilisateur est membre. Un workspace hors de
+  portée répond `404`. Un élément reste dans son workspace.
+- **Emploi du temps de membres** : la liste prend aussi `participants` (identifiants
+  d'utilisateurs séparés par des virgules) et ne garde que les éléments où l'un d'eux participe,
+  plus ceux sans participant, qui concernent tout le monde. Le filtre vaut pour tous les
+  workspaces lus.
+- **Un jeton d'agent** n'atteint que le workspace pour lequel il a été créé
+  (`WorkspaceService::reachableIds()`).
+- **Participants** : un utilisateur qui n'est pas membre du workspace de l'élément est refusé
+  (`422`). Retirer un membre le retire des éléments de ce workspace.
+- **Historique et événements** : `agenda.item.created`, `agenda.item.updated`,
+  `agenda.item.deleted`, envoyés aux appareils avec l'élément et ses participants (`id`, `email`).
+- **Rappel** : un workspace peut régler un délai (`workspace.agenda_reminder_minutes`, de 1 à
+  10 080 minutes, nul pour aucun), dans Mes workspaces → Fonctionnalités. Une tâche Cube tourne
+  chaque minute (`App/Schedules/agenda.php`) et lance `agenda.item.upcoming`, d'`origin` `agenda`,
+  pour chaque élément qui commence ce nombre de minutes plus tard, avec `minutes` en plus dans
+  le payload. Un élément d'une journée entière n'a pas d'heure, donc pas de rappel. **Rien n'est
+  rattrapé**, comme pour les planifications. Une règle de notification sur ce type en fait une
+  notification push ; elle part à tous ceux qui ont la règle, pas seulement aux participants.
+- **Planifications dans l'agenda** : `GET /api/agenda/schedules` donne les déclenchements des
+  planifications actives sur la période. Le cron est parcouru champ par champ (les jours, puis
+  leurs heures et leurs minutes), jamais minute par minute ; une planification qui part plusieurs
+  fois dans l'heure donne un seul déclenchement `frequent` par jour, avec son nombre de `runs`.
+- **Couleur** : un élément prend la couleur de son workspace, ou la sienne (`#rrggbb`). Le
+  formulaire propose une palette fixe de dix couleurs (`AGENDA_COLORS`, côté front), précédée d'un
+  cercle vide pour « aucune couleur » ; l'API accepte toute couleur `#rrggbb`, pour un agent.
+- Une période demandée fait **62 jours au plus**.
+- Outils MCP : `list_agenda_items`, `create_agenda_item`, `update_agenda_item`. Pas de suppression.
+
 ### Historique
 
 Toute action notable écrit une ligne dans la table `history` : `workspace`, `type`,
-`origin` (`user`, `device`, `integration`, `webhook`, `schedule`, `mcp`, plus tard `agent`), l'utilisateur à l'origine s'il
+`origin` (`user`, `device`, `integration`, `webhook`, `schedule`, `mcp`, `agenda`, plus tard `agent`), l'utilisateur à l'origine s'il
 y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les lignes sont
 écrites par `HistoryService::log()`.
 
@@ -232,11 +281,13 @@ y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les l
 | `webhook.created`, `webhook.enabled`, `webhook.disabled`, `webhook.deleted`, `webhook.secret_regenerated` | gestion des webhooks |
 | `schedule.created`, `schedule.enabled`, `schedule.disabled`, `schedule.deleted` | gestion des planifications |
 | `token.created`, `token.revoked` | création et révocation d'un jeton d'agent (voir § Serveur MCP) |
+| `agenda.item.created`, `agenda.item.updated`, `agenda.item.deleted` | éléments de l'agenda (`title`, `item`) |
+| `agenda.item.upcoming`        | rappel avant un élément (`title`, `item`, `minutes`), voir § Agenda |
 | `doc.page.created`, `doc.page.updated`, `doc.page.moved`, `doc.page.archived`, `doc.page.restored`, `doc.page.deleted` | pages de la documentation (`title`, `page`, `version` ; `sub_pages` pour un archivage, un désarchivage ou une suppression) |
 
 Les lignes `task.*`, `sprint.*` et `event.triggered` sont aussi envoyées aux appareils
-connectés comme des événements du même type (voir § Événements), comme les lignes `pr.*` et
-`jira.issue.*`. Chaque tâche affiche son propre historique, avec l'auteur de chaque changement.
+connectés comme des événements du même type (voir § Événements), comme les lignes `pr.*`,
+`jira.issue.*` et `agenda.item.*`. Chaque tâche affiche son propre historique, avec l'auteur de chaque changement.
 
 L'historique a, à terme, un second consommateur : **(prévu)** l'agent IA, qui ne lira que les
 lignes postérieures à son dernier run.
@@ -980,6 +1031,7 @@ des sprints actifs, tickets non terminés de l'utilisateur, merge requests ouver
 | Workspace          | tout en haut : sélecteur du workspace courant, avec une dernière option « Gérer mes workspaces » |
 | Appareils          | indicateur permanent, voir ci-dessous                              |
 | Accueil            |                                                                    |
+| Agenda             | section `agenda` : agenda de tous les workspaces de l'utilisateur  |
 | Tâches             | section `tasks` : tableau et backlog                               |
 | Jira               | section `jira` : kanban d'un profil Jira                           |
 | Merge Requests     | section `merge_requests`                                           |
@@ -1012,7 +1064,7 @@ Le premier bloc de l'accueil dessine le workspace comme un circuit électronique
 de 64rem de large : ni affiché ni abonné aux signaux sur mobile.
 
 - **Puces** : Tower au centre ; à gauche les sources, par catégorie (Interface, Agents IA : un
-  jeton du workspace par puce, de tous les membres, Intégrations, Webhooks, Planifications **régulières** : une ponctuelle n'est pas une puce, l'accueil la liste à part ; une catégorie vide ne prend pas de place) ; à droite les sorties :
+  jeton du workspace par puce, de tous les membres, Intégrations, Webhooks, Planifications **régulières** : une ponctuelle n'est pas une puce, l'accueil la liste à part, Agenda : une puce « Rappel » quand la section est active et le délai réglé ; une catégorie vide ne prend pas de place) ; à droite les sorties :
   les appareils **actuellement connectés** (WebSocket) et les règles de notification de
   l'utilisateur (Push, si les clés VAPID sont en place). Chaque puce a une LED : verte, grise si
   désactivée ; pour un appareil, la couleur de sa dernière livraison pendant 4 s.
@@ -1026,7 +1078,7 @@ de 64rem de large : ni affiché ni abonné aux signaux sur mobile.
   qu'il lance n'allume pas en plus la puce Interface).
 - Au-delà de **12 puces** (Tower exclue), le circuit reste affiché mais statique, avec un message
   qui l'explique : animer chaque événement coûterait trop cher.
-- Un clic sur une puce ouvre son écran (Jira, Merge Requests, Webhooks, Automatisations, Paramètres → Agents IA).
+- Un clic sur une puce ouvre son écran (Jira, Merge Requests, Webhooks, Automatisations, Agenda, Paramètres → Agents IA).
 - Le bloc se replie sur son titre ; le choix est gardé dans le navigateur. Replié, le circuit
   n'est pas dessiné et rien n'est animé.
 
@@ -1039,7 +1091,7 @@ Les signaux du workspace portent ce qu'il faut pour cela : `history.created` (`h
 
 | Écran              | Contenu                                                              |
 |--------------------|----------------------------------------------------------------------|
-| Accueil            | sur écran large, en premier et sur toute la largeur, le **circuit** (voir § Circuit) ; puis les sprints en cours, les quick-actions, les planifications ponctuelles à venir (activées et pas encore passées, la plus proche d'abord, avec leur date et le délai restant ; le bloc disparaît quand il n'y en a aucune) et les derniers événements |
+| Accueil            | sur écran large, en premier et sur toute la largeur, le **circuit** (voir § Circuit) ; puis les sprints en cours, les quick-actions, le bloc **À venir** et les derniers événements. À venir mêle, du plus proche au plus lointain et huit au plus : les éléments de l'agenda du workspace courant sur sept jours, en cours ou à venir, où l'utilisateur participe ou sans participant (comme l'agenda par défaut), avec leur couleur ; et les planifications ponctuelles activées et pas encore passées. Chaque ligne donne sa date, le délai restant (ou « en cours ») et mène à l'Agenda ou aux Automatisations ; le bloc disparaît quand il n'y a rien |
 | Tâches             | onglet Tableau (un kanban de cinq colonnes par sprint actif, repliable, choix gardé dans le navigateur par workspace ; une tâche se glisse d'un sprint actif à l'autre ; annulées à part) et onglet Backlog (sprints ouverts et planifiés, backlog, sprints clôturés repliés) ; fiche de tâche avec son historique |
 | Événements         | deux cartes côte à côte, l'une sous l'autre quand la place manque : lancer un événement (type et payload JSON) ; créer, lancer et supprimer des quick-actions |
 | Automatisations    | onglets, choisi dans l'adresse (`?tab=`) ; onglet **Planifications** : tableau des planifications : interrupteur actif/inactif (bloqué pour une ponctuelle passée), nom, événement, fréquence en clair, dernier déclenchement ; création et modification (nom, événement, régulière avec sa fréquence ou ponctuelle avec sa date), lancement immédiat, suppression ; rechargé quand un événement est lancé |
@@ -1049,8 +1101,9 @@ Les signaux du workspace portent ce qu'il faut pour cela : `history.created` (`h
 | Paramètres         | onglets verticaux à gauche, contenu à droite, onglet choisi dans l'adresse (`?tab=`) : **Compte** (changement de mot de passe) ; **Interface** (langue : auto, français ou anglais ; thème : auto, clair ou sombre ; gardés dans le navigateur, appliqués sans recharger) ; intégrations Bitbucket et Jira, chacune affichée si sa section est active : workspace ou site, e-mail, token, synchronisation, profils Jira (board, nom, filtre JQL ; ajout, modification, suppression, chacun suivi d'une synchronisation), état de la dernière synchronisation ; bloc « Vider une section », toujours visible, qui supprime d'un coup l'intégration Jira ou Bitbucket et ses données |
 | Jira               | tickets non terminés d'un profil, choisi dans une liste, avec la pastille de leur assigné, ou seulement les siens, en kanban avec les colonnes de son board ; transition par glisser-déposer, ouverture dans Jira, création de tâche |
 | Documentation      | section du workspace, à l'adresse `/docs` (`?page=`) : à gauche, la recherche (titre et contenu) et le bouton « + » d'une nouvelle page, puis « Filtres supplémentaires », repliés par défaut avec le nombre de filtres actifs (tag, pages archivées), puis l'arborescence ; à droite, la page rendue avec ses tags, son dernier auteur, le bouton « Modifier » et un menu des autres actions (sous-page, historique, télécharger le `.md` de ce qui est affiché — la page ou la version lue —, archiver ou désarchiver, supprimer pour son créateur et l'auteur du workspace). L'édition montre le Markdown et son aperçu côte à côte ; une image s'ajoute par bouton ou par collage. L'historique est un volet des versions (auteur, jeton, date) : en choisir une l'affiche à la place de la page. Rechargée quand une page change (signal `history.created`), sauf pendant une édition. Sur téléphone, la page remplace la liste |
+| Agenda             | section du workspace, à l'adresse `/agenda`, chargée à la demande (FullCalendar). À gauche, un panneau (replié derrière un bouton « Options » sur téléphone) : « Nouvel élément », un mois avec les numéros de semaine où un clic sur un jour y amène l'agenda, les membres du workspace courant à cocher pour voir leur emploi du temps (soi-même par défaut, choix gardé par workspace dans le navigateur ; personne de coché : tout), une case par workspace de l'utilisateur (le courant par défaut, choix gardé dans le navigateur), l'interrupteur des planifications. À droite, l'agenda : vues mois, semaine (par défaut sur écran large) et jour (par défaut sur téléphone) ; chaque élément prend la couleur de son workspace. Glisser-déposer pour changer le jour ou l'heure, étirer pour changer la durée ; sélectionner une plage ou « Nouvel élément » ouvre le formulaire (workspace, titre, couleur, journée entière, dates, participants, lien, description). Interrupteur « Afficher les planifications » : leurs déclenchements, en pointillés et en lecture seule, mènent aux Automatisations. Rechargé quand un élément du workspace courant change (signal `history.created`) |
 | Aide / API         | à l'adresse `/help`, onglets verticaux comme les Paramètres, page choisie dans l'adresse (`?page=`) : accueil, événements envoyés aux appareils (enveloppe du message, variables d'environnement, chaque type avec ses champs et des exemples de payload), lancer le connecteur en service sous Linux (systemd), et sur un serveur sans écran (service détaché des sessions par le lingering, handlers en fichier, délai des handlers, commande root autorisée par sudo, dépannage). Les blocs de code sont colorés (highlight.js, avec seulement les langages utilisés) et ont un bouton pour copier leur contenu brut. Chaque page existe en français et en anglais (`views/docs/fr/`, `views/docs/en/`) ; la version de la langue active est affichée, le français sert de repli |
-| Mes workspaces     | modale ouverte par « Gérer mes workspaces » : liste et création à gauche ; à droite, le workspace choisi en trois onglets, chacun enregistré à part : **Général** (nom, couleur, passage sur ce workspace), **Fonctionnalités** (sections), **Membres** (liste, ajout par e-mail, retrait, départ) |
+| Mes workspaces     | modale ouverte par « Gérer mes workspaces » : liste et création à gauche ; à droite, le workspace choisi en trois onglets, chacun enregistré à part : **Général** (nom, couleur, passage sur ce workspace), **Fonctionnalités** (sections, accès MCP, rappel de l'agenda), **Membres** (liste, ajout par e-mail, retrait, départ) |
 
 ### Connecter un appareil
 
@@ -1080,7 +1133,7 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | Table             | Contenu principal                                                         |
 |-------------------|---------------------------------------------------------------------------|
 | `user`            | `email`, `password_hash`, `created_at`, `disabled_at`                     |
-| `workspace`       | `name`, `accent_color`, `author` (utilisateur créateur), `sections` (JSON, `null` : toutes) |
+| `workspace`       | `name`, `accent_color`, `author` (utilisateur créateur), `sections` (JSON, `null` : toutes), `agenda_reminder_minutes` |
 | `workspace_member` | `workspace`, `user`                                                      |
 | `task`            | voir § Tâches et sprints                                                  |
 | `sprint`          | `workspace`, `name`, `state`, `opened_at`, `closed_at`, `created_at`      |
@@ -1100,6 +1153,8 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `doc_page`        | `workspace`, `parent`, `title`, `content`, `tags` (JSON), `version`, `archived_at`, `created_by`, `updated_by`, `created_at`, `updated_at` |
 | `doc_page_version` | `page`, `version` (unique avec `page`), `title`, `content`, `tags`, `user`, `token` (nom du jeton d'agent), `created_at` |
 | `doc_image`       | `workspace`, `name`, `type`, `size`, `file`, `user`, `created_at`          |
+| `agenda_item`     | `workspace`, `title`, `description`, `starts_at`, `ends_at` (exclusive), `all_day`, `link`, `color`, `created_by`, `created_at`, `updated_at` |
+| `agenda_item_participant` | `item`, `user` (unique ensemble)                                  |
 | `jira_issue`      | `workspace`, `integration`, `external_id`, `issue_key`, `summary`, `url`, `project`, `issue_type`, `priority`, `status_id`, `status`, `status_category` (`todo`, `in_progress`, `done`), `sprint_id`, `sprint_name`, `sprint_state`, `assignee_id`, `assignee_name`, `assignee_avatar`, `parent` (ticket parent d'une sous-tâche), `tracked`, `synced_at` |
 
 **(prévu)** `job`, `device_connection`, `agent_run`, `agent_memory`.
@@ -1110,7 +1165,7 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
   tâches et sprints, configurations, appareils, événements, quick-actions et planifications, intégrations,
   merge requests, historique. Décrite en OpenAPI (`php do make:openapi`), client front généré
   (`npm run api:generate`). Chaque requête est limitée au workspace courant de
-  l'utilisateur.
+  l'utilisateur, sauf celles de l'agenda, qui atteignent tous ses workspaces (voir § Agenda).
 - **API appareil** : la connexion WebSocket `/devices`, authentifiée par la configuration.
 - **Webhooks** : `POST /api/hooks/<uuid>`, authentifié par le secret du webhook, ou par son
   adresse seule pour un webhook non sécurisé.

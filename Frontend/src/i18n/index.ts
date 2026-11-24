@@ -35,8 +35,8 @@ const i18n = createI18n<[typeof fr], Locale, false>({
   fallbackLocale: 'fr',
   messages,
   datetimeFormats: {
-    fr: { short: { dateStyle: 'short', timeStyle: 'short' } },
-    en: { short: { dateStyle: 'short', timeStyle: 'short' } },
+    fr: { short: { dateStyle: 'short', timeStyle: 'short' }, day: { weekday: 'short', day: 'numeric', month: 'short' }, time: { timeStyle: 'short' } },
+    en: { short: { dateStyle: 'short', timeStyle: 'short' }, day: { weekday: 'short', day: 'numeric', month: 'short' }, time: { timeStyle: 'short' } },
   },
 })
 

@@ -7,7 +7,7 @@ import EmptyState from '../components/EmptyState.vue'
 import HomeActivity from '../components/HomeActivity.vue'
 import HomeFlow from '../components/HomeFlow.vue'
 import HomeQuickActions from '../components/HomeQuickActions.vue'
-import HomeSchedules from '../components/HomeSchedules.vue'
+import HomeUpcoming from '../components/HomeUpcoming.vue'
 import HomeTaskBoard from '../components/HomeTaskBoard.vue'
 import TaskDialog from '../components/TaskDialog.vue'
 import { useDeviceSocketStore, type WorkspaceSignal } from '../stores/deviceSocket'
@@ -34,21 +34,21 @@ const dialogTask = ref<Task | null>(null)
 
 const showTasks = computed(() => workspace.hasSection('tasks'))
 const showQuickActions = computed(() => workspace.hasSection('events'))
-const showSchedules = computed(() => workspace.hasSection('automation'))
+const showUpcoming = computed(() => workspace.hasSection('agenda') || workspace.hasSection('automation'))
 const showActivity = computed(() => workspace.hasSection('events') || workspace.hasSection('webhooks') || workspace.hasSection('automation'))
 
 // Each block hides itself while empty : null until it has loaded
-const filled = ref<{ tasks: boolean | null; quickActions: boolean | null; schedules: boolean | null; activity: boolean | null }>({
+const filled = ref<{ tasks: boolean | null; quickActions: boolean | null; upcoming: boolean | null; activity: boolean | null }>({
   tasks: null,
   quickActions: null,
-  schedules: null,
+  upcoming: null,
   activity: null,
 })
 const isEmpty = computed(() => {
   const shown = [
     showTasks.value && filled.value.tasks,
     showQuickActions.value && filled.value.quickActions,
-    showSchedules.value && filled.value.schedules,
+    showUpcoming.value && filled.value.upcoming,
     showActivity.value && filled.value.activity,
   ]
   return !shown.includes(null) && !shown.includes(true)
@@ -121,11 +121,11 @@ function openTask(task: Task) {
   <div class="home">
     <HomeTaskBoard v-if="showTasks" v-model:filled="filled.tasks" @open="openTask" />
 
-    <div v-if="showQuickActions || showSchedules || showActivity" class="home-row">
+    <div v-if="showQuickActions || showUpcoming || showActivity" class="home-row">
       <!-- What can be launched, and what will launch itself -->
-      <div v-if="(showQuickActions && filled.quickActions !== false) || (showSchedules && filled.schedules !== false)" class="home-side">
+      <div v-if="(showQuickActions && filled.quickActions !== false) || (showUpcoming && filled.upcoming !== false)" class="home-side">
         <HomeQuickActions v-if="showQuickActions" v-model:filled="filled.quickActions" />
-        <HomeSchedules v-if="showSchedules" v-model:filled="filled.schedules" />
+        <HomeUpcoming v-if="showUpcoming" v-model:filled="filled.upcoming" />
       </div>
       <HomeActivity v-if="showActivity" ref="activity" v-model:filled="filled.activity" />
     </div>

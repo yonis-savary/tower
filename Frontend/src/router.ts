@@ -34,6 +34,8 @@ const router = createRouter({
         { path: 'merge-requests', name: 'merge-requests', component: MergeRequestsView, meta: { title: 'nav.mergeRequests', section: 'merge_requests' } },
         // Loaded on demand : markdown, highlight.js and mermaid weigh more than the rest of the application
         { path: 'docs', name: 'documentation', component: () => import('./views/DocumentationView.vue'), meta: { title: 'nav.documentation', section: 'documentation' } },
+        // Loaded on demand : FullCalendar is only needed here
+        { path: 'agenda', name: 'agenda', component: () => import('./views/AgendaView.vue'), meta: { title: 'nav.agenda', section: 'agenda' } },
         { path: 'help', name: 'help', component: HelpView, meta: { title: 'nav.help' } },
         { path: 'settings', name: 'settings', component: SettingsView, meta: { title: 'nav.settings' } },
       ],

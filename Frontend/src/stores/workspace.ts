@@ -8,8 +8,8 @@ import {
   type ListWorkspacesResponse,
 } from '../client'
 
-export type WorkspaceSection = 'tasks' | 'jira' | 'merge_requests' | 'events' | 'automation' | 'webhooks' | 'documentation'
-export const WORKSPACE_SECTIONS: WorkspaceSection[] = ['tasks', 'jira', 'merge_requests', 'events', 'automation', 'webhooks', 'documentation']
+export type WorkspaceSection = 'tasks' | 'jira' | 'merge_requests' | 'events' | 'automation' | 'webhooks' | 'documentation' | 'agenda'
+export const WORKSPACE_SECTIONS: WorkspaceSection[] = ['tasks', 'jira', 'merge_requests', 'events', 'automation', 'webhooks', 'documentation', 'agenda']
 export type McpAccess = 'blocked' | 'read' | 'write'
 export const MCP_ACCESSES: McpAccess[] = ['blocked', 'read', 'write']
 

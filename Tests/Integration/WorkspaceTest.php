@@ -110,7 +110,7 @@ class WorkspaceTest extends CubeTestCase
     {
         $this->register('alice@example.com');
 
-        $this->assertEquals(['id', 'name', 'accent_color', 'sections', 'mcp_access', 'author', 'icon', 'favicon_url'], array_keys($this->get('/api/workspaces')->assertOk()->json()[0]));
+        $this->assertEquals(['id', 'name', 'accent_color', 'sections', 'mcp_access', 'agenda_reminder_minutes', 'author', 'icon', 'favicon_url'], array_keys($this->get('/api/workspaces')->assertOk()->json()[0]));
     }
 
     public function testRegisterSelectsDefaultWorkspace()
@@ -189,12 +189,12 @@ class WorkspaceTest extends CubeTestCase
         $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Personnel', 'accent_color' => null])->assertOk();
         $this->assertNull(Workspace::find($created['id'])->accent_color);
 
-        $this->assertSame(['tasks', 'jira', 'merge_requests', 'events', 'automation', 'webhooks', 'documentation'], $updated['sections']);
+        $this->assertSame(['tasks', 'jira', 'merge_requests', 'events', 'automation', 'webhooks', 'documentation', 'agenda'], $updated['sections']);
         $sections = $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Personnel', 'accent_color' => null, 'sections' => ['events', 'tasks']])->assertOk()->json()['sections'];
         $this->assertSame(['tasks', 'events'], $sections);
         $this->assertSame(['tasks', 'events'], $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Perso', 'accent_color' => null])->assertOk()->json()['sections']);
         $this->assertSame([], $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Perso', 'accent_color' => null, 'sections' => []])->assertOk()->json()['sections']);
-        $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Perso', 'accent_color' => null, 'sections' => ['agenda']])->assertUnprocessableContent();
+        $this->putJson("/api/workspaces/{$created['id']}", ['name' => 'Perso', 'accent_color' => null, 'sections' => ['billing']])->assertUnprocessableContent();
 
         $this->postJson('/api/workspaces', ['name' => '   '])->assertUnprocessableContent();
         $this->putJson("/api/workspaces/{$created['id']}", ['name' => str_repeat('x', 101), 'accent_color' => null])->assertUnprocessableContent();

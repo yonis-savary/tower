@@ -6,6 +6,8 @@ use App\Documentation\DocumentationImages;
 use App\Documentation\DocumentationService;
 use App\Integrations\IntegrationService;
 use App\Models\AccessKey;
+use App\Models\AgendaItem;
+use App\Models\AgendaItemParticipant;
 use App\Models\ApiToken;
 use App\Models\ConfigDownload;
 use App\Models\DocImage;
@@ -32,7 +34,9 @@ use Cube\Data\Models\Model;
 
 class WorkspaceService
 {
-    public const SECTIONS = ['tasks', 'jira', 'merge_requests', 'events', 'automation', 'webhooks', 'documentation'];
+    public const SECTIONS = ['tasks', 'jira', 'merge_requests', 'events', 'automation', 'webhooks', 'documentation', 'agenda'];
+
+    public const MAX_AGENDA_REMINDER_MINUTES = 10080;
 
     public const MCP_BLOCKED = 'blocked';
     public const MCP_READ = 'read';
@@ -81,9 +85,11 @@ class WorkspaceService
     /**
      * @param ?list<string> $sections null keeps the current ones
      */
-    public function update(Workspace $workspace, string $name, ?string $accentColor, ?array $sections = null, ?string $mcpAccess = null): Workspace
+    public function update(Workspace $workspace, string $name, ?string $accentColor, ?array $sections = null, ?string $mcpAccess = null, int|false|null $agendaReminderMinutes = false): Workspace
     {
         $workspace->mcp_access = $mcpAccess ?? $workspace->mcp_access;
+        if (false !== $agendaReminderMinutes)
+            $workspace->agenda_reminder_minutes = $agendaReminderMinutes;
         $workspace->name = $name;
         $workspace->accent_color = null === $accentColor ? null : strtolower($accentColor);
         if (null !== $sections)
@@ -138,6 +144,7 @@ class WorkspaceService
         // What they asked to be notified of here is theirs only
         NotificationRule::deleteWhere(['workspace' => $workspace->id, 'user' => $userId]);
         PushSubscription::deleteWhere(['workspace' => $workspace->id, 'user' => $userId]);
+        AgendaItemParticipant::delete()->where('user', $userId)->whereIn('item', $this->idsOf(AgendaItem::class, $workspace->id))->fetch();
 
         return true;
     }
@@ -167,6 +174,8 @@ class WorkspaceService
             Webhook::delete()->where('workspace', $id)->fetch();
             ConfigDownload::delete()->whereIn('access_key', $this->idsOf(AccessKey::class, $id))->fetch();
             $this->documentation->deleteWorkspacePages($id);
+            AgendaItemParticipant::delete()->whereIn('item', $this->idsOf(AgendaItem::class, $id))->fetch();
+            AgendaItem::delete()->where('workspace', $id)->fetch();
 
             foreach ([AccessKey::class, ApiToken::class, QuickAction::class, ScheduledEvent::class, NotificationRule::class, PushSubscription::class, DocImage::class, WorkspaceMember::class] as $model)
                 $model::delete()->where('workspace', $id)->fetch();
@@ -198,6 +207,18 @@ class WorkspaceService
     public static function sectionsOf(Workspace $workspace): array
     {
         return null === $workspace->sections ? self::SECTIONS : json_decode($workspace->sections, true);
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function reachableIds(int $userId): array
+    {
+        // An API token opens the workspace it was created for, never the other ones of its user
+        if (null !== HistoryActor::getInstance()->tokenName)
+            return [$this->current($userId)->id];
+
+        return $this->listFor($userId)->map(fn (Workspace $workspace) => $workspace->id)->toArray();
     }
 
     public function isMember(int $userId, int $workspaceId): bool

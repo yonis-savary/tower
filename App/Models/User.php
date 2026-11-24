@@ -15,6 +15,8 @@ use Cube\Utils\Attributes\Generated;
  * @property string $password_hash
  * @property \DateTime $created_at
  * @property \DateTime $disabled_at
+ * @property AgendaItem[] $agendaItems
+ * @property AgendaItemParticipant[] $agendaItemParticipants
  * @property ApiToken[] $apiTokens
  * @property DocImage[] $docImages
  * @property DocPage[] $docPages
@@ -54,6 +56,18 @@ class User extends Model
             'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
             'disabled_at' => (new ModelField('disabled_at'))->type('DATE')->nullable()->default(NULL)
         ];
+    }
+
+    #[Generated]
+    public function agendaItems(): HasMany
+    {
+        return $this->hasMany('agendaItems', AgendaItem::class, 'created_by', 'id');
+    }
+
+    #[Generated]
+    public function agendaItemParticipants(): HasMany
+    {
+        return $this->hasMany('agendaItemParticipants', AgendaItemParticipant::class, 'user', 'id');
     }
 
     #[Generated]
@@ -120,6 +134,8 @@ class User extends Model
     public static function relations(): array
     {
         return [
+            "agendaItems",
+            "agendaItemParticipants",
             "apiTokens",
             "docImages",
             "docPages",

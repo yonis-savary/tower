@@ -2,6 +2,7 @@
 
 namespace App\Requests;
 
+use App\Requests\Rules\HexColor;
 use App\Services\WorkspaceService;
 use Cube\Web\Http\Rules\Param;
 
@@ -11,12 +12,13 @@ class UpdateWorkspaceRequest extends WorkspaceNameRequest
     {
         return [
             ...parent::getRules(),
-            'accent_color' => Param::string(nullable: true)->withValueCondition(
-                fn ($color) => null === $color || 1 === preg_match('/^#[0-9a-fA-F]{6}$/', (string) $color),
-                '{key} must be a color like #3b82f6, or null'
-            ),
+            'accent_color' => HexColor::param(),
             'sections' => Param::array(Param::string()->inArray(WorkspaceService::SECTIONS))->optional(),
             'mcp_access' => Param::string()->inArray(WorkspaceService::MCP_ACCESSES)->optional(),
+            'agenda_reminder_minutes' => Param::integer(nullable: true)->optional()->withValueCondition(
+                fn ($minutes) => null === $minutes || (1 <= $minutes && $minutes <= WorkspaceService::MAX_AGENDA_REMINDER_MINUTES),
+                '{key} must be a number of minutes between 1 and '.WorkspaceService::MAX_AGENDA_REMINDER_MINUTES.', or null'
+            ),
         ];
     }
 }

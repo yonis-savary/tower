@@ -15,6 +15,7 @@ class HistoryService
     public const ORIGIN_WEBHOOK = 'webhook';
     public const ORIGIN_SCHEDULE = 'schedule';
     public const ORIGIN_MCP = 'mcp';
+    public const ORIGIN_AGENDA = 'agenda';
 
     public const DELIVERY_PENDING = 'pending';
     public const DELIVERY_RUNNING = 'running';
