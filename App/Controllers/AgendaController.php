@@ -8,10 +8,11 @@ use App\Agenda\ScheduleOccurrence;
 use App\Agenda\ScheduleOccurrences;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
-use App\Requests\AgendaItemRequest;
 use App\Requests\AgendaRangeRequest;
 use App\Requests\CreateAgendaItemRequest;
+use App\Requests\DeleteAgendaItemRequest;
 use App\Requests\ListAgendaItemsRequest;
+use App\Requests\UpdateAgendaItemRequest;
 use App\Resources\AgendaItemResource;
 use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
@@ -20,7 +21,6 @@ use Cube\Data\OpenAPI\Attributes\RawResponse;
 use Cube\Data\OpenAPI\Attributes\ResourceResponse;
 use Cube\Security\Authentication;
 use Cube\Web\Controller;
-use Cube\Web\Http\Request;
 use Cube\Web\Http\Response;
 use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
@@ -46,7 +46,7 @@ class AgendaController extends Controller
         ]);
     }
 
-    #[Endpoint('List agenda items', 'The agenda items overlapping [from, to) (ISO 8601 with their offset, or server time without one ; at most 62 days apart), earliest first, with their participants. `workspaces` lists the ids to read, separated by commas : the current workspace when left out. `participants` (user ids, separated by commas) keeps the items one of them takes part in, plus those without participants. An agent only reads the workspace of its token', 'listAgendaItems')]
+    #[Endpoint('List agenda items', 'The agenda items overlapping [from, to) (ISO 8601 with their offset, or server time without one ; at most 62 days apart), earliest first, with their participants. A recurring item (`recurrence` set) is listed once per occurrence in the range, with the dates of that occurrence and its `occurrence` day, which names it to `update_agenda_item`. `workspaces` lists the ids to read, separated by commas : the current workspace when left out. `participants` (user ids, separated by commas) keeps the items one of them takes part in, plus those without participants. An agent only reads the workspace of its token', 'listAgendaItems')]
     #[ResourceResponse(AgendaItemResource::class, isArray: true, description: 'The agenda items', with: ['participants._user'])]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current user is not a member of a listed workspace')]
@@ -60,7 +60,7 @@ class AgendaController extends Controller
         return Response::json(AgendaItemResource::of($this->agenda->listIn($workspaces, $request->from(), $request->to(), $request->participants())));
     }
 
-    #[Endpoint('Create agenda item', 'Adds an item to the agenda of `workspace` (the current workspace when left out). Dates are ISO 8601 with their offset, or server time without one ; `ends_at` is exclusive : an all-day item of one day ends at midnight the next day. Participants are members of that workspace. `color` (#rrggbb) replaces the color of the workspace, null keeps it', 'createAgendaItem')]
+    #[Endpoint('Create agenda item', 'Adds an item to the agenda of `workspace` (the current workspace when left out). Dates are ISO 8601 with their offset, or server time without one ; `ends_at` is exclusive : an all-day item of one day ends at midnight the next day. Participants are members of that workspace. `color` (#rrggbb) replaces the color of the workspace, null keeps it. `recurrence` repeats the item from its dates : `frequency` daily, weekly, monthly or yearly, every `interval` periods (1 by default), on ISO `weekdays` for a weekly item (1 = Monday, the day it starts by default), until the day `until` included (forever when null). A monthly or yearly item skips the months without its day', 'createAgendaItem')]
     #[ResourceResponse(AgendaItemResource::class, responseCode: StatusCode::CREATED, description: 'The agenda item', with: ['participants._user'])]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current user is not a member of this workspace')]
@@ -79,36 +79,50 @@ class AgendaController extends Controller
         return Response::json(AgendaItemResource::of($item), StatusCode::CREATED);
     }
 
-    #[Endpoint('Update agenda item', 'Replaces the title, description, dates, link, color and participants of an agenda item. It stays in its workspace', 'updateAgendaItem')]
+    #[Endpoint('Update agenda item', 'Replaces the title, description, dates, link, color, participants and recurrence of an agenda item. It stays in its workspace. Without `occurrence`, the dates are those of the first occurrence. For a recurring item, `occurrence` (the day a listed occurrence gives) makes the dates those of that occurrence, and `scope` tells what changes : `occurrence` (the default) moves it out of its item, as an item of its own happening once ; `following` ends the item the day before and starts a new one ; `series` moves every occurrence as this one moves. The answer is the item holding the change', 'updateAgendaItem')]
     #[ResourceResponse(AgendaItemResource::class, description: 'The agenda item', with: ['participants._user'])]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
-    #[RawResponse(['error' => 'Agenda item not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such item in a workspace of the current user')]
+    #[RawResponse(['error' => 'Agenda item not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such item in a workspace of the current user, or no such occurrence of it')]
     #[RawResponse(['error' => 'Every participant must be a member of the workspace'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'A participant is not a member of the workspace, or an invalid field')]
     #[McpTool('update_agenda_item', write: true)]
-    public function update(AgendaItemRequest $request, int $item): Response
+    public function update(UpdateAgendaItemRequest $request, int $item): Response
     {
         $found = $this->agenda->find($this->reachable(), $item);
         if (!$found)
             return $this->itemNotFound();
 
-        $updated = $this->agenda->update($found, $this->authentication->userId(), AgendaItemData::fromValidated($request->validated()));
+        $occurrence = null;
+        if (null !== $request->occurrence()) {
+            $occurrence = $this->agenda->occurrenceOf($found, $request->occurrence());
+            if (!$occurrence)
+                return $this->itemNotFound();
+        }
+
+        $updated = $this->agenda->update($found, $this->authentication->userId(), AgendaItemData::fromValidated($request->validated()), $occurrence, $request->scope());
         if (!$updated)
             return $this->participantsRefused();
 
         return Response::json(AgendaItemResource::of($updated));
     }
 
-    #[Endpoint('Delete agenda item', 'Deletes an agenda item and its participants', 'deleteAgendaItem')]
+    #[Endpoint('Delete agenda item', 'Deletes an agenda item and its participants, every occurrence of a recurring one. With `occurrence`, `scope` tells which occurrences go : `occurrence` (the default) that one only, `following` this one and the next ones, `series` all of them', 'deleteAgendaItem')]
     #[NoContentResponse('The agenda item is deleted')]
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
-    #[RawResponse(['error' => 'Agenda item not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such item in a workspace of the current user')]
-    public function delete(Request $request, int $item): Response
+    #[RawResponse(['error' => 'Agenda item not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such item in a workspace of the current user, or no such occurrence of it')]
+    public function delete(DeleteAgendaItemRequest $request, int $item): Response
     {
         $found = $this->agenda->find($this->reachable(), $item);
         if (!$found)
             return $this->itemNotFound();
 
-        $this->agenda->delete($found, $this->authentication->userId());
+        $occurrence = null;
+        if (null !== $request->occurrence()) {
+            $occurrence = $this->agenda->occurrenceOf($found, $request->occurrence());
+            if (!$occurrence)
+                return $this->itemNotFound();
+        }
+
+        $this->agenda->delete($found, $this->authentication->userId(), $occurrence, $request->scope());
 
         return Response::noContent();
     }

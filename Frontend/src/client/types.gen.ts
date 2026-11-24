@@ -560,6 +560,13 @@ export type ListAgendaItemsResponses = {
         all_day: boolean;
         link: string | null;
         color: string | null;
+        recurrence: {
+            frequency: string;
+            interval: number;
+            weekdays: Array<number>;
+            until: string | null;
+        } | null;
+        occurrence: string | null;
         participants: Array<{
             id: number;
             email: string;
@@ -580,6 +587,12 @@ export type CreateAgendaItemData = {
         link?: string | null;
         color?: string | null;
         participants?: Array<number>;
+        recurrence?: {
+            frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+            interval?: number | null;
+            weekdays?: Array<number> | null;
+            until?: string | null;
+        } | null;
         workspace?: number;
     };
     path?: never;
@@ -624,6 +637,13 @@ export type CreateAgendaItemResponses = {
         all_day: boolean;
         link: string | null;
         color: string | null;
+        recurrence: {
+            frequency: string;
+            interval: number;
+            weekdays: Array<number>;
+            until: string | null;
+        } | null;
+        occurrence: string | null;
         participants: Array<{
             id: number;
             email: string;
@@ -639,7 +659,10 @@ export type DeleteAgendaItemData = {
     path: {
         item: number;
     };
-    query?: never;
+    query?: {
+        occurrence?: string | null;
+        scope?: 'occurrence' | 'following' | 'series' | null;
+    };
     url: '/api/agenda/items/{item}';
 };
 
@@ -651,11 +674,15 @@ export type DeleteAgendaItemErrors = {
         error?: string;
     };
     /**
-     * No such item in a workspace of the current user
+     * No such item in a workspace of the current user, or no such occurrence of it
      */
     404: {
         error?: string;
     };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
 };
 
 export type DeleteAgendaItemError = DeleteAgendaItemErrors[keyof DeleteAgendaItemErrors];
@@ -679,6 +706,14 @@ export type UpdateAgendaItemData = {
         link?: string | null;
         color?: string | null;
         participants?: Array<number>;
+        recurrence?: {
+            frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+            interval?: number | null;
+            weekdays?: Array<number> | null;
+            until?: string | null;
+        } | null;
+        occurrence?: string | null;
+        scope?: 'occurrence' | 'following' | 'series' | null;
     };
     path: {
         item: number;
@@ -695,7 +730,7 @@ export type UpdateAgendaItemErrors = {
         error?: string;
     };
     /**
-     * No such item in a workspace of the current user
+     * No such item in a workspace of the current user, or no such occurrence of it
      */
     404: {
         error?: string;
@@ -724,6 +759,13 @@ export type UpdateAgendaItemResponses = {
         all_day: boolean;
         link: string | null;
         color: string | null;
+        recurrence: {
+            frequency: string;
+            interval: number;
+            weekdays: Array<number>;
+            until: string | null;
+        } | null;
+        occurrence: string | null;
         participants: Array<{
             id: number;
             email: string;

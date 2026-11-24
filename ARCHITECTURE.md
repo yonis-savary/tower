@@ -219,8 +219,8 @@ s'écrit dans le front ou par un agent (voir § Serveur MCP), par les mêmes rou
 
 Chaque workspace a son agenda : des éléments (table `agenda_item`) avec un titre, une
 description, un début, une fin, un drapeau « toute la journée », un lien http(s) facultatif, une
-couleur facultative et des participants (table `agenda_item_participant`), membres du workspace de l'élément. Pas de
-récurrence.
+couleur facultative, des participants (table `agenda_item_participant`), membres du workspace de l'élément, et une
+récurrence facultative.
 
 - **Dates** : un élément avec une heure voyage comme un instant, en ISO 8601 avec son décalage
   (`2026-12-01T09:00:00+01:00`), converti à l'heure du serveur à l'entrée (`App/Requests/Rules/Instant`) ;
@@ -259,8 +259,28 @@ récurrence.
 - **Couleur** : un élément prend la couleur de son workspace, ou la sienne (`#rrggbb`). Le
   formulaire propose une palette fixe de dix couleurs (`AGENDA_COLORS`, côté front), précédée d'un
   cercle vide pour « aucune couleur » ; l'API accepte toute couleur `#rrggbb`, pour un agent.
+- **Récurrence** (`App/Agenda/Recurrence`) : `recurrence` (`daily`, `weekly`, `monthly`, `yearly`, nul pour un
+  élément unique), `recurrence_interval` (toutes les N périodes, 1 à 99), `recurrence_weekdays` (jours ISO d'un élément
+  hebdomadaire, `1` = lundi, séparés par des virgules ; le jour du début par défaut) et `recurrence_until` (dernier jour
+  où une occurrence peut commencer, inclus ; nul : sans fin). L'élément donne la première occurrence ; les autres
+  commencent les jours de la règle, à la même heure, et durent autant. Un mois ou une année sans le jour de
+  l'élément (un 31, un 29 février) n'a pas d'occurrence. Rien n'est stocké par occurrence : la liste les calcule sur la
+  période demandée, sans parcourir les périodes antérieures, et donne **une entrée par occurrence**, avec ses dates,
+  l'`id` de l'élément et `occurrence`, le jour où elle commence (heure du serveur), qui la nomme ensuite.
+- **Changer une occurrence** : `PUT` et `DELETE` prennent `occurrence` et `scope`. Les dates envoyées sont alors celles
+  de l'occurrence. `occurrence` (par défaut) : l'occurrence quitte l'élément (une ligne dans `agenda_item_exception`,
+  le jour retiré) et devient un élément unique, pour une modification ; elle disparaît, pour une suppression.
+  `following` : l'élément s'arrête la veille (`recurrence_until`), un nouvel élément reprend à partir de l'occurrence avec
+  les jours retirés qui suivent, pour une modification. `series` : toutes les occurrences bougent comme celle-ci (le
+  début de l'élément d'autant de jours, toutes à sa nouvelle heure) ; une règle renvoyée telle quelle suit le
+  déplacement (un hebdomadaire du lundi glissé au mardi se répète le mardi), une règle changée est prise telle
+  quelle. Sans `occurrence`, l'élément entier est remplacé ou supprimé. Les éléments détachés ou repris gardent
+  leur auteur. L'historique et l'événement d'une occurrence portent `occurrence` et `scope` (et `series`, l'élément
+  d'origine, pour une modification) ; le formulaire demande la portée à l'enregistrement, à la suppression et au
+  glisser-déposer d'une occurrence, et ne propose pas « cette occurrence » quand la règle change.
+- Le rappel vaut pour chaque occurrence, avec `occurrence` dans le payload.
 - Une période demandée fait **62 jours au plus**.
-- Outils MCP : `list_agenda_items`, `create_agenda_item`, `update_agenda_item`. Pas de suppression.
+- Outils MCP : `list_agenda_items`, `create_agenda_item`, `update_agenda_item` (récurrence et portée comprises). Pas de suppression.
 
 ### Recherche
 
@@ -1128,7 +1148,7 @@ Les signaux du workspace portent ce qu'il faut pour cela : `history.created` (`h
 | Paramètres         | onglets verticaux à gauche, contenu à droite, onglet choisi dans l'adresse (`?tab=`) : **Compte** (changement de mot de passe) ; **Interface** (langue : auto, français ou anglais ; thème : auto, clair ou sombre ; gardés dans le navigateur, appliqués sans recharger) ; intégrations Bitbucket et Jira, chacune affichée si sa section est active : workspace ou site, e-mail, token, synchronisation, profils Jira (board, nom, filtre JQL ; ajout, modification, suppression, chacun suivi d'une synchronisation), état de la dernière synchronisation ; bloc « Vider une section », toujours visible, qui supprime d'un coup l'intégration Jira ou Bitbucket et ses données |
 | Jira               | tickets non terminés d'un profil, choisi dans une liste, avec la pastille de leur assigné, ou seulement les siens, en kanban avec les colonnes de son board ; transition par glisser-déposer, ouverture dans Jira, création de tâche ; option « Merge requests » (gardée dans le navigateur par workspace, proposée avec la section `merge_requests`) : au bas de chaque carte, une ligne par merge request ouverte du ticket (clé Jira dans la branche ou le titre) avec son numéro en lien externe, son nombre d'approbations et l'état de son pipeline, en vert (réussi), rouge (en échec) ou bleu (en cours, en attente, aucun) |
 | Documentation      | section du workspace, à l'adresse `/docs` (`?page=`) : à gauche, la recherche (titre et contenu) et le bouton « + » d'une nouvelle page, puis « Filtres supplémentaires », repliés par défaut avec le nombre de filtres actifs (tag, pages archivées), puis l'arborescence ; à droite, la page rendue avec ses tags, son dernier auteur, le bouton « Modifier » et un menu des autres actions (sous-page, historique, télécharger le `.md` de ce qui est affiché — la page ou la version lue —, archiver ou désarchiver, supprimer pour son créateur et l'auteur du workspace). L'édition montre le Markdown et son aperçu côte à côte ; une image s'ajoute par bouton ou par collage. L'historique est un volet des versions (auteur, jeton, date) : en choisir une l'affiche à la place de la page. Rechargée quand une page change (signal `history.created`), sauf pendant une édition. Sur téléphone, la page remplace la liste |
-| Agenda             | section du workspace, à l'adresse `/agenda`, chargée à la demande (FullCalendar). À gauche, un panneau (replié derrière un bouton « Options » sur téléphone) : « Nouvel élément », un mois avec les numéros de semaine où un clic sur un jour y amène l'agenda, les membres du workspace courant à cocher pour voir leur emploi du temps (soi-même par défaut, choix gardé par workspace dans le navigateur ; personne de coché : tout), une case par workspace de l'utilisateur (le courant par défaut, choix gardé dans le navigateur), l'interrupteur des planifications. À droite, l'agenda : vues mois, semaine (par défaut sur écran large) et jour (par défaut sur téléphone) ; chaque élément prend la couleur de son workspace. Glisser-déposer pour changer le jour ou l'heure, étirer pour changer la durée ; sélectionner une plage ou « Nouvel élément » ouvre le formulaire (workspace, titre, couleur, journée entière, dates, participants, lien, description). Interrupteur « Afficher les planifications » : leurs déclenchements, en pointillés et en lecture seule, mènent aux Automatisations. Rechargé quand un élément du workspace courant change (signal `history.created`) |
+| Agenda             | section du workspace, à l'adresse `/agenda`, chargée à la demande (FullCalendar). À gauche, un panneau (replié derrière un bouton « Options » sur téléphone) : « Nouvel élément », un mois avec les numéros de semaine où un clic sur un jour y amène l'agenda, les membres du workspace courant à cocher pour voir leur emploi du temps (soi-même par défaut, choix gardé par workspace dans le navigateur ; personne de coché : tout), une case par workspace de l'utilisateur (le courant par défaut, choix gardé dans le navigateur), l'interrupteur des planifications. À droite, l'agenda : vues mois, semaine (par défaut sur écran large) et jour (par défaut sur téléphone) ; chaque élément prend la couleur de son workspace. Glisser-déposer pour changer le jour ou l'heure, étirer pour changer la durée ; sélectionner une plage ou « Nouvel élément » ouvre le formulaire (workspace, titre, couleur, journée entière, dates, répétition, participants, lien, description). Une occurrence d'un élément récurrent porte ↻ ; la modifier, la déplacer ou la supprimer demande d'abord la portée (cette occurrence, celle-ci et les suivantes, toutes). Interrupteur « Afficher les planifications » : leurs déclenchements, en pointillés et en lecture seule, mènent aux Automatisations. Rechargé quand un élément du workspace courant change (signal `history.created`) |
 | Aide / API         | à l'adresse `/help`, onglets verticaux comme les Paramètres, page choisie dans l'adresse (`?page=`) : accueil, événements envoyés aux appareils (enveloppe du message, variables d'environnement, chaque type avec ses champs et des exemples de payload), lancer le connecteur en service sous Linux (systemd), et sur un serveur sans écran (service détaché des sessions par le lingering, handlers en fichier, délai des handlers, commande root autorisée par sudo, dépannage). Les blocs de code sont colorés (highlight.js, avec seulement les langages utilisés) et ont un bouton pour copier leur contenu brut. Chaque page existe en français et en anglais (`views/docs/fr/`, `views/docs/en/`) ; la version de la langue active est affichée, le français sert de repli |
 | Mes workspaces     | modale ouverte par « Gérer mes workspaces » : liste et création à gauche ; à droite, le workspace choisi en trois onglets, chacun enregistré à part : **Général** (nom, couleur, passage sur ce workspace), **Fonctionnalités** (sections, accès MCP, rappel de l'agenda), **Membres** (liste, ajout par e-mail, retrait, départ) |
 
@@ -1180,7 +1200,8 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `doc_page`        | `workspace`, `parent`, `title`, `content`, `tags` (JSON), `version`, `archived_at`, `created_by`, `updated_by`, `created_at`, `updated_at` |
 | `doc_page_version` | `page`, `version` (unique avec `page`), `title`, `content`, `tags`, `user`, `token` (nom du jeton d'agent), `created_at` |
 | `doc_image`       | `workspace`, `name`, `type`, `size`, `file`, `user`, `created_at`          |
-| `agenda_item`     | `workspace`, `title`, `description`, `starts_at`, `ends_at` (exclusive), `all_day`, `link`, `color`, `created_by`, `created_at`, `updated_at` |
+| `agenda_item`     | `workspace`, `title`, `description`, `starts_at`, `ends_at` (exclusive), `all_day`, `link`, `color`, `recurrence`, `recurrence_interval`, `recurrence_weekdays`, `recurrence_until`, `created_by`, `created_at`, `updated_at` |
+| `agenda_item_exception` | `item`, `occurs_on` (unique ensemble) : jour d'une occurrence retirée ou détachée |
 | `agenda_item_participant` | `item`, `user` (unique ensemble)                                  |
 | `jira_issue`      | `workspace`, `integration`, `external_id`, `issue_key`, `summary`, `url`, `project`, `issue_type`, `priority`, `status_id`, `status`, `status_category` (`todo`, `in_progress`, `done`), `sprint_id`, `sprint_name`, `sprint_state`, `assignee_id`, `assignee_name`, `assignee_avatar`, `parent` (ticket parent d'une sous-tâche), `tracked`, `synced_at` |
 

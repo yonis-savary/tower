@@ -22,8 +22,13 @@ use Cube\Utils\Attributes\Generated;
  * @property \DateTime $created_at
  * @property \DateTime $updated_at
  * @property string $color
+ * @property string $recurrence
+ * @property int $recurrence_interval
+ * @property string $recurrence_weekdays
+ * @property \DateTime $recurrence_until
  * @property Workspace $_workspace
  * @property User $_created_by
+ * @property AgendaItemException[] $exceptions
  * @property AgendaItemParticipant[] $participants
  */
 class AgendaItem extends Model
@@ -59,7 +64,11 @@ class AgendaItem extends Model
             'created_by' => (new ModelField('created_by'))->type('INTEGER')->notNull()->hasDefault(false)->references(User::class,'id'),
             'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
             'updated_at' => (new ModelField('updated_at'))->type('DATE')->notNull()->hasDefault(false),
-            'color' => (new ModelField('color'))->type('STRING')->nullable()->default(NULL)
+            'color' => (new ModelField('color'))->type('STRING')->nullable()->default(NULL),
+            'recurrence' => (new ModelField('recurrence'))->type('STRING')->nullable()->default(NULL),
+            'recurrence_interval' => (new ModelField('recurrence_interval'))->type('INTEGER')->notNull()->default(NULL),
+            'recurrence_weekdays' => (new ModelField('recurrence_weekdays'))->type('STRING')->nullable()->default(NULL),
+            'recurrence_until' => (new ModelField('recurrence_until'))->type('DATE')->nullable()->default(NULL)
         ];
     }
 
@@ -76,6 +85,12 @@ class AgendaItem extends Model
     }
 
     #[Generated]
+    public function exceptions(): HasMany
+    {
+        return $this->hasMany('exceptions', AgendaItemException::class, 'item', 'id');
+    }
+
+    #[Generated]
     public function participants(): HasMany
     {
         return $this->hasMany('participants', AgendaItemParticipant::class, 'item', 'id');
@@ -85,10 +100,23 @@ class AgendaItem extends Model
     public static function relations(): array
     {
         return [
+            "exceptions",
             "participants",
             "_workspace",
             "_created_by",
         ];
+    }
+
+    public function isRecurring(): bool
+    {
+        return null !== $this->recurrence;
+    }
+
+    // An occurrence is a copy whose dates are moved : it must not share the fields of its item
+    public function __clone()
+    {
+        $this->data = clone $this->data;
+        $this->original = clone $this->original;
     }
 
 }

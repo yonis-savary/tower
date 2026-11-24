@@ -46,7 +46,7 @@ const entries = computed<Entry[]>(() => [
   ...items.value
     .filter((item) => new Date(item.ends_at).getTime() > now.value)
     .map((item) => ({
-      key: `item:${item.id}`,
+      key: item.occurrence ? `item:${item.id}:${item.occurrence}` : `item:${item.id}`,
       title: item.title,
       detail: item.participants.length ? item.participants.map(({ email }) => email).join(', ') : null,
       icon: 'pi pi-calendar',

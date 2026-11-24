@@ -4,6 +4,7 @@ namespace Tests\Integration;
 
 use App\Agenda\AgendaService;
 use App\Models\AgendaItem;
+use App\Models\AgendaItemException;
 use App\Models\AgendaItemParticipant;
 use App\Models\History;
 use App\Models\ScheduledEvent;
@@ -323,5 +324,169 @@ class AgendaTest extends CubeTestCase
         $this->assertSame(0, AgendaItem::select()->count());
         $this->assertSame(0, AgendaItemParticipant::select()->count());
         $this->assertNull(User::find($alice)->disabled_at);
+    }
+
+    private function weekly(array $values = []): array
+    {
+        // Monday 2026-11-30, on Mondays and Wednesdays
+        return $this->item(['starts_at' => '2026-11-30 09:00:00', 'ends_at' => '2026-11-30 09:15:00', 'recurrence' => ['frequency' => 'weekly', 'weekdays' => [1, 3]], ...$values]);
+    }
+
+    /**
+     * @return list<string> "title day hh:mm" of each listed entry
+     */
+    private function listed(string $from = '2026-11-30', string $to = '2026-12-14'): array
+    {
+        $items = $this->get("/api/agenda/items?from={$from}%2000:00:00&to={$to}%2000:00:00")->assertOk()->json();
+
+        return array_map(fn (array $item) => $item['title'].' '.substr($item['starts_at'], 0, 10).' '.substr($item['starts_at'], 11, 5), $items);
+    }
+
+    public function testARecurringItemIsListedOncePerOccurrence()
+    {
+        $this->register('alice@example.com');
+        $created = $this->postJson('/api/agenda/items', $this->weekly())->assertCreated()->json();
+        $this->assertSame(['frequency' => 'weekly', 'interval' => 1, 'weekdays' => [1, 3], 'until' => null], $created['recurrence']);
+        $this->postJson('/api/agenda/items', $this->item(['title' => 'Retro', 'starts_at' => '2026-12-01 14:00:00', 'ends_at' => '2026-12-01 15:00:00', 'recurrence' => ['frequency' => 'daily', 'interval' => 2, 'until' => '2026-12-05']]))->assertCreated();
+
+        $this->assertSame([
+            'Standup 2026-11-30 09:00', 'Retro 2026-12-01 14:00', 'Standup 2026-12-02 09:00', 'Retro 2026-12-03 14:00',
+            'Retro 2026-12-05 14:00', 'Standup 2026-12-07 09:00', 'Standup 2026-12-09 09:00',
+        ], $this->listed());
+
+        $later = $this->get('/api/agenda/items?from=2027-06-01%2000:00:00&to=2027-06-08%2000:00:00')->assertOk()->json();
+        $this->assertSame(['2027-06-02', '2027-06-07'], array_column($later, 'occurrence'));
+        $this->assertSame($created['id'], $later[0]['id']);
+        $this->assertStringEndsWith(substr($later[0]['starts_at'], 19), $later[0]['ends_at']);
+
+        // A weekly item without days repeats on the day it starts
+        $tuesday = $this->postJson('/api/agenda/items', $this->item(['recurrence' => ['frequency' => 'weekly']]))->assertCreated()->json();
+        $this->assertSame([2], $tuesday['recurrence']['weekdays']);
+    }
+
+    public function testAnInvalidRecurrenceIsRefused()
+    {
+        $this->register('alice@example.com');
+
+        $this->postJson('/api/agenda/items', $this->item(['recurrence' => ['frequency' => 'hourly']]))->assertUnprocessableContent();
+        $this->postJson('/api/agenda/items', $this->item(['recurrence' => ['frequency' => 'daily', 'interval' => 0]]))->assertUnprocessableContent();
+        $this->postJson('/api/agenda/items', $this->item(['recurrence' => ['frequency' => 'weekly', 'weekdays' => [8]]]))->assertUnprocessableContent();
+        $this->postJson('/api/agenda/items', $this->item(['recurrence' => ['frequency' => 'daily', 'until' => '2026-11-30']]))->assertUnprocessableContent();
+        $this->assertSame(0, AgendaItem::select()->count());
+    }
+
+    public function testAnOccurrenceIsChangedAlone()
+    {
+        $this->register('alice@example.com');
+        $series = $this->postJson('/api/agenda/items', $this->weekly())->assertCreated()->json();
+
+        $this->putJson("/api/agenda/items/{$series['id']}", $this->weekly(['occurrence' => '2026-12-01', 'starts_at' => '2026-12-01 10:00:00', 'ends_at' => '2026-12-01 10:15:00']))->assertNotFound();
+
+        $detached = $this->putJson("/api/agenda/items/{$series['id']}", $this->weekly(['title' => 'Late standup', 'occurrence' => '2026-12-02', 'starts_at' => '2026-12-02 11:00:00', 'ends_at' => '2026-12-02 11:15:00']))->assertOk()->json();
+        $this->assertNotSame($series['id'], $detached['id']);
+        $this->assertNull($detached['recurrence']);
+        $this->assertNull($detached['occurrence']);
+
+        $this->assertSame(['Standup 2026-11-30 09:00', 'Late standup 2026-12-02 11:00', 'Standup 2026-12-07 09:00', 'Standup 2026-12-09 09:00'], $this->listed());
+        $this->assertSame('2026-12-02', substr((string) AgendaItemException::findWhere(['item' => $series['id']])->occurs_on, 0, 10));
+
+        // Changed already : that occurrence no longer exists
+        $this->putJson("/api/agenda/items/{$series['id']}", $this->weekly(['occurrence' => '2026-12-02', 'starts_at' => '2026-12-02 11:00:00', 'ends_at' => '2026-12-02 11:15:00']))->assertNotFound();
+
+        $line = array_values(array_filter($this->broadcast->emitted, fn (array $data) => 'agenda.item.updated' === ($data['event'] ?? null)))[0];
+        $payload = json_decode($line['payload'], true);
+        $this->assertSame([$series['id'], '2026-12-02', 'occurrence'], [$payload['series'], $payload['occurrence'], $payload['scope']]);
+    }
+
+    public function testTheFollowingOccurrencesAreSplitIntoANewItem()
+    {
+        $this->register('alice@example.com');
+        $series = $this->postJson('/api/agenda/items', $this->weekly(['recurrence' => ['frequency' => 'weekly', 'weekdays' => [1, 3], 'until' => '2026-12-31']]))->assertCreated()->json();
+        $this->deleteJson("/api/agenda/items/{$series['id']}?occurrence=2026-12-09")->assertNoContent();
+
+        $following = $this->putJson("/api/agenda/items/{$series['id']}", $this->weekly([
+            'occurrence' => '2026-12-07', 'scope' => 'following',
+            'starts_at' => '2026-12-07 09:30:00', 'ends_at' => '2026-12-07 09:45:00',
+            'recurrence' => ['frequency' => 'weekly', 'weekdays' => [1, 3], 'until' => '2026-12-31'],
+        ]))->assertOk()->json();
+
+        $this->assertNotSame($series['id'], $following['id']);
+        $this->assertSame('2026-12-31', $following['recurrence']['until']);
+        $this->assertSame('2026-12-06', substr((string) AgendaItem::find($series['id'])->recurrence_until, 0, 10));
+        // The occurrence removed before the split stays removed
+        $this->assertSame(['Standup 2026-11-30 09:00', 'Standup 2026-12-02 09:00', 'Standup 2026-12-07 09:30', 'Standup 2026-12-14 09:30', 'Standup 2026-12-16 09:30'], $this->listed('2026-11-30', '2026-12-17'));
+    }
+
+    public function testTheWholeSeriesMovesAsAnOccurrenceDoes()
+    {
+        $this->register('alice@example.com');
+        $series = $this->postJson('/api/agenda/items', $this->weekly())->assertCreated()->json();
+        $this->deleteJson("/api/agenda/items/{$series['id']}?occurrence=2026-12-07")->assertNoContent();
+
+        // Wednesday 9:00 to Thursday 14:00, the rule sent back as it was
+        $moved = $this->putJson("/api/agenda/items/{$series['id']}", $this->weekly([
+            'occurrence' => '2026-12-02', 'scope' => 'series',
+            'starts_at' => '2026-12-03 14:00:00', 'ends_at' => '2026-12-03 15:00:00',
+        ]))->assertOk()->json();
+
+        $this->assertSame($series['id'], $moved['id']);
+        $this->assertSame([2, 4], $moved['recurrence']['weekdays']);
+        $this->assertSame(['Standup 2026-12-01 14:00', 'Standup 2026-12-03 14:00', 'Standup 2026-12-10 14:00'], $this->listed());
+
+        // The rule changed : it is taken as sent
+        $this->putJson("/api/agenda/items/{$series['id']}", $this->weekly([
+            'occurrence' => '2026-12-03', 'scope' => 'series',
+            'starts_at' => '2026-12-03 14:00:00', 'ends_at' => '2026-12-03 15:00:00',
+            'recurrence' => ['frequency' => 'weekly', 'weekdays' => [5]],
+        ]))->assertOk();
+        $this->assertSame(['Standup 2026-12-04 14:00', 'Standup 2026-12-11 14:00'], $this->listed());
+
+        // Without a rule, the item happens once, on the dates sent
+        $this->putJson("/api/agenda/items/{$series['id']}", $this->item(['occurrence' => '2026-12-11', 'scope' => 'series', 'starts_at' => '2026-12-11 14:00:00', 'ends_at' => '2026-12-11 15:00:00']))->assertOk();
+        $this->assertSame(['Standup 2026-12-11 14:00'], $this->listed());
+        $this->assertSame(0, AgendaItemException::select()->count());
+    }
+
+    public function testOccurrencesAreDeletedAloneTheFollowingOnesOrAll()
+    {
+        $this->register('alice@example.com');
+        $series = $this->postJson('/api/agenda/items', $this->weekly())->assertCreated()->json();
+
+        $this->deleteJson("/api/agenda/items/{$series['id']}?occurrence=2026-12-01")->assertNotFound();
+        $this->deleteJson("/api/agenda/items/{$series['id']}?occurrence=2026-12-02")->assertNoContent();
+        $this->assertSame(['Standup 2026-11-30 09:00', 'Standup 2026-12-07 09:00', 'Standup 2026-12-09 09:00'], $this->listed());
+
+        $this->deleteJson("/api/agenda/items/{$series['id']}?occurrence=2026-12-09&scope=following")->assertNoContent();
+        $this->assertSame(['Standup 2026-11-30 09:00', 'Standup 2026-12-07 09:00'], $this->listed());
+        $this->assertSame('2026-12-08', substr((string) AgendaItem::find($series['id'])->recurrence_until, 0, 10));
+
+        $deleted = array_values(array_filter($this->broadcast->emitted, fn (array $data) => 'agenda.item.deleted' === ($data['event'] ?? null)));
+        $this->assertSame(['2026-12-02', 'occurrence'], [json_decode($deleted[0]['payload'], true)['occurrence'], json_decode($deleted[0]['payload'], true)['scope']]);
+        $this->assertStringStartsWith('2026-12-02T09:00', json_decode($deleted[0]['payload'], true)['starts_at']);
+
+        $this->deleteJson("/api/agenda/items/{$series['id']}?occurrence=2026-12-07&scope=series")->assertNoContent();
+        $this->assertSame([], $this->listed());
+        $this->assertSame(0, AgendaItemException::select()->count());
+    }
+
+    public function testUpcomingIsAnnouncedBeforeEachOccurrence()
+    {
+        $this->register('alice@example.com');
+        $workspace = SelectedWorkspace::get();
+        $this->putJson("/api/workspaces/{$workspace}", ['name' => 'Pro', 'accent_color' => null, 'agenda_reminder_minutes' => 10])->assertOk();
+        $series = $this->postJson('/api/agenda/items', $this->weekly())->assertCreated()->json();
+        $this->deleteJson("/api/agenda/items/{$series['id']}?occurrence=2026-12-07")->assertNoContent();
+
+        $agenda = inject(AgendaService::class);
+        $agenda->announceUpcomingAt(new \DateTimeImmutable('2026-12-01 08:50:00'));
+        $agenda->announceUpcomingAt(new \DateTimeImmutable('2026-12-07 08:50:00'));
+        $this->assertSame(0, History::select()->where('type', AgendaService::UPCOMING_TYPE)->count());
+
+        $agenda->announceUpcomingAt(new \DateTimeImmutable('2026-12-09 08:50:00'));
+        $sent = array_values(array_filter($this->broadcast->emitted, fn (array $data) => AgendaService::UPCOMING_TYPE === ($data['event'] ?? null)));
+        $this->assertCount(1, $sent);
+        $payload = json_decode($sent[0]['payload'], true);
+        $this->assertSame('2026-12-09', $payload['occurrence']);
+        $this->assertStringStartsWith('2026-12-09T09:00', $payload['starts_at']);
     }
 }

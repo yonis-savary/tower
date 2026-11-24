@@ -7,6 +7,7 @@ use App\Documentation\DocumentationService;
 use App\Integrations\IntegrationService;
 use App\Models\AccessKey;
 use App\Models\AgendaItem;
+use App\Models\AgendaItemException;
 use App\Models\AgendaItemParticipant;
 use App\Models\ApiToken;
 use App\Models\ConfigDownload;
@@ -175,6 +176,7 @@ class WorkspaceService
             ConfigDownload::delete()->whereIn('access_key', $this->idsOf(AccessKey::class, $id))->fetch();
             $this->documentation->deleteWorkspacePages($id);
             AgendaItemParticipant::delete()->whereIn('item', $this->idsOf(AgendaItem::class, $id))->fetch();
+            AgendaItemException::delete()->whereIn('item', $this->idsOf(AgendaItem::class, $id))->fetch();
             AgendaItem::delete()->where('workspace', $id)->fetch();
 
             foreach ([AccessKey::class, ApiToken::class, QuickAction::class, ScheduledEvent::class, NotificationRule::class, PushSubscription::class, DocImage::class, WorkspaceMember::class] as $model)

@@ -133,14 +133,14 @@ export const downloadFromConfigLink = <ThrowOnError extends boolean = false>(opt
 /**
  * List agenda items
  *
- * The agenda items overlapping [from, to) (ISO 8601 with their offset, or server time without one ; at most 62 days apart), earliest first, with their participants. `workspaces` lists the ids to read, separated by commas : the current workspace when left out. `participants` (user ids, separated by commas) keeps the items one of them takes part in, plus those without participants. An agent only reads the workspace of its token
+ * The agenda items overlapping [from, to) (ISO 8601 with their offset, or server time without one ; at most 62 days apart), earliest first, with their participants. A recurring item (`recurrence` set) is listed once per occurrence in the range, with the dates of that occurrence and its `occurrence` day, which names it to `update_agenda_item`. `workspaces` lists the ids to read, separated by commas : the current workspace when left out. `participants` (user ids, separated by commas) keeps the items one of them takes part in, plus those without participants. An agent only reads the workspace of its token
  */
 export const listAgendaItems = <ThrowOnError extends boolean = false>(options: Options<ListAgendaItemsData, ThrowOnError>): RequestResult<ListAgendaItemsResponses, ListAgendaItemsErrors, ThrowOnError> => (options.client ?? client).get<ListAgendaItemsResponses, ListAgendaItemsErrors, ThrowOnError>({ url: '/api/agenda/items', ...options });
 
 /**
  * Create agenda item
  *
- * Adds an item to the agenda of `workspace` (the current workspace when left out). Dates are ISO 8601 with their offset, or server time without one ; `ends_at` is exclusive : an all-day item of one day ends at midnight the next day. Participants are members of that workspace. `color` (#rrggbb) replaces the color of the workspace, null keeps it
+ * Adds an item to the agenda of `workspace` (the current workspace when left out). Dates are ISO 8601 with their offset, or server time without one ; `ends_at` is exclusive : an all-day item of one day ends at midnight the next day. Participants are members of that workspace. `color` (#rrggbb) replaces the color of the workspace, null keeps it. `recurrence` repeats the item from its dates : `frequency` daily, weekly, monthly or yearly, every `interval` periods (1 by default), on ISO `weekdays` for a weekly item (1 = Monday, the day it starts by default), until the day `until` included (forever when null). A monthly or yearly item skips the months without its day
  */
 export const createAgendaItem = <ThrowOnError extends boolean = false>(options: Options<CreateAgendaItemData, ThrowOnError>): RequestResult<CreateAgendaItemResponses, CreateAgendaItemErrors, ThrowOnError> => (options.client ?? client).post<CreateAgendaItemResponses, CreateAgendaItemErrors, ThrowOnError>({
     url: '/api/agenda/items',
@@ -154,14 +154,14 @@ export const createAgendaItem = <ThrowOnError extends boolean = false>(options: 
 /**
  * Delete agenda item
  *
- * Deletes an agenda item and its participants
+ * Deletes an agenda item and its participants, every occurrence of a recurring one. With `occurrence`, `scope` tells which occurrences go : `occurrence` (the default) that one only, `following` this one and the next ones, `series` all of them
  */
 export const deleteAgendaItem = <ThrowOnError extends boolean = false>(options: Options<DeleteAgendaItemData, ThrowOnError>): RequestResult<DeleteAgendaItemResponses, DeleteAgendaItemErrors, ThrowOnError> => (options.client ?? client).delete<DeleteAgendaItemResponses, DeleteAgendaItemErrors, ThrowOnError>({ url: '/api/agenda/items/{item}', ...options });
 
 /**
  * Update agenda item
  *
- * Replaces the title, description, dates, link, color and participants of an agenda item. It stays in its workspace
+ * Replaces the title, description, dates, link, color, participants and recurrence of an agenda item. It stays in its workspace. Without `occurrence`, the dates are those of the first occurrence. For a recurring item, `occurrence` (the day a listed occurrence gives) makes the dates those of that occurrence, and `scope` tells what changes : `occurrence` (the default) moves it out of its item, as an item of its own happening once ; `following` ends the item the day before and starts a new one ; `series` moves every occurrence as this one moves. The answer is the item holding the change
  */
 export const updateAgendaItem = <ThrowOnError extends boolean = false>(options: Options<UpdateAgendaItemData, ThrowOnError>): RequestResult<UpdateAgendaItemResponses, UpdateAgendaItemErrors, ThrowOnError> => (options.client ?? client).put<UpdateAgendaItemResponses, UpdateAgendaItemErrors, ThrowOnError>({
     url: '/api/agenda/items/{item}',

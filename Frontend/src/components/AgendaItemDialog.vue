@@ -5,6 +5,7 @@ import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import DatePicker from 'primevue/datepicker'
 import Dialog from 'primevue/dialog'
+import InputNumber from 'primevue/inputnumber'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import MultiSelect from 'primevue/multiselect'
@@ -18,9 +19,22 @@ import {
   type ListAgendaItemsResponse,
   type ListWorkspaceMembersResponse,
 } from '../client'
+import AgendaScopeDialog from './AgendaScopeDialog.vue'
 import WorkspaceIcon from './WorkspaceIcon.vue'
 import { useWorkspaceStore } from '../stores/workspace'
-import { AGENDA_COLORS, addDays, agendaBody, type AgendaDraft } from '../utils/agenda'
+import {
+  AGENDA_COLORS,
+  FREQUENCIES,
+  WEEKDAYS,
+  addDays,
+  agendaBody,
+  dayOf,
+  recurrenceOf,
+  weekdayName,
+  type AgendaDraft,
+  type Frequency,
+  type Recurrence,
+} from '../utils/agenda'
 
 type Item = ListAgendaItemsResponse[number]
 
@@ -28,7 +42,7 @@ const visible = defineModel<boolean>('visible', { required: true })
 const props = defineProps<{ item: Item | null; draft: AgendaDraft; workspace: number }>()
 const emit = defineEmits<{ changed: [] }>()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const store = useWorkspaceStore()
 
 const form = ref({
@@ -41,7 +55,12 @@ const form = ref({
   link: '',
   color: null as string | null,
   participants: [] as number[],
+  frequency: null as Frequency | null,
+  interval: 1,
+  weekdays: [] as number[],
+  until: null as Date | null,
 })
+const scopeDialog = ref<InstanceType<typeof AgendaScopeDialog> | null>(null)
 const members = ref<ListWorkspaceMembersResponse>([])
 const saving = ref(false)
 const error = ref<string | null>(null)
@@ -57,6 +76,7 @@ watch(visible, (shown) => {
   const allDay = item?.all_day ?? draft.allDay
   const start = item ? new Date(item.starts_at) : draft.start
   const end = item ? new Date(item.ends_at) : draft.end
+  const recurrence = item?.recurrence
   form.value = {
     workspace: item?.workspace ?? props.workspace,
     title: item?.title ?? '',
@@ -67,9 +87,45 @@ watch(visible, (shown) => {
     link: item?.link ?? '',
     color: item?.color ?? null,
     participants: item?.participants.map(({ id }) => id) ?? [],
+    frequency: (recurrence?.frequency as Frequency | undefined) ?? null,
+    interval: recurrence?.interval ?? 1,
+    weekdays: recurrence?.weekdays ?? [],
+    until: recurrence?.until ? new Date(`${recurrence.until}T00:00:00`) : null,
   }
   error.value = null
 })
+
+// ISO-8601 : 1 = Monday
+const isoDay = (date: Date) => date.getDay() || 7
+
+// A weekly item repeats on the day it starts until other days are chosen
+watch(() => form.value.frequency, (frequency) => {
+  if (frequency === 'weekly' && !form.value.weekdays.length) form.value.weekdays = [isoDay(form.value.start)]
+})
+
+const frequencyOptions = computed(() => [
+  { value: null, label: t('agenda.recurrence.none') },
+  ...FREQUENCIES.map((value) => ({ value, label: t(`agenda.recurrence.${value}`) })),
+])
+
+function toggleWeekday(day: number) {
+  const days = form.value.weekdays
+  form.value.weekdays = days.includes(day) ? days.filter((value) => value !== day) : [...days, day].sort()
+}
+
+function formRecurrence(): Recurrence | null {
+  const { frequency, interval, weekdays, until } = form.value
+  if (!frequency) return null
+
+  return {
+    frequency,
+    interval: interval || 1,
+    weekdays: frequency === 'weekly' ? [...(weekdays.length ? weekdays : [isoDay(form.value.start)])].sort() : [],
+    until: until ? dayOf(until) : null,
+  }
+}
+
+const sameRule = (a: Recurrence | null, b: Recurrence | null) => JSON.stringify(a) === JSON.stringify(b)
 
 watch(() => (visible.value ? form.value.workspace : null), async (workspace, previous) => {
   if (workspace === null) return
@@ -87,6 +143,18 @@ async function save() {
     error.value = t('agenda.invalidDates')
     return
   }
+  if (form.value.until && dayOf(form.value.until) < dayOf(form.value.start)) {
+    error.value = t('agenda.recurrence.invalidUntil')
+    return
+  }
+
+  const recurrence = formRecurrence()
+  // A new rule means nothing to a single occurrence
+  const occurrence = props.item?.occurrence
+  const scope = occurrence
+    ? await scopeDialog.value?.ask('edit', sameRule(recurrence, recurrenceOf(props.item!)) ? ['occurrence', 'following', 'series'] : ['following', 'series'])
+    : undefined
+  if (occurrence && !scope) return
 
   saving.value = true
   error.value = null
@@ -98,9 +166,10 @@ async function save() {
     link: form.value.link.trim() || null,
     color: form.value.color,
     participants: form.value.participants,
+    recurrence,
   }
   const { response } = props.item
-    ? await updateAgendaItem({ path: { item: props.item.id }, body })
+    ? await updateAgendaItem({ path: { item: props.item.id }, body: { ...body, ...(occurrence ? { occurrence, scope } : {}) } })
     : await createAgendaItem({ body: { ...body, workspace: form.value.workspace } })
   saving.value = false
 
@@ -115,9 +184,13 @@ async function save() {
 
 async function remove() {
   const item = props.item
-  if (!item || !window.confirm(t('agenda.deleteConfirm', { title: item.title }))) return
+  if (!item) return
 
-  const { response } = await deleteAgendaItem({ path: { item: item.id } })
+  const occurrence = item.occurrence
+  const scope = occurrence ? await scopeDialog.value?.ask('delete') : undefined
+  if (occurrence ? !scope : !window.confirm(t('agenda.deleteConfirm', { title: item.title }))) return
+
+  const { response } = await deleteAgendaItem({ path: { item: item.id }, query: occurrence ? { occurrence, scope } : undefined })
   if (!response?.ok) {
     error.value = t('agenda.deleteError')
     return
@@ -211,6 +284,59 @@ async function remove() {
       </div>
 
       <div class="field">
+        <label for="agenda-frequency">{{ t('agenda.recurrence.label') }}</label>
+        <Select v-model="form.frequency" input-id="agenda-frequency" :options="frequencyOptions" option-label="label" option-value="value" fluid />
+      </div>
+
+      <template v-if="form.frequency">
+        <div class="field-row">
+          <div class="field">
+            <label for="agenda-interval">{{ t('agenda.recurrence.every') }}</label>
+            <InputNumber
+              v-model="form.interval"
+              input-id="agenda-interval"
+              :min="1"
+              :max="99"
+              show-buttons
+              :suffix="` ${t(`agenda.recurrence.unit.${form.frequency}`, form.interval || 1)}`"
+              fluid
+            />
+          </div>
+          <div class="field">
+            <label for="agenda-until">{{ t('agenda.recurrence.until') }}</label>
+            <DatePicker
+              v-model="form.until"
+              input-id="agenda-until"
+              :min-date="form.start"
+              :placeholder="t('agenda.recurrence.forever')"
+              show-button-bar
+              fluid
+            />
+          </div>
+        </div>
+
+        <fieldset v-if="form.frequency === 'weekly'" class="field weekdays">
+          <legend>{{ t('agenda.recurrence.weekdays') }}</legend>
+          <div class="days">
+            <button
+              v-for="day in WEEKDAYS"
+              :key="day"
+              type="button"
+              class="day"
+              :class="{ selected: form.weekdays.includes(day) }"
+              :aria-pressed="form.weekdays.includes(day)"
+              :aria-label="weekdayName(day, locale, 'long')"
+              :title="weekdayName(day, locale, 'long')"
+              @click="toggleWeekday(day)"
+            >
+              {{ weekdayName(day, locale, 'narrow') }}
+            </button>
+          </div>
+        </fieldset>
+        <small v-if="item?.occurrence" class="hint">{{ t('agenda.recurrence.occurrenceHint') }}</small>
+      </template>
+
+      <div class="field">
         <label for="agenda-participants">{{ t('agenda.participantsLabel') }}</label>
         <MultiSelect
           v-model="form.participants"
@@ -240,6 +366,8 @@ async function remove() {
       </div>
     </form>
   </Dialog>
+
+  <AgendaScopeDialog ref="scopeDialog" />
 </template>
 
 <style scoped>
@@ -311,6 +439,47 @@ async function remove() {
 
 .swatch:focus-visible {
   outline: 2px solid var(--p-focus-ring-color, var(--p-primary-color));
+}
+
+.weekdays {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.weekdays legend {
+  margin-bottom: 0.375rem;
+  padding: 0;
+}
+
+.days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.day {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  color: var(--p-text-color);
+  font: inherit;
+  text-transform: capitalize;
+  background: transparent;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.day.selected {
+  color: var(--p-primary-contrast-color);
+  background: var(--p-primary-color);
+  border-color: var(--p-primary-color);
+}
+
+.day:focus-visible {
+  outline: 2px solid var(--p-focus-ring-color, var(--p-primary-color));
+  outline-offset: 2px;
 }
 
 .all-day,

@@ -1,7 +1,15 @@
 import type { EventInput } from '@fullcalendar/core'
-import type { ListAgendaItemsResponse, ListAgendaSchedulesResponse } from '../client'
+import type { CreateAgendaItemData, ListAgendaItemsResponse, ListAgendaSchedulesResponse } from '../client'
 
 export type AgendaItem = ListAgendaItemsResponse[number]
+export type Recurrence = NonNullable<NonNullable<CreateAgendaItemData['body']>['recurrence']>
+export type Frequency = Recurrence['frequency']
+// What a change made from an occurrence of a recurring item concerns
+export type RecurrenceScope = 'occurrence' | 'following' | 'series'
+
+export const FREQUENCIES: Frequency[] = ['daily', 'weekly', 'monthly', 'yearly']
+// ISO-8601 days, 1 = Monday
+export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7]
 // The document reads this answer from an example, which cannot tell that every key is always given
 export type ScheduleOccurrence = Required<ListAgendaSchedulesResponse[number]>
 
@@ -28,8 +36,13 @@ export function agendaBody({ start, end, allDay }: AgendaDraft): { starts_at: st
     : { starts_at: start.toISOString(), ends_at: end.toISOString(), all_day: false }
 }
 
-// The API replaces the whole item : a field left out here would be erased by a move
-export function itemBody(item: AgendaItem, dates: AgendaDraft) {
+// The API reads a listed rule as the one it gives : its frequency is one it knows
+export function recurrenceOf(item: AgendaItem): Recurrence | null {
+  return item.recurrence ? { ...item.recurrence, frequency: item.recurrence.frequency as Frequency } : null
+}
+
+// The API replaces the whole item : a field left out here would be erased by a move. The dates of an occurrence are its own
+export function itemBody(item: AgendaItem, dates: AgendaDraft, scope?: RecurrenceScope) {
   return {
     ...agendaBody(dates),
     title: item.title,
@@ -37,12 +50,20 @@ export function itemBody(item: AgendaItem, dates: AgendaDraft) {
     link: item.link,
     color: item.color,
     participants: item.participants.map(({ id }) => id),
+    recurrence: recurrenceOf(item),
+    ...(item.occurrence ? { occurrence: item.occurrence, scope } : {}),
   }
+}
+
+// A monday of 2024 : its week gives the names of the days in the language of the page
+export function weekdayName(day: number, locale: string, width: 'short' | 'narrow' | 'long' = 'short'): string {
+  return new Date(2024, 0, day).toLocaleDateString(locale, { weekday: width })
 }
 
 export function itemEvent(item: AgendaItem, color: string): EventInput {
   return {
-    id: `item:${item.id}`,
+    // The occurrences of a recurring item share its id
+    id: item.occurrence ? `item:${item.id}:${item.occurrence}` : `item:${item.id}`,
     title: item.title,
     // An all-day item keeps its days whatever the timezone of the browser
     start: item.all_day ? item.starts_at.slice(0, 10) : item.starts_at,
@@ -50,6 +71,7 @@ export function itemEvent(item: AgendaItem, color: string): EventInput {
     allDay: item.all_day,
     backgroundColor: color,
     borderColor: color,
+    classNames: item.recurrence ? ['recurring'] : [],
     extendedProps: { item },
   }
 }

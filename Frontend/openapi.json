@@ -1191,7 +1191,7 @@
         "\/api\/agenda\/items": {
             "get": {
                 "summary": "List agenda items",
-                "description": "The agenda items overlapping [from, to) (ISO 8601 with their offset, or server time without one ; at most 62 days apart), earliest first, with their participants. `workspaces` lists the ids to read, separated by commas : the current workspace when left out. `participants` (user ids, separated by commas) keeps the items one of them takes part in, plus those without participants. An agent only reads the workspace of its token",
+                "description": "The agenda items overlapping [from, to) (ISO 8601 with their offset, or server time without one ; at most 62 days apart), earliest first, with their participants. A recurring item (`recurrence` set) is listed once per occurrence in the range, with the dates of that occurrence and its `occurrence` day, which names it to `update_agenda_item`. `workspaces` lists the ids to read, separated by commas : the current workspace when left out. `participants` (user ids, separated by commas) keeps the items one of them takes part in, plus those without participants. An agent only reads the workspace of its token",
                 "operationId": "listAgendaItems",
                 "parameters": [
                     {
@@ -1280,6 +1280,44 @@
                                                     "null"
                                                 ]
                                             },
+                                            "recurrence": {
+                                                "type": [
+                                                    "object",
+                                                    "null"
+                                                ],
+                                                "properties": {
+                                                    "frequency": {
+                                                        "type": "string"
+                                                    },
+                                                    "interval": {
+                                                        "type": "integer"
+                                                    },
+                                                    "weekdays": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "until": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "frequency",
+                                                    "interval",
+                                                    "weekdays",
+                                                    "until"
+                                                ]
+                                            },
+                                            "occurrence": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
                                             "participants": {
                                                 "type": "array",
                                                 "items": {
@@ -1312,6 +1350,8 @@
                                             "all_day",
                                             "link",
                                             "color",
+                                            "recurrence",
+                                            "occurrence",
                                             "participants",
                                             "created_by"
                                         ]
@@ -1328,6 +1368,15 @@
                                         "all_day": false,
                                         "link": "aliquid sit aut",
                                         "color": "minus necessitatibus cupiditate",
+                                        "recurrence": {
+                                            "frequency": "autem sequi molestiae",
+                                            "interval": 975,
+                                            "weekdays": [
+                                                0
+                                            ],
+                                            "until": "2001-08-20"
+                                        },
+                                        "occurrence": "2002-12-05",
                                         "participants": [
                                             {
                                                 "id": 98,
@@ -1374,7 +1423,7 @@
             },
             "post": {
                 "summary": "Create agenda item",
-                "description": "Adds an item to the agenda of `workspace` (the current workspace when left out). Dates are ISO 8601 with their offset, or server time without one ; `ends_at` is exclusive : an all-day item of one day ends at midnight the next day. Participants are members of that workspace. `color` (#rrggbb) replaces the color of the workspace, null keeps it",
+                "description": "Adds an item to the agenda of `workspace` (the current workspace when left out). Dates are ISO 8601 with their offset, or server time without one ; `ends_at` is exclusive : an all-day item of one day ends at midnight the next day. Participants are members of that workspace. `color` (#rrggbb) replaces the color of the workspace, null keeps it. `recurrence` repeats the item from its dates : `frequency` daily, weekly, monthly or yearly, every `interval` periods (1 by default), on ISO `weekdays` for a weekly item (1 = Monday, the day it starts by default), until the day `until` included (forever when null). A monthly or yearly item skips the months without its day",
                 "operationId": "createAgendaItem",
                 "requestBody": {
                     "required": true,
@@ -1418,6 +1467,52 @@
                                         "items": {
                                             "type": "integer"
                                         }
+                                    },
+                                    "recurrence": {
+                                        "type": [
+                                            "object",
+                                            "null"
+                                        ],
+                                        "properties": {
+                                            "frequency": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "daily",
+                                                    "weekly",
+                                                    "monthly",
+                                                    "yearly"
+                                                ]
+                                            },
+                                            "interval": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 1,
+                                                "maximum": 99
+                                            },
+                                            "weekdays": {
+                                                "type": [
+                                                    "array",
+                                                    "null"
+                                                ],
+                                                "items": {
+                                                    "type": "integer",
+                                                    "minimum": 1,
+                                                    "maximum": 7
+                                                }
+                                            },
+                                            "until": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "format": "date"
+                                            }
+                                        },
+                                        "required": [
+                                            "frequency"
+                                        ]
                                     },
                                     "workspace": {
                                         "type": "integer"
@@ -1488,6 +1583,44 @@
                                                 "null"
                                             ]
                                         },
+                                        "recurrence": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "properties": {
+                                                "frequency": {
+                                                    "type": "string"
+                                                },
+                                                "interval": {
+                                                    "type": "integer"
+                                                },
+                                                "weekdays": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "until": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "frequency",
+                                                "interval",
+                                                "weekdays",
+                                                "until"
+                                            ]
+                                        },
+                                        "occurrence": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
                                         "participants": {
                                             "type": "array",
                                             "items": {
@@ -1520,6 +1653,8 @@
                                         "all_day",
                                         "link",
                                         "color",
+                                        "recurrence",
+                                        "occurrence",
                                         "participants",
                                         "created_by"
                                     ]
@@ -1534,6 +1669,15 @@
                                     "all_day": false,
                                     "link": "aliquid sit aut",
                                     "color": "minus necessitatibus cupiditate",
+                                    "recurrence": {
+                                        "frequency": "autem sequi molestiae",
+                                        "interval": 975,
+                                        "weekdays": [
+                                            0
+                                        ],
+                                        "until": "2001-08-20"
+                                    },
+                                    "occurrence": "2002-12-05",
                                     "participants": [
                                         {
                                             "id": 98,
@@ -1581,7 +1725,7 @@
         "\/api\/agenda\/items\/{item}": {
             "put": {
                 "summary": "Update agenda item",
-                "description": "Replaces the title, description, dates, link, color and participants of an agenda item. It stays in its workspace",
+                "description": "Replaces the title, description, dates, link, color, participants and recurrence of an agenda item. It stays in its workspace. Without `occurrence`, the dates are those of the first occurrence. For a recurring item, `occurrence` (the day a listed occurrence gives) makes the dates those of that occurrence, and `scope` tells what changes : `occurrence` (the default) moves it out of its item, as an item of its own happening once ; `following` ends the item the day before and starts a new one ; `series` moves every occurrence as this one moves. The answer is the item holding the change",
                 "operationId": "updateAgendaItem",
                 "parameters": [
                     {
@@ -1635,6 +1779,71 @@
                                         "items": {
                                             "type": "integer"
                                         }
+                                    },
+                                    "recurrence": {
+                                        "type": [
+                                            "object",
+                                            "null"
+                                        ],
+                                        "properties": {
+                                            "frequency": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "daily",
+                                                    "weekly",
+                                                    "monthly",
+                                                    "yearly"
+                                                ]
+                                            },
+                                            "interval": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 1,
+                                                "maximum": 99
+                                            },
+                                            "weekdays": {
+                                                "type": [
+                                                    "array",
+                                                    "null"
+                                                ],
+                                                "items": {
+                                                    "type": "integer",
+                                                    "minimum": 1,
+                                                    "maximum": 7
+                                                }
+                                            },
+                                            "until": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "format": "date"
+                                            }
+                                        },
+                                        "required": [
+                                            "frequency"
+                                        ]
+                                    },
+                                    "occurrence": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date"
+                                    },
+                                    "scope": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "enum": [
+                                            "occurrence",
+                                            "following",
+                                            "series",
+                                            null
+                                        ]
                                     }
                                 },
                                 "required": [
@@ -1702,6 +1911,44 @@
                                                 "null"
                                             ]
                                         },
+                                        "recurrence": {
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "properties": {
+                                                "frequency": {
+                                                    "type": "string"
+                                                },
+                                                "interval": {
+                                                    "type": "integer"
+                                                },
+                                                "weekdays": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "until": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "frequency",
+                                                "interval",
+                                                "weekdays",
+                                                "until"
+                                            ]
+                                        },
+                                        "occurrence": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
                                         "participants": {
                                             "type": "array",
                                             "items": {
@@ -1734,6 +1981,8 @@
                                         "all_day",
                                         "link",
                                         "color",
+                                        "recurrence",
+                                        "occurrence",
                                         "participants",
                                         "created_by"
                                     ]
@@ -1748,6 +1997,15 @@
                                     "all_day": false,
                                     "link": "aliquid sit aut",
                                     "color": "minus necessitatibus cupiditate",
+                                    "recurrence": {
+                                        "frequency": "autem sequi molestiae",
+                                        "interval": 975,
+                                        "weekdays": [
+                                            0
+                                        ],
+                                        "until": "2001-08-20"
+                                    },
+                                    "occurrence": "2002-12-05",
                                     "participants": [
                                         {
                                             "id": 98,
@@ -1775,7 +2033,7 @@
                         }
                     },
                     "404": {
-                        "description": "No such item in a workspace of the current user",
+                        "description": "No such item in a workspace of the current user, or no such occurrence of it",
                         "content": {
                             "application\/json": {
                                 "schema": {
@@ -1793,7 +2051,7 @@
             },
             "delete": {
                 "summary": "Delete agenda item",
-                "description": "Deletes an agenda item and its participants",
+                "description": "Deletes an agenda item and its participants, every occurrence of a recurring one. With `occurrence`, `scope` tells which occurrences go : `occurrence` (the default) that one only, `following` this one and the next ones, `series` all of them",
                 "operationId": "deleteAgendaItem",
                 "parameters": [
                     {
@@ -1803,9 +2061,48 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "occurrence",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "occurrence",
+                                "following",
+                                "series",
+                                null
+                            ]
+                        }
                     }
                 ],
                 "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "No active session",
                         "content": {
@@ -1822,7 +2119,7 @@
                         }
                     },
                     "404": {
-                        "description": "No such item in a workspace of the current user",
+                        "description": "No such item in a workspace of the current user, or no such occurrence of it",
                         "content": {
                             "application\/json": {
                                 "schema": {

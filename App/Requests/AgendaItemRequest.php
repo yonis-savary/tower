@@ -2,6 +2,7 @@
 
 namespace App\Requests;
 
+use App\Agenda\Recurrence;
 use App\Requests\Rules\HexColor;
 use App\Requests\Rules\Instant;
 use App\Requests\Rules\WebAddress;
@@ -18,6 +19,10 @@ class AgendaItemRequest extends Request
         return Param::object($this->fieldRules())->withCondition(
             fn (array $values) => !isset($values['starts_at'], $values['ends_at']) || Instant::toServerTime($values['starts_at']) < Instant::toServerTime($values['ends_at']),
             '{key} must end after it starts'
+        )->withCondition(
+            fn (array $values) => !isset($values['starts_at'], $values['recurrence']['until'])
+                || substr(Instant::toServerTime($values['starts_at']), 0, 10) <= $values['recurrence']['until'],
+            '{key} must repeat until a day after it starts'
         );
     }
 
@@ -41,6 +46,13 @@ class AgendaItemRequest extends Request
                 fn ($participants) => count((array) $participants) <= self::MAX_PARTICIPANTS,
                 '{key} must list at most '.self::MAX_PARTICIPANTS.' users'
             ),
+            // Null or left out : the item happens once
+            'recurrence' => Param::object([
+                'frequency' => Param::string()->inArray(Recurrence::FREQUENCIES),
+                'interval' => Param::integer(nullable: true)->optional()->isBetween(1, Recurrence::MAX_INTERVAL),
+                'weekdays' => Param::array(Param::integer()->isBetween(1, 7), nullable: true)->optional(),
+                'until' => Param::date(nullable: true)->optional(),
+            ], nullable: true)->optional(),
         ];
     }
 }

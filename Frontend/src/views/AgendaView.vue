@@ -19,6 +19,7 @@ import ToggleSwitch from 'primevue/toggleswitch'
 import { useToast } from 'primevue/usetoast'
 import { listAgendaItems, listAgendaSchedules, listWorkspaceMembers, updateAgendaItem, type ListWorkspaceMembersResponse } from '../client'
 import AgendaItemDialog from '../components/AgendaItemDialog.vue'
+import AgendaScopeDialog from '../components/AgendaScopeDialog.vue'
 import WorkspaceIcon from '../components/WorkspaceIcon.vue'
 import { useAuthStore } from '../stores/auth'
 import { useDeviceSocketStore } from '../stores/deviceSocket'
@@ -169,18 +170,29 @@ function onEventClick({ event, jsEvent }: EventClickArg) {
   dialogVisible.value = true
 }
 
+const scopeDialog = ref<InstanceType<typeof AgendaScopeDialog> | null>(null)
+
 async function onMoved({ event, revert }: EventDropArg | EventResizeDoneArg) {
   const item = event.extendedProps.item as AgendaItem
   const start = event.start!
   const end = event.end ?? (event.allDay ? addDays(start, 1) : new Date(start.getTime() + 60 * 60_000))
-  const { data } = await updateAgendaItem({ path: { item: item.id }, body: itemBody(item, { start, end, allDay: event.allDay }) })
+  // An occurrence moves alone, with the following ones or with all of them
+  const scope = item.occurrence ? await scopeDialog.value?.ask('edit') : undefined
+  if (item.occurrence && !scope) {
+    revert()
+    return
+  }
+
+  const { data } = await updateAgendaItem({ path: { item: item.id }, body: itemBody(item, { start, end, allDay: event.allDay }, scope ?? undefined) })
 
   if (!data) {
     revert()
     toast.add({ severity: 'error', summary: t('agenda.saveError'), life: 4000 })
     return
   }
-  event.setExtendedProp('item', data)
+  // The other occurrences may have moved, or this one left its item
+  if (item.occurrence) refetch()
+  else event.setExtendedProp('item', data)
 }
 
 const options = computed<CalendarOptions>(() => ({
@@ -282,6 +294,7 @@ const options = computed<CalendarOptions>(() => ({
   </div>
 
   <AgendaItemDialog v-model:visible="dialogVisible" :item="editing" :draft="draft" :workspace="store.current?.id ?? shownWorkspaces[0] ?? 0" @changed="refetch" />
+  <AgendaScopeDialog ref="scopeDialog" />
 </template>
 
 <style scoped>
@@ -507,6 +520,10 @@ const options = computed<CalendarOptions>(() => ({
 
 .grid :deep(.fc-more-link) {
   color: var(--p-text-muted-color);
+}
+
+.grid :deep(.recurring .fc-event-title)::before {
+  content: '↻ ';
 }
 
 .grid :deep(.schedule-occurrence) {
