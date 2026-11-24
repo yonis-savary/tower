@@ -172,6 +172,8 @@ export default {
     noSprint: 'No sprint',
   },
   mergeRequests: {
+    sync: 'Synchronize',
+    syncError: 'The synchronization could not be started.',
     emptyTitle: 'No merge request',
     emptyHint: 'Your open merge requests will show here once Bitbucket is set up in the settings.',
     emptyAction: 'Set up Bitbucket',

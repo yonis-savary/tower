@@ -10,6 +10,8 @@ import TabPanel from 'primevue/tabpanel'
 import TabPanels from 'primevue/tabpanels'
 import Tabs from 'primevue/tabs'
 import Tag from 'primevue/tag'
+import { useToast } from 'primevue/usetoast'
+import { syncBitbucketIntegration } from '../client'
 import { PULL_REQUEST_ICON } from '../components/AppIcon.vue'
 import EmptyState from '../components/EmptyState.vue'
 import PullRequestTree from '../components/PullRequestTree.vue'
@@ -26,12 +28,25 @@ const pipelineIcons: Record<string, string> = {
 }
 
 const { t } = useI18n()
+const toast = useToast()
 const workspace = useWorkspaceStore()
 
 const store = usePullRequestsStore()
 const { pullRequests, approvals, loaded } = storeToRefs(store)
 
 watch(() => workspace.current?.id, (id) => { if (id) void store.load() }, { immediate: true })
+
+const syncing = ref(false)
+
+async function synchronize() {
+  syncing.value = true
+  const { data } = await syncBitbucketIntegration()
+  await store.load()
+  syncing.value = false
+
+  if (!data) toast.add({ severity: 'error', summary: t('mergeRequests.syncError'), life: 5000 })
+  else if (data.last_error) toast.add({ severity: 'warn', summary: data.last_error, life: 8000 })
+}
 
 /** A pull request is the child of the open one whose source branch it targets. */
 function toRows(open: PullRequest[]): Row[] {
@@ -88,7 +103,10 @@ function reviewersTitle(id: number): string {
 </script>
 
 <template>
-  <h1 class="page-title">{{ t('nav.mergeRequests') }}</h1>
+  <header class="page-header">
+    <h1 class="page-title">{{ t('nav.mergeRequests') }}</h1>
+    <Button :label="t('mergeRequests.sync')" icon="pi pi-refresh" severity="secondary" size="small" :loading="syncing" @click="synchronize" />
+  </header>
 
   <EmptyState v-if="loaded && !pullRequests.length" :icon="PULL_REQUEST_ICON" :title="t('mergeRequests.emptyTitle')" :hint="t('mergeRequests.emptyHint')">
     <RouterLink v-slot="{ navigate }" :to="{ name: 'settings', query: { tab: 'bitbucket' } }" custom>
@@ -165,6 +183,19 @@ function reviewersTitle(id: number): string {
 </template>
 
 <style scoped>
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.page-header .page-title {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
 .repository-tabs {
   min-width: 0;
 }

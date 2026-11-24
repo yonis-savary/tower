@@ -170,6 +170,8 @@ export default {
     noSprint: 'Sans sprint',
   },
   mergeRequests: {
+    sync: 'Synchroniser',
+    syncError: "La synchronisation n'a pas pu être lancée.",
     emptyTitle: 'Aucune merge request',
     emptyHint: 'Tes merge requests ouvertes apparaîtront ici une fois Bitbucket configuré dans les paramètres.',
     emptyAction: 'Configurer Bitbucket',
