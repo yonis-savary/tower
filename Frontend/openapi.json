@@ -8229,6 +8229,83 @@
                 }
             }
         },
+        "\/api\/search": {
+            "get": {
+                "summary": "Search workspace",
+                "description": "Finds `q` (2 to 100 characters) in the current workspace, by type and in this order : merge requests (title, repository, branch), Jira issues (key, summary), tasks (title, description), quick actions (name, event type, description), documentation pages (title, content). At most 5 results a type, the unfinished ones first ; `done` marks a closed merge request, a finished issue or task, an archived page. A section the workspace does not show is not searched. `url` is the external link of a merge request or an issue",
+                "operationId": "searchWorkspace",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The results",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "detail": {
+                                                "type": "string"
+                                            },
+                                            "url": {
+                                                "type": "string"
+                                            },
+                                            "done": {
+                                                "type": "boolean"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/api\/tasks": {
             "get": {
                 "summary": "List tasks",

@@ -258,6 +258,28 @@ récurrence.
 - Une période demandée fait **62 jours au plus**.
 - Outils MCP : `list_agenda_items`, `create_agenda_item`, `update_agenda_item`. Pas de suppression.
 
+### Recherche
+
+Une recherche globale, ouverte par la touche **F** depuis n'importe quel écran (mêmes garde-fous que
+`N` : ignorée dans un champ, une modale ou avec une touche de modification), dans une modale placée
+en haut de la page, le champ déjà actif.
+
+- `GET /api/search?q=` (2 à 100 caractères) cherche dans le **workspace courant**, par type et dans
+  cet ordre : merge requests (titre, dépôt, branche), tickets Jira (clé, résumé), tâches (titre,
+  description), quick-actions (nom, type, description), pages de documentation (titre, contenu).
+  **5 résultats par type**, les non terminés d'abord ; `done` marque une merge request fermée, un
+  ticket terminé ou qui n'est plus suivi, une tâche terminée ou annulée, une page archivée, affichés
+  plus discrètement. Une section que le workspace n'affiche pas n'est pas cherchée.
+- Chaque type est une classe qui étend `App/Search/SearchSource` (son type, sa position, sa section,
+  ses champs, ce qui est terminé), trouvée par découverte : ajouter un type, c'est ajouter un fichier.
+- Les **workspaces** de l'utilisateur sont cherchés dans le front, par leur nom, et s'insèrent après
+  les tâches.
+- Flèches haut et bas pour choisir, Entrée ou un clic pour ouvrir : une merge request ou un ticket
+  ouvre son lien externe dans un nouvel onglet, une tâche sa fiche (`/tasks?task=`), une page de
+  documentation la page (`/docs?page=`), un workspace devient le courant, une **quick-action est
+  lancée** aussitôt, avec un toast.
+- Outil MCP : `search_workspace`.
+
 ### Historique
 
 Toute action notable écrit une ligne dans la table `history` : `workspace`, `type`,

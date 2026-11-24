@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import Toast from 'primevue/toast'
 import MobileNav from './MobileNav.vue'
+import GlobalSearch from './GlobalSearch.vue'
 import NavBar from './NavBar.vue'
 import WorkspacesDialog from './WorkspacesDialog.vue'
 import { useDeviceSocketStore } from '../stores/deviceSocket'
@@ -119,6 +120,7 @@ void push.start((url) => void router.push(url))
       <RouterView />
     </main>
     <WorkspacesDialog v-model:visible="workspacesDialogVisible" />
+    <GlobalSearch />
     <Toast :breakpoints="{ '768px': { width: 'calc(100vw - 1.5rem)', right: '0.75rem', left: '0.75rem' } }" />
   </div>
 </template>

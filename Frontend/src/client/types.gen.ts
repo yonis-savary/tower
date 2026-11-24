@@ -3477,6 +3477,46 @@ export type TriggerScheduledEventResponses = {
 
 export type TriggerScheduledEventResponse = TriggerScheduledEventResponses[keyof TriggerScheduledEventResponses];
 
+export type SearchWorkspaceData = {
+    body?: never;
+    path?: never;
+    query: {
+        q: string;
+    };
+    url: '/api/search';
+};
+
+export type SearchWorkspaceErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type SearchWorkspaceError = SearchWorkspaceErrors[keyof SearchWorkspaceErrors];
+
+export type SearchWorkspaceResponses = {
+    /**
+     * The results
+     */
+    200: Array<{
+        type?: string;
+        id?: number;
+        title?: string;
+        detail?: string;
+        url?: string;
+        done?: boolean;
+    }>;
+};
+
+export type SearchWorkspaceResponse = SearchWorkspaceResponses[keyof SearchWorkspaceResponses];
+
 export type ListTasksData = {
     body?: never;
     path?: never;

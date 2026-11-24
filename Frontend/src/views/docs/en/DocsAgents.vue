@@ -35,6 +35,7 @@ const token = 'tower_…'
   <table>
     <thead><tr><th>Level</th><th>Effect</th></tr></thead>
     <tbody>
+      <tr><td><code>search_workspace</code></td><td>search a text in the whole workspace: merge requests, Jira issues, tasks, quick actions and documentation, 5 results a type, the unfinished ones first</td></tr>
       <tr><td>Blocked</td><td>no connection, no token can be created</td></tr>
       <tr><td>Read</td><td>the read tools only, even for a write token (default)</td></tr>
       <tr><td>Read and write</td><td>the write tools for the tokens allowed to use them</td></tr>

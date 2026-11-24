@@ -20,7 +20,7 @@ const deviceSocket = useDeviceSocketStore()
 const { t } = useI18n()
 const { workspaceLabel, mainItems, secondaryItems, socketIndicator, logOut } = useNavigation()
 
-const shortcuts = computed(() => GLOBAL_SHORTCUTS.filter(({ section }) => workspace.hasSection(section)))
+const shortcuts = computed(() => GLOBAL_SHORTCUTS.filter(({ section }) => !section || workspace.hasSection(section)))
 
 const workspaceMenu = useTemplateRef<InstanceType<typeof WorkspaceMenu>>('workspaceMenu')
 </script>

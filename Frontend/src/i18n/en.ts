@@ -557,6 +557,23 @@ export default {
       invalid: 'Invalid body',
     },
   },
+  search: {
+    open: 'Search',
+    placeholder: 'Search the workspace…',
+    hint: 'Merge requests, issues, tasks, workspaces, quick actions and documentation. ↑ ↓ to choose, Enter to open.',
+    empty: 'No result.',
+    currentWorkspace: 'current workspace',
+    triggered: 'Quick action “{name}” launched',
+    triggerError: 'The quick action “{name}” could not be launched.',
+    type: {
+      merge_request: 'Merge requests',
+      jira_issue: 'Issues',
+      task: 'Tasks',
+      workspace: 'Workspaces',
+      quick_action: 'Quick actions',
+      doc_page: 'Documentation',
+    },
+  },
   agenda: {
     title: 'Agenda',
     colorLabel: 'Color',
