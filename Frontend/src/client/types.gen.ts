@@ -5093,6 +5093,26 @@ export type RemoveWorkspaceMemberResponses = {
 
 export type RemoveWorkspaceMemberResponse = RemoveWorkspaceMemberResponses[keyof RemoveWorkspaceMemberResponses];
 
+export type GetPublicWorkspaceIconData = {
+    body?: never;
+    path: {
+        file: string;
+    };
+    query?: never;
+    url: '/api/workspace-icons/{file}';
+};
+
+export type GetPublicWorkspaceIconErrors = {
+    /**
+     * No workspace has this image, or it was replaced
+     */
+    404: {
+        error?: string;
+    };
+};
+
+export type GetPublicWorkspaceIconError = GetPublicWorkspaceIconErrors[keyof GetPublicWorkspaceIconErrors];
+
 export type ServeIndexFileData = {
     body?: never;
     path: {

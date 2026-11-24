@@ -2,6 +2,7 @@
 
 namespace Tests\Integration;
 
+use Cube\Web\Http\Request;
 use App\Models\NotificationRule;
 use App\Models\PushSubscription;
 use App\Models\Workspace;
@@ -251,6 +252,28 @@ class NotificationTest extends CubeTestCase
 
         $this->delete("/api/push/subscriptions/{$subscription['id']}")->assertNoContent();
         $this->assertSame([], $this->get('/api/push/subscriptions')->json());
+    }
+
+    public function testANotificationShowsTheUploadedIconOfItsWorkspace()
+    {
+        $this->register('alice@example.com');
+        $workspace = SelectedWorkspace::get();
+        $subscription = $this->subscribe();
+
+        $this->postJson("/api/push/subscriptions/{$subscription['id']}/test", ['title' => 'Tower', 'body' => 'Without icon'])->assertNoContent();
+        $this->assertArrayNotHasKey('icon', $this->sender->sent[0]);
+
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+        $this->assertResponseOf(new Request('PUT', "/api/workspaces/{$workspace}/icon", [], [], ['content-type' => 'image/png'], body: $png))->assertOk();
+        $path = '/api/workspace-icons/'.Workspace::find($workspace)->icon;
+
+        $this->postJson("/api/push/subscriptions/{$subscription['id']}/test", ['title' => 'Tower', 'body' => 'With icon'])->assertNoContent();
+        $this->assertSame($path, $this->sender->sent[1]['icon']);
+
+        $this->createRule();
+        $this->trigger('pr.opened');
+        $this->processQueue();
+        $this->assertSame($path, end($this->sender->sent)['icon']);
     }
 
     public function testTestOnAGoneSubscriptionDeletesIt()

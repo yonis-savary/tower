@@ -17,6 +17,9 @@ class WorkspaceIconService
     /** Detected type => extension of the stored file */
     public const TYPES = ['image/png' => 'png', 'image/jpeg' => 'jpg'];
 
+    // The random part of the file name is all that guards its public address : 64 bits before, 128 since
+    private const FILE_NAME = '/^\d+-(?:[0-9a-f]{16}|[0-9a-f]{32})\.(?:png|jpg)$/';
+
     /** The color of Tower, for a workspace without one : keep it in sync with Frontend/src/components/TowerLogo.vue */
     public const DEFAULT_COLOR = '#2190FF';
 
@@ -56,7 +59,7 @@ class WorkspaceIconService
      */
     public function set(Workspace $workspace, string $content, string $type): Workspace
     {
-        $name = $workspace->id.'-'.bin2hex(random_bytes(8)).'.'.self::TYPES[$type];
+        $name = $workspace->id.'-'.bin2hex(random_bytes(16)).'.'.self::TYPES[$type];
         if (!$this->storage()->write($name, $content))
             throw new \RuntimeException("Cannot write the icon of workspace {$workspace->id}");
 
@@ -93,6 +96,19 @@ class WorkspaceIconService
         }
 
         return new Favicon('image/svg+xml', $this->logo($workspace->accent_color ?? self::DEFAULT_COLOR));
+    }
+
+    public function publicPath(Workspace $workspace): ?string
+    {
+        return null === $workspace->icon ? null : '/api/workspace-icons/'.rawurlencode($workspace->icon);
+    }
+
+    public function ofPublicFile(string $file): ?Favicon
+    {
+        if (1 !== preg_match(self::FILE_NAME, $file) || !$workspace = Workspace::findWhere(['icon' => $file]))
+            return null;
+
+        return $this->of($workspace);
     }
 
     /**

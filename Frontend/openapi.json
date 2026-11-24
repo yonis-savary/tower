@@ -12278,6 +12278,40 @@
                 }
             }
         },
+        "\/api\/workspace-icons\/{file}": {
+            "get": {
+                "summary": "Get public workspace icon",
+                "description": "The uploaded image of a workspace, by the random name of its file, without a session : the browser fetches it to show a push notification, often with no Tower page open. The name changes with each upload",
+                "operationId": "getPublicWorkspaceIcon",
+                "parameters": [
+                    {
+                        "name": "file",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "404": {
+                        "description": "No workspace has this image, or it was replaced",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/{any}": {
             "get": {
                 "summary": "serveIndexFile",

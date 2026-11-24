@@ -90,7 +90,11 @@ intégrations et, à terme, jobs et runs IA appartiennent tous à **un** workspa
   le logo de Tower en SVG, généré à la couleur du workspace : la base ne stocke jamais d'icône par
   défaut. Quand le workspace est le courant, cette route sert de favicon à la page, et l'image
   remplace le logo dans la navbar. Son adresse porte une version (`favicon_url`, `?v=`) qui change
-  avec l'image ou la couleur, ce qui permet au navigateur de la garder en cache sans limite. Pas d'outil MCP :
+  avec l'image ou la couleur, ce qui permet au navigateur de la garder en cache sans limite. Une image
+  téléversée a aussi une adresse **publique**, `GET /api/workspace-icons/<fichier>`, sans session :
+  le navigateur la cherche pour afficher une notification push, souvent sans page Tower ouverte. Seul
+  le nom du fichier la protège, d'où sa part aléatoire de 128 bits (64 pour une image envoyée avant) ;
+  une nouvelle image change l'adresse et l'ancienne répond `404`. Pas d'outil MCP :
   un agent n'envoie pas d'image.
 - Tout membre peut renommer le workspace, changer sa couleur et son icône, en ajouter un autre par l'e-mail de son compte Tower
   (un compte existant et actif : il n'y a pas d'invitation), retirer un membre ou le quitter.
@@ -505,7 +509,8 @@ connecteur. Le périmètre détaillé est dans `ROADMAP/notification.md`.
 - Tout événement passe par `EventAnnouncer::announce()` : envoi aux appareils, et
   `PushQueue` quand une règle active existe dans le workspace. Le worker `push`
   (`cube:queue`) relit les règles, vérifie l'adhésion, et envoie (`TTL` 1 h, `Urgency: high`,
-  `tag` par règle et type d'événement ; grande icône : le logo, `icon-192.png` ; icône de la barre
+  `tag` par règle et type d'événement ; grande icône : l'image téléversée du workspace s'il en a une (son adresse publique, dans `icon`),
+  sinon le logo, `icon-192.png` ; icône de la barre
   d'état : `badge-96.png`, le logo-mark blanc sur fond transparent, car Android n'en garde que la
   transparence). `404`/`410` supprime l'abonnement ; `429`, `5xx` et
   une erreur réseau sont réessayés 3 fois au plus.

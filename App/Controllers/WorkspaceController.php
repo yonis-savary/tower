@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Channels\WorkspaceDevicesChannel;
+use App\Favicons\Favicon;
 use App\Middlewares\IsAuthenticated;
 use App\Models\Workspace;
 use App\Requests\AddWorkspaceMemberRequest;
@@ -55,6 +56,11 @@ class WorkspaceController extends Controller
             Route::post('/{int:workspace}/members', [self::class, 'addMember']),
             Route::delete('/{int:workspace}/members/{int:user}', [self::class, 'removeMember']),
         ]);
+
+        // Fetched by the browser for a push notification, without a session : the random file name guards it
+        $router->addRoutes(
+            Route::get('/api/workspace-icons/{file}', [self::class, 'publicIcon']),
+        );
     }
 
     #[Endpoint('List workspaces', 'The workspaces the current user is a member of', 'listWorkspaces')]
@@ -165,8 +171,22 @@ class WorkspaceController extends Controller
         if (!$found)
             return $this->workspaceNotFound();
 
-        $icon = $this->icons->of($found);
+        return $this->iconResponse($this->icons->of($found));
+    }
 
+    #[Endpoint('Get public workspace icon', 'The uploaded image of a workspace, by the random name of its file, without a session : the browser fetches it to show a push notification, often with no Tower page open. The name changes with each upload', 'getPublicWorkspaceIcon')]
+    #[RawResponse(['error' => 'Icon not found'], responseCode: StatusCode::NOT_FOUND, description: 'No workspace has this image, or it was replaced')]
+    public function publicIcon(Request $request, string $file): Response
+    {
+        $icon = $this->icons->ofPublicFile($file);
+        if (!$icon)
+            return Response::json(['error' => 'Icon not found'], StatusCode::NOT_FOUND);
+
+        return $this->iconResponse($icon);
+    }
+
+    private function iconResponse(Favicon $icon): Response
+    {
         return new Response(StatusCode::OK, $icon->body, [
             'Content-Type' => $icon->type,
             // Its address changes with the icon (see WorkspaceResource) : a cached one never goes stale

@@ -28,6 +28,7 @@ class PushService
         protected PushConfiguration $configuration,
         protected AccessKeyService $keys,
         protected WorkspaceService $workspaces,
+        protected WorkspaceIconService $icons,
     ) {}
 
     public function isEnabled(): bool
@@ -102,6 +103,7 @@ class PushService
             'body' => $this->truncate($body, self::MAX_BODY_LENGTH),
             'tag' => 'test',
             'url' => '/automation?tab=notifications',
+            ...$this->iconOf(Workspace::find($subscription->workspace)),
         ]);
     }
 
@@ -204,11 +206,22 @@ class PushService
                 // A new notification of the same rule and event replaces the previous one
                 'tag' => "rule-{$rule->id}-{$event}",
                 'url' => "/history?workspace={$workspace}&line={$history}",
+                ...$this->iconOf($found),
             ];
 
             foreach ($this->subscriptionsOf($workspace, $rule->user) as $subscription)
                 $this->deliverTo($subscription, $message);
         }
+    }
+
+    /**
+     * @return array{icon?: string}
+     */
+    private function iconOf(?Workspace $workspace): array
+    {
+        $path = $workspace ? $this->icons->publicPath($workspace) : null;
+
+        return null === $path ? [] : ['icon' => $path];
     }
 
     /**

@@ -388,6 +388,27 @@ class WorkspaceTest extends CubeTestCase
         $this->get("/api/workspaces/{$workspace}/icon")->assertOk()->assertHeaderEqual('Content-Type', 'image/svg+xml');
     }
 
+    public function testAnUploadedIconHasAPublicAddressThatChangesWithIt()
+    {
+        $alice = $this->register('alice@example.com');
+        $workspace = $this->defaultWorkspaceId($alice);
+        $png = base64_decode(self::PNG);
+        $this->putIcon($workspace, $png)->assertOk();
+        $first = Workspace::find($workspace)->icon;
+        $this->assertMatchesRegularExpression('/^\d+-[0-9a-f]{32}\.png$/', $first);
+
+        $this->logOut();
+        $this->assertSame($png, $this->get("/api/workspace-icons/{$first}")->assertOk()->assertHeaderEqual('Content-Type', 'image/png')->body());
+        $this->get("/api/workspaces/{$workspace}/icon")->assertUnauthorized();
+        $this->get('/api/workspace-icons/'.str_replace('png', 'jpg', $first))->assertNotFound();
+        $this->get("/api/workspace-icons/{$workspace}-".str_repeat('0', 32).'.png')->assertNotFound();
+        $this->get('/api/workspace-icons/.env')->assertNotFound();
+
+        $this->logIn('alice@example.com');
+        $this->putIcon($workspace, $png)->assertOk();
+        $this->get("/api/workspace-icons/{$first}")->assertNotFound();
+    }
+
     public function testIconMustBeASmallPngOrJpeg()
     {
         $alice = $this->register('alice@example.com');
