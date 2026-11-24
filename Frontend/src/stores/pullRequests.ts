@@ -23,6 +23,10 @@ export const usePullRequestsStore = defineStore('pullRequests', () => {
     return open.value.filter(({ source_branch, title }) => pattern.test(source_branch) || pattern.test(title))
   }
 
+  function approvalCountOf(pullRequest: number): number {
+    return approvals.value.filter((approval) => approval.pull_request === pullRequest && approval.status === 'approved').length
+  }
+
   async function load(): Promise<void> {
     const [list, reviewers] = await Promise.all([listPullRequests(), listPullRequestApprovals()])
     pullRequests.value = list.data ?? []
@@ -30,5 +34,5 @@ export const usePullRequestsStore = defineStore('pullRequests', () => {
     loaded.value = true
   }
 
-  return { pullRequests, approvals, loaded, open, openForIssue, load }
+  return { pullRequests, approvals, loaded, open, openForIssue, approvalCountOf, load }
 })

@@ -3220,6 +3220,7 @@ export type ListPullRequestsResponses = {
      */
     200: Array<{
         id: number;
+        number: string;
         repository: string;
         title: string;
         author: string;

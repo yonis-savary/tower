@@ -131,6 +131,8 @@ export default {
     },
   },
   jira: {
+    pullRequests: 'Merge requests',
+    approvals: '{count} approbation | {count} approbation | {count} approbations',
     emptyTitle: 'Pas encore de board Jira',
     emptyHint: 'Renseigne ton site et un API token dans les paramètres, ajoute un profil pour chaque board à suivre, puis synchronise : les colonnes et les tickets apparaîtront ici.',
     profile: 'Profil Jira',

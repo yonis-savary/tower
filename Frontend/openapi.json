@@ -7577,6 +7577,9 @@
                                             "id": {
                                                 "type": "integer"
                                             },
+                                            "number": {
+                                                "type": "string"
+                                            },
                                             "repository": {
                                                 "type": "string"
                                             },
@@ -7613,6 +7616,7 @@
                                         },
                                         "required": [
                                             "id",
+                                            "number",
                                             "repository",
                                             "title",
                                             "author",
@@ -7630,6 +7634,7 @@
                                 "example": [
                                     {
                                         "id": 944,
+                                        "number": "nihil ad eum",
                                         "repository": "est qui rem",
                                         "title": "sed mollitia aperiam",
                                         "author": "voluptatem est in",

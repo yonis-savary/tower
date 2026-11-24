@@ -48,6 +48,7 @@ const taskOf = computed(() => new Map(tasks.tasks.filter(({ jira_issue }) => jir
 
 const onlyMine = storedFlag(computed(() => `tower.jira.onlyMine.${workspace.current?.id}`))
 const showSubtasks = storedFlag(computed(() => `tower.jira.showSubtasks.${workspace.current?.id}`))
+const showPullRequests = storedFlag(computed(() => `tower.jira.showPullRequests.${workspace.current?.id}`))
 
 function hasCard(issue: JiraIssue): boolean {
   return !onlyMine.value || store.isMine(issue)
@@ -270,6 +271,10 @@ async function discuss(issue: JiraIssue) {
       <Checkbox v-model="showSubtasks" binary />
       {{ t('jira.subtasks') }}
     </label>
+    <label v-if="workspace.hasSection('merge_requests')" class="board-option">
+      <Checkbox v-model="showPullRequests" binary />
+      {{ t('jira.pullRequests') }}
+    </label>
     <MultiSelect
       v-if="sprintOptions.length"
       v-model="shownSprints"
@@ -320,6 +325,7 @@ async function discuss(issue: JiraIssue) {
             :parent="item.parent"
             :task-id="taskOf.get(item.issue.id) ?? null"
             :show-assignee="!onlyMine"
+            :show-pull-requests="showPullRequests && workspace.hasSection('merge_requests')"
             :creating-task="creatingTask === item.issue.id"
             :discussing="discussing === item.issue.id"
             @create-task="createTask(item.issue)"

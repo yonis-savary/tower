@@ -2,12 +2,13 @@
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'primevue/usetoast'
 import JiraAssignee from './JiraAssignee.vue'
+import JiraIssuePullRequests from './JiraIssuePullRequests.vue'
 import PullRequestButton from './PullRequestButton.vue'
 import type { JiraIssue } from '../stores/jira'
 
 const props = withDefaults(
-  defineProps<{ issue: JiraIssue; parent?: JiraIssue | null; taskId: number | null; creatingTask: boolean; discussing: boolean; showAssignee: boolean }>(),
-  { parent: null },
+  defineProps<{ issue: JiraIssue; parent?: JiraIssue | null; taskId: number | null; creatingTask: boolean; discussing: boolean; showAssignee: boolean; showPullRequests?: boolean }>(),
+  { parent: null, showPullRequests: false },
 )
 defineEmits<{ createTask: []; openTask: []; discuss: [] }>()
 
@@ -60,6 +61,8 @@ async function copyKey() {
         <JiraAssignee v-if="showAssignee" :name="issue.assignee_name" :avatar="issue.assignee_avatar" />
       </span>
     </footer>
+
+    <JiraIssuePullRequests v-if="showPullRequests" :issue-key="issue.key" />
   </article>
 </template>
 

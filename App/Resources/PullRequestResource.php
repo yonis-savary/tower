@@ -23,6 +23,8 @@ class PullRequestResource extends ModelResource
     {
         return [
             'id' => $model->id,
+            // The id the forge shows (#12), unique in its repository only
+            'number' => $model->external_id,
             'repository' => $model->repository,
             'title' => $model->title,
             'author' => $model->author,
