@@ -7,6 +7,7 @@ use App\Integrations\Bitbucket\BitbucketProvider;
 use App\Integrations\IntegrationConfiguration;
 use App\Integrations\IntegrationEvents;
 use App\Integrations\IntegrationService;
+use App\Integrations\PullRequestContent;
 use App\Integrations\PullRequestData;
 use App\Integrations\PullRequestProvider;
 use App\Integrations\PullRequestSync;
@@ -17,6 +18,7 @@ use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
 use Cube\Web\Http\HttpMockServer;
+use Cube\Web\Http\MockServers;
 use Cube\Web\Http\Response;
 use Cube\Web\Websocket\Broadcast\Broadcast;
 use Cube\Web\Websocket\Broadcast\BroadcastConfiguration;
@@ -120,6 +122,11 @@ class BitbucketTest extends CubeTestCase
             public function pullRequest(string $repository, string $externalId): ?PullRequestData
             {
                 return $this->final[$externalId] ?? null;
+            }
+
+            public function pullRequestContent(string $repository, string $externalId): ?PullRequestContent
+            {
+                return null;
             }
 
             public function pipelineStatus(string $repository, string $externalId): string
@@ -402,5 +409,66 @@ class BitbucketTest extends CubeTestCase
         $this->assertSame(PullRequestData::PIPELINE_RUNNING, $provider->pipelineStatus('team/api', '7'));
         $this->assertSame(PullRequestData::PIPELINE_FAILED, $provider->pipelineStatus('team/api', '8'));
         $this->assertSame(PullRequestData::PIPELINE_NONE, $provider->pipelineStatus('team/api', '9'));
+    }
+
+    public function testAPullRequestIsReadWithItsDescriptionAndComments()
+    {
+        $this->register();
+        $this->save();
+        $forge = $this->fakeForge();
+        $forge->open = [$this->pr('7', ['repository' => 'team/api'])];
+        $this->sync($forge);
+        $id = PullRequest::findWhere(['external_id' => '7'])->id;
+
+        $comment = fn (int $id, string $created, string $body, array $more = []) => [
+            'id' => $id,
+            'created_on' => $created,
+            'content' => ['raw' => $body],
+            'user' => ['display_name' => 'Bob'],
+            'deleted' => false,
+            ...$more,
+        ];
+        MockServers::getInstance()->set(BitbucketClient::class, HttpMockServer::fromArray([
+            '/repositories/team/api/pullrequests/7' => Response::json([
+                'id' => 7,
+                'title' => 'Add login',
+                'state' => 'OPEN',
+                'summary' => ['raw' => "## Context\nThe login page"],
+                'author' => ['display_name' => 'Alice'],
+                'source' => ['branch' => ['name' => 'login'], 'commit' => ['hash' => 'abc']],
+                'destination' => ['branch' => ['name' => 'main'], 'repository' => ['full_name' => 'team/api']],
+                'links' => ['html' => ['href' => 'https://bitbucket.org/team/api/pull-requests/7']],
+            ]),
+            '/repositories/team/api/pullrequests/7/comments' => function (\Cube\Web\Http\Request $request) use ($comment) {
+                return null === $request->param('page')
+                    ? Response::json(['values' => [
+                        $comment(1, '2026-11-10T10:00:00+00:00', 'Rename this', ['inline' => ['path' => 'src/Login.php', 'from' => null, 'to' => 42], 'resolution' => ['type' => 'comment_resolution']]),
+                        $comment(3, '2026-11-10T12:00:00+00:00', 'Why ?'),
+                    ], 'next' => '/repositories/team/api/pullrequests/7/comments?page=2'])
+                    : Response::json(['values' => [
+                        $comment(2, '2026-11-10T11:00:00+00:00', 'Done', ['parent' => ['id' => 1]]),
+                        $comment(4, '2026-11-10T13:00:00+00:00', '', ['deleted' => true]),
+                        $comment(5, '2026-11-10T14:00:00+00:00', 'My draft', ['pending' => true]),
+                    ]]);
+            },
+        ]));
+
+        $read = $this->get("/api/pull-requests/{$id}")->assertOk()->json();
+        $this->assertSame([$id, '7', 'Add login', "## Context\nThe login page"], [$read['id'], $read['number'], $read['title'], $read['description']]);
+        $this->assertSame(['Rename this', 'Done', 'Why ?'], array_column($read['comments'], 'body'));
+        $this->assertSame([null, '1', null], array_column($read['comments'], 'parent'));
+        $this->assertSame([true, true, false], array_column($read['comments'], 'resolved'));
+        $this->assertSame(['src/Login.php', 42], [$read['comments'][0]['path'], $read['comments'][0]['line']]);
+        $this->assertNull($read['comments'][2]['path']);
+
+        $unresolved = $this->get("/api/pull-requests/{$id}?unresolved=1")->assertOk()->json();
+        $this->assertSame(['Why ?'], array_column($unresolved['comments'], 'body'));
+
+        $this->get('/api/pull-requests/999')->assertNotFound();
+
+        Authentication::getInstance()->logout();
+        SelectedWorkspace::unset();
+        $this->register('bob@example.com');
+        $this->get("/api/pull-requests/{$id}")->assertNotFound();
     }
 }

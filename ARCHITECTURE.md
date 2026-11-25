@@ -1217,6 +1217,12 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 - **API appareil** : la connexion WebSocket `/devices`, authentifiée par la configuration.
 - **Webhooks** : `POST /api/hooks/<uuid>`, authentifié par le secret du webhook, ou par son
   adresse seule pour un webhook non sécurisé.
+- **Contenu** : une merge request stockée se lit dans la forge à la demande (`GET
+  /api/pull-requests/{id}`, outil MCP `get_pull_request`) : sa description et ses commentaires en
+  Markdown, du plus ancien au plus récent, sans les supprimés ni les brouillons. Une réponse porte
+  l'id du commentaire auquel elle répond (`parent`), un commentaire en ligne son fichier et sa
+  ligne, et chacun dit si son fil est résolu ; `unresolved` ne garde que les fils ouverts. Rien
+  n'est stocké, comme pour la lecture d'un ticket Jira.
 - **Serveur MCP** : `/mcp`, authentifié par un jeton d'agent, voir ci-dessous.
 
 ### Serveur MCP

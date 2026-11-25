@@ -18,6 +18,11 @@ interface PullRequestProvider
     public function pullRequest(string $repository, string $externalId): ?PullRequestData;
 
     /**
+     * @return ?PullRequestContent null when it does not exist anymore
+     */
+    public function pullRequestContent(string $repository, string $externalId): ?PullRequestContent;
+
+    /**
      * @return string One of PullRequestData::PIPELINE_*
      */
     public function pipelineStatus(string $repository, string $externalId): string;

@@ -2,12 +2,16 @@
 
 namespace App\Integrations\Bitbucket;
 
+use App\Integrations\PullRequestComment;
+use App\Integrations\PullRequestContent;
 use App\Integrations\PullRequestData;
 use App\Integrations\PullRequestProvider;
 
 class BitbucketProvider implements PullRequestProvider
 {
     private const PAGE_LENGTH = 50;
+    // The largest page the comments endpoint gives
+    private const COMMENTS_PAGE_LENGTH = 100;
     // Lists leave the participants out unless asked
     private const LIST_FIELDS = '+values.participants';
 
@@ -42,6 +46,65 @@ class BitbucketProvider implements PullRequestProvider
         $pullRequest = $this->client->read("/repositories/{$repository}/pullrequests/{$externalId}");
 
         return $pullRequest ? $this->toData($pullRequest) : null;
+    }
+
+    public function pullRequestContent(string $repository, string $externalId): ?PullRequestContent
+    {
+        $pullRequest = $this->client->read("/repositories/{$repository}/pullrequests/{$externalId}");
+        if (!$pullRequest)
+            return null;
+
+        $comments = $this->client->readAll("/repositories/{$repository}/pullrequests/{$externalId}/comments", ['pagelen' => self::COMMENTS_PAGE_LENGTH]);
+
+        return new PullRequestContent(
+            pullRequest: $this->toData($pullRequest),
+            description: (string) ($pullRequest['summary']['raw'] ?? $pullRequest['description'] ?? ''),
+            comments: $this->comments($comments),
+        );
+    }
+
+    /**
+     * @return list<PullRequestComment> Oldest first, without the deleted ones and the drafts
+     */
+    private function comments(array $comments): array
+    {
+        $byId = array_column($comments, null, 'id');
+        $result = [];
+
+        foreach ($comments as $comment) {
+            if (($comment['deleted'] ?? false) || ($comment['pending'] ?? false))
+                continue;
+
+            $inline = $comment['inline'] ?? null;
+            $parent = $comment['parent']['id'] ?? null;
+
+            $result[] = new PullRequestComment(
+                id: (string) $comment['id'],
+                parent: null === $parent ? null : (string) $parent,
+                author: (string) ($comment['user']['display_name'] ?? ''),
+                created: (string) ($comment['created_on'] ?? ''),
+                body: (string) ($comment['content']['raw'] ?? ''),
+                path: isset($inline['path']) ? (string) $inline['path'] : null,
+                line: isset($inline['to']) ? (int) $inline['to'] : (isset($inline['from']) ? (int) $inline['from'] : null),
+                resolved: isset($this->threadRoot($comment, $byId)['resolution']),
+            );
+        }
+
+        usort($result, fn (PullRequestComment $a, PullRequestComment $b) => [$a->created, (int) $a->id] <=> [$b->created, (int) $b->id]);
+
+        return $result;
+    }
+
+    // Bitbucket marks the resolution on the first comment of a thread only
+    private function threadRoot(array $comment, array $byId): array
+    {
+        $seen = [];
+        while (null !== ($parent = $comment['parent']['id'] ?? null) && isset($byId[$parent]) && !isset($seen[$parent])) {
+            $seen[$parent] = true;
+            $comment = $byId[$parent];
+        }
+
+        return $comment;
     }
 
     public function pipelineStatus(string $repository, string $externalId): string
