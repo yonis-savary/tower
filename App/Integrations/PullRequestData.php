@@ -11,6 +11,7 @@ final class PullRequestData
     public const STATE_MERGED = 'merged';
     public const STATE_DECLINED = 'declined';
     public const STATE_SUPERSEDED = 'superseded';
+    public const STATES = [self::STATE_OPEN, self::STATE_MERGED, self::STATE_DECLINED, self::STATE_SUPERSEDED];
 
     public const PIPELINE_NONE = 'none';
     public const PIPELINE_PENDING = 'pending';

@@ -2,6 +2,7 @@
 
 namespace Tests\Integration;
 
+use App\Integrations\Bitbucket\BitbucketClient;
 use App\Integrations\Jira\JiraClient;
 use App\Models\AgendaItem;
 use App\Models\ApiToken;
@@ -350,6 +351,22 @@ class McpTest extends CubeTestCase
         $content = $this->callTool($token, 'get_jira_attachment', ['attachment' => 501])['content'][0];
 
         $this->assertSame(['image', 'image/png', base64_encode("\x89PNG")], [$content['type'], $content['mimeType'], $content['data']]);
+    }
+
+    public function testADiffIsGivenAsText()
+    {
+        $diff = "diff --git a/a.php b/a.php\n+new\n";
+        MockServers::getInstance()->set(BitbucketClient::class, HttpMockServer::fromArray([
+            '/repositories/team/api/pullrequests/30/diff' => fn () => new Response(200, $diff, ['Content-Type' => 'text/plain']),
+        ]));
+        $this->register();
+        $this->putJson('/api/integrations/bitbucket', ['workspace' => 'team', 'email' => 'me@example.com', 'token' => 'the-api-token'])->assertOk();
+        $token = $this->createToken('read')['value'];
+        $this->logOut();
+
+        $content = $this->callTool($token, 'get_pull_request_diff', ['repository' => 'api', 'number' => 30])['content'][0];
+
+        $this->assertSame(['text', $diff], [$content['type'], $content['text']]);
     }
 
     public function testAnAgentIllustratesAndEditsTheDocumentation()

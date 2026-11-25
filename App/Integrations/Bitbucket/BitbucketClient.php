@@ -43,6 +43,20 @@ class BitbucketClient extends HttpClient
     }
 
     /**
+     * @return ?string The body of a text answer (a diff), null on a 404
+     */
+    public function readText(string $path, array $parameters = []): ?string
+    {
+        $response = $this->get($path, $parameters, ['Accept' => 'text/plain']);
+
+        return match ($response->getStatusCode()) {
+            200 => $response->getBody(),
+            404 => null,
+            default => throw new \RuntimeException($this->describeFailure($response, $path)),
+        };
+    }
+
+    /**
      * @return list<array> The values of every page
      */
     public function readAll(string $path, array $parameters = []): array

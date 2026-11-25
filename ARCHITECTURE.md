@@ -886,6 +886,24 @@ la synchronisation, qui seule sait qu'un élément apparaît ou disparaît.
   `read:user:bitbucket`, `read:pullrequest:bitbucket`, `read:repository:bitbucket`).
 - Ensemble suivi : les merge requests ouvertes **dont l'utilisateur du token est l'auteur**
   dans le workspace Bitbucket configuré, sans liste de dépôts. Lecture seule.
+- **Lecture à la demande**, pour les relectures : toute merge request d'un dépôt du workspace
+  Bitbucket configuré que le compte peut lire, suivie ou non, se lit dans la forge sans rien
+  stocker, comme un ticket Jira. Le dépôt est donné par son slug seul (`api` pour `team/api`) :
+  la lecture ne sort jamais du workspace de l'intégration.
+  - `GET /api/repositories/{dépôt}/pull-requests` (`search_repository_pull_requests`) : celles
+    du dépôt, de la plus récemment modifiée à la plus ancienne, filtrées par branche source
+    (`branch`), par état (`state`, `open` par défaut) et en nombre (`limit`, 20 par défaut,
+    50 au plus). `id` est celui de la merge request suivie, `null` sinon.
+  - `GET /api/repositories/{dépôt}/pull-requests/{numéro}` (`get_repository_pull_request`), et
+    `GET /api/pull-requests/{id}` (`get_pull_request`) pour une merge request suivie : sa
+    description, les fichiers qu'elle change (lignes ajoutées et retirées) et ses commentaires
+    en Markdown, du plus ancien au plus récent, sans les supprimés ni les brouillons. Une réponse
+    porte l'id du commentaire auquel elle répond (`parent`), un commentaire en ligne son fichier
+    et sa ligne, et chacun dit si son fil est résolu ; `unresolved` ne garde que les fils ouverts.
+  - `GET /api/repositories/{dépôt}/pull-requests/{numéro}/diff` (`get_pull_request_diff`) : son
+    diff unifié en texte, depuis le point où sa branche source a quitté la cible. Au-delà de
+    256 Kio il répond `413` : `path` le réduit à un fichier ou à un dossier, découpage fait par
+    Tower dans le diff, quelle que soit la forge.
 - Une merge request qui disparaît de la liste est relue une dernière fois pour connaître son
   état final ; les fermées restent affichées 30 jours.
 - Les statuts de pipeline ne sont relus que si le commit source a changé ou si le pipeline
@@ -1217,12 +1235,6 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 - **API appareil** : la connexion WebSocket `/devices`, authentifiée par la configuration.
 - **Webhooks** : `POST /api/hooks/<uuid>`, authentifié par le secret du webhook, ou par son
   adresse seule pour un webhook non sécurisé.
-- **Contenu** : une merge request stockée se lit dans la forge à la demande (`GET
-  /api/pull-requests/{id}`, outil MCP `get_pull_request`) : sa description et ses commentaires en
-  Markdown, du plus ancien au plus récent, sans les supprimés ni les brouillons. Une réponse porte
-  l'id du commentaire auquel elle répond (`parent`), un commentaire en ligne son fichier et sa
-  ligne, et chacun dit si son fil est résolu ; `unresolved` ne garde que les fils ouverts. Rien
-  n'est stocké, comme pour la lecture d'un ticket Jira.
 - **Serveur MCP** : `/mcp`, authentifié par un jeton d'agent, voir ci-dessous.
 
 ### Serveur MCP

@@ -5,13 +5,15 @@ namespace App\Integrations\Bitbucket;
 use App\Integrations\PullRequestComment;
 use App\Integrations\PullRequestContent;
 use App\Integrations\PullRequestData;
+use App\Integrations\PullRequestFile;
 use App\Integrations\PullRequestProvider;
 
 class BitbucketProvider implements PullRequestProvider
 {
     private const PAGE_LENGTH = 50;
-    // The largest page the comments endpoint gives
+    // The largest page the comments and diffstat endpoints give
     private const COMMENTS_PAGE_LENGTH = 100;
+    private const FILES_PAGE_LENGTH = 500;
     // Lists leave the participants out unless asked
     private const LIST_FIELDS = '+values.participants';
 
@@ -56,10 +58,55 @@ class BitbucketProvider implements PullRequestProvider
 
         $comments = $this->client->readAll("/repositories/{$repository}/pullrequests/{$externalId}/comments", ['pagelen' => self::COMMENTS_PAGE_LENGTH]);
 
+        $files = $this->client->readAll("/repositories/{$repository}/pullrequests/{$externalId}/diffstat", ['pagelen' => self::FILES_PAGE_LENGTH]);
+
         return new PullRequestContent(
             pullRequest: $this->toData($pullRequest),
             description: (string) ($pullRequest['summary']['raw'] ?? $pullRequest['description'] ?? ''),
             comments: $this->comments($comments),
+            files: array_map(fn (array $file) => $this->toFile($file), $files),
+        );
+    }
+
+    public function searchPullRequests(string $repository, ?string $branch, string $state, int $limit): ?array
+    {
+        $parameters = [
+            'state' => array_search($state, self::STATES, true) ?: throw new \InvalidArgumentException("Unknown pull request state {$state}"),
+            'sort' => '-updated_on',
+            'pagelen' => $limit,
+            'fields' => self::LIST_FIELDS,
+        ];
+        if (null !== $branch)
+            $parameters['q'] = 'source.branch.name = "'.addcslashes($branch, '"\\').'"';
+
+        $page = $this->client->read("/repositories/{$repository}/pullrequests", $parameters);
+
+        return null === $page ? null : array_map(fn (array $pullRequest) => $this->toData($pullRequest), $page['values'] ?? []);
+    }
+
+    public function pullRequestDiff(string $repository, string $externalId): ?string
+    {
+        // Bitbucket redirects to the diff of the two commits, from their merge base
+        return $this->client->readText("/repositories/{$repository}/pullrequests/{$externalId}/diff");
+    }
+
+    private function toFile(array $file): PullRequestFile
+    {
+        $old = $file['old']['path'] ?? null;
+        $new = $file['new']['path'] ?? null;
+        $status = match ($file['status'] ?? null) {
+            'added' => PullRequestFile::STATUS_ADDED,
+            'removed' => PullRequestFile::STATUS_REMOVED,
+            'renamed' => PullRequestFile::STATUS_RENAMED,
+            default => PullRequestFile::STATUS_MODIFIED,
+        };
+
+        return new PullRequestFile(
+            path: (string) ($new ?? $old),
+            previousPath: PullRequestFile::STATUS_RENAMED === $status ? $old : null,
+            status: $status,
+            linesAdded: (int) ($file['lines_added'] ?? 0),
+            linesRemoved: (int) ($file['lines_removed'] ?? 0),
         );
     }
 

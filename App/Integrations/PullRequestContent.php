@@ -9,10 +9,12 @@ final class PullRequestContent
 {
     /**
      * @param list<PullRequestComment> $comments Oldest first
+     * @param list<PullRequestFile>    $files    The files it changes
      */
     public function __construct(
         public readonly PullRequestData $pullRequest,
         public readonly string $description,
         public readonly array $comments,
+        public readonly array $files,
     ) {}
 }

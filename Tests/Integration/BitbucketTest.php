@@ -129,6 +129,16 @@ class BitbucketTest extends CubeTestCase
                 return null;
             }
 
+            public function searchPullRequests(string $repository, ?string $branch, string $state, int $limit): ?array
+            {
+                return null;
+            }
+
+            public function pullRequestDiff(string $repository, string $externalId): ?string
+            {
+                return null;
+            }
+
             public function pipelineStatus(string $repository, string $externalId): string
             {
                 ++$this->pipelineCalls;
@@ -439,6 +449,11 @@ class BitbucketTest extends CubeTestCase
                 'destination' => ['branch' => ['name' => 'main'], 'repository' => ['full_name' => 'team/api']],
                 'links' => ['html' => ['href' => 'https://bitbucket.org/team/api/pull-requests/7']],
             ]),
+            '/repositories/team/api/pullrequests/7/diffstat' => Response::json(['values' => [
+                ['status' => 'modified', 'lines_added' => 12, 'lines_removed' => 3, 'old' => ['path' => 'src/Login.php'], 'new' => ['path' => 'src/Login.php']],
+                ['status' => 'renamed', 'lines_added' => 0, 'lines_removed' => 0, 'old' => ['path' => 'old.md'], 'new' => ['path' => 'docs/new.md']],
+                ['status' => 'removed', 'lines_added' => 0, 'lines_removed' => 8, 'old' => ['path' => 'legacy.php'], 'new' => null],
+            ]]),
             '/repositories/team/api/pullrequests/7/comments' => function (\Cube\Web\Http\Request $request) use ($comment) {
                 return null === $request->param('page')
                     ? Response::json(['values' => [
@@ -460,6 +475,12 @@ class BitbucketTest extends CubeTestCase
         $this->assertSame([true, true, false], array_column($read['comments'], 'resolved'));
         $this->assertSame(['src/Login.php', 42], [$read['comments'][0]['path'], $read['comments'][0]['line']]);
         $this->assertNull($read['comments'][2]['path']);
+        $this->assertSame(['src/Login.php', 'docs/new.md', 'legacy.php'], array_column($read['files'], 'path'));
+        $this->assertSame([null, 'old.md', null], array_column($read['files'], 'previous_path'));
+        $this->assertSame(['modified', 'renamed', 'removed'], array_column($read['files'], 'status'));
+
+        // The same pull request, by its repository and number
+        $this->assertSame($read, $this->get('/api/repositories/api/pull-requests/7')->assertOk()->json());
 
         $unresolved = $this->get("/api/pull-requests/{$id}?unresolved=1")->assertOk()->json();
         $this->assertSame(['Why ?'], array_column($unresolved['comments'], 'body'));
@@ -470,5 +491,100 @@ class BitbucketTest extends CubeTestCase
         SelectedWorkspace::unset();
         $this->register('bob@example.com');
         $this->get("/api/pull-requests/{$id}")->assertNotFound();
+    }
+
+    private function otherPullRequest(int $id, string $branch): array
+    {
+        return [
+            'id' => $id,
+            'title' => "Change of Bob {$id}",
+            'state' => 'OPEN',
+            'author' => ['display_name' => 'Bob'],
+            'comment_count' => 2,
+            'summary' => ['raw' => 'Please review'],
+            'source' => ['branch' => ['name' => $branch], 'commit' => ['hash' => 'def']],
+            'destination' => ['branch' => ['name' => 'main'], 'repository' => ['full_name' => 'team/api']],
+            'links' => ['html' => ['href' => "https://bitbucket.org/team/api/pull-requests/{$id}"]],
+            'participants' => [['role' => 'REVIEWER', 'approved' => false, 'state' => null, 'user' => ['account_id' => 'me', 'display_name' => 'Alice']]],
+        ];
+    }
+
+    private const DIFF = "diff --git a/src/Login.php b/src/Login.php\n--- a/src/Login.php\n+++ b/src/Login.php\n@@ -1 +1 @@\n-old\n+new\n"
+        ."diff --git a/docs/a.md b/docs/a.md\n--- a/docs/a.md\n+++ b/docs/a.md\n@@ -1 +1 @@\n-a\n+b\n";
+
+    private function fakeRepository(): void
+    {
+        MockServers::getInstance()->set(BitbucketClient::class, HttpMockServer::fromArray([
+            '/repositories/team/api/pullrequests' => function (\Cube\Web\Http\Request $request) {
+                $this->searched = $request->all();
+
+                return Response::json(['values' => [$this->otherPullRequest(30, 'feature-bob'), $this->otherPullRequest(7, 'login')]]);
+            },
+            '/repositories/team/api/pullrequests/30' => Response::json($this->otherPullRequest(30, 'feature-bob')),
+            '/repositories/team/api/pullrequests/30/comments' => Response::json(['values' => []]),
+            '/repositories/team/api/pullrequests/30/diffstat' => Response::json(['values' => []]),
+            '/repositories/team/api/pullrequests/30/diff' => fn () => new Response(200, self::DIFF, ['Content-Type' => 'text/plain']),
+            '/repositories/team/api/pullrequests/31/diff' => fn () => new Response(200, str_repeat('+', 300 * 1024), ['Content-Type' => 'text/plain']),
+        ]));
+    }
+
+    private array $searched = [];
+
+    public function testAnyPullRequestOfARepositoryIsFoundByItsBranch()
+    {
+        $this->register();
+        $this->save();
+        $forge = $this->fakeForge();
+        $forge->open = [$this->pr('7', ['repository' => 'team/api'])];
+        $this->sync($forge);
+        $this->fakeRepository();
+
+        $found = $this->get('/api/repositories/api/pull-requests?branch=feature-"bob"')->assertOk()->json();
+        $this->assertSame('source.branch.name = "feature-\\"bob\\""', $this->searched['q']);
+        $this->assertSame(['OPEN', '20', '-updated_on'], [$this->searched['state'], (string) $this->searched['pagelen'], $this->searched['sort']]);
+        $this->assertSame(['30', '7'], array_column($found, 'number'));
+        // Only the followed one has a Tower id
+        $this->assertSame([null, PullRequest::findWhere(['external_id' => '7'])->id], array_column($found, 'id'));
+        $this->assertSame([['name' => 'Alice', 'status' => 'pending']], $found[0]['reviewers']);
+
+        $this->get('/api/repositories/api/pull-requests?state=merged&limit=5')->assertOk();
+        $this->assertSame(['MERGED', '5'], [$this->searched['state'], (string) $this->searched['pagelen']]);
+        $this->assertArrayNotHasKey('q', $this->searched);
+        $this->get('/api/repositories/api/pull-requests?state=closed')->assertUnprocessableContent();
+        $this->get('/api/repositories/api/pull-requests?limit=500')->assertUnprocessableContent();
+        $this->get('/api/repositories/other/pull-requests')->assertNotFound();
+
+        $read = $this->get('/api/repositories/api/pull-requests/30')->assertOk()->json();
+        $this->assertSame([null, 'Bob', 'Please review'], [$read['id'], $read['author'], $read['description']]);
+    }
+
+    public function testTheDiffIsTextNarrowedByPath()
+    {
+        $this->register();
+        $this->save();
+        $this->fakeRepository();
+
+        $this->get('/api/repositories/api/pull-requests/30/diff')->assertOk()->assertHeaderEqual('content-type', 'text/plain; charset=utf-8');
+        $this->assertSame(self::DIFF, $this->get('/api/repositories/api/pull-requests/30/diff')->body());
+
+        $docs = $this->get('/api/repositories/api/pull-requests/30/diff?path=docs/')->assertOk()->body();
+        $this->assertStringStartsWith('diff --git a/docs/a.md', $docs);
+        $this->assertStringNotContainsString('Login', $docs);
+        $this->assertStringContainsString('Login', $this->get('/api/repositories/api/pull-requests/30/diff?path=src/Login.php')->body());
+        $this->get('/api/repositories/api/pull-requests/30/diff?path=src/Log')->assertNotFound();
+
+        $this->get('/api/repositories/api/pull-requests/31/diff')->assertResponseCode(413);
+        $this->get('/api/repositories/api/pull-requests/32/diff')->assertNotFound();
+    }
+
+    public function testWithoutIntegrationNoRepositoryIsRead()
+    {
+        $this->register();
+        $this->fakeRepository();
+
+        $this->get('/api/repositories/api/pull-requests')->assertNotFound();
+        $this->get('/api/repositories/api/pull-requests/30')->assertNotFound();
+        $this->get('/api/repositories/api/pull-requests/30/diff')->assertNotFound();
+        $this->get('/api/repositories/.hidden/pull-requests')->assertNotFound();
     }
 }
