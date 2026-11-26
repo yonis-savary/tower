@@ -72,7 +72,7 @@ class PullRequestService
         return [
             ...$this->summaryPayload($content->pullRequest, $this->storedIds($workspace, $content->pullRequest->repository)),
             'description' => $content->description,
-            'files' => array_map(fn (PullRequestFile $file) => [
+            'files' => null === $content->files ? null : array_map(fn (PullRequestFile $file) => [
                 'path' => $file->path,
                 'previous_path' => $file->previousPath,
                 'status' => $file->status,

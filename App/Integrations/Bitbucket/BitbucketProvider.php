@@ -7,6 +7,7 @@ use App\Integrations\PullRequestContent;
 use App\Integrations\PullRequestData;
 use App\Integrations\PullRequestFile;
 use App\Integrations\PullRequestProvider;
+use Cube\Env\Logger\Logger;
 
 class BitbucketProvider implements PullRequestProvider
 {
@@ -58,14 +59,27 @@ class BitbucketProvider implements PullRequestProvider
 
         $comments = $this->client->readAll("/repositories/{$repository}/pullrequests/{$externalId}/comments", ['pagelen' => self::COMMENTS_PAGE_LENGTH]);
 
-        $files = $this->client->readAll("/repositories/{$repository}/pullrequests/{$externalId}/diffstat", ['pagelen' => self::FILES_PAGE_LENGTH]);
-
         return new PullRequestContent(
             pullRequest: $this->toData($pullRequest),
             description: (string) ($pullRequest['summary']['raw'] ?? $pullRequest['description'] ?? ''),
             comments: $this->comments($comments),
-            files: array_map(fn (array $file) => $this->toFile($file), $files),
+            files: $this->files($repository, $externalId),
         );
+    }
+
+    /**
+     * @return ?list<PullRequestFile> null when the token lacks the scope to read the repository
+     */
+    private function files(string $repository, string $externalId): ?array
+    {
+        try {
+            $files = $this->client->readAll("/repositories/{$repository}/pullrequests/{$externalId}/diffstat", ['pagelen' => self::FILES_PAGE_LENGTH]);
+        } catch (BitbucketForbiddenException $exception) {
+            Logger::getInstance()->warning('Cannot list the files of {repository}#{pullRequest} : {reason}', ['repository' => $repository, 'pullRequest' => $externalId, 'reason' => $exception->getMessage()]);
+            return null;
+        }
+
+        return array_map(fn (array $file) => $this->toFile($file), $files);
     }
 
     public function searchPullRequests(string $repository, ?string $branch, string $state, int $limit): ?array

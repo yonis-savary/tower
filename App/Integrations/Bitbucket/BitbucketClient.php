@@ -38,6 +38,7 @@ class BitbucketClient extends HttpClient
         return match ($response->getStatusCode()) {
             200 => $response->getJSON(),
             404 => null,
+            403 => throw new BitbucketForbiddenException($this->describeFailure($response, $path)),
             default => throw new \RuntimeException($this->describeFailure($response, $path)),
         };
     }
@@ -52,6 +53,7 @@ class BitbucketClient extends HttpClient
         return match ($response->getStatusCode()) {
             200 => $response->getBody(),
             404 => null,
+            403 => throw new BitbucketForbiddenException($this->describeFailure($response, $path)),
             default => throw new \RuntimeException($this->describeFailure($response, $path)),
         };
     }

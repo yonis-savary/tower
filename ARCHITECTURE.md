@@ -897,7 +897,8 @@ la synchronisation, qui seule sait qu'un élément apparaît ou disparaît.
     50 au plus). `id` est celui de la merge request suivie, `null` sinon.
   - `GET /api/repositories/{dépôt}/pull-requests/{numéro}` (`get_repository_pull_request`), et
     `GET /api/pull-requests/{id}` (`get_pull_request`) pour une merge request suivie : sa
-    description, les fichiers qu'elle change (lignes ajoutées et retirées) et ses commentaires
+    description, les fichiers qu'elle change (lignes ajoutées et retirées ; `null` si le token n'a
+    pas le scope `read:repository`, le reste est quand même lu) et ses commentaires
     en Markdown, du plus ancien au plus récent, sans les supprimés ni les brouillons. Une réponse
     porte l'id du commentaire auquel elle répond (`parent`), un commentaire en ligne son fichier
     et sa ligne, et chacun dit si son fil est résolu ; `unresolved` ne garde que les fils ouverts.

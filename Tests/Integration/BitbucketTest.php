@@ -512,7 +512,7 @@ class BitbucketTest extends CubeTestCase
     private const DIFF = "diff --git a/src/Login.php b/src/Login.php\n--- a/src/Login.php\n+++ b/src/Login.php\n@@ -1 +1 @@\n-old\n+new\n"
         ."diff --git a/docs/a.md b/docs/a.md\n--- a/docs/a.md\n+++ b/docs/a.md\n@@ -1 +1 @@\n-a\n+b\n";
 
-    private function fakeRepository(): void
+    private function fakeRepository(?Response $diffstat = null): void
     {
         MockServers::getInstance()->set(BitbucketClient::class, HttpMockServer::fromArray([
             '/repositories/team/api/pullrequests' => function (\Cube\Web\Http\Request $request) {
@@ -522,7 +522,7 @@ class BitbucketTest extends CubeTestCase
             },
             '/repositories/team/api/pullrequests/30' => Response::json($this->otherPullRequest(30, 'feature-bob')),
             '/repositories/team/api/pullrequests/30/comments' => Response::json(['values' => []]),
-            '/repositories/team/api/pullrequests/30/diffstat' => Response::json(['values' => []]),
+            '/repositories/team/api/pullrequests/30/diffstat' => $diffstat ?? Response::json(['values' => []]),
             '/repositories/team/api/pullrequests/30/diff' => fn () => new Response(200, self::DIFF, ['Content-Type' => 'text/plain']),
             '/repositories/team/api/pullrequests/31/diff' => fn () => new Response(200, str_repeat('+', 300 * 1024), ['Content-Type' => 'text/plain']),
         ]));
@@ -556,6 +556,16 @@ class BitbucketTest extends CubeTestCase
 
         $read = $this->get('/api/repositories/api/pull-requests/30')->assertOk()->json();
         $this->assertSame([null, 'Bob', 'Please review'], [$read['id'], $read['author'], $read['description']]);
+    }
+
+    public function testAPullRequestIsReadWithoutItsFilesWhenTheTokenCannotReadTheRepository()
+    {
+        $this->register();
+        $this->save();
+        $this->fakeRepository(Response::json(['type' => 'error', 'error' => ['message' => 'Your credentials lack one or more required privilege scopes.']], 403));
+
+        $read = $this->get('/api/repositories/api/pull-requests/30')->assertOk()->json();
+        $this->assertSame(['Please review', [], null], [$read['description'], $read['comments'], $read['files']]);
     }
 
     public function testTheDiffIsTextNarrowedByPath()
