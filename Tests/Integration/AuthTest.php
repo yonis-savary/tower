@@ -2,9 +2,11 @@
 
 namespace Tests\Integration;
 
+use App\Models\History;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
+use App\Services\LoginHistory;
 use Cube\Data\Database\Database;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
@@ -134,6 +136,50 @@ class AuthTest extends CubeTestCase
 
         $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => 'wrong password'])->assertUnauthorized();
         $this->get('/api/auth/me')->assertUnauthorized();
+    }
+
+    public function testLoginIsWrittenInEveryWorkspaceOfTheUser()
+    {
+        $user = $this->register();
+        $this->post('/api/auth/logout')->assertNoContent();
+
+        $owner = $this->postJson('/api/auth/register', ['email' => 'bob@example.com', 'password' => self::PASSWORD])->assertCreated()->json();
+        $this->post('/api/auth/logout')->assertNoContent();
+        $ownerWorkspace = Workspace::findWhere(['author' => $owner['id']]);
+        WorkspaceMember::fromArray(['workspace' => $ownerWorkspace->id, 'user' => $user['id']])->save();
+
+        $this->logIn();
+
+        $lines = History::select()->where('type', LoginHistory::LOGGED_IN_TYPE)->order('workspace', 'ASC')->fetch();
+        $this->assertSame(
+            [Workspace::findWhere(['author' => $user['id']])->id, $ownerWorkspace->id],
+            array_map(fn (History $line) => $line->workspace, $lines),
+        );
+        foreach ($lines as $line) {
+            $this->assertSame($user['id'], $line->user);
+            $this->assertSame(['email' => self::EMAIL], json_decode($line->details, true));
+        }
+    }
+
+    public function testRefusedLoginIsWrittenWithoutAuthor()
+    {
+        $user = $this->register();
+        $this->post('/api/auth/logout')->assertNoContent();
+
+        $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => 'wrong password'])->assertUnauthorized();
+
+        $line = History::findWhere(['type' => LoginHistory::LOGIN_FAILED_TYPE]);
+        $this->assertSame(Workspace::findWhere(['author' => $user['id']])->id, $line->workspace);
+        $this->assertNull($line->user);
+        $this->assertSame(['email' => self::EMAIL], json_decode($line->details, true));
+        $this->assertNull(History::findWhere(['type' => LoginHistory::LOGGED_IN_TYPE]));
+    }
+
+    public function testUnknownEmailWritesNothing()
+    {
+        $this->postJson('/api/auth/login', ['email' => 'nobody@example.com', 'password' => self::PASSWORD])->assertUnauthorized();
+
+        $this->assertNull(History::findWhere(['type' => LoginHistory::LOGIN_FAILED_TYPE]));
     }
 
     public function testDisabledUserCannotLogIn()

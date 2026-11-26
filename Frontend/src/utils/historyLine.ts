@@ -69,6 +69,8 @@ export const HISTORY_ICONS: Record<string, string> = {
   'agenda.item.updated': 'pi pi-calendar',
   'agenda.item.deleted': 'pi pi-calendar-minus',
   'agenda.item.upcoming': 'pi pi-bell',
+  'user.logged_in': 'pi pi-sign-in',
+  'user.login_failed': 'pi pi-lock',
 }
 
 export const DELIVERY_SEVERITY: Record<string, string> = { succeeded: 'success', received: 'success', failed: 'danger', running: 'info', pending: 'warn' }
@@ -83,7 +85,7 @@ export function parseDetails(details: string): Details {
 
 /** The lines sent to the devices : the others have no delivery */
 export function isSent(type: string): boolean {
-  return [EVENT_TYPE, 'task.', 'sprint.', 'pr.', 'jira.issue.', 'agenda.item.'].some((prefix) => type.startsWith(prefix))
+  return [EVENT_TYPE, 'task.', 'sprint.', 'pr.', 'jira.issue.', 'agenda.item.', 'user.'].some((prefix) => type.startsWith(prefix))
 }
 
 export function historyLabel({ t, te }: HistoryI18n, type: string): string {
@@ -108,6 +110,8 @@ function describe({ t, te }: HistoryI18n, type: string, parsed: Details): string
 
   if (type === 'agenda.item.upcoming') return `${parsed.title} · ${t('history.inMinutes', { minutes: parsed.minutes })}`
   if (type.startsWith('agenda.item.')) return parsed.title
+
+  if (type.startsWith('user.')) return parsed.email
 
   if (type.startsWith('task.')) {
     const change = taskChange(t, type, parsed)

@@ -329,11 +329,12 @@ y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les l
 | `token.created`, `token.revoked` | création et révocation d'un jeton d'agent (voir § Serveur MCP) |
 | `agenda.item.created`, `agenda.item.updated`, `agenda.item.deleted` | éléments de l'agenda (`title`, `item`) |
 | `agenda.item.upcoming`        | rappel avant un élément (`title`, `item`, `minutes`), voir § Agenda |
+| `user.logged_in`, `user.login_failed` | connexion par mot de passe, réussie ou refusée (`email`), écrite dans chaque workspace du compte ; un refus n'a pas d'auteur, et un email inconnu n'écrit rien |
 | `doc.page.created`, `doc.page.updated`, `doc.page.moved`, `doc.page.archived`, `doc.page.restored`, `doc.page.deleted` | pages de la documentation (`title`, `page`, `version` ; `sub_pages` pour un archivage, un désarchivage ou une suppression) |
 
 Les lignes `task.*`, `sprint.*` et `event.triggered` sont aussi envoyées aux appareils
 connectés comme des événements du même type (voir § Événements), comme les lignes `pr.*`,
-`jira.issue.*` et `agenda.item.*`. Chaque tâche affiche son propre historique, avec l'auteur de chaque changement.
+`jira.issue.*`, `agenda.item.*` et `user.*` (`user` et `email` du compte). Chaque tâche affiche son propre historique, avec l'auteur de chaque changement.
 
 L'historique a, à terme, un second consommateur : **(prévu)** l'agent IA, qui ne lira que les
 lignes postérieures à son dernier run.

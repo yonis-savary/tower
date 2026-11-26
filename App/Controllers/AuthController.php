@@ -10,6 +10,7 @@ use App\Requests\RegisterRequest;
 use App\Resources\UserResource;
 use App\Security\RegistrationConfiguration;
 use App\Services\AccountService;
+use App\Services\LoginHistory;
 use App\Services\UserRegistration;
 use App\Services\WorkspaceService;
 use App\Session\SelectedWorkspace;
@@ -33,6 +34,7 @@ class AuthController extends Controller
         protected WorkspaceService $workspaces,
         protected AccountService $accounts,
         protected RegistrationConfiguration $registrationConfiguration,
+        protected LoginHistory $logins,
     ) {}
 
     public function routes(Router $router): void
@@ -73,12 +75,15 @@ class AuthController extends Controller
     #[RawResponse(['error' => 'Invalid credentials'], responseCode: StatusCode::UNAUTHORIZED, description: 'Wrong email or password, or disabled account')]
     public function login(LoginRequest $request): Response
     {
-        if (!$this->authentication->attempt($request->validated('email'), $request->validated('password')))
+        if (!$this->authentication->attempt($request->validated('email'), $request->validated('password'))) {
+            $this->logins->failed($request->validated('email'));
             return Response::json(['error' => 'Invalid credentials'], StatusCode::UNAUTHORIZED);
+        }
 
         $user = $this->authentication->user();
         $this->workspaces->createDefault($user);
         $this->workspaces->selectFirst($user->id);
+        $this->logins->loggedIn($user);
 
         return Response::json(UserResource::of($user));
     }

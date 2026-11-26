@@ -498,6 +498,8 @@ export default {
       agenda_item_updated: 'Élément d’agenda modifié',
       agenda_item_deleted: 'Élément d’agenda supprimé',
       agenda_item_upcoming: 'Élément d’agenda imminent',
+      user_logged_in: 'Connexion',
+      user_login_failed: 'Connexion refusée',
     },
     reason: {
       connection_closed: 'connexion fermée',

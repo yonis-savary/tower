@@ -500,6 +500,8 @@ export default {
       agenda_item_updated: 'Agenda item changed',
       agenda_item_deleted: 'Agenda item deleted',
       agenda_item_upcoming: 'Agenda item coming up',
+      user_logged_in: 'Logged in',
+      user_login_failed: 'Login refused',
     },
     reason: {
       connection_closed: 'connection closed',
