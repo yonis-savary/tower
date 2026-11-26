@@ -554,6 +554,11 @@ class BitbucketTest extends CubeTestCase
         $this->get('/api/repositories/api/pull-requests?limit=500')->assertUnprocessableContent();
         $this->get('/api/repositories/other/pull-requests')->assertNotFound();
 
+        // No route takes it : the frontend fallback may answer, Bitbucket never does
+        $this->searched = [];
+        $this->get('/api/repositories/.hidden/pull-requests');
+        $this->assertSame([], $this->searched);
+
         $read = $this->get('/api/repositories/api/pull-requests/30')->assertOk()->json();
         $this->assertSame([null, 'Bob', 'Please review'], [$read['id'], $read['author'], $read['description']]);
     }
@@ -595,6 +600,5 @@ class BitbucketTest extends CubeTestCase
         $this->get('/api/repositories/api/pull-requests')->assertNotFound();
         $this->get('/api/repositories/api/pull-requests/30')->assertNotFound();
         $this->get('/api/repositories/api/pull-requests/30/diff')->assertNotFound();
-        $this->get('/api/repositories/.hidden/pull-requests')->assertNotFound();
     }
 }
