@@ -144,6 +144,31 @@ Le tableau montre chaque sprint actif en cinq colonnes, du plus ancien au plus r
 planifiés puis les tâches sans sprint. Les tâches se déplacent par glisser-déposer, entre les
 listes et à l'intérieur d'une liste.
 
+**Timeline.** Un troisième onglet, à côté du tableau et du backlog, montre les tâches traitées
+entre deux jours, inclus (un mois glissant par défaut, 92 jours au plus) : une ligne par tâche,
+découpée par statut (un trait fin tant qu'elle attend « à faire », une barre quand elle est en
+cours, rien une fois finie) et un point par changement de statut sur la période.
+
+- Les statuts tombent dans trois catégories, `todo`, `in_progress` et `done` (`App/Services/TimelineSpan`).
+  Attendre dans un statut à faire n'est pas travailler : une tâche **commence** quand elle quitte
+  `todo` pour la première fois, et elle est traitée si elle a été en cours pendant la période ou
+  s'est finie pendant celle-ci. Une tâche qui n'a fait que bouger entre statuts à faire n'apparaît pas.
+- `GET /api/tasks/timeline?from=&to=` (`App/Services/TaskTimelineService`) : `done` et `cancelled`
+  sont `done`. Sa fin est `done_at`, ou la date d'annulation. L'historique n'étant gardé que 31 jours,
+  une tâche plus ancienne n'est placée que par sa création et sa fin.
+- Une case « Inclure les tickets Jira sans tâche », proposée quand le workspace a des profils Jira et
+  gardée dans le navigateur par workspace, ajoute les tickets **lus dans Jira** :
+  `GET /api/jira/worked-issues?from=&to=` cherche (JQL) ceux que le compte du token avait assignés
+  pendant la période et dont le statut a changé pendant celle-ci, sur un board suivi ou non, terminés
+  ou non, avec leur historique de statuts (`changelog`). Un statut est classé par les **colonnes des
+  boards** des profils, comme le kanban : la première est `todo`, la dernière `done`, les autres
+  `in_progress` (« Rouvert » rangé dans To Do attend, « Fix » rangé dans Done est fini) ; un statut
+  qu'aucun board ne montre prend la catégorie de Jira (`/rest/api/3/status`, lu au besoin). Tower ne
+  garde pas les tickets terminés, d'où la lecture dans Jira. Les tickets liés à une tâche sont
+  retirés : la tâche les montre déjà. Les 100 mis à jour le plus récemment au plus (`truncated`) ;
+  Jira en erreur répond `502`, sans intégration Jira `404`.
+- Outils MCP : `get_task_timeline` et `list_worked_jira_issues`.
+
 **Prise de notes.** Une grande modale, ouverte par « Prise de notes » à côté de « Nouvelle
 tâche », crée plusieurs tâches d'un coup à partir de notes prises en réunion. Une ligne sans
 indentation est le titre d'une tâche, les lignes indentées en dessous (tabulations ou espaces)

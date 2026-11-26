@@ -8,6 +8,7 @@ class JiraProvider
     private const FIELDS = 'summary,status,issuetype,priority,project,sprint,assignee,subtasks';
     private const CONTENT_FIELDS = self::FIELDS.',description,assignee,reporter,labels,comment,attachment';
     private const CONTENT_COMMENTS = 20;
+    private const WORKED_FIELDS = 'summary,status,issuetype,project,created,resolutiondate';
     private const BOARD_JQL = '{filter}statusCategory != Done{exclusion} ORDER BY updated DESC';
 
     private const CATEGORIES = [
@@ -69,6 +70,93 @@ class JiraProvider
         }
 
         return $assignees;
+    }
+
+    /**
+     * The issues the account of the token was assigned to during a period, and whose status changed
+     * during it, with every status change Jira kept.
+     *
+     * @param string $start first second of the period, Y-m-d H:i:s in server time
+     * @param string $end last second of the period, Y-m-d H:i:s in server time
+     *
+     * @return array{issues:list<JiraWorkedIssue>,truncated:bool} truncated beyond one page, the most recently updated kept
+     */
+    public function workedIssues(string $start, string $end): array
+    {
+        // Formatted from dates : nothing else enters the query. Jira reads them in the timezone of the account
+        $period = sprintf('("%s", "%s")', (new \DateTimeImmutable($start))->format('Y/m/d H:i'), (new \DateTimeImmutable($end))->format('Y/m/d H:i'));
+        $page = $this->client->read('/rest/api/3/search/jql', [
+            'jql' => "assignee WAS currentUser() DURING {$period} AND status CHANGED DURING {$period} ORDER BY updated DESC",
+            'fields' => self::WORKED_FIELDS,
+            'expand' => 'changelog',
+            'maxResults' => self::PAGE_LENGTH,
+        ]) ?? [];
+
+        return [
+            'issues' => array_map(fn (array $issue) => $this->toWorkedIssue($issue), $page['issues'] ?? []),
+            'truncated' => !($page['isLast'] ?? true),
+        ];
+    }
+
+    /**
+     * @return array<string,string> The category of every status of the site, by status id
+     */
+    public function statusCategories(): array
+    {
+        $categories = [];
+        foreach ($this->client->read('/rest/api/3/status') ?? [] as $status)
+            $categories[(string) $status['id']] = $this->category($status['statusCategory']['key'] ?? null);
+
+        return $categories;
+    }
+
+    private function toWorkedIssue(array $issue): JiraWorkedIssue
+    {
+        $fields = $issue['fields'] ?? [];
+        $key = (string) $issue['key'];
+
+        $changes = [];
+        foreach ($issue['changelog']['histories'] ?? [] as $history) {
+            foreach ($history['items'] ?? [] as $item) {
+                if ('status' !== ($item['field'] ?? null) || null === ($at = self::atom($history['created'] ?? null)))
+                    continue;
+
+                $changes[] = [
+                    'at' => $at,
+                    'from' => $item['fromString'] ?? null,
+                    'to' => $item['toString'] ?? null,
+                    'from_id' => isset($item['from']) ? (string) $item['from'] : null,
+                    'to_id' => isset($item['to']) ? (string) $item['to'] : null,
+                ];
+            }
+        }
+        usort($changes, fn (array $a, array $b) => strtotime($a['at']) <=> strtotime($b['at']));
+
+        return new JiraWorkedIssue(
+            key: $key,
+            summary: (string) ($fields['summary'] ?? ''),
+            url: $this->client->site.'/browse/'.rawurlencode($key),
+            project: (string) ($fields['project']['name'] ?? ''),
+            issueType: (string) ($fields['issuetype']['name'] ?? ''),
+            statusId: (string) ($fields['status']['id'] ?? ''),
+            status: (string) ($fields['status']['name'] ?? ''),
+            statusCategory: $this->category($fields['status']['statusCategory']['key'] ?? null),
+            created: self::atom($fields['created'] ?? null),
+            resolved: self::atom($fields['resolutiondate'] ?? null),
+            changes: $changes,
+        );
+    }
+
+    private static function atom(?string $date): ?string
+    {
+        if (null === $date || '' === $date)
+            return null;
+
+        try {
+            return (new \DateTimeImmutable($date))->format(\DateTimeInterface::ATOM);
+        } catch (\Exception) {
+            return null;
+        }
     }
 
     public function myself(): JiraUser

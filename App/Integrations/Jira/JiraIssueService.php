@@ -9,10 +9,12 @@ use App\Integrations\Jira\Changes\StatusChanged;
 use App\Models\History;
 use App\Models\Integration;
 use App\Models\JiraIssue;
+use App\Models\JiraProfile;
 use App\Models\Task;
 use App\Services\EventService;
 use App\Services\HistoryService;
 use App\Services\TaskService;
+use App\Services\TimelineSpan;
 use Cube\Data\Bunch;
 use Cube\Data\Database\Query;
 
@@ -135,6 +137,97 @@ class JiraIssueService
     public function content(int $workspace, string $key): ?JiraIssueContent
     {
         return $this->providerOf($workspace)?->issueContent($key);
+    }
+
+    /**
+     * The issues the account of the integration worked on during a period, read from Jira, without
+     * those a task of the workspace is linked to : the task already tells their story. A status is
+     * classified by the boards of the profiles : their first column is to do, their last one done.
+     *
+     * @param string $start first second of the period, Y-m-d H:i:s in server time
+     * @param string $end last second of the period, Y-m-d H:i:s in server time
+     *
+     * @return ?array{issues:list<array>,truncated:bool} Oldest start first, null without Jira integration
+     */
+    public function workedIssues(int $workspace, string $start, string $end): ?array
+    {
+        $provider = $this->providerOf($workspace);
+        if (!$provider)
+            return null;
+
+        $worked = $provider->workedIssues($start, $end);
+        $withTask = array_flip(array_map(
+            fn (JiraIssue $issue) => $issue->issue_key,
+            JiraIssue::select()->whereIn('id', Query::select('task')->selectField('jira_issue', 'task')->where('workspace', $workspace, table: 'task'))->fetch(),
+        ));
+        $categories = $this->boardCategories($workspace);
+        $siteCategories = null;
+        $categoryOf = function (?string $statusId) use ($categories, $provider, &$siteCategories): string {
+            if (null !== $statusId && isset($categories[$statusId]))
+                return $categories[$statusId];
+
+            // A status no board shows : Jira's own category, read once
+            $siteCategories ??= $provider->statusCategories();
+
+            return $siteCategories[$statusId ?? ''] ?? TimelineSpan::TODO;
+        };
+
+        $issues = [];
+        foreach ($worked['issues'] as $issue) {
+            if (isset($withTask[$issue->key]))
+                continue;
+
+            $category = $categories[$issue->statusId] ?? $issue->statusCategory;
+            $changes = array_map(fn (array $change) => [
+                'at' => $change['at'],
+                'from' => $change['from'],
+                'to' => $change['to'],
+                'from_category' => $categoryOf($change['from_id']),
+                'to_category' => $categoryOf($change['to_id']),
+            ], $issue->changes);
+
+            $span = TimelineSpan::place($changes, $category, $issue->created, $issue->resolved, strtotime($start), strtotime($end));
+            if (!$span)
+                continue;
+
+            $issues[] = [
+                'key' => $issue->key,
+                'summary' => $issue->summary,
+                'url' => $issue->url,
+                'project' => $issue->project,
+                'issue_type' => $issue->issueType,
+                'status' => $issue->status,
+                'status_category' => $category,
+                ...$span,
+            ];
+        }
+        usort($issues, fn (array $a, array $b) => strtotime($a['started_at'] ?? $a['created_at'] ?? 'now') <=> strtotime($b['started_at'] ?? $b['created_at'] ?? 'now'));
+
+        return ['issues' => $issues, 'truncated' => $worked['truncated']];
+    }
+
+    /**
+     * @return array<string,string> The category of the statuses the boards of the profiles show, by status id
+     */
+    private function boardCategories(int $workspace): array
+    {
+        $categories = [];
+        foreach (JiraProfile::select()->where('workspace', $workspace)->order('id', 'ASC')->fetch() as $profile) {
+            $columns = json_decode((string) $profile->columns, true) ?: [];
+            foreach ($columns as $index => $column) {
+                $category = match (true) {
+                    count($columns) - 1 === $index => TimelineSpan::DONE,
+                    0 === $index => TimelineSpan::TODO,
+                    default => TimelineSpan::IN_PROGRESS,
+                };
+                foreach ($column['statuses'] ?? [] as $id)
+                    $categories[(string) $id] ??= $category;
+            }
+            foreach (json_decode((string) $profile->done_statuses, true) ?: [] as $id)
+                $categories[(string) $id] = TimelineSpan::DONE;
+        }
+
+        return $categories;
     }
 
     public function attachment(int $workspace, string $id): ?JiraAttachment

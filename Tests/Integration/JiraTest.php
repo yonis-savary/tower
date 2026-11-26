@@ -33,6 +33,8 @@ class JiraTest extends CubeTestCase
     private array $secondBoard = [];
     /** @var array<string,array> */
     private array $subtaskAssignees = [];
+    /** @var list<string> */
+    private array $worked = [];
     private ?array $refusal = null;
     private int $searchStatus = 200;
     private ?string $lastJql = null;
@@ -98,6 +100,7 @@ class JiraTest extends CubeTestCase
     {
         return HttpMockServer::fromArray([
             '/rest/api/3/myself' => fn () => Response::json(self::ME),
+            '/rest/api/3/status' => fn () => Response::json([...array_values(self::STATUSES), ['id' => '1', 'name' => 'Open', 'statusCategory' => ['key' => 'new']]]),
             '/rest/api/3/attachment/content/{id}' => fn (Request $request, string $id) => isset(self::ATTACHMENTS[$id])
                 ? new Response(200, self::ATTACHMENT_BODIES[$id], ['Content-Type' => self::ATTACHMENTS[$id]['mimeType']])
                 : Response::json(['errorMessages' => ['Attachment does not exist']], 404),
@@ -116,6 +119,14 @@ class JiraTest extends CubeTestCase
                 return Response::json(['startAt' => $startAt, 'total' => count($keys), 'issues' => $key ? [$this->issues[$key]] : []]);
             },
             '/rest/api/3/search/jql' => function (Request $request) {
+                if (str_contains((string) $request->param('jql'), 'DURING')) {
+                    $this->lastJql = $request->param('jql');
+                    if (200 !== $this->searchStatus)
+                        return Response::json([], $this->searchStatus);
+
+                    return Response::json(['issues' => array_values(array_map(fn (string $key) => $this->issues[$key], $this->worked)), 'isLast' => true]);
+                }
+
                 preg_match_all('/\d+/', (string) $request->param('jql'), $ids);
 
                 return Response::json(['issues' => array_map(
@@ -770,5 +781,85 @@ class JiraTest extends CubeTestCase
         $this->assertSame(1, JiraIssue::select()->where('external_id', '200')->count());
         $this->assertSame($this->stored('PLAT-1')->id, $this->stored('PLAT-10')->parent);
         $this->assertSame([], $this->historyTypes());
+    }
+
+    private function statusChange(string $at, string $from, string $to): array
+    {
+        return ['created' => $at, 'items' => [['field' => 'status', 'from' => $from, 'fromString' => self::STATUSES[$from]['name'] ?? 'Open', 'to' => $to, 'toString' => self::STATUSES[$to]['name']]]];
+    }
+
+    public function testWorkedIssuesAreReadFromJiraWithoutThoseOfATask()
+    {
+        $this->register();
+        $this->get('/api/jira/worked-issues?from=2026-11-01&to=2026-11-30')->assertNotFound();
+
+        $this->save();
+        $this->issue('100', 'PLAT-1');
+        $this->assigned = ['PLAT-1'];
+        $this->sync();
+        $this->postJson('/api/jira/issues/'.$this->stored('PLAT-1')->id.'/task')->assertCreated();
+
+        $this->issue('200', 'OPS-2', ['status' => self::STATUSES['31'], 'created' => '2026-09-01T10:00:00.000+0200', 'resolutiondate' => '2026-11-12T16:00:00.000+0100']);
+        $this->issues['OPS-2']['changelog'] = ['histories' => [
+            $this->statusChange('2026-11-12T16:00:00.000+0100', '21', '31'),
+            ['created' => '2026-11-10T09:00:00.000+0100', 'items' => [['field' => 'assignee', 'toString' => 'Alice']]],
+            $this->statusChange('2026-10-20T09:00:00.000+0200', '11', '21'),
+        ]];
+        $this->issue('300', 'OPS-3', ['status' => self::STATUSES['21'], 'created' => '2026-11-05T08:00:00.000+0100']);
+        $this->worked = ['PLAT-1', 'OPS-2', 'OPS-3'];
+
+        $worked = $this->get('/api/jira/worked-issues?from=2026-11-01&to=2026-11-30')->assertOk()->json();
+        $this->assertStringContainsString('assignee WAS currentUser() DURING ("2026/11/01 00:00", "2026/11/30 23:59")', $this->lastJql);
+        $this->assertFalse($worked['truncated']);
+        $this->assertSame(['OPS-2', 'OPS-3'], array_column($worked['issues'], 'key'));
+
+        [$done, $ongoing] = $worked['issues'];
+        $this->assertSame(self::SITE.'/browse/OPS-2', $done['url']);
+        $this->assertSame('done', $done['status_category']);
+        $this->assertSame('in_progress', $done['initial_category']);
+        $this->assertSame('2026-10-20T09:00:00+02:00', $done['started_at']);
+        $this->assertSame('2026-11-12T16:00:00+01:00', $done['ended_at']);
+        $this->assertSame([['at' => '2026-11-12T16:00:00+01:00', 'from' => 'In Progress', 'to' => 'Done', 'from_category' => 'in_progress', 'to_category' => 'done']], $done['changes']);
+        // In progress without any change Jira kept : started when created
+        $this->assertSame('2026-11-05T08:00:00+01:00', $ongoing['started_at']);
+        $this->assertNull($ongoing['ended_at']);
+
+        $this->get('/api/jira/worked-issues?from=2026-11-30&to=2026-11-01')->assertUnprocessableContent();
+
+        $this->searchStatus = 401;
+        $this->get('/api/jira/worked-issues?from=2026-11-01&to=2026-11-30')->assertBadGateway();
+    }
+
+    public function testWorkedIssuesAreClassifiedByTheColumnsOfTheBoard()
+    {
+        $this->register();
+        $this->save();
+        $this->sync();
+
+        // Waited months in the first column, worked on today : it starts today
+        $this->issue('200', 'OPS-2', ['status' => self::STATUSES['22'], 'created' => '2026-08-01T10:00:00.000+0200']);
+        $this->issues['OPS-2']['changelog'] = ['histories' => [
+            $this->statusChange('2026-08-01T10:00:00.000+0200', '1', '11'),
+            $this->statusChange('2026-11-26T11:00:00.000+0100', '11', '22'),
+        ]];
+        // Moved inside the first column only : never worked on
+        $this->issue('300', 'OPS-3', ['status' => self::STATUSES['11']]);
+        $this->issues['OPS-3']['changelog'] = ['histories' => [$this->statusChange('2026-11-10T10:00:00.000+0100', '1', '11')]];
+        // "Fix" is in the last column : done for the board, whatever Jira's category
+        $this->issue('400', 'OPS-4', ['status' => self::STATUSES['32']]);
+        $this->issues['OPS-4']['changelog'] = ['histories' => [
+            $this->statusChange('2026-11-03T10:00:00.000+0100', '11', '21'),
+            $this->statusChange('2026-11-04T18:00:00.000+0100', '21', '32'),
+        ]];
+        $this->worked = ['OPS-2', 'OPS-3', 'OPS-4'];
+
+        $worked = $this->get('/api/jira/worked-issues?from=2026-11-01&to=2026-11-30')->assertOk()->json()['issues'];
+        $this->assertSame(['OPS-4', 'OPS-2'], array_column($worked, 'key'));
+        [$fix, $waited] = $worked;
+        $this->assertSame('done', $fix['status_category']);
+        $this->assertSame('2026-11-04T18:00:00+01:00', $fix['ended_at']);
+        $this->assertSame('todo', $waited['initial_category']);
+        $this->assertSame('2026-11-26T11:00:00+01:00', $waited['started_at']);
+        $this->assertNull($waited['ended_at']);
     }
 }

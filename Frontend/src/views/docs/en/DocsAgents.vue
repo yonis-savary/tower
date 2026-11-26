@@ -76,12 +76,14 @@ const token = 'tower_…'
     <thead><tr><th>Tool</th><th>Effect</th></tr></thead>
     <tbody>
       <tr><td><code>list_tasks</code>, <code>list_sprints</code>, <code>list_task_history</code></td><td>the tasks, the sprints and their links, the history of a task</td></tr>
+      <tr><td><code>get_task_timeline</code></td><td>the tasks worked on between two days (92 days at most), with their start, their end and their status changes during the period</td></tr>
       <tr><td><code>create_task</code>, <code>update_task</code>, <code>move_task</code>, <code>add_sprint_link</code></td><td>write: create, edit (title, description, link), change status or sprint, add a link to a sprint</td></tr>
       <tr><td><code>preview_task_notes</code>, <code>create_tasks_from_notes</code></td><td>read meeting notes (one title per line, its description indented below) and see the tasks they describe; write: create them all at once, 50 at most</td></tr>
       <tr><td><code>list_agenda_items</code></td><td>the agenda items of the workspace between two dates (62 days at most), with their participants; filterable by participants. A recurring item is listed once per occurrence, with the day of the occurrence</td></tr>
       <tr><td><code>create_agenda_item</code>, <code>update_agenda_item</code></td><td>write: add an item to the agenda, change it (title, dates, all day, link, color, participants, members of the workspace, recurrence: every day, week, month or year, until a day); for a recurring item, one occurrence, it and the following ones, or all of them</td></tr>
       <tr><td><code>list_jira_profiles</code></td><td>the Jira profiles (board, name, JQL filter, columns) and the Jira account of the token</td></tr>
       <tr><td><code>list_jira_issues</code>, <code>list_jira_transitions</code></td><td>the tracked Jira issues and their subtasks (filterable: by profile, mine, by status category), the transitions allowed for an issue</td></tr>
+      <tr><td><code>list_worked_jira_issues</code></td><td>the Jira issues assigned to the account whose status changed between two days, read from Jira, without those linked to a task</td></tr>
       <tr><td><code>get_jira_issue</code>, <code>get_jira_attachment</code></td><td>an issue read from Jira by its key, on the board or not (description, comments, attachments), and an attachment of 5 MiB at most: an image comes as an image</td></tr>
       <tr><td><code>transition_jira_issue</code>, <code>create_task_from_jira_issue</code></td><td>write: change the status in Jira, create a linked task</td></tr>
       <tr><td><code>list_pull_requests</code>, <code>get_pull_request</code></td><td>the followed merge requests, open and recently closed, and one of them read from Bitbucket: its description, files and comments (file and line of an inline comment, thread resolved or not; <code>unresolved</code> keeps the open threads only)</td></tr>

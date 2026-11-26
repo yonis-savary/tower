@@ -8,6 +8,7 @@ use App\Integrations\Jira\JiraTransition;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\ListJiraIssuesRequest;
+use App\Requests\TimelineRequest;
 use App\Requests\TransitionJiraIssueRequest;
 use App\Resources\JiraIssueResource;
 use App\Resources\JiraProfileResource;
@@ -43,6 +44,7 @@ class JiraIssueController extends Controller
         $router->group('/api', middlewares: [IsAuthenticated::class], routes: [
             Route::get('/jira/profiles', [self::class, 'profiles']),
             Route::get('/jira/issues', [self::class, 'list']),
+            Route::get('/jira/worked-issues', [self::class, 'worked']),
             Route::get('/jira/issues/{'.self::ISSUE_KEY.':key}', [self::class, 'read']),
             Route::get('/jira/issues/{int:issue}/transitions', [self::class, 'transitions']),
             Route::get('/jira/attachments/{int:attachment}', [self::class, 'attachment']),
@@ -61,6 +63,26 @@ class JiraIssueController extends Controller
         $issues = $this->issues->listIssues($this->workspace(), (bool) $request->validated('mine'), $request->validated('status_category'), $request->validated('profile'));
 
         return Response::json(JiraIssueResource::of($issues));
+    }
+
+    #[Endpoint('List worked Jira issues', 'The Jira issues the account of the integration was assigned to between two days, both included (92 days at most), read from Jira, done or not, on a followed board or not : those in progress at some point of the period, or finished during it. A status is classified by the boards of the profiles : their first column is `todo`, their last one `done`, the others `in_progress` (Jira\'s own category for a status no board shows). Issues linked to a task are left out : get_task_timeline shows them. Each one has `created_at`, `started_at` (when it first left todo), `ended_at` (when it reached done, null while it is not), `initial_category` (at the start of the period) and its status changes during the period in `changes`. The 100 most recently updated at most : `truncated` says when there were more', 'listWorkedJiraIssues')]
+    #[RawResponse(['issues' => [['key' => 'PLAT-12', 'summary' => 'Pay again', 'url' => 'https://example.atlassian.net/browse/PLAT-12', 'project' => 'Platform', 'issue_type' => 'Story', 'status' => 'Done', 'status_category' => 'done', 'created_at' => '2026-09-01T10:00:00+02:00', 'started_at' => '2026-11-03T10:00:00+01:00', 'ended_at' => '2026-11-06T15:30:00+01:00', 'initial_category' => 'todo', 'changes' => [['at' => '2026-11-03T10:00:00+01:00', 'from' => 'To Do', 'to' => 'In Progress', 'from_category' => 'todo', 'to_category' => 'in_progress']]]], 'truncated' => false], description: 'The issues of the period')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[RawResponse(['error' => 'No Jira integration'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace has no Jira integration')]
+    #[RawResponse(['error' => 'Jira answered 401 on /rest/api/3/search/jql'], responseCode: StatusCode::BAD_GATEWAY, description: 'Jira could not be read')]
+    #[McpTool('list_worked_jira_issues')]
+    public function worked(TimelineRequest $request): Response
+    {
+        try {
+            $worked = $this->issues->workedIssues($this->workspace(), $request->start(), $request->end());
+        } catch (\RuntimeException $failure) {
+            return Response::json(['error' => $failure->getMessage()], StatusCode::BAD_GATEWAY);
+        }
+
+        if (null === $worked)
+            return Response::json(['error' => 'No Jira integration'], StatusCode::NOT_FOUND);
+
+        return Response::json($worked);
     }
 
     #[Endpoint('List Jira profiles', 'The Jira account of the token, and the profiles of the workspace, oldest first : each one follows a board, narrowed by an optional JQL condition. A profile without name shows its board name. Its columns are those of its board in their order, with the ids of the statuses each one holds, the last one being its "done". Read on each sync', 'listJiraProfiles')]

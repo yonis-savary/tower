@@ -6190,6 +6190,169 @@
                 }
             }
         },
+        "\/api\/jira\/worked-issues": {
+            "get": {
+                "summary": "List worked Jira issues",
+                "description": "The Jira issues the account of the integration was assigned to between two days, both included (92 days at most), read from Jira, done or not, on a followed board or not : those in progress at some point of the period, or finished during it. A status is classified by the boards of the profiles : their first column is `todo`, their last one `done`, the others `in_progress` (Jira's own category for a status no board shows). Issues linked to a task are left out : get_task_timeline shows them. Each one has `created_at`, `started_at` (when it first left todo), `ended_at` (when it reached done, null while it is not), `initial_category` (at the start of the period) and its status changes during the period in `changes`. The 100 most recently updated at most : `truncated` says when there were more",
+                "operationId": "listWorkedJiraIssues",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The issues of the period",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "issues": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "key": {
+                                                        "type": "string"
+                                                    },
+                                                    "summary": {
+                                                        "type": "string"
+                                                    },
+                                                    "url": {
+                                                        "type": "string"
+                                                    },
+                                                    "project": {
+                                                        "type": "string"
+                                                    },
+                                                    "issue_type": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "status_category": {
+                                                        "type": "string"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string"
+                                                    },
+                                                    "started_at": {
+                                                        "type": "string"
+                                                    },
+                                                    "ended_at": {
+                                                        "type": "string"
+                                                    },
+                                                    "initial_category": {
+                                                        "type": "string"
+                                                    },
+                                                    "changes": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "at": {
+                                                                    "type": "string"
+                                                                },
+                                                                "from": {
+                                                                    "type": "string"
+                                                                },
+                                                                "to": {
+                                                                    "type": "string"
+                                                                },
+                                                                "from_category": {
+                                                                    "type": "string"
+                                                                },
+                                                                "to_category": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "truncated": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The workspace has no Jira integration",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Jira could not be read",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/api\/jira\/issues\/{key}": {
             "get": {
                 "summary": "Read Jira issue",
@@ -8026,6 +8189,584 @@
                 }
             }
         },
+        "\/api\/pull-requests\/{pullRequest}": {
+            "get": {
+                "summary": "Read pull request",
+                "description": "Reads a stored pull request (its `id` from listPullRequests) from its forge, as readRepositoryPullRequest does",
+                "operationId": "readPullRequest",
+                "parameters": [
+                    {
+                        "name": "pullRequest",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "unresolved",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The pull request",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "number": {
+                                            "type": "string"
+                                        },
+                                        "repository": {
+                                            "type": "string"
+                                        },
+                                        "url": {
+                                            "type": "string"
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "author": {
+                                            "type": "string"
+                                        },
+                                        "state": {
+                                            "type": "string"
+                                        },
+                                        "draft": {
+                                            "type": "boolean"
+                                        },
+                                        "source_branch": {
+                                            "type": "string"
+                                        },
+                                        "target_branch": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "files": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "path": {
+                                                        "type": "string"
+                                                    },
+                                                    "previous_path": {},
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "lines_added": {
+                                                        "type": "integer"
+                                                    },
+                                                    "lines_removed": {
+                                                        "type": "integer"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "comments": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "parent": {},
+                                                    "author": {
+                                                        "type": "string"
+                                                    },
+                                                    "created": {
+                                                        "type": "string"
+                                                    },
+                                                    "body": {
+                                                        "type": "string"
+                                                    },
+                                                    "path": {
+                                                        "type": "string"
+                                                    },
+                                                    "line": {
+                                                        "type": "integer"
+                                                    },
+                                                    "resolved": {
+                                                        "type": "boolean"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not stored in the current workspace, or the forge does not know it anymore",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/repositories\/{repository}\/pull-requests": {
+            "get": {
+                "summary": "Search repository pull requests",
+                "description": "Lists the pull requests of a repository of the Bitbucket workspace, read from Bitbucket : anyone's, followed by Tower or not, the most recently updated first. `repository` is its slug, without the workspace (`api` for `team\/api`). Find the pull request of a branch with `branch` (its source branch) ; `state` defaults to `open`, `limit` to 20. `id` is the id of listPullRequests when Tower follows it, else null",
+                "operationId": "searchRepositoryPullRequests",
+                "parameters": [
+                    {
+                        "name": "repository",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[A-Za-z0-9_-][A-Za-z0-9._-]*"
+                        }
+                    },
+                    {
+                        "name": "branch",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "state",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "open",
+                                "merged",
+                                "declined",
+                                "superseded"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The pull requests",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {},
+                                            "number": {
+                                                "type": "string"
+                                            },
+                                            "repository": {
+                                                "type": "string"
+                                            },
+                                            "url": {
+                                                "type": "string"
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "author": {
+                                                "type": "string"
+                                            },
+                                            "state": {
+                                                "type": "string"
+                                            },
+                                            "draft": {
+                                                "type": "boolean"
+                                            },
+                                            "source_branch": {
+                                                "type": "string"
+                                            },
+                                            "target_branch": {
+                                                "type": "string"
+                                            },
+                                            "comment_count": {
+                                                "type": "integer"
+                                            },
+                                            "reviewers": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "status": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No Bitbucket integration, or no such repository the account can read",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/repositories\/{repository}\/pull-requests\/{number}": {
+            "get": {
+                "summary": "Read repository pull request",
+                "description": "Reads any pull request of a repository of the Bitbucket workspace by its number, followed by Tower or not, to review it : its description in Markdown, the files it changes (`files`, with their added and removed lines, null when the Bitbucket token lacks the `read:repository` scope), and its comments in Markdown, oldest first. A reply carries the id of the comment it answers in `parent`, an inline comment its file in `path` and its line in `line` (null for a general comment), and `resolved` tells whether its thread is resolved. Narrow to the threads still open with `unresolved`. `repository` is its slug, without the workspace (`api` for `team\/api`)",
+                "operationId": "readRepositoryPullRequest",
+                "parameters": [
+                    {
+                        "name": "repository",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[A-Za-z0-9_-][A-Za-z0-9._-]*"
+                        }
+                    },
+                    {
+                        "name": "number",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "unresolved",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The pull request",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "number": {
+                                            "type": "string"
+                                        },
+                                        "repository": {
+                                            "type": "string"
+                                        },
+                                        "url": {
+                                            "type": "string"
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "author": {
+                                            "type": "string"
+                                        },
+                                        "state": {
+                                            "type": "string"
+                                        },
+                                        "draft": {
+                                            "type": "boolean"
+                                        },
+                                        "source_branch": {
+                                            "type": "string"
+                                        },
+                                        "target_branch": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "files": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "path": {
+                                                        "type": "string"
+                                                    },
+                                                    "previous_path": {},
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "lines_added": {
+                                                        "type": "integer"
+                                                    },
+                                                    "lines_removed": {
+                                                        "type": "integer"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "comments": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "parent": {},
+                                                    "author": {
+                                                        "type": "string"
+                                                    },
+                                                    "created": {
+                                                        "type": "string"
+                                                    },
+                                                    "body": {
+                                                        "type": "string"
+                                                    },
+                                                    "path": {
+                                                        "type": "string"
+                                                    },
+                                                    "line": {
+                                                        "type": "integer"
+                                                    },
+                                                    "resolved": {
+                                                        "type": "boolean"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No Bitbucket integration, or no such pull request the account can read",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/repositories\/{repository}\/pull-requests\/{number}\/diff": {
+            "get": {
+                "summary": "Read pull request diff",
+                "description": "The unified diff of a pull request of a repository of the Bitbucket workspace, as text, from the point where its source branch left the target one. `repository` is its slug, without the workspace (`api` for `team\/api`). Over 256 KiB, narrow with `path` : a file, or a directory for every file under it (see `files` of readRepositoryPullRequest)",
+                "operationId": "readPullRequestDiff",
+                "parameters": [
+                    {
+                        "name": "repository",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "[A-Za-z0-9_-][A-Za-z0-9._-]*"
+                        }
+                    },
+                    {
+                        "name": "number",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No Bitbucket integration, no such pull request the account can read, or no change at `path`",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "Over 256 KiB : narrow with `path`",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/api\/scheduled-events": {
             "get": {
                 "summary": "List scheduled events",
@@ -8815,6 +9556,130 @@
                                     "position": 719,
                                     "jira_issue": 452,
                                     "link": "odit ut reprehenderit"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "\/api\/tasks\/timeline": {
+            "get": {
+                "summary": "Task timeline",
+                "description": "The tasks worked on between two days, both included (92 days at most) : in progress at some point of the period, or finished during it. Statuses fall in three categories : `todo`, `in_progress`, `done` (done and cancelled). Each task has `created_at`, `started_at` (when it first left todo, null if it never did), `ended_at` (when it was done or cancelled, null while it is open), `initial_category` (its category at the start of the period) and its status changes during the period in `changes`, with their categories. Status changes are kept 31 days : an older task is placed by its creation and its completion only. Oldest start first",
+                "operationId": "getTaskTimeline",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "422": {
+                        "description": "The request does not follow its rules, errors are keyed by field",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "$ref": "#\/components\/schemas\/ValidationErrors"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "The tasks of the period",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "title": {
+                                                "type": "string"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            },
+                                            "status_category": {
+                                                "type": "string"
+                                            },
+                                            "sprint": {
+                                                "type": "integer"
+                                            },
+                                            "sprint_name": {
+                                                "type": "string"
+                                            },
+                                            "jira_issue": {},
+                                            "link": {},
+                                            "created_at": {
+                                                "type": "string"
+                                            },
+                                            "started_at": {
+                                                "type": "string"
+                                            },
+                                            "ended_at": {
+                                                "type": "string"
+                                            },
+                                            "initial_category": {
+                                                "type": "string"
+                                            },
+                                            "changes": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "at": {
+                                                            "type": "string"
+                                                        },
+                                                        "from": {
+                                                            "type": "string"
+                                                        },
+                                                        "to": {
+                                                            "type": "string"
+                                                        },
+                                                        "from_category": {
+                                                            "type": "string"
+                                                        },
+                                                        "to_category": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

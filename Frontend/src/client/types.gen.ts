@@ -2521,6 +2521,74 @@ export type ListJiraIssuesResponses = {
 
 export type ListJiraIssuesResponse = ListJiraIssuesResponses[keyof ListJiraIssuesResponses];
 
+export type ListWorkedJiraIssuesData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/jira/worked-issues';
+};
+
+export type ListWorkedJiraIssuesErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The workspace has no Jira integration
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+    /**
+     * Jira could not be read
+     */
+    502: {
+        error?: string;
+    };
+};
+
+export type ListWorkedJiraIssuesError = ListWorkedJiraIssuesErrors[keyof ListWorkedJiraIssuesErrors];
+
+export type ListWorkedJiraIssuesResponses = {
+    /**
+     * The issues of the period
+     */
+    200: {
+        issues?: Array<{
+            key?: string;
+            summary?: string;
+            url?: string;
+            project?: string;
+            issue_type?: string;
+            status?: string;
+            status_category?: string;
+            created_at?: string;
+            started_at?: string;
+            ended_at?: string;
+            initial_category?: string;
+            changes?: Array<{
+                at?: string;
+                from?: string;
+                to?: string;
+                from_category?: string;
+                to_category?: string;
+            }>;
+        }>;
+        truncated?: boolean;
+    };
+};
+
+export type ListWorkedJiraIssuesResponse = ListWorkedJiraIssuesResponses[keyof ListWorkedJiraIssuesResponses];
+
 export type ReadJiraIssueData = {
     body?: never;
     path: {
@@ -3310,6 +3378,245 @@ export type ListPullRequestApprovalsResponses = {
 
 export type ListPullRequestApprovalsResponse = ListPullRequestApprovalsResponses[keyof ListPullRequestApprovalsResponses];
 
+export type ReadPullRequestData = {
+    body?: never;
+    path: {
+        pullRequest: number;
+    };
+    query?: {
+        unresolved?: boolean;
+    };
+    url: '/api/pull-requests/{pullRequest}';
+};
+
+export type ReadPullRequestErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * Not stored in the current workspace, or the forge does not know it anymore
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type ReadPullRequestError = ReadPullRequestErrors[keyof ReadPullRequestErrors];
+
+export type ReadPullRequestResponses = {
+    /**
+     * The pull request
+     */
+    200: {
+        id?: number;
+        number?: string;
+        repository?: string;
+        url?: string;
+        title?: string;
+        author?: string;
+        state?: string;
+        draft?: boolean;
+        source_branch?: string;
+        target_branch?: string;
+        description?: string;
+        files?: Array<{
+            path?: string;
+            previous_path?: unknown;
+            status?: string;
+            lines_added?: number;
+            lines_removed?: number;
+        }>;
+        comments?: Array<{
+            id?: string;
+            parent?: unknown;
+            author?: string;
+            created?: string;
+            body?: string;
+            path?: string;
+            line?: number;
+            resolved?: boolean;
+        }>;
+    };
+};
+
+export type ReadPullRequestResponse = ReadPullRequestResponses[keyof ReadPullRequestResponses];
+
+export type SearchRepositoryPullRequestsData = {
+    body?: never;
+    path: {
+        repository: string;
+    };
+    query?: {
+        branch?: string;
+        state?: 'open' | 'merged' | 'declined' | 'superseded';
+        limit?: number;
+    };
+    url: '/api/repositories/{repository}/pull-requests';
+};
+
+export type SearchRepositoryPullRequestsErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No Bitbucket integration, or no such repository the account can read
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type SearchRepositoryPullRequestsError = SearchRepositoryPullRequestsErrors[keyof SearchRepositoryPullRequestsErrors];
+
+export type SearchRepositoryPullRequestsResponses = {
+    /**
+     * The pull requests
+     */
+    200: Array<{
+        id?: unknown;
+        number?: string;
+        repository?: string;
+        url?: string;
+        title?: string;
+        author?: string;
+        state?: string;
+        draft?: boolean;
+        source_branch?: string;
+        target_branch?: string;
+        comment_count?: number;
+        reviewers?: Array<{
+            name?: string;
+            status?: string;
+        }>;
+    }>;
+};
+
+export type SearchRepositoryPullRequestsResponse = SearchRepositoryPullRequestsResponses[keyof SearchRepositoryPullRequestsResponses];
+
+export type ReadRepositoryPullRequestData = {
+    body?: never;
+    path: {
+        repository: string;
+        number: number;
+    };
+    query?: {
+        unresolved?: boolean;
+    };
+    url: '/api/repositories/{repository}/pull-requests/{number}';
+};
+
+export type ReadRepositoryPullRequestErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No Bitbucket integration, or no such pull request the account can read
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type ReadRepositoryPullRequestError = ReadRepositoryPullRequestErrors[keyof ReadRepositoryPullRequestErrors];
+
+export type ReadRepositoryPullRequestResponses = {
+    /**
+     * The pull request
+     */
+    200: {
+        id?: number;
+        number?: string;
+        repository?: string;
+        url?: string;
+        title?: string;
+        author?: string;
+        state?: string;
+        draft?: boolean;
+        source_branch?: string;
+        target_branch?: string;
+        description?: string;
+        files?: Array<{
+            path?: string;
+            previous_path?: unknown;
+            status?: string;
+            lines_added?: number;
+            lines_removed?: number;
+        }>;
+        comments?: Array<{
+            id?: string;
+            parent?: unknown;
+            author?: string;
+            created?: string;
+            body?: string;
+            path?: string;
+            line?: number;
+            resolved?: boolean;
+        }>;
+    };
+};
+
+export type ReadRepositoryPullRequestResponse = ReadRepositoryPullRequestResponses[keyof ReadRepositoryPullRequestResponses];
+
+export type ReadPullRequestDiffData = {
+    body?: never;
+    path: {
+        repository: string;
+        number: number;
+    };
+    query?: {
+        path?: string;
+    };
+    url: '/api/repositories/{repository}/pull-requests/{number}/diff';
+};
+
+export type ReadPullRequestDiffErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * No Bitbucket integration, no such pull request the account can read, or no change at `path`
+     */
+    404: {
+        error?: string;
+    };
+    /**
+     * Over 256 KiB : narrow with `path`
+     */
+    413: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type ReadPullRequestDiffError = ReadPullRequestDiffErrors[keyof ReadPullRequestDiffErrors];
+
 export type ListScheduledEventsData = {
     body?: never;
     path?: never;
@@ -3642,6 +3949,60 @@ export type CreateTaskResponses = {
 };
 
 export type CreateTaskResponse = CreateTaskResponses[keyof CreateTaskResponses];
+
+export type GetTaskTimelineData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/tasks/timeline';
+};
+
+export type GetTaskTimelineErrors = {
+    /**
+     * No active session
+     */
+    401: {
+        error?: string;
+    };
+    /**
+     * The request does not follow its rules, errors are keyed by field
+     */
+    422: ValidationErrors;
+};
+
+export type GetTaskTimelineError = GetTaskTimelineErrors[keyof GetTaskTimelineErrors];
+
+export type GetTaskTimelineResponses = {
+    /**
+     * The tasks of the period
+     */
+    200: Array<{
+        id?: number;
+        title?: string;
+        status?: string;
+        status_category?: string;
+        sprint?: number;
+        sprint_name?: string;
+        jira_issue?: unknown;
+        link?: unknown;
+        created_at?: string;
+        started_at?: string;
+        ended_at?: string;
+        initial_category?: string;
+        changes?: Array<{
+            at?: string;
+            from?: string;
+            to?: string;
+            from_category?: string;
+            to_category?: string;
+        }>;
+    }>;
+};
+
+export type GetTaskTimelineResponse = GetTaskTimelineResponses[keyof GetTaskTimelineResponses];
 
 export type PreviewTaskNotesData = {
     body: {

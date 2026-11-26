@@ -2,6 +2,8 @@
 
 namespace Tests\Integration;
 
+use App\Models\History;
+use App\Models\Task;
 use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
@@ -301,5 +303,75 @@ class TaskTest extends CubeTestCase
 
         $this->postJson('/api/tasks/notes', ['text' => 'Late', 'sprint' => $sprint['id']])->assertUnprocessableContent();
         $this->assertSame([], $this->titles());
+    }
+
+    private function timeline(string $from, string $to): array
+    {
+        return $this->get("/api/tasks/timeline?from={$from}&to={$to}")->assertOk()->json();
+    }
+
+    public function testTimelineListsTheTasksWorkedOnDuringThePeriod()
+    {
+        $this->register();
+        $today = date('Y-m-d');
+        $weekAgo = date('Y-m-d', strtotime('-7 days'));
+
+        $done = $this->task('Done this week');
+        $this->move($done, null, 'in_progress')->assertOk();
+        $this->move($done, null, 'done')->assertOk();
+        $this->task('Never started');
+        $ongoing = $this->task('Started last month');
+        $this->move($ongoing, null, 'in_review')->assertOk();
+        $old = $this->task('Done long ago');
+        $this->move($old, null, 'done')->assertOk();
+
+        // Older than the history : placed by its creation and its completion only
+        History::delete()->where('task', $old['id'])->fetch();
+        Task::update()->set('created_at', '2026-01-05 09:00:00')->set('done_at', '2026-01-20 17:00:00')->where('id', $old['id'])->fetch();
+        History::update()->set('created_at', date('Y-m-d H:i:s', strtotime('-40 days')))->where('task', $ongoing['id'])->fetch();
+
+        $entries = $this->timeline($weekAgo, $today);
+        $this->assertSame(['Started last month', 'Done this week'], array_column($entries, 'title'));
+        $this->assertSame([], $entries[0]['changes']);
+        $this->assertNull($entries[0]['ended_at']);
+        $this->assertSame([['todo', 'in_progress'], ['in_progress', 'done']], array_map(fn (array $change) => [$change['from'], $change['to']], $entries[1]['changes']));
+        $this->assertNotNull($entries[1]['ended_at']);
+
+        $january = $this->timeline('2026-01-10', '2026-01-31');
+        $this->assertSame(['Done long ago'], array_column($january, 'title'));
+        $this->assertStringStartsWith('2026-01-05T09:00:00', $january[0]['started_at']);
+        $this->assertStringStartsWith('2026-01-20T17:00:00', $january[0]['ended_at']);
+        $this->assertSame([], $this->timeline('2026-01-21', '2026-01-31'));
+    }
+
+    public function testTimelineStartsATaskWhenItLeavesToDo()
+    {
+        $this->register();
+        $waited = $this->task('Waited in the backlog');
+        Task::update()->set('created_at', date('Y-m-d H:i:s', strtotime('-20 days')))->where('id', $waited['id'])->fetch();
+        $this->move($waited, null, 'in_progress')->assertOk();
+
+        [$entry] = $this->timeline(date('Y-m-d', strtotime('-30 days')), date('Y-m-d'));
+        $this->assertSame('todo', $entry['initial_category']);
+        $this->assertSame('in_progress', $entry['status_category']);
+        $this->assertStringStartsWith(date('Y-m-d'), $entry['started_at']);
+        $this->assertStringStartsWith(date('Y-m-d', strtotime('-20 days')), $entry['created_at']);
+    }
+
+    public function testTimelineStaysInItsWorkspaceAndValidatesThePeriod()
+    {
+        $this->get('/api/tasks/timeline?from=2026-11-01&to=2026-11-30')->assertUnauthorized();
+
+        $this->register();
+        $task = $this->task('Mine');
+        $this->move($task, null, 'in_progress')->assertOk();
+        $this->logOut();
+
+        $this->register('bob@example.com');
+        $this->assertSame([], $this->timeline(date('Y-m-d', strtotime('-1 day')), date('Y-m-d')));
+
+        $this->get('/api/tasks/timeline?from=2026-11-30&to=2026-11-01')->assertUnprocessableContent();
+        $this->get('/api/tasks/timeline?from=2026-01-01&to=2026-06-01')->assertUnprocessableContent();
+        $this->get('/api/tasks/timeline?from=2026-02-30&to=2026-03-01')->assertUnprocessableContent();
     }
 }

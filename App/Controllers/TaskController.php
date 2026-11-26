@@ -12,11 +12,13 @@ use App\Requests\MoveTaskRequest;
 use App\Requests\SaveSprintLinkRequest;
 use App\Requests\TaskContentRequest;
 use App\Requests\TaskNotesRequest;
+use App\Requests\TimelineRequest;
 use App\Resources\SprintLinkResource;
 use App\Resources\SprintResource;
 use App\Resources\TaskHistoryResource;
 use App\Resources\TaskResource;
 use App\Services\TaskService;
+use App\Services\TaskTimelineService;
 use App\Services\WorkspaceService;
 use App\TaskNotes\TaskNotesParser;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
@@ -39,12 +41,14 @@ class TaskController extends Controller
         protected TaskService $tasks,
         protected FaviconService $favicons,
         protected TaskNotesParser $notesParser,
+        protected TaskTimelineService $timeline,
     ) {}
 
     public function routes(Router $router): void
     {
         $router->group('/api', middlewares: [IsAuthenticated::class], routes: [
             Route::get('/tasks', [self::class, 'list']),
+            Route::get('/tasks/timeline', [self::class, 'timeline']),
             Route::post('/tasks', [self::class, 'create']),
             Route::post('/tasks/notes/preview', [self::class, 'previewNotes']),
             Route::post('/tasks/notes', [self::class, 'createFromNotes']),
@@ -69,6 +73,15 @@ class TaskController extends Controller
     public function list(Request $request): Response
     {
         return Response::json(TaskResource::of($this->tasks->listTasks($this->workspace())));
+    }
+
+    #[Endpoint('Task timeline', 'The tasks worked on between two days, both included (92 days at most) : in progress at some point of the period, or finished during it. Statuses fall in three categories : `todo`, `in_progress`, `done` (done and cancelled). Each task has `created_at`, `started_at` (when it first left todo, null if it never did), `ended_at` (when it was done or cancelled, null while it is open), `initial_category` (its category at the start of the period) and its status changes during the period in `changes`, with their categories. Status changes are kept 31 days : an older task is placed by its creation and its completion only. Oldest start first', 'getTaskTimeline')]
+    #[RawResponse([['id' => 12, 'title' => 'Prepare the demo', 'status' => 'done', 'status_category' => 'done', 'sprint' => 3, 'sprint_name' => 'Sprint 3', 'jira_issue' => null, 'link' => null, 'created_at' => '2026-10-20T15:00:00+01:00', 'started_at' => '2026-11-02T09:12:00+01:00', 'ended_at' => '2026-11-05T17:40:00+01:00', 'initial_category' => 'todo', 'changes' => [['at' => '2026-11-02T09:12:00+01:00', 'from' => 'todo', 'to' => 'in_progress', 'from_category' => 'todo', 'to_category' => 'in_progress']]]], description: 'The tasks of the period')]
+    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
+    #[McpTool('get_task_timeline')]
+    public function timeline(TimelineRequest $request): Response
+    {
+        return Response::json($this->timeline->timeline($this->workspace(), $request->start(), $request->end()));
     }
 
     #[Endpoint('Create task', 'Adds a task at the end of the backlog or of a sprint, optionally with a single http(s) link to a page it is about', 'createTask')]

@@ -12,6 +12,7 @@ import TaskBacklog from '../components/TaskBacklog.vue'
 import TaskBoard from '../components/TaskBoard.vue'
 import TaskDialog from '../components/TaskDialog.vue'
 import TaskNotesDialog from '../components/TaskNotesDialog.vue'
+import TaskTimeline from '../components/TaskTimeline.vue'
 import { useJiraStore } from '../stores/jira'
 import { useTasksStore, type Task } from '../stores/tasks'
 import { useWorkspaceStore } from '../stores/workspace'
@@ -84,6 +85,7 @@ function takeNotes(sprint: number | null) {
     <TabList>
       <Tab value="board">{{ t('tasks.board') }}</Tab>
       <Tab value="backlog">{{ t('tasks.backlog') }}</Tab>
+      <Tab value="timeline">{{ t('tasks.timeline.tab') }}</Tab>
     </TabList>
     <TabPanels>
       <TabPanel value="board">
@@ -91,6 +93,9 @@ function takeNotes(sprint: number | null) {
       </TabPanel>
       <TabPanel value="backlog">
         <TaskBacklog @open="openTask" @create="createTask" @notes="takeNotes" />
+      </TabPanel>
+      <TabPanel value="timeline">
+        <TaskTimeline v-if="tab === 'timeline'" @open="openTask" />
       </TabPanel>
     </TabPanels>
   </Tabs>
