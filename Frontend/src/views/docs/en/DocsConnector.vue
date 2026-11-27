@@ -155,7 +155,8 @@ const chained = `
 
   <h3>No shell</h3>
   <p>
-    Commands run <strong>directly</strong>, without a shell: the payload can never become a command or an option. In
+    Commands run <strong>directly</strong>, without a shell: the payload can never become a command, and a variable
+    that would start an argument with <code>-</code> fails the delivery rather than pass an option to the command. In
     return, <code>|</code>, <code>&amp;&amp;</code>, <code>&gt;</code>, <code>$VAR</code> or <code>*</code> mean nothing
     special. When you need them, call a shell yourself, without putting any <code>{payload…}</code> variable in it, or
     write a script:

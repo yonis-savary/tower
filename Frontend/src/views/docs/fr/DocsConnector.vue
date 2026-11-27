@@ -162,8 +162,9 @@ const chained = `
 
   <h3>Sans shell</h3>
   <p>
-    Les commandes sont lancées <strong>directement</strong>, sans shell : le payload ne peut jamais devenir une commande ou
-    une option. En contrepartie, <code>|</code>, <code>&amp;&amp;</code>, <code>&gt;</code>, <code>$VAR</code> ou
+    Les commandes sont lancées <strong>directement</strong>, sans shell : le payload ne peut jamais devenir une commande,
+    et une variable qui ferait commencer un argument par <code>-</code> fait échouer la livraison plutôt que de passer
+    une option à la commande. En contrepartie, <code>|</code>, <code>&amp;&amp;</code>, <code>&gt;</code>, <code>$VAR</code> ou
     <code>*</code> n'ont pas de sens particulier. Pour en avoir besoin, appelle un shell toi-même, sans y insérer de
     variable <code>{payload…}</code>, ou écris un script :
   </p>

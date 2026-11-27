@@ -53,6 +53,10 @@ PYTHON_SCRIPTS = (".py", ".pyz")
 MAX_PENDING_ANSWERS = 1000
 
 
+class InjectedOption(Exception):
+    """A placeholder filled an argument with a value starting with a dash."""
+
+
 class Fatal(Exception):
     """Tower refused this connector : retrying would not help."""
 
@@ -77,7 +81,7 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def split_command(command: str) -> list[str]:
-    # Run without shell : the payload can never become a command or an option
+    # Run without shell : the payload can never become a command, and HandlerFile refuses it as an option
     parts = [os.path.expanduser(part) for part in shlex.split(command, posix=os.name != "nt")]
     if parts and parts[0].lower().endswith(PYTHON_SCRIPTS):
         parts.insert(0, sys.executable)
@@ -256,7 +260,12 @@ class HandlerFile:
 
         # Replaced inside an argument, after splitting : a value never adds an argument
         def fill(command: list[str]) -> list[str]:
-            return [fill_text(part, values) for part in command]
+            filled = [fill_text(part, values) for part in command]
+            for part, value in zip(command, filled):
+                # git --upload-pack=, curl -o, rsync -e... : an option brought by the payload can run anything
+                if value.startswith("-") and not part.startswith("-"):
+                    raise InjectedOption(f"{part!r} would become the option {shorten(value)!r} of {command[0]}, not run")
+            return filled
 
         return [chain._replace(commands=[fill(command) for command in chain.commands]) for pattern, chain in self.rules if fnmatch.fnmatchcase(event, pattern)]
 
@@ -320,7 +329,12 @@ class Handler:
 
     async def run(self, message: dict) -> None:
         delivery = message.get("delivery")
-        chains = self.source.chains_for(message)
+        try:
+            chains = self.source.chains_for(message)
+        except InjectedOption as refusal:
+            await self.outbox.send({"type": "response", "delivery": delivery, "status": "failed", "exit_code": None, "output": str(refusal)})
+            self.console.outgoing(f"{self.console.event(message)} failed", None, str(refusal))
+            return
         if not chains:
             await self.outbox.send({"type": "response", "delivery": delivery, "status": "received"})
             self.console.outgoing(f"{self.console.event(message)} received · no command")
