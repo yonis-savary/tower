@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Mcp\McpServer;
 use App\Security\ApiTokenService;
 use Cube\Data\OpenAPI\Attributes\Hidden;
+use Cube\Security\BearerAuthentication;
 use Cube\Web\Controller;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Response;
@@ -30,10 +31,8 @@ class McpController extends Controller
 
     public function handle(Request $request): Response
     {
-        $authorization = $request->getHeader('authorization', '');
-        $token = str_starts_with($authorization, 'Bearer ')
-            ? $this->tokens->authenticate(trim(substr($authorization, 7)))
-            : null;
+        $value = BearerAuthentication::tokenOf($request);
+        $token = $value ? $this->tokens->authenticate($value) : null;
 
         if (!$token)
             return Response::json(['error' => 'A valid Tower API token is required'], StatusCode::UNAUTHORIZED)
