@@ -40,21 +40,17 @@ class FaviconClient extends HttpClient
         return $this->resolveLocation($base, $reference);
     }
 
+    public function isPublicOnly(): bool
+    {
+        // A link is typed by a user : it must not make Tower read its own network
+        return true;
+    }
+
     private function readOnce(string $url, int $maxBytes): ?Response
     {
-        $parts = parse_url($url);
-        $scheme = strtolower($parts['scheme'] ?? '');
-        $host = trim($parts['host'] ?? '', '[]');
-        if (!in_array($scheme, ['http', 'https']) || '' === $host)
+        $scheme = strtolower(parse_url($url, PHP_URL_SCHEME) ?? '');
+        if (!in_array($scheme, ['http', 'https']) || !parse_url($url, PHP_URL_HOST))
             return null;
-
-        // A link is typed by a user : it must not make Tower read its own network
-        $address = $this->publicAddressOf($host);
-        if (null === $address)
-            return null;
-
-        $port = $parts['port'] ?? ('https' === $scheme ? 443 : 80);
-        $pinned = str_contains($address, ':') ? "[{$address}]" : $address;
 
         try {
             return $this->fetch(
@@ -62,9 +58,7 @@ class FaviconClient extends HttpClient
                 timeout: self::TIMEOUT_SECONDS,
                 supportRedirection: false,
                 logFlags: 0,
-                // The address checked is the one connected to : a second DNS answer cannot point elsewhere
                 curlMutator: fn (\CurlHandle $handle) => curl_setopt_array($handle, [
-                    CURLOPT_RESOLVE => ["{$host}:{$port}:{$pinned}"],
                     CURLOPT_MAXFILESIZE_LARGE => $maxBytes,
                     CURLOPT_ENCODING => '',
                 ]),
@@ -72,29 +66,5 @@ class FaviconClient extends HttpClient
         } catch (\RuntimeException) {
             return null;
         }
-    }
-
-    private function publicAddressOf(string $host): ?string
-    {
-        $addresses = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : $this->lookup($host);
-        if (!$addresses)
-            return null;
-
-        foreach ($addresses as $address) {
-            if (!filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE))
-                return null;
-        }
-
-        return $addresses[0];
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function lookup(string $host): array
-    {
-        $records = @dns_get_record($host, DNS_A | DNS_AAAA) ?: [];
-
-        return array_values(array_filter(array_map(fn (array $record) => $record['ip'] ?? $record['ipv6'] ?? null, $records)));
     }
 }

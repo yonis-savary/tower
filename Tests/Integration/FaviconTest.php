@@ -7,6 +7,7 @@ use App\Session\SelectedWorkspace;
 use Cube\Env\Cache;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
+use Cube\Web\Http\Exceptions\NonPublicAddressException;
 use Cube\Web\Http\HttpMockServer;
 use Cube\Web\Http\MockServers;
 use Cube\Web\Http\Request;
@@ -109,11 +110,16 @@ class FaviconTest extends CubeTestCase
 
     public function testPrivateAddressesAreNeverRead()
     {
-        $local = $this->link('http://127.0.0.1:8081/');
-        $internal = $this->link('http://10.0.0.12/grafana');
-
-        $this->get("/api/sprints/links/{$local}/icon")->assertNotFound();
-        $this->get("/api/sprints/links/{$internal}/icon")->assertNotFound();
-        $this->assertSame([], $this->reads);
+        // A mock server answers before the address check : the refusal is asserted on a real fetch
+        (new MockServers())->asGlobalInstance(function () {
+            foreach (['http://127.0.0.1:8081/', 'http://10.0.0.12/grafana'] as $url) {
+                try {
+                    (new FaviconClient())->fetch(new Request('GET', $url));
+                    $this->fail("{$url} was fetched");
+                } catch (NonPublicAddressException $refused) {
+                    $this->assertSame(parse_url($url, PHP_URL_HOST), $refused->host);
+                }
+            }
+        });
     }
 }
