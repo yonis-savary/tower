@@ -7,13 +7,13 @@ use App\Domain\Event\EventService;
 use App\Domain\History\HistoryService;
 use App\Models\AccessKey;
 use App\Requests\TriggerEventRequest;
+use Cube\Utils\Identifier;
 use Cube\Web\Http\Rules\Param;
 use Cube\Web\Http\Rules\Rule;
 use Cube\Web\Websocket\Channel\Channel;
 use Cube\Web\Websocket\Channel\ChannelSubscriber;
 use Psr\Http\Message\RequestInterface;
 use Ratchet\ConnectionInterface;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * The connection of each device, authenticated by an access key given in the handshake headers.
@@ -60,7 +60,7 @@ class DevicesChannel extends Channel
         $this->accessKeys[$connection->resourceId] = $key->id;
         $this->keys->markUsed($key);
 
-        $uuid = Uuid::v4()->toRfc4122();
+        $uuid = Identifier::uuid4();
         $this->getSubscriber($connection)->send(['type' => 'connection', 'uuid' => $uuid]);
         $device = $this->describe($connection->httpRequest, $key->name, $uuid);
         ConnectedDevices::getInstance()->add($connection->resourceId, $key->workspace, $device);

@@ -9,7 +9,6 @@ use App\Models\WebhookCall;
 use Cube\Data\Bunch;
 use Cube\Utils\Identifier;
 use Cube\Web\Http\Request;
-use Symfony\Component\Uid\Uuid;
 
 use function Cube\decrypt;
 use function Cube\encrypt;
@@ -74,7 +73,7 @@ class WebhookService
         $webhook = (new Webhook([
             'workspace' => $workspace,
             'name' => $name,
-            'uuid' => Uuid::v4()->toRfc4122(),
+            'uuid' => Identifier::uuid4(),
             'secret' => null === $secret ? null : encrypt($secret),
             'events' => $this->encodeEvents($events),
             'enabled' => true,
