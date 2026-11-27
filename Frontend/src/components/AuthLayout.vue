@@ -13,7 +13,7 @@ defineProps<{ title: string; subtitle: string }>()
 
       <slot />
 
-      <footer class="auth-footer">
+      <footer v-if="$slots.footer" class="auth-footer">
         <slot name="footer" />
       </footer>
     </section>

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Password from 'primevue/password'
+import { readRegistration } from '../client'
 import AuthLayout from '../components/AuthLayout.vue'
 import { useAuthStore } from '../stores/auth'
 
@@ -18,6 +19,13 @@ const email = ref('')
 const password = ref('')
 const submitting = ref(false)
 const error = ref<string | null>(null)
+// Hidden until known : a closed instance never shows the link, even for a moment
+const registrationOpen = ref(false)
+
+onMounted(async () => {
+  const { data } = await readRegistration()
+  registrationOpen.value = data?.open === true
+})
 
 function errorMessage(status: number | null): string {
   if (status === 401) return t('login.invalidCredentials')
@@ -67,7 +75,7 @@ async function submit() {
       <Button type="submit" :label="t('login.submit')" :loading="submitting" fluid />
     </form>
 
-    <template #footer>
+    <template v-if="registrationOpen" #footer>
       {{ t('login.noAccount') }}
       <RouterLink :to="{ name: 'register' }">{{ t('login.registerLink') }}</RouterLink>
     </template>
