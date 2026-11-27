@@ -354,7 +354,7 @@ y en a un, la tâche concernée s'il y en a une, et des `details` en JSON. Les l
 | `token.created`, `token.revoked` | création et révocation d'un jeton d'agent (voir § Serveur MCP) |
 | `agenda.item.created`, `agenda.item.updated`, `agenda.item.deleted` | éléments de l'agenda (`title`, `item`) |
 | `agenda.item.upcoming`        | rappel avant un élément (`title`, `item`, `minutes`), voir § Agenda |
-| `user.logged_in`, `user.login_failed` | connexion par mot de passe, réussie ou refusée (`email`), écrite dans chaque workspace du compte ; un refus n'a pas d'auteur, et un email inconnu n'écrit rien |
+| `user.logged_in`, `user.login_failed` | connexion par mot de passe, réussie ou refusée (`email`), écrite dans chaque workspace du compte ; un refus n'a pas d'auteur, et un email inconnu n'écrit rien. Après 5 échecs sur un compte depuis une adresse, ou 50 depuis une adresse, la connexion répond 429 pendant 15 minutes sans rien écrire (`LoginThrottle`) |
 | `doc.page.created`, `doc.page.updated`, `doc.page.moved`, `doc.page.archived`, `doc.page.restored`, `doc.page.deleted` | pages de la documentation (`title`, `page`, `version` ; `sub_pages` pour un archivage, un désarchivage ou une suppression) |
 
 Les lignes `task.*`, `sprint.*` et `event.triggered` sont aussi envoyées aux appareils

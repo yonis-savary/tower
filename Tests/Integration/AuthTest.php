@@ -3,11 +3,13 @@
 namespace Tests\Integration;
 
 use App\Domain\Account\LoginHistory;
+use App\Domain\Account\LoginThrottle;
 use App\Models\History;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use Cube\Data\Database\Database;
+use Cube\Env\Cache;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
 
@@ -20,6 +22,8 @@ class AuthTest extends CubeTestCase
     {
         parent::setUp();
         Authentication::getInstance()->logout();
+        // Kept on disk between runs : the failures of a previous run would block this one
+        Cache::getInstance()->child('login-throttle')->clear();
     }
 
     private function register(): array
@@ -180,6 +184,32 @@ class AuthTest extends CubeTestCase
         $this->postJson('/api/auth/login', ['email' => 'nobody@example.com', 'password' => self::PASSWORD])->assertUnauthorized();
 
         $this->assertNull(History::findWhere(['type' => LoginHistory::LOGIN_FAILED_TYPE]));
+    }
+
+    public function testRepeatedFailuresBlockTheAccountFromThatAddress()
+    {
+        $this->register();
+        $this->post('/api/auth/logout')->assertNoContent();
+
+        for ($attempt = 0; $attempt < LoginThrottle::MAX_FAILURES_PER_ACCOUNT; ++$attempt)
+            $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => 'a wrong guess'])->assertUnauthorized();
+
+        $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => self::PASSWORD])->assertResponseCode(429);
+        $this->assertSame(LoginThrottle::MAX_FAILURES_PER_ACCOUNT, History::select()->where('type', 'user.login_failed')->count());
+    }
+
+    public function testASuccessForgetsTheFailuresOfTheAccount()
+    {
+        $this->register();
+        $this->post('/api/auth/logout')->assertNoContent();
+
+        for ($attempt = 1; $attempt < LoginThrottle::MAX_FAILURES_PER_ACCOUNT; ++$attempt)
+            $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => 'a wrong guess'])->assertUnauthorized();
+        $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => self::PASSWORD])->assertOk();
+        $this->post('/api/auth/logout')->assertNoContent();
+
+        $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => 'a wrong guess'])->assertUnauthorized();
+        $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => self::PASSWORD])->assertOk();
     }
 
     public function testDisabledUserCannotLogIn()

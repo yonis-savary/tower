@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Domain\Account\AccountService;
 use App\Domain\Account\LoginHistory;
+use App\Domain\Account\LoginThrottle;
 use App\Domain\Account\UserRegistration;
 use App\Domain\Workspace\WorkspaceService;
 use App\Middlewares\IsAuthenticated;
@@ -35,6 +36,7 @@ class AuthController extends Controller
         protected AccountService $accounts,
         protected RegistrationConfiguration $registrationConfiguration,
         protected LoginHistory $logins,
+        protected LoginThrottle $throttle,
     ) {}
 
     public function routes(Router $router): void
@@ -74,13 +76,22 @@ class AuthController extends Controller
     #[Endpoint('Log in', 'Opens a session from an email and a password', 'login')]
     #[ResourceResponse(UserResource::class, description: 'The logged in user')]
     #[RawResponse(['error' => 'Invalid credentials'], responseCode: StatusCode::UNAUTHORIZED, description: 'Wrong email or password, or disabled account')]
+    #[RawResponse(['error' => 'Too many failed attempts, try again later'], responseCode: StatusCode::TOO_MANY_REQUESTS, description: 'Too many failures for this account from this address, or from this address')]
     public function login(LoginRequest $request): Response
     {
         $validated = $request->validated();
+        $address = $request->getIp();
+        if ($this->throttle->isBlocked($validated['email'], $address))
+            return Response::json(['error' => 'Too many failed attempts, try again later'], StatusCode::TOO_MANY_REQUESTS)
+                ->withHeaders(['Retry-After' => (string) LoginThrottle::WINDOW_SECONDS]);
+
         if (!$this->authentication->attempt($validated['email'], $validated['password'])) {
+            $this->throttle->failed($validated['email'], $address);
             $this->logins->failed($validated['email']);
             return Response::json(['error' => 'Invalid credentials'], StatusCode::UNAUTHORIZED);
         }
+
+        $this->throttle->succeeded($validated['email'], $address);
 
         $user = $this->authentication->user();
         $this->workspaces->createDefault($user);
