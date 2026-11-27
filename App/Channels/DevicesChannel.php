@@ -246,10 +246,12 @@ class DevicesChannel extends Channel
         $this->emit(['type' => 'disconnect', 'access_key' => $accessKey, 'reason' => $reason]);
     }
 
-    // Revoking or rotating a key closes its connections through a broadcast, which may not arrive
+    // Revoking or rotating a key closes its connections through a broadcast, which may not arrive, and disabling its creator through nothing
     private function isStillValid(AccessKey $key, int $connectionId): bool
     {
-        return null === $key->revoked_at && $key->secret_hash === ($this->secretHashes[$connectionId] ?? null);
+        return null === $key->revoked_at
+            && $key->secret_hash === ($this->secretHashes[$connectionId] ?? null)
+            && $this->keys->creatorAllows($key);
     }
 
     private function authenticate(RequestInterface $request): ?AccessKey

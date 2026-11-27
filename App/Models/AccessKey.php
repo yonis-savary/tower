@@ -20,7 +20,9 @@ use Cube\Utils\Attributes\Generated;
  * @property \DateTimeImmutable $revoked_at
  * @property string $listen
  * @property string $handlers
+ * @property int $created_by
  * @property Workspace $_workspace
+ * @property User $_created_by
  * @property ConfigDownload[] $configDownloads
  * @property EventDelivery[] $eventDeliveries
  */
@@ -55,7 +57,8 @@ class AccessKey extends Model
             'last_used_at' => (new ModelField('last_used_at'))->type('DATETIME')->nullable()->default(NULL),
             'revoked_at' => (new ModelField('revoked_at'))->type('DATETIME')->nullable()->default(NULL),
             'listen' => (new ModelField('listen'))->type('STRING')->notNull()->default(NULL),
-            'handlers' => (new ModelField('handlers'))->type('STRING')->nullable()->default(NULL)
+            'handlers' => (new ModelField('handlers'))->type('STRING')->nullable()->default(NULL),
+            'created_by' => (new ModelField('created_by'))->type('INTEGER')->nullable()->default(NULL)->references(User::class,'id')
         ];
     }
 
@@ -63,6 +66,12 @@ class AccessKey extends Model
     public function _workspace(): HasOne
     {
         return $this->hasOne('_workspace', 'workspace', Workspace::class, 'id');
+    }
+
+    #[Generated]
+    public function _created_by(): HasOne
+    {
+        return $this->hasOne('_created_by', 'created_by', User::class, 'id');
     }
 
     #[Generated]
@@ -84,6 +93,7 @@ class AccessKey extends Model
             "configDownloads",
             "eventDeliveries",
             "_workspace",
+            "_created_by",
         ];
     }
 

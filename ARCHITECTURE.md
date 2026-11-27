@@ -397,7 +397,9 @@ Une configuration est créée dans le front (page des appareils, onglet « Conne
 appareil »). Elle donne un `client_id`
 (`twr_…`) et un secret de 256 bits, affiché une seule fois ; Tower n'en garde que le SHA-256.
 Elle peut servir sur plusieurs appareils et se révoque depuis le front : les appareils qui
-l'utilisent sont déconnectés.
+l'utilisent sont déconnectés. Elle appartient à son créateur (`access_key.created_by`) : retirer
+ce membre du workspace révoque ses configurations, et un créateur désactivé ne laisse plus ses
+appareils se connecter ni rien recevoir. Les configurations créées avant n'ont pas de créateur.
 
 Une configuration se **duplique** depuis le front : la modale de création s'ouvre avec ses
 abonnements et ses règles de handler, sous le nom « <nom> (copie) », modifiable. La copie est
@@ -1232,7 +1234,7 @@ Conventions Cube : tables au singulier (le modèle généré porte le nom de la 
 | `sprint_link`     | `sprint`, `label`, `url`, `created_at`                                    |
 | `history`         | `workspace`, `type`, `origin`, `user`, `task`, `details`, `created_at`    |
 | `event_delivery`  | `history`, `access_key`, `connection_uuid`, `hostname`, `payload`, `status`, `exit_code`, `response`, `responded_at` |
-| `access_key`      | configurations : `workspace`, `name`, `client_id`, `secret_hash`, `listen`, `created_at`, `last_used_at`, `revoked_at` |
+| `access_key`      | configurations : `workspace`, `created_by`, `name`, `client_id`, `secret_hash`, `listen`, `created_at`, `last_used_at`, `revoked_at` |
 | `quick_action`    | `workspace`, `name`, `type`, `payload`, `created_at`                      |
 | `webhook`         | `workspace`, `name`, `uuid`, `secured`, `secret` (chiffré, nul si non sécurisé), `events` (JSON), `enabled`, `created_at`, `last_called_at` |
 | `webhook_call`    | `webhook`, `status`, `ip`, `user_agent`, `payload`, `created_at`          |

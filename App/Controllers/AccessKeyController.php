@@ -83,6 +83,7 @@ class AccessKeyController extends Controller
         $validated = $request->validated();
         [$key, $secret] = $this->keys->create(
             currentWorkspaceId(),
+            $this->authentication->userId(),
             $validated['name'],
             $validated['listen'] ?? AccessKeyService::LISTEN_EVERYTHING,
             HandlerRules::normalize($validated['handlers'] ?? []),

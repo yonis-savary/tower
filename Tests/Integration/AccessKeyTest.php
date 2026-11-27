@@ -11,6 +11,7 @@ use App\Domain\History\HistoryService;
 use App\Domain\Workspace\WorkspaceSignals;
 use App\Models\AccessKey;
 use App\Models\ConfigDownload;
+use App\Models\User;
 use App\Session\SelectedWorkspace;
 use Cube\Env\Configuration;
 use Cube\Security\Authentication;
@@ -85,6 +86,42 @@ class AccessKeyTest extends CubeTestCase
         $this->deleteJson('/api/access-keys/1')->assertUnauthorized();
         $this->get('/api/connector')->assertUnauthorized();
         $this->get('/api/connector/handler')->assertUnauthorized();
+    }
+
+    public function testTheKeysOfARemovedMemberAreRevoked()
+    {
+        $this->register('bob@example.com');
+        $bob = User::findWhere(['email' => 'bob@example.com'])->id;
+        $this->post('/api/auth/logout')->assertNoContent();
+        $this->register('alice@example.com');
+        $workspace = $this->get('/api/workspaces/current')->assertOk()->json()['id'];
+        $this->postJson("/api/workspaces/{$workspace}/members", ['email' => 'bob@example.com'])->assertOk();
+        $alicesKey = $this->createKey('Alice');
+
+        $this->post('/api/auth/logout')->assertNoContent();
+        $this->postJson('/api/auth/login', ['email' => 'bob@example.com', 'password' => 'correct horse battery'])->assertOk();
+        $this->putJson('/api/workspaces/current', ['workspace' => $workspace])->assertOk();
+        $bobsKey = $this->createKey('Bob');
+        $this->assertNull($this->authorize($this->credentials($bobsKey)));
+
+        $this->delete("/api/workspaces/{$workspace}/members/{$bob}")->assertNoContent();
+
+        $this->assertNotNull($this->authorize($this->credentials($bobsKey)));
+        $this->assertNotNull(AccessKey::find($bobsKey['key']['id'])->revoked_at);
+        $this->assertNull($this->authorize($this->credentials($alicesKey)));
+    }
+
+    public function testTheKeysOfADisabledUserStopWorking()
+    {
+        $this->register('alice@example.com');
+        $key = $this->createKey();
+        $this->assertNull($this->authorize($this->credentials($key)));
+
+        $alice = User::findWhere(['email' => 'alice@example.com']);
+        $alice->disabled_at = new \DateTime();
+        $alice->save();
+
+        $this->assertNotNull($this->authorize($this->credentials($key)));
     }
 
     public function testBasicHandlerIsDownloadedWhenBuilt()

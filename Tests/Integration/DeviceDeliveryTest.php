@@ -64,7 +64,7 @@ class DeviceDeliveryTest extends CubeTestCase
 
     private function connect(int $workspace, array $listen): object
     {
-        [$key, $secret] = $this->keys->create($workspace, 'Key '.count($this->connections), $listen);
+        [$key, $secret] = $this->keys->create($workspace, null, 'Key '.count($this->connections), $listen);
 
         $connection = new class implements ConnectionInterface {
             public int $resourceId;

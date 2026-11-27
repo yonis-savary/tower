@@ -5,6 +5,8 @@ namespace App\Domain\AccessKey;
 use App\Domain\AccessKey\Connector\HandlerRules;
 use App\Models\AccessKey;
 use App\Models\ConfigDownload;
+use App\Models\User;
+use App\Models\WorkspaceMember;
 use Cube\Data\Bunch;
 use Cube\Utils\Identifier;
 
@@ -33,12 +35,13 @@ class AccessKeyService
      * @param list<string> $listen   Patterns of the events sent to the devices using this key
      * @param list<array>  $handlers Handler rules, normalized by `HandlerRules::normalize()`
      */
-    public function create(int $workspace, string $name, array $listen = self::LISTEN_EVERYTHING, array $handlers = []): array
+    public function create(int $workspace, ?int $createdBy, string $name, array $listen = self::LISTEN_EVERYTHING, array $handlers = []): array
     {
         $secret = $this->newSecret();
 
         $key = (new AccessKey([
             'workspace' => $workspace,
+            'created_by' => $createdBy,
             'name' => $name,
             'client_id' => 'twr_'.bin2hex(random_bytes(12)),
             'secret_hash' => Identifier::hash256($secret),
@@ -138,6 +141,32 @@ class AccessKeyService
         ConfigDownload::delete()->where('access_key', $key->id)->fetch();
     }
 
+    /**
+     * @return list<AccessKey> The usable keys this member created in the workspace
+     */
+    public function createdBy(int $workspace, int $user): array
+    {
+        return AccessKey::select()
+            ->where('workspace', $workspace)
+            ->where('created_by', $user)
+            ->where('revoked_at', null)
+            ->fetch();
+    }
+
+    /**
+     * A key stops working with its creator : once disabled, or no longer a member of the workspace.
+     */
+    public function creatorAllows(AccessKey $key): bool
+    {
+        if (null === $key->created_by)
+            return true;
+        $creator = User::find($key->created_by);
+
+        return $creator
+            && null === $creator->disabled_at
+            && WorkspaceMember::existsWhere(['user' => $creator->id, 'workspace' => $key->workspace]);
+    }
+
     public function secretMatches(AccessKey $key, #[\SensitiveParameter] string $secret): bool
     {
         // A 256-bit random secret needs no slow hash, and bcrypt would hold the websocket event loop
@@ -148,7 +177,7 @@ class AccessKeyService
     {
         $key = AccessKey::findWhere(['client_id' => $clientId]);
 
-        return $key && !$key->revoked_at && $this->secretMatches($key, $secret) ? $key : null;
+        return $key && !$key->revoked_at && $this->secretMatches($key, $secret) && $this->creatorAllows($key) ? $key : null;
     }
 
     public function markUsed(AccessKey $key): void

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Workspace;
 
+use App\Domain\AccessKey\AccessKeyService;
 use App\Domain\Documentation\DocumentationImages;
 use App\Domain\Documentation\DocumentationService;
 use App\Domain\History\HistoryActor;
@@ -51,6 +52,7 @@ class WorkspaceService
         protected WorkspaceIconService $icons,
         protected DocumentationService $documentation,
         protected DocumentationImages $docImages,
+        protected AccessKeyService $keys,
     ) {}
 
     /**
@@ -146,6 +148,9 @@ class WorkspaceService
             return false;
 
         WorkspaceMember::deleteWhere(['workspace' => $workspace->id, 'user' => $userId]);
+        // The devices they set up would keep receiving every event of the workspace
+        foreach ($this->keys->createdBy($workspace->id, $userId) as $key)
+            $this->keys->revoke($key);
         // What they asked to be notified of here is theirs only
         NotificationRule::deleteWhere(['workspace' => $workspace->id, 'user' => $userId]);
         PushSubscription::deleteWhere(['workspace' => $workspace->id, 'user' => $userId]);

@@ -2,7 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Channels\DevicesChannel;
 use App\Channels\WorkspaceDevicesChannel;
+use App\Domain\AccessKey\AccessKeyService;
 use App\Domain\Workspace\WorkspaceIconService;
 use App\Domain\Workspace\WorkspaceService;
 use App\Favicons\Favicon;
@@ -39,6 +41,8 @@ class WorkspaceController extends Controller
         protected WorkspaceSocketToken $socketTokens,
         protected WorkspaceDevicesChannel $devicesChannel,
         protected WorkspaceIconService $icons,
+        protected AccessKeyService $keys,
+        protected DevicesChannel $devices,
     ) {}
 
     public function routes(Router $router): void
@@ -260,9 +264,14 @@ class WorkspaceController extends Controller
         if (!$found || !$this->workspaces->isMember($user, $found->id))
             return $this->workspaceNotFound();
 
-        return $this->workspaces->removeMember($found, $user)
-            ? Response::noContent()
-            : Response::json(['error' => 'A workspace keeps at least one member'], StatusCode::CONFLICT);
+        $keys = $this->keys->createdBy($found->id, $user);
+        if (!$this->workspaces->removeMember($found, $user))
+            return Response::json(['error' => 'A workspace keeps at least one member'], StatusCode::CONFLICT);
+
+        foreach ($keys as $key)
+            $this->devices->disconnectKey($key->id, 'revoked');
+
+        return Response::noContent();
     }
 
     private function workspaceOfUser(int $workspace): ?Workspace
