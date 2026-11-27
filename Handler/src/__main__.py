@@ -162,9 +162,12 @@ def discuss(message: dict, arguments: argparse.Namespace) -> str:
         raise Refusal("claude is not installed on this device, or not in the PATH of the connector")
 
     path = prompt_path(workspace, key)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(system_prompt(issue), encoding="utf-8")
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    # Created private : writing first and restricting after leaves a moment where others can read it
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     path.chmod(0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as prompt:
+        prompt.write(system_prompt(issue))
 
     # The ticket travels through the file : only safe values are given to the terminal
     command = [sys.executable, os.path.abspath(sys.argv[0]), "--cwd", arguments.cwd, "open-discussion", workspace, key]
