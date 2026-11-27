@@ -97,7 +97,7 @@ class NotificationTest extends CubeTestCase
         $this->postJson('/api/auth/login', ['email' => $email, 'password' => self::PASSWORD])->assertOk();
     }
 
-    private function subscribe(string $endpoint = 'https://push.example.com/abc'): array
+    private function subscribe(string $endpoint = 'https://fcm.googleapis.com/fcm/send/abc'): array
     {
         return $this->putJson('/api/push/subscriptions', [
             'endpoint' => $endpoint,
@@ -131,7 +131,7 @@ class NotificationTest extends CubeTestCase
     {
         $this->get('/api/push')->assertUnauthorized();
         $this->get('/api/push/subscriptions')->assertUnauthorized();
-        $this->postJson('/api/push/subscriptions/claim', ['endpoint' => 'https://push.example.com/abc'])->assertUnauthorized();
+        $this->postJson('/api/push/subscriptions/claim', ['endpoint' => 'https://fcm.googleapis.com/fcm/send/abc'])->assertUnauthorized();
         $this->get('/api/notification-rules')->assertUnauthorized();
         $this->postJson('/api/notification-rules', ['name' => 'a', 'listen' => ['*']])->assertUnauthorized();
     }
@@ -143,7 +143,7 @@ class NotificationTest extends CubeTestCase
 
         $this->configurePush(enabled: false);
         $this->assertSame(['enabled' => false, 'public_key' => null], $this->get('/api/push')->assertOk()->json());
-        $this->putJson('/api/push/subscriptions', ['endpoint' => 'https://push.example.com/abc', 'keys' => ['p256dh' => 'abc', 'auth' => 'abc'], 'content_encoding' => 'aes128gcm'])->assertResponseCode(409);
+        $this->putJson('/api/push/subscriptions', ['endpoint' => 'https://fcm.googleapis.com/fcm/send/abc', 'keys' => ['p256dh' => 'abc', 'auth' => 'abc'], 'content_encoding' => 'aes128gcm'])->assertResponseCode(409);
     }
 
     public function testSubscriptionIsUpdatedRatherThanDuplicated()
@@ -153,11 +153,16 @@ class NotificationTest extends CubeTestCase
         $again = $this->subscribe();
 
         $this->assertSame($first['id'], $again['id']);
-        $this->assertSame('https://push.example.com/abc', $again['endpoint']);
+        $this->assertSame('https://fcm.googleapis.com/fcm/send/abc', $again['endpoint']);
         $this->assertCount(1, $this->get('/api/push/subscriptions')->json());
 
         $this->putJson('/api/push/subscriptions', ['endpoint' => 'http://push.example.com/abc', 'keys' => ['p256dh' => 'abc', 'auth' => 'abc'], 'content_encoding' => 'aes128gcm'])->assertUnprocessableContent();
-        $this->putJson('/api/push/subscriptions', ['endpoint' => 'https://push.example.com/abc', 'keys' => ['p256dh' => 'abc', 'auth' => 'abc'], 'content_encoding' => 'gzip'])->assertUnprocessableContent();
+        $this->putJson('/api/push/subscriptions', ['endpoint' => 'https://fcm.googleapis.com/fcm/send/abc', 'keys' => ['p256dh' => 'abc', 'auth' => 'abc'], 'content_encoding' => 'gzip'])->assertUnprocessableContent();
+
+        // Anything but a browser push service would make Tower post where the user tells it to
+        foreach (['https://10.0.0.5:8443/x', 'https://127.0.0.1/x', 'https://fcm.googleapis.com.evil.com/x', 'https://fcm.googleapis.com:8443/x', 'https://evilpush.apple.com/x'] as $endpoint)
+            $this->putJson('/api/push/subscriptions', ['endpoint' => $endpoint, 'keys' => ['p256dh' => 'abc', 'auth' => 'abc'], 'content_encoding' => 'aes128gcm'])->assertUnprocessableContent();
+        $this->putJson('/api/push/subscriptions', ['endpoint' => 'https://web.push.apple.com/abc', 'keys' => ['p256dh' => 'abc', 'auth' => 'abc'], 'content_encoding' => 'aes128gcm'])->assertOk();
     }
 
     public function testSubscriptionBelongsToTheLastUserOfTheBrowser()
@@ -178,7 +183,7 @@ class NotificationTest extends CubeTestCase
     public function testSubscriptionsOfSomeoneElseCannotBeTouched()
     {
         $this->register('bob@example.com');
-        $bobs = $this->subscribe('https://push.example.com/bob');
+        $bobs = $this->subscribe('https://fcm.googleapis.com/fcm/send/bob');
         $this->logOut();
 
         $this->register('alice@example.com');
@@ -194,11 +199,11 @@ class NotificationTest extends CubeTestCase
         $pro = $this->get('/api/workspaces/current')->json()['id'];
         $perso = $this->postJson('/api/workspaces', ['name' => 'Perso'])->assertCreated()->json()['id'];
 
-        $this->subscribe('https://push.example.com/laptop');
+        $this->subscribe('https://fcm.googleapis.com/fcm/send/laptop');
         $this->createRule(['listen' => ['*']]);
         $this->putJson('/api/workspaces/current', ['workspace' => $perso])->assertOk();
         $this->assertSame([], $this->get('/api/push/subscriptions')->json());
-        $this->subscribe('https://push.example.com/phone');
+        $this->subscribe('https://fcm.googleapis.com/fcm/send/phone');
         $this->createRule(['listen' => ['*']]);
 
         $this->trigger('perso.event');
@@ -207,8 +212,8 @@ class NotificationTest extends CubeTestCase
         $this->processQueue();
 
         $this->assertSame([
-            ['https://push.example.com/phone', 'Perso · perso.event'],
-            ['https://push.example.com/laptop', Workspace::find($pro)->name.' · pro.event'],
+            ['https://fcm.googleapis.com/fcm/send/phone', 'Perso · perso.event'],
+            ['https://fcm.googleapis.com/fcm/send/laptop', Workspace::find($pro)->name.' · pro.event'],
         ], array_map(fn ($sent) => [$sent['endpoint'], $sent['title']], $this->sender->sent));
     }
 
@@ -233,10 +238,10 @@ class NotificationTest extends CubeTestCase
         $this->logOut();
 
         $this->register('alice@example.com');
-        $this->postJson('/api/push/subscriptions/claim', ['endpoint' => 'https://push.example.com/other'])->assertNoContent();
+        $this->postJson('/api/push/subscriptions/claim', ['endpoint' => 'https://fcm.googleapis.com/fcm/send/other'])->assertNoContent();
         $this->assertNotNull(PushSubscription::find($bobs['id']));
 
-        $this->postJson('/api/push/subscriptions/claim', ['endpoint' => 'https://push.example.com/abc'])->assertNoContent();
+        $this->postJson('/api/push/subscriptions/claim', ['endpoint' => 'https://fcm.googleapis.com/fcm/send/abc'])->assertNoContent();
         $this->assertNull(PushSubscription::find($bobs['id']));
         $this->postJson('/api/push/subscriptions/claim', ['endpoint' => 'http://push.example.com/abc'])->assertUnprocessableContent();
     }
@@ -384,15 +389,15 @@ class NotificationTest extends CubeTestCase
     {
         $this->register('alice@example.com');
         $workspace = $this->get('/api/workspaces/current')->json()['id'];
-        $this->subscribe('https://push.example.com/phone');
-        $this->subscribe('https://push.example.com/laptop');
+        $this->subscribe('https://fcm.googleapis.com/fcm/send/phone');
+        $this->subscribe('https://fcm.googleapis.com/fcm/send/laptop');
         $rule = $this->createRule(['listen' => ['deploy.*'], 'title' => 'Deployed', 'body' => '{payload.env}']);
 
         $this->trigger('deploy.done', ['env' => 'prod']);
         $this->trigger('task.reminder', ['title' => 'Ignored']);
         $this->processQueue();
 
-        $this->assertSame(['https://push.example.com/phone', 'https://push.example.com/laptop'], array_column($this->sender->sent, 'endpoint'));
+        $this->assertSame(['https://fcm.googleapis.com/fcm/send/phone', 'https://fcm.googleapis.com/fcm/send/laptop'], array_column($this->sender->sent, 'endpoint'));
         $sent = $this->sender->sent[0];
         $this->assertSame('Deployed', $sent['title']);
         $this->assertSame('prod', $sent['body']);

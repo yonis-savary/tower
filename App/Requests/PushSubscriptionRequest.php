@@ -10,12 +10,29 @@ use Cube\Web\Http\Rules\Param;
  */
 class PushSubscriptionRequest extends Request
 {
+    // The push services of the browsers : any other address would make Tower send requests where a user tells it to
+    public const PUSH_SERVICE_HOSTS = ['fcm.googleapis.com', '.push.services.mozilla.com', '.push.apple.com', '.notify.windows.com'];
+
     public static function endpointRule(): Param
     {
         return Param::url()->withValueCondition(
-            fn ($endpoint) => strlen((string) $endpoint) <= 500 && str_starts_with((string) $endpoint, 'https://'),
-            '{key} must be an https address of 500 characters at most'
+            fn ($endpoint) => strlen((string) $endpoint) <= 500 && self::isPushService((string) $endpoint),
+            '{key} must be the https address of a browser push service, 500 characters at most'
         );
+    }
+
+    public static function isPushService(string $endpoint): bool
+    {
+        if ('https' !== parse_url($endpoint, PHP_URL_SCHEME) || null !== parse_url($endpoint, PHP_URL_PORT))
+            return false;
+        $host = strtolower((string) parse_url($endpoint, PHP_URL_HOST));
+
+        foreach (self::PUSH_SERVICE_HOSTS as $allowed) {
+            if ($host === $allowed || (str_starts_with($allowed, '.') && str_ends_with($host, $allowed)))
+                return true;
+        }
+
+        return false;
     }
 
     public function getRules(): array
