@@ -58,10 +58,8 @@ class FaviconClient extends HttpClient
                 timeout: self::TIMEOUT_SECONDS,
                 supportRedirection: false,
                 logFlags: 0,
-                curlMutator: fn (\CurlHandle $handle) => curl_setopt_array($handle, [
-                    CURLOPT_MAXFILESIZE_LARGE => $maxBytes,
-                    CURLOPT_ENCODING => '',
-                ]),
+                // No CURLOPT_ENCODING : the size limit then applies to the bytes read, not to a compressed body that expands
+                curlMutator: fn (\CurlHandle $handle) => curl_setopt($handle, CURLOPT_MAXFILESIZE_LARGE, $maxBytes),
             );
         } catch (\RuntimeException) {
             return null;
