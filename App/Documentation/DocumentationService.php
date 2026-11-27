@@ -35,7 +35,10 @@ class DocumentationService
                 ->where('title', "%{$search}%", 'LIKE')
                 ->or()->where('content', "%{$search}%", 'LIKE'));
 
-        return Bunch::wrap($query->order('title', 'ASC')->order('id', 'ASC')->fetch())
+        return $query
+            ->order('title', 'ASC')
+            ->order('id', 'ASC')
+            ->toBunch()
             ->filter(fn (DocPage $page) => null === $tag || in_array($tag, self::tagsOf($page), true), keepValues: true);
     }
 
@@ -129,7 +132,10 @@ class DocumentationService
         if (!$below)
             return 0;
 
-        $changing = DocPage::select()->whereIn('id', $below)->whereRaw($archived ? 'archived_at IS NULL' : 'archived_at IS NOT NULL')->fetch();
+        $changing = DocPage::select()
+            ->whereIn('id', $below)
+            ->whereRaw($archived ? 'archived_at IS NULL' : 'archived_at IS NOT NULL')
+            ->fetch();
         if (!$changing)
             return 0;
 
@@ -205,7 +211,10 @@ class DocumentationService
      */
     public function versionsOf(DocPage $page): Bunch
     {
-        return Bunch::wrap(DocPageVersion::select(['_user'])->where('page', $page->id)->order('version', 'DESC')->fetch());
+        return DocPageVersion::select(['_user'])
+            ->where('page', $page->id)
+            ->order('version', 'DESC')
+            ->toBunch();
     }
 
     public function findVersion(int $workspace, int $id): ?DocPageVersion
@@ -259,7 +268,10 @@ class DocumentationService
             return;
 
         // The pages reference each other : MySQL checks the key row by row, in no given order
-        DocPage::update()->set('parent', null)->whereIn('id', $pages)->fetch();
+        DocPage::update()
+            ->set('parent', null)
+            ->whereIn('id', $pages)
+            ->fetch();
         DocPageVersion::delete()->whereIn('page', $pages)->fetch();
         DocPage::delete()->whereIn('id', $pages)->fetch();
     }

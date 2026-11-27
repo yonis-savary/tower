@@ -14,13 +14,11 @@ class AccessKeyService
      */
     public function listFor(int $workspace): Bunch
     {
-        return Bunch::wrap(
-            AccessKey::select()
-                ->where('workspace', $workspace)
-                ->where('revoked_at', null)
-                ->order('id', 'DESC')
-                ->fetch()
-        );
+        return AccessKey::select()
+            ->where('workspace', $workspace)
+            ->where('revoked_at', null)
+            ->order('id', 'DESC')
+            ->toBunch();
     }
 
     /**

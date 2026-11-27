@@ -36,7 +36,11 @@ abstract class SearchSource
             if (!$query)
                 continue;
 
-            foreach ($query->order('id', 'DESC')->limit($remaining)->fetch() as $model)
+            $models = $query
+                ->order('id', 'DESC')
+                ->limit($remaining)
+                ->fetch();
+            foreach ($models as $model)
                 $results[] = $this->toResult($model);
         }
 

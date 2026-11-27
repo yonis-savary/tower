@@ -64,7 +64,10 @@ class PullRequestController extends Controller
     #[McpTool('list_pull_requests')]
     public function list(Request $request): Response
     {
-        $rows = PullRequest::select()->where('workspace', currentWorkspaceId())->order('id', 'DESC')->fetch();
+        $rows = PullRequest::select()
+            ->where('workspace', currentWorkspaceId())
+            ->order('id', 'DESC')
+            ->fetch();
 
         return Response::json(PullRequestResource::of(Bunch::wrap($rows)));
     }

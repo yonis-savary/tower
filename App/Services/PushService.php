@@ -48,7 +48,11 @@ class PushService
      */
     public function subscriptionsOf(int $workspace, int $user): Bunch
     {
-        return Bunch::wrap(PushSubscription::select()->where('workspace', $workspace)->where('user', $user)->order('id', 'ASC')->fetch());
+        return PushSubscription::select()
+            ->where('workspace', $workspace)
+            ->where('user', $user)
+            ->order('id', 'ASC')
+            ->toBunch();
     }
 
     public function findSubscription(int $workspace, int $user, int $id): ?PushSubscription
@@ -66,7 +70,10 @@ class PushService
         $this->claimBrowser($user, $endpoint);
 
         // created_at as a string : generated models type a DATETIME column as DATE, which drops the time
-        $subscription = PushSubscription::select()->where('endpoint', $endpoint)->where('workspace', $workspace)->first()
+        $subscription = PushSubscription::select()
+            ->where('endpoint', $endpoint)
+            ->where('workspace', $workspace)
+            ->first()
             ?? new PushSubscription(['endpoint' => $endpoint, 'workspace' => $workspace, 'created_at' => date('Y-m-d H:i:s')]);
 
         $subscription->user = $user;
@@ -84,7 +91,11 @@ class PushService
      */
     public function claimBrowser(int $user, string $endpoint): void
     {
-        foreach (PushSubscription::select()->where('endpoint', $endpoint)->where('user', $user, '<>')->fetch() as $subscription)
+        $subscriptions = PushSubscription::select()
+            ->where('endpoint', $endpoint)
+            ->where('user', $user, '<>')
+            ->fetch();
+        foreach ($subscriptions as $subscription)
             $this->deleteSubscription($subscription);
     }
 
@@ -114,7 +125,11 @@ class PushService
      */
     public function rulesOf(int $workspace, int $user): Bunch
     {
-        return Bunch::wrap(NotificationRule::select()->where('workspace', $workspace)->where('user', $user)->order('id', 'ASC')->fetch());
+        return NotificationRule::select()
+            ->where('workspace', $workspace)
+            ->where('user', $user)
+            ->order('id', 'ASC')
+            ->toBunch();
     }
 
     public function findRule(int $workspace, int $user, int $id): ?NotificationRule
@@ -178,7 +193,11 @@ class PushService
         if (!$this->isEnabled())
             return;
 
-        if (!NotificationRule::select()->where('workspace', $workspace)->where('enabled', true)->first())
+        $enabledRule = NotificationRule::select()
+            ->where('workspace', $workspace)
+            ->where('enabled', true)
+            ->first();
+        if (!$enabledRule)
             return;
 
         PushQueue::queue($workspace, $history, $event, $payload);
@@ -195,7 +214,11 @@ class PushService
         if (!$this->isEnabled() || !$found = Workspace::find($workspace))
             return;
 
-        $rules = NotificationRule::select()->where('workspace', $workspace)->where('enabled', true)->order('id', 'ASC')->fetch();
+        $rules = NotificationRule::select()
+            ->where('workspace', $workspace)
+            ->where('enabled', true)
+            ->order('id', 'ASC')
+            ->fetch();
 
         foreach ($rules as $rule) {
             if (!$this->keys->listens($this->listenOf($rule), $event) || !$this->canReceive($rule->user, $workspace))

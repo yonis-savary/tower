@@ -22,7 +22,10 @@ class JiraProfileService
      */
     public function listFor(int $workspace): Bunch
     {
-        return Bunch::wrap(JiraProfile::select()->where('workspace', $workspace)->order('id', 'ASC')->fetch());
+        return JiraProfile::select()
+            ->where('workspace', $workspace)
+            ->order('id', 'ASC')
+            ->toBunch();
     }
 
     public function find(int $workspace, int $id): ?JiraProfile
@@ -92,8 +95,11 @@ class JiraProfileService
      */
     public function profilesByIssue(int $integration): array
     {
+        $profiles = Query::select('jira_profile')
+            ->selectField('id', 'jira_profile')
+            ->where('integration', $integration, table: 'jira_profile');
         $links = JiraIssueProfile::select()
-            ->whereIn('jira_profile', Query::select('jira_profile')->selectField('id', 'jira_profile')->where('integration', $integration, table: 'jira_profile'))
+            ->whereIn('jira_profile', $profiles)
             ->fetch();
 
         $profiles = [];
@@ -131,7 +137,10 @@ class JiraProfileService
             return;
 
         // A parent can only be deleted once no subtask points to it
-        JiraIssue::update()->set('parent', null)->whereIn('id', $leaving)->fetch();
+        JiraIssue::update()
+            ->set('parent', null)
+            ->whereIn('id', $leaving)
+            ->fetch();
         JiraIssue::delete()->whereIn('id', $leaving)->fetch();
     }
 }

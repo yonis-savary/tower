@@ -112,7 +112,10 @@ class WorkspaceService
      */
     public function members(Workspace $workspace): Bunch
     {
-        return Bunch::wrap(WorkspaceMember::select(['_user'])->where('workspace', $workspace->id)->order('id', 'ASC')->fetch())
+        return WorkspaceMember::select(['_user'])
+            ->where('workspace', $workspace->id)
+            ->order('id', 'ASC')
+            ->toBunch()
             ->map(fn (WorkspaceMember $membership) => $membership->_user);
     }
 
@@ -145,7 +148,10 @@ class WorkspaceService
         // What they asked to be notified of here is theirs only
         NotificationRule::deleteWhere(['workspace' => $workspace->id, 'user' => $userId]);
         PushSubscription::deleteWhere(['workspace' => $workspace->id, 'user' => $userId]);
-        AgendaItemParticipant::delete()->where('user', $userId)->whereIn('item', $this->idsOf(AgendaItem::class, $workspace->id))->fetch();
+        AgendaItemParticipant::delete()
+            ->where('user', $userId)
+            ->whereIn('item', $this->idsOf(AgendaItem::class, $workspace->id))
+            ->fetch();
 
         return true;
     }
@@ -233,7 +239,7 @@ class WorkspaceService
      */
     public function listFor(int $userId): Bunch
     {
-        return Bunch::wrap($this->memberships($userId)->fetch())
+        return $this->memberships($userId)->toBunch()
             ->map(fn (WorkspaceMember $membership) => $membership->_workspace);
     }
 

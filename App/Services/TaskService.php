@@ -30,7 +30,11 @@ class TaskService
      */
     public function listTasks(int $workspace): Bunch
     {
-        return Bunch::wrap(Task::select()->where('workspace', $workspace)->order('position', 'ASC')->order('id', 'ASC')->fetch());
+        return Task::select()
+            ->where('workspace', $workspace)
+            ->order('position', 'ASC')
+            ->order('id', 'ASC')
+            ->toBunch();
     }
 
     public function findTask(int $workspace, int $id): ?Task
@@ -144,7 +148,10 @@ class TaskService
             if (!in_array($task->id, $ordered, true))
                 return null;
 
-            $neighbours = Task::select()->where('workspace', $task->workspace)->whereIn('id', $ordered)->fetch();
+            $neighbours = Task::select()
+                ->where('workspace', $task->workspace)
+                ->whereIn('id', $ordered)
+                ->fetch();
             if (count($neighbours) !== count($ordered))
                 return null;
         }
@@ -199,7 +206,10 @@ class TaskService
      */
     public function historyOf(Task $task): Bunch
     {
-        return Bunch::wrap(History::select(['_user'])->where('task', $task->id)->order('id', 'DESC')->fetch());
+        return History::select(['_user'])
+            ->where('task', $task->id)
+            ->order('id', 'DESC')
+            ->toBunch();
     }
 
     /**
@@ -207,7 +217,10 @@ class TaskService
      */
     public function listSprints(int $workspace): Bunch
     {
-        return Bunch::wrap(Sprint::select(['links'])->where('workspace', $workspace)->order('id', 'ASC')->fetch());
+        return Sprint::select(['links'])
+            ->where('workspace', $workspace)
+            ->order('id', 'ASC')
+            ->toBunch();
     }
 
     public function findSprint(int $workspace, int $id): ?Sprint

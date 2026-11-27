@@ -17,7 +17,10 @@ class ScheduledEventService
      */
     public function listFor(int $workspace): Bunch
     {
-        return Bunch::wrap(ScheduledEvent::select()->where('workspace', $workspace)->order('id', 'ASC')->fetch());
+        return ScheduledEvent::select()
+            ->where('workspace', $workspace)
+            ->order('id', 'ASC')
+            ->toBunch();
     }
 
     public function find(int $workspace, int $id): ?ScheduledEvent
@@ -67,7 +70,10 @@ class ScheduledEventService
         $minute = $now->format('Y-m-d H:i');
         $moment = new \DateTime($minute);
 
-        $schedules = ScheduledEvent::select()->where('enabled', true)->order('id', 'ASC')->fetch();
+        $schedules = ScheduledEvent::select()
+            ->where('enabled', true)
+            ->order('id', 'ASC')
+            ->fetch();
 
         foreach ($schedules as $schedule) {
             $runAt = null === $schedule->run_at ? null : $this->minuteOf($schedule->run_at);

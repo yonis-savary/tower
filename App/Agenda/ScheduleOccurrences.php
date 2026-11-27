@@ -14,7 +14,11 @@ class ScheduleOccurrences
      */
     public function between(array $workspaces, \DateTimeImmutable $from, \DateTimeImmutable $to): array
     {
-        $schedules = ScheduledEvent::select()->whereIn('workspace', $workspaces)->where('enabled', true)->order('id', 'ASC')->fetch();
+        $schedules = ScheduledEvent::select()
+            ->whereIn('workspace', $workspaces)
+            ->where('enabled', true)
+            ->order('id', 'ASC')
+            ->fetch();
 
         $occurrences = [];
         foreach ($schedules as $schedule)

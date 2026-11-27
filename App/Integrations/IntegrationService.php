@@ -107,7 +107,12 @@ class IntegrationService
 
     private function forgetIssues(Integration $integration): void
     {
-        JiraIssueProfile::delete()->whereIn('jira_profile', Query::select('jira_profile')->selectField('id', 'jira_profile')->where('integration', $integration->id, table: 'jira_profile'))->fetch();
+        $profiles = Query::select('jira_profile')
+            ->selectField('id', 'jira_profile')
+            ->where('integration', $integration->id, table: 'jira_profile');
+        JiraIssueProfile::delete()
+            ->whereIn('jira_profile', $profiles)
+            ->fetch();
         Database::getInstance()->exec('UPDATE task SET jira_issue = NULL WHERE jira_issue IN (SELECT id FROM jira_issue WHERE integration = {})', [$integration->id]);
         Database::getInstance()->exec('UPDATE jira_issue SET parent = NULL WHERE integration = {}', [$integration->id]);
         JiraIssue::deleteWhere(['integration' => $integration->id]);

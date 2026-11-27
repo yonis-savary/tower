@@ -90,7 +90,10 @@ class JiraIssueSync
         foreach (JiraIssue::select()->where('integration', $integration->id)->fetch() as $row)
             $stored[$row->external_id] = $row;
 
-        $profiles = JiraProfile::select()->where('integration', $integration->id)->order('id', 'ASC')->fetch();
+        $profiles = JiraProfile::select()
+            ->where('integration', $integration->id)
+            ->order('id', 'ASC')
+            ->fetch();
         $readings = [];
         $board = [];
         $profilesOf = [];

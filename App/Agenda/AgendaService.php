@@ -439,7 +439,12 @@ class AgendaService
         if (!$users)
             return true;
 
-        return WorkspaceMember::select()->where('workspace', $workspace)->whereIn('user', $users)->count() === count($users);
+        $members = WorkspaceMember::select()
+            ->where('workspace', $workspace)
+            ->whereIn('user', $users)
+            ->count();
+
+        return count($users) === $members;
     }
 
     private function announce(AgendaItem $item, string $type, int $user): void

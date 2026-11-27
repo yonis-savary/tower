@@ -36,3 +36,9 @@ component takes it as a nullable last parameter, like any method outside a const
 
 - `App\currentWorkspace()` / `App\currentWorkspaceId()` : the workspace the logged user, or the
   MCP token, acts on.
+
+### Query chains
+
+From three chained calls, a query puts one call per line. A query used inside a `foreach`, an `if`
+or as a sub-query of `whereIn()` is first named in a variable. A query ending in a `Bunch` uses
+`toBunch()`, never `Bunch::wrap(...->fetch())`.

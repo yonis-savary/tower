@@ -45,10 +45,14 @@ class JiraIssueService
             $query->where('status_category', $statusCategory);
         if (null !== $account)
             $query->where('assignee_id', $account);
-        if (null !== $profile)
-            $query->whereIn('id', Query::select('jira_issue_profile')->selectField('jira_issue', 'jira_issue_profile')->where('jira_profile', $profile, table: 'jira_issue_profile'));
+        if (null !== $profile) {
+            $issuesOfProfile = Query::select('jira_issue_profile')
+                ->selectField('jira_issue', 'jira_issue_profile')
+                ->where('jira_profile', $profile, table: 'jira_issue_profile');
+            $query->whereIn('id', $issuesOfProfile);
+        }
 
-        return Bunch::wrap($query->fetch());
+        return $query->toBunch();
     }
 
     public function accountOf(int $workspace): ?string

@@ -139,7 +139,11 @@ class PullRequestService
     private function storedIds(int $workspace, string $repository): array
     {
         $ids = [];
-        foreach (PullRequest::select()->where('workspace', $workspace)->where('repository', $repository)->fetch() as $row)
+        $rows = PullRequest::select()
+            ->where('workspace', $workspace)
+            ->where('repository', $repository)
+            ->fetch();
+        foreach ($rows as $row)
             $ids[$row->external_id] = $row->id;
 
         return $ids;

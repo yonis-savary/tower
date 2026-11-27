@@ -127,12 +127,10 @@ class EventService
      */
     public function listQuickActions(int $workspace): Bunch
     {
-        return Bunch::wrap(
-            QuickAction::select()
-                ->where('workspace', $workspace)
-                ->order('id', 'ASC')
-                ->fetch()
-        );
+        return QuickAction::select()
+            ->where('workspace', $workspace)
+            ->order('id', 'ASC')
+            ->toBunch();
     }
 
     public function createQuickAction(int $workspace, string $name, ?string $description, string $type, string $payload): QuickAction

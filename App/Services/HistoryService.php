@@ -124,7 +124,10 @@ class HistoryService
         if (null !== $before)
             $query->where('id', $before, '<');
 
-        return Bunch::wrap($query->order('id', 'DESC')->limit(self::PAGE_SIZE)->fetch());
+        return $query
+            ->order('id', 'DESC')
+            ->limit(self::PAGE_SIZE)
+            ->toBunch();
     }
 
     /**
@@ -133,17 +136,15 @@ class HistoryService
      */
     public function recentEvents(int $workspace, int $limit): Bunch
     {
-        return Bunch::wrap(
-            History::select(['eventDeliveries'])
-                ->where('workspace', $workspace)
-                ->whereGroup(fn ($query) => $query
-                    ->where('type', EventService::HISTORY_TYPE)
-                    ->or()->where('type', 'pr.%', 'LIKE')
-                    ->or()->where('type', 'jira.%', 'LIKE'))
-                ->order('id', 'DESC')
-                ->limit($limit)
-                ->fetch()
-        );
+        return History::select(['eventDeliveries'])
+            ->where('workspace', $workspace)
+            ->whereGroup(fn ($query) => $query
+                ->where('type', EventService::HISTORY_TYPE)
+                ->or()->where('type', 'pr.%', 'LIKE')
+                ->or()->where('type', 'jira.%', 'LIKE'))
+            ->order('id', 'DESC')
+            ->limit($limit)
+            ->toBunch();
     }
 
     public function find(int $workspace, int $id): ?History
@@ -155,7 +156,10 @@ class HistoryService
 
     public function deliveriesOf(History $line): Bunch
     {
-        return Bunch::wrap(EventDelivery::select()->where('history', $line->id)->order('id', 'ASC')->fetch());
+        return EventDelivery::select()
+            ->where('history', $line->id)
+            ->order('id', 'ASC')
+            ->toBunch();
     }
 
     public function purgeExpired(HistoryConfiguration $configuration): void

@@ -39,7 +39,10 @@ class WebhookService
      */
     public function listFor(int $workspace): Bunch
     {
-        return Bunch::wrap(Webhook::select()->where('workspace', $workspace)->order('id', 'ASC')->fetch());
+        return Webhook::select()
+            ->where('workspace', $workspace)
+            ->order('id', 'ASC')
+            ->toBunch();
     }
 
     public function find(int $workspace, int $id): ?Webhook
@@ -162,7 +165,10 @@ class WebhookService
         if (null !== $before)
             $query->where('id', $before, '<');
 
-        return Bunch::wrap($query->order('id', 'DESC')->limit(self::PAGE_SIZE)->fetch());
+        return $query
+            ->order('id', 'DESC')
+            ->limit(self::PAGE_SIZE)
+            ->toBunch();
     }
 
     /**
@@ -170,16 +176,17 @@ class WebhookService
      */
     public function refusedCalls(int $workspace, int $limit): Bunch
     {
-        $webhooks = Bunch::wrap(Webhook::select()->where('workspace', $workspace)->fetch())->map(fn (Webhook $webhook) => $webhook->id);
+        $webhooks = Webhook::select()
+            ->where('workspace', $workspace)
+            ->toBunch()
+            ->map(fn (Webhook $webhook) => $webhook->id);
 
-        return Bunch::wrap(
-            WebhookCall::select(['_webhook'])
-                ->whereIn('webhook', $webhooks)
-                ->where('status', self::CALL_ACCEPTED, '<>')
-                ->order('id', 'DESC')
-                ->limit($limit)
-                ->fetch()
-        );
+        return WebhookCall::select(['_webhook'])
+            ->whereIn('webhook', $webhooks)
+            ->where('status', self::CALL_ACCEPTED, '<>')
+            ->order('id', 'DESC')
+            ->limit($limit)
+            ->toBunch();
     }
 
     /**

@@ -45,7 +45,11 @@ class ApiTokenService
      */
     public function listFor(int $user, int $workspace): Bunch
     {
-        return Bunch::wrap(ApiToken::select()->where('user', $user)->where('workspace', $workspace)->order('id', 'DESC')->fetch());
+        return ApiToken::select()
+            ->where('user', $user)
+            ->where('workspace', $workspace)
+            ->order('id', 'DESC')
+            ->toBunch();
     }
 
     /**
@@ -53,7 +57,10 @@ class ApiTokenService
      */
     public function listForWorkspace(int $workspace): Bunch
     {
-        return Bunch::wrap(ApiToken::select()->where('workspace', $workspace)->order('id', 'ASC')->fetch());
+        return ApiToken::select()
+            ->where('workspace', $workspace)
+            ->order('id', 'ASC')
+            ->toBunch();
     }
 
     public function find(int $user, int $workspace, int $id): ?ApiToken
