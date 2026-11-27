@@ -16,7 +16,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $hostname
  * @property string $payload
  * @property string $response
- * @property \DateTime $responded_at
+ * @property \DateTimeImmutable $responded_at
  * @property string $status
  * @property int $exit_code
  * @property int $access_key

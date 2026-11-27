@@ -16,7 +16,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $ip
  * @property string $user_agent
  * @property string $payload
- * @property \DateTime $created_at
+ * @property \DateTimeImmutable $created_at
  * @property Webhook $_webhook
  */
 class WebhookCall extends Model

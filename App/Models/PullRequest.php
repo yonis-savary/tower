@@ -27,7 +27,7 @@ use Cube\Utils\Attributes\Generated;
  * @property bool $draft
  * @property int $comment_count
  * @property string $pipeline_status
- * @property \DateTime $synced_at
+ * @property \DateTimeImmutable $synced_at
  * @property Workspace $_workspace
  * @property Integration $_integration
  * @property PullRequestApprovals[] $approvals

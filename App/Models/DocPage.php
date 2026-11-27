@@ -17,11 +17,11 @@ use Cube\Utils\Attributes\Generated;
  * @property string $content
  * @property string $tags
  * @property int $version
- * @property \DateTime $archived_at
+ * @property \DateTimeImmutable $archived_at
  * @property int $created_by
  * @property int $updated_by
- * @property \DateTime $created_at
- * @property \DateTime $updated_at
+ * @property \DateTimeImmutable $created_at
+ * @property \DateTimeImmutable $updated_at
  * @property Workspace $_workspace
  * @property DocPage $_parent
  * @property User $_created_by

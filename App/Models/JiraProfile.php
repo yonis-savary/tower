@@ -19,8 +19,8 @@ use Cube\Utils\Attributes\Generated;
  * @property string $jql
  * @property string $columns
  * @property string $done_statuses
- * @property \DateTime $synced_at
- * @property \DateTime $created_at
+ * @property \DateTimeImmutable $synced_at
+ * @property \DateTimeImmutable $created_at
  * @property Workspace $_workspace
  * @property Integration $_integration
  * @property JiraIssueProfile[] $jiraIssueProfiles

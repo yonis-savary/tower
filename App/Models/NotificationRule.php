@@ -18,7 +18,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $title
  * @property string $body
  * @property bool $enabled
- * @property \DateTime $created_at
+ * @property \DateTimeImmutable $created_at
  * @property Workspace $_workspace
  * @property User $_user
  */

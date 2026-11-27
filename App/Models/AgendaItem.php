@@ -14,18 +14,18 @@ use Cube\Utils\Attributes\Generated;
  * @property int $workspace
  * @property string $title
  * @property string $description
- * @property \DateTime $starts_at
- * @property \DateTime $ends_at
+ * @property \DateTimeImmutable $starts_at
+ * @property \DateTimeImmutable $ends_at
  * @property bool $all_day
  * @property string $link
  * @property int $created_by
- * @property \DateTime $created_at
- * @property \DateTime $updated_at
+ * @property \DateTimeImmutable $created_at
+ * @property \DateTimeImmutable $updated_at
  * @property string $color
  * @property string $recurrence
  * @property int $recurrence_interval
  * @property string $recurrence_weekdays
- * @property \DateTime $recurrence_until
+ * @property \Cube\Data\Date $recurrence_until
  * @property Workspace $_workspace
  * @property User $_created_by
  * @property AgendaItemException[] $exceptions

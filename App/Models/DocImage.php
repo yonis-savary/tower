@@ -17,7 +17,7 @@ use Cube\Utils\Attributes\Generated;
  * @property int $size
  * @property string $file
  * @property int $user
- * @property \DateTime $created_at
+ * @property \DateTimeImmutable $created_at
  * @property Workspace $_workspace
  * @property User $_user
  */

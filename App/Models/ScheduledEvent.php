@@ -16,10 +16,10 @@ use Cube\Utils\Attributes\Generated;
  * @property string $type
  * @property string $payload
  * @property string $cron
- * @property \DateTime $run_at
+ * @property \DateTimeImmutable $run_at
  * @property bool $enabled
- * @property \DateTime $last_run_at
- * @property \DateTime $created_at
+ * @property \DateTimeImmutable $last_run_at
+ * @property \DateTimeImmutable $created_at
  * @property Workspace $_workspace
  */
 class ScheduledEvent extends Model

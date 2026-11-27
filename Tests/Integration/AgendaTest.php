@@ -388,7 +388,7 @@ class AgendaTest extends CubeTestCase
         $this->assertNull($detached['occurrence']);
 
         $this->assertSame(['Standup 2026-11-30 09:00', 'Late standup 2026-12-02 11:00', 'Standup 2026-12-07 09:00', 'Standup 2026-12-09 09:00'], $this->listed());
-        $this->assertSame('2026-12-02', substr((string) AgendaItemException::findWhere(['item' => $series['id']])->occurs_on, 0, 10));
+        $this->assertSame('2026-12-02', AgendaItemException::findWhere(['item' => $series['id']])->occurs_on->format('Y-m-d'));
 
         // Changed already : that occurrence no longer exists
         $this->putJson("/api/agenda/items/{$series['id']}", $this->weekly(['occurrence' => '2026-12-02', 'starts_at' => '2026-12-02 11:00:00', 'ends_at' => '2026-12-02 11:15:00']))->assertNotFound();
@@ -412,7 +412,7 @@ class AgendaTest extends CubeTestCase
 
         $this->assertNotSame($series['id'], $following['id']);
         $this->assertSame('2026-12-31', $following['recurrence']['until']);
-        $this->assertSame('2026-12-06', substr((string) AgendaItem::find($series['id'])->recurrence_until, 0, 10));
+        $this->assertSame('2026-12-06', AgendaItem::find($series['id'])->recurrence_until->format('Y-m-d'));
         // The occurrence removed before the split stays removed
         $this->assertSame(['Standup 2026-11-30 09:00', 'Standup 2026-12-02 09:00', 'Standup 2026-12-07 09:30', 'Standup 2026-12-14 09:30', 'Standup 2026-12-16 09:30'], $this->listed('2026-11-30', '2026-12-17'));
     }
@@ -458,7 +458,7 @@ class AgendaTest extends CubeTestCase
 
         $this->deleteJson("/api/agenda/items/{$series['id']}?occurrence=2026-12-09&scope=following")->assertNoContent();
         $this->assertSame(['Standup 2026-11-30 09:00', 'Standup 2026-12-07 09:00'], $this->listed());
-        $this->assertSame('2026-12-08', substr((string) AgendaItem::find($series['id'])->recurrence_until, 0, 10));
+        $this->assertSame('2026-12-08', AgendaItem::find($series['id'])->recurrence_until->format('Y-m-d'));
 
         $deleted = array_values(array_filter($this->broadcast->emitted, fn (array $data) => 'agenda.item.deleted' === ($data['event'] ?? null)));
         $this->assertSame(['2026-12-02', 'occurrence'], [json_decode($deleted[0]['payload'], true)['occurrence'], json_decode($deleted[0]['payload'], true)['scope']]);

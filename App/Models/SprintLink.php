@@ -14,7 +14,7 @@ use Cube\Utils\Attributes\Generated;
  * @property int $sprint
  * @property string $label
  * @property string $url
- * @property \DateTime $created_at
+ * @property \DateTimeImmutable $created_at
  * @property Sprint $_sprint
  */
 class SprintLink extends Model

@@ -15,9 +15,9 @@ use Cube\Utils\Attributes\Generated;
  * @property string $type
  * @property string $settings
  * @property string $credentials
- * @property \DateTime $last_synced_at
+ * @property \DateTimeImmutable $last_synced_at
  * @property string $last_error
- * @property \DateTime $created_at
+ * @property \DateTimeImmutable $created_at
  * @property Workspace $_workspace
  * @property JiraIssue[] $jiraIssues
  * @property JiraProfile[] $jiraProfiles

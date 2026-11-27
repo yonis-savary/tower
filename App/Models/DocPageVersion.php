@@ -18,7 +18,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $tags
  * @property int $user
  * @property string $token
- * @property \DateTime $created_at
+ * @property \DateTimeImmutable $created_at
  * @property DocPage $_page
  * @property User $_user
  */

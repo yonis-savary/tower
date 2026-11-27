@@ -15,7 +15,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $type
  * @property string $origin
  * @property string $details
- * @property \DateTime $created_at
+ * @property \DateTimeImmutable $created_at
  * @property int $user
  * @property int $task
  * @property Workspace $_workspace

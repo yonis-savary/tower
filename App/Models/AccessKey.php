@@ -15,9 +15,9 @@ use Cube\Utils\Attributes\Generated;
  * @property string $name
  * @property string $client_id
  * @property string $secret_hash
- * @property \DateTime $created_at
- * @property \DateTime $last_used_at
- * @property \DateTime $revoked_at
+ * @property \DateTimeImmutable $created_at
+ * @property \DateTimeImmutable $last_used_at
+ * @property \DateTimeImmutable $revoked_at
  * @property string $listen
  * @property string $handlers
  * @property Workspace $_workspace

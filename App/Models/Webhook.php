@@ -17,8 +17,8 @@ use Cube\Utils\Attributes\Generated;
  * @property string $secret
  * @property string $events
  * @property bool $enabled
- * @property \DateTime $created_at
- * @property \DateTime $last_called_at
+ * @property \DateTimeImmutable $created_at
+ * @property \DateTimeImmutable $last_called_at
  * @property bool $secured
  * @property Workspace $_workspace
  * @property WebhookCall[] $calls

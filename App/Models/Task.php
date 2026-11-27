@@ -14,9 +14,9 @@ use Cube\Utils\Attributes\Generated;
  * @property int $workspace
  * @property string $title
  * @property string $color
- * @property \DateTime $done_at
- * @property \DateTime $created_at
- * @property \DateTime $updated_at
+ * @property \DateTimeImmutable $done_at
+ * @property \DateTimeImmutable $created_at
+ * @property \DateTimeImmutable $updated_at
  * @property int $sprint
  * @property string $description
  * @property string $status

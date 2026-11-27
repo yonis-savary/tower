@@ -14,9 +14,9 @@ use Cube\Utils\Attributes\Generated;
  * @property int $workspace
  * @property string $name
  * @property string $state
- * @property \DateTime $opened_at
- * @property \DateTime $closed_at
- * @property \DateTime $created_at
+ * @property \DateTimeImmutable $opened_at
+ * @property \DateTimeImmutable $closed_at
+ * @property \DateTimeImmutable $created_at
  * @property Workspace $_workspace
  * @property SprintLink[] $links
  * @property Task[] $tasks

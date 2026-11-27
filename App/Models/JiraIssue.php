@@ -30,7 +30,7 @@ use Cube\Utils\Attributes\Generated;
  * @property string $sprint_name
  * @property string $sprint_state
  * @property bool $tracked
- * @property \DateTime $synced_at
+ * @property \DateTimeImmutable $synced_at
  * @property string $assignee_id
  * @property string $assignee_name
  * @property string $assignee_avatar

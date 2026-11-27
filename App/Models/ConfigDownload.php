@@ -15,9 +15,9 @@ use Cube\Utils\Attributes\Generated;
  * @property string $token_hash
  * @property string $format
  * @property string $payload
- * @property \DateTime $expires_at
- * @property \DateTime $used_at
- * @property \DateTime $created_at
+ * @property \DateTimeImmutable $expires_at
+ * @property \DateTimeImmutable $used_at
+ * @property \DateTimeImmutable $created_at
  * @property AccessKey $_access_key
  */
 class ConfigDownload extends Model

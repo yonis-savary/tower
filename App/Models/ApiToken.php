@@ -16,9 +16,9 @@ use Cube\Utils\Attributes\Generated;
  * @property string $name
  * @property string $token_hash
  * @property string $scope
- * @property \DateTime $created_at
- * @property \DateTime $last_used_at
- * @property \DateTime $expires_at
+ * @property \DateTimeImmutable $created_at
+ * @property \DateTimeImmutable $last_used_at
+ * @property \DateTimeImmutable $expires_at
  * @property User $_user
  * @property Workspace $_workspace
  */

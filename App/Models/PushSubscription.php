@@ -18,8 +18,8 @@ use Cube\Utils\Attributes\Generated;
  * @property string $auth
  * @property string $content_encoding
  * @property string $user_agent
- * @property \DateTime $created_at
- * @property \DateTime $last_success_at
+ * @property \DateTimeImmutable $created_at
+ * @property \DateTimeImmutable $last_success_at
  * @property Workspace $_workspace
  * @property User $_user
  */

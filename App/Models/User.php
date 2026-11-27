@@ -13,8 +13,8 @@ use Cube\Utils\Attributes\Generated;
  * @property int $id
  * @property string $email
  * @property string $password_hash
- * @property \DateTime $created_at
- * @property \DateTime $disabled_at
+ * @property \DateTimeImmutable $created_at
+ * @property \DateTimeImmutable $disabled_at
  * @property AgendaItem[] $agendaItems
  * @property AgendaItemParticipant[] $agendaItemParticipants
  * @property ApiToken[] $apiTokens
