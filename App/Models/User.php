@@ -53,8 +53,8 @@ class User extends Model
             'id' => (new ModelField('id'))->type('INTEGER')->autoIncrement()->notNull()->hasDefault(false),
             'email' => (new ModelField('email'))->type('STRING')->notNull()->hasDefault(false),
             'password_hash' => (new ModelField('password_hash'))->type('STRING')->notNull()->hasDefault(false),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
-            'disabled_at' => (new ModelField('disabled_at'))->type('DATE')->nullable()->default(NULL)
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false),
+            'disabled_at' => (new ModelField('disabled_at'))->type('DATETIME')->nullable()->default(NULL)
         ];
     }
 

@@ -39,7 +39,7 @@ class __cubeMigration extends Model
         return [
             'id' => (new ModelField('id'))->type('INTEGER')->autoIncrement()->notNull()->hasDefault(false),
             'name' => (new ModelField('name'))->type('STRING')->notNull()->hasDefault(false),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false)
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 

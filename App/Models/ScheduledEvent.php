@@ -50,10 +50,10 @@ class ScheduledEvent extends Model
             'type' => (new ModelField('type'))->type('STRING')->notNull()->hasDefault(false),
             'payload' => (new ModelField('payload'))->type('STRING')->notNull()->hasDefault(false),
             'cron' => (new ModelField('cron'))->type('STRING')->notNull()->hasDefault(false),
-            'run_at' => (new ModelField('run_at'))->type('DATE')->nullable()->default(NULL),
+            'run_at' => (new ModelField('run_at'))->type('DATETIME')->nullable()->default(NULL),
             'enabled' => (new ModelField('enabled'))->type('BOOLEAN')->notNull()->hasDefault(false),
-            'last_run_at' => (new ModelField('last_run_at'))->type('DATE')->nullable()->default(NULL),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false)
+            'last_run_at' => (new ModelField('last_run_at'))->type('DATETIME')->nullable()->default(NULL),
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 

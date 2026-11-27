@@ -50,7 +50,7 @@ class DocImage extends Model
             'size' => (new ModelField('size'))->type('INTEGER')->notNull()->hasDefault(false),
             'file' => (new ModelField('file'))->type('STRING')->notNull()->hasDefault(false),
             'user' => (new ModelField('user'))->type('INTEGER')->notNull()->hasDefault(false)->references(User::class,'id'),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false)
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 

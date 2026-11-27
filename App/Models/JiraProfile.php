@@ -56,8 +56,8 @@ class JiraProfile extends Model
             'jql' => (new ModelField('jql'))->type('STRING')->nullable()->default(NULL),
             'columns' => (new ModelField('columns'))->type('STRING')->notNull()->hasDefault(false),
             'done_statuses' => (new ModelField('done_statuses'))->type('STRING')->notNull()->hasDefault(false),
-            'synced_at' => (new ModelField('synced_at'))->type('DATE')->nullable()->default(NULL),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false)
+            'synced_at' => (new ModelField('synced_at'))->type('DATETIME')->nullable()->default(NULL),
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 

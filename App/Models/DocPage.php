@@ -57,11 +57,11 @@ class DocPage extends Model
             'content' => (new ModelField('content'))->type('STRING')->notNull()->hasDefault(false),
             'tags' => (new ModelField('tags'))->type('STRING')->notNull()->hasDefault(false),
             'version' => (new ModelField('version'))->type('INTEGER')->notNull()->hasDefault(false),
-            'archived_at' => (new ModelField('archived_at'))->type('DATE')->nullable()->default(NULL),
+            'archived_at' => (new ModelField('archived_at'))->type('DATETIME')->nullable()->default(NULL),
             'created_by' => (new ModelField('created_by'))->type('INTEGER')->notNull()->hasDefault(false)->references(User::class,'id'),
             'updated_by' => (new ModelField('updated_by'))->type('INTEGER')->notNull()->hasDefault(false)->references(User::class,'id'),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
-            'updated_at' => (new ModelField('updated_at'))->type('DATE')->notNull()->hasDefault(false)
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false),
+            'updated_at' => (new ModelField('updated_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 

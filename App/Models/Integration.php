@@ -50,9 +50,9 @@ class Integration extends Model
             'type' => (new ModelField('type'))->type('STRING')->notNull()->hasDefault(false),
             'settings' => (new ModelField('settings'))->type('STRING')->notNull()->hasDefault(false),
             'credentials' => (new ModelField('credentials'))->type('STRING')->notNull()->hasDefault(false),
-            'last_synced_at' => (new ModelField('last_synced_at'))->type('DATE')->nullable()->default(NULL),
+            'last_synced_at' => (new ModelField('last_synced_at'))->type('DATETIME')->nullable()->default(NULL),
             'last_error' => (new ModelField('last_error'))->type('STRING')->nullable()->default(NULL),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false)
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 

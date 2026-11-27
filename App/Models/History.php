@@ -50,7 +50,7 @@ class History extends Model
             'type' => (new ModelField('type'))->type('STRING')->notNull()->hasDefault(false),
             'origin' => (new ModelField('origin'))->type('STRING')->notNull()->hasDefault(false),
             'details' => (new ModelField('details'))->type('STRING')->notNull()->hasDefault(false),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false),
             'user' => (new ModelField('user'))->type('INTEGER')->nullable()->default(NULL)->references(User::class,'id'),
             'task' => (new ModelField('task'))->type('INTEGER')->nullable()->default(NULL)->references(Task::class,'id')
         ];

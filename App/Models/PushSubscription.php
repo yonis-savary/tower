@@ -53,8 +53,8 @@ class PushSubscription extends Model
             'auth' => (new ModelField('auth'))->type('STRING')->notNull()->hasDefault(false),
             'content_encoding' => (new ModelField('content_encoding'))->type('STRING')->notNull()->hasDefault(false),
             'user_agent' => (new ModelField('user_agent'))->type('STRING')->nullable()->default(NULL),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
-            'last_success_at' => (new ModelField('last_success_at'))->type('DATE')->nullable()->default(NULL)
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false),
+            'last_success_at' => (new ModelField('last_success_at'))->type('DATETIME')->nullable()->default(NULL)
         ];
     }
 

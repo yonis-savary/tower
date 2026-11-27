@@ -51,7 +51,7 @@ class EventDelivery extends Model
             'hostname' => (new ModelField('hostname'))->type('STRING')->nullable()->default(NULL),
             'payload' => (new ModelField('payload'))->type('STRING')->notNull()->hasDefault(false),
             'response' => (new ModelField('response'))->type('STRING')->nullable()->default(NULL),
-            'responded_at' => (new ModelField('responded_at'))->type('DATE')->nullable()->default(NULL),
+            'responded_at' => (new ModelField('responded_at'))->type('DATETIME')->nullable()->default(NULL),
             'status' => (new ModelField('status'))->type('STRING')->notNull()->default(NULL),
             'exit_code' => (new ModelField('exit_code'))->type('INTEGER')->nullable()->default(NULL),
             'access_key' => (new ModelField('access_key'))->type('INTEGER')->nullable()->default(NULL)->references(AccessKey::class,'id')

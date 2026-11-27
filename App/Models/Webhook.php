@@ -52,8 +52,8 @@ class Webhook extends Model
             'secret' => (new ModelField('secret'))->type('STRING')->nullable()->default(NULL),
             'events' => (new ModelField('events'))->type('STRING')->notNull()->hasDefault(false),
             'enabled' => (new ModelField('enabled'))->type('BOOLEAN')->notNull()->hasDefault(false),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
-            'last_called_at' => (new ModelField('last_called_at'))->type('DATE')->nullable()->default(NULL),
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false),
+            'last_called_at' => (new ModelField('last_called_at'))->type('DATETIME')->nullable()->default(NULL),
             'secured' => (new ModelField('secured'))->type('BOOLEAN')->notNull()->default(NULL)
         ];
     }

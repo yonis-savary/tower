@@ -52,7 +52,7 @@ class DocPageVersion extends Model
             'tags' => (new ModelField('tags'))->type('STRING')->notNull()->hasDefault(false),
             'user' => (new ModelField('user'))->type('INTEGER')->notNull()->hasDefault(false)->references(User::class,'id'),
             'token' => (new ModelField('token'))->type('STRING')->nullable()->default(NULL),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false)
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 

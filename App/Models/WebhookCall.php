@@ -47,7 +47,7 @@ class WebhookCall extends Model
             'ip' => (new ModelField('ip'))->type('STRING')->nullable()->default(NULL),
             'user_agent' => (new ModelField('user_agent'))->type('STRING')->nullable()->default(NULL),
             'payload' => (new ModelField('payload'))->type('STRING')->nullable()->default(NULL),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false)
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 

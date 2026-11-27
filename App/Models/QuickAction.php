@@ -46,7 +46,7 @@ class QuickAction extends Model
             'name' => (new ModelField('name'))->type('STRING')->notNull()->hasDefault(false),
             'type' => (new ModelField('type'))->type('STRING')->notNull()->hasDefault(false),
             'payload' => (new ModelField('payload'))->type('STRING')->notNull()->hasDefault(false),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false),
             'description' => (new ModelField('description'))->type('STRING')->nullable()->default(NULL)
         ];
     }

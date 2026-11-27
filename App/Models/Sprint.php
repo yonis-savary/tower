@@ -47,9 +47,9 @@ class Sprint extends Model
             'workspace' => (new ModelField('workspace'))->type('INTEGER')->notNull()->hasDefault(false)->references(Workspace::class,'id'),
             'name' => (new ModelField('name'))->type('STRING')->notNull()->hasDefault(false),
             'state' => (new ModelField('state'))->type('STRING')->notNull()->hasDefault(false),
-            'opened_at' => (new ModelField('opened_at'))->type('DATE')->nullable()->default(NULL),
-            'closed_at' => (new ModelField('closed_at'))->type('DATE')->nullable()->default(NULL),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false)
+            'opened_at' => (new ModelField('opened_at'))->type('DATETIME')->nullable()->default(NULL),
+            'closed_at' => (new ModelField('closed_at'))->type('DATETIME')->nullable()->default(NULL),
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 

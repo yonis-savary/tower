@@ -69,7 +69,7 @@ class PullRequest extends Model
             'draft' => (new ModelField('draft'))->type('BOOLEAN')->notNull()->hasDefault(false),
             'comment_count' => (new ModelField('comment_count'))->type('INTEGER')->notNull()->hasDefault(false),
             'pipeline_status' => (new ModelField('pipeline_status'))->type('STRING')->notNull()->hasDefault(false),
-            'synced_at' => (new ModelField('synced_at'))->type('DATE')->notNull()->hasDefault(false)
+            'synced_at' => (new ModelField('synced_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 

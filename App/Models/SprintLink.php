@@ -43,7 +43,7 @@ class SprintLink extends Model
             'sprint' => (new ModelField('sprint'))->type('INTEGER')->notNull()->hasDefault(false)->references(Sprint::class,'id'),
             'label' => (new ModelField('label'))->type('STRING')->nullable()->default(NULL),
             'url' => (new ModelField('url'))->type('STRING')->notNull()->hasDefault(false),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false)
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 

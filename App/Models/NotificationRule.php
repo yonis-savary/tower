@@ -52,7 +52,7 @@ class NotificationRule extends Model
             'title' => (new ModelField('title'))->type('STRING')->nullable()->default(NULL),
             'body' => (new ModelField('body'))->type('STRING')->nullable()->default(NULL),
             'enabled' => (new ModelField('enabled'))->type('BOOLEAN')->notNull()->hasDefault(false),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false)
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 

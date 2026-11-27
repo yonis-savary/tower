@@ -50,9 +50,9 @@ class ApiToken extends Model
             'name' => (new ModelField('name'))->type('STRING')->notNull()->hasDefault(false),
             'token_hash' => (new ModelField('token_hash'))->type('STRING')->notNull()->hasDefault(false),
             'scope' => (new ModelField('scope'))->type('STRING')->notNull()->hasDefault(false),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
-            'last_used_at' => (new ModelField('last_used_at'))->type('DATE')->nullable()->default(NULL),
-            'expires_at' => (new ModelField('expires_at'))->type('DATE')->nullable()->default(NULL)
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false),
+            'last_used_at' => (new ModelField('last_used_at'))->type('DATETIME')->nullable()->default(NULL),
+            'expires_at' => (new ModelField('expires_at'))->type('DATETIME')->nullable()->default(NULL)
         ];
     }
 

@@ -51,9 +51,9 @@ class AccessKey extends Model
             'name' => (new ModelField('name'))->type('STRING')->notNull()->hasDefault(false),
             'client_id' => (new ModelField('client_id'))->type('STRING')->notNull()->hasDefault(false),
             'secret_hash' => (new ModelField('secret_hash'))->type('STRING')->notNull()->hasDefault(false),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false),
-            'last_used_at' => (new ModelField('last_used_at'))->type('DATE')->nullable()->default(NULL),
-            'revoked_at' => (new ModelField('revoked_at'))->type('DATE')->nullable()->default(NULL),
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false),
+            'last_used_at' => (new ModelField('last_used_at'))->type('DATETIME')->nullable()->default(NULL),
+            'revoked_at' => (new ModelField('revoked_at'))->type('DATETIME')->nullable()->default(NULL),
             'listen' => (new ModelField('listen'))->type('STRING')->notNull()->default(NULL),
             'handlers' => (new ModelField('handlers'))->type('STRING')->nullable()->default(NULL)
         ];

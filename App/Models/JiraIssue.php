@@ -80,7 +80,7 @@ class JiraIssue extends Model
             'sprint_name' => (new ModelField('sprint_name'))->type('STRING')->nullable()->default(NULL),
             'sprint_state' => (new ModelField('sprint_state'))->type('STRING')->nullable()->default(NULL),
             'tracked' => (new ModelField('tracked'))->type('BOOLEAN')->notNull()->hasDefault(false),
-            'synced_at' => (new ModelField('synced_at'))->type('DATE')->notNull()->hasDefault(false),
+            'synced_at' => (new ModelField('synced_at'))->type('DATETIME')->notNull()->hasDefault(false),
             'assignee_id' => (new ModelField('assignee_id'))->type('STRING')->nullable()->default(NULL),
             'assignee_name' => (new ModelField('assignee_name'))->type('STRING')->nullable()->default(NULL),
             'assignee_avatar' => (new ModelField('assignee_avatar'))->type('STRING')->nullable()->default(NULL),

@@ -47,9 +47,9 @@ class ConfigDownload extends Model
             'token_hash' => (new ModelField('token_hash'))->type('STRING')->notNull()->hasDefault(false),
             'format' => (new ModelField('format'))->type('STRING')->notNull()->hasDefault(false),
             'payload' => (new ModelField('payload'))->type('STRING')->notNull()->hasDefault(false),
-            'expires_at' => (new ModelField('expires_at'))->type('DATE')->notNull()->hasDefault(false),
-            'used_at' => (new ModelField('used_at'))->type('DATE')->nullable()->default(NULL),
-            'created_at' => (new ModelField('created_at'))->type('DATE')->notNull()->hasDefault(false)
+            'expires_at' => (new ModelField('expires_at'))->type('DATETIME')->notNull()->hasDefault(false),
+            'used_at' => (new ModelField('used_at'))->type('DATETIME')->nullable()->default(NULL),
+            'created_at' => (new ModelField('created_at'))->type('DATETIME')->notNull()->hasDefault(false)
         ];
     }
 
