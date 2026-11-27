@@ -5,6 +5,15 @@ PROD = docker compose -f docker-compose.yml
 DO = $(PROD) run --rm php-fpm php do
 EXEC = docker compose exec php-fpm
 
+# make exec <command> : the words after exec are the command, not targets. A command with options
+# goes in quotes (make exec "php do migrate:rollback --steps=2"), make would read them as its own
+ifeq (exec,$(firstword $(MAKECMDGOALS)))
+COMMAND := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+$(eval .PHONY: $(subst :,\:,$(COMMAND)))
+$(eval $(subst :,\:,$(COMMAND)):;@:)
+.DEFAULT: ; @:
+endif
+
 # Docker would create a missing mounted directory as root, which the containers could not write in
 Storage:
 	mkdir -p Storage
@@ -38,8 +47,13 @@ deploy: Storage
 	$(DO) configuration:cache
 	$(PROD) up -d
 
+# In the running php-fpm container, else in a one-off one (first install, stopped stack)
 exec:
-	$(EXEC) bash
+	@if [ -n "$$(docker compose ps -q --status running php-fpm 2>/dev/null)" ]; then \
+		$(EXEC) $(or $(COMMAND),bash); \
+	else \
+		$(PROD) run --rm php-fpm $(or $(COMMAND),bash); \
+	fi
 
 launch-scheduler:
 	$(EXEC) php do routine:launch

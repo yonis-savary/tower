@@ -2,7 +2,7 @@
 
 ```sh
 make dev   # the stack with your code mounted, plus the Vite dev server
-docker compose exec php-fpm vendor/bin/phpunit
+make exec vendor/bin/phpunit   # any command in the PHP container, quoted when it has options
 make sdk   # regenerate the OpenAPI document and the frontend client
 ```
 
