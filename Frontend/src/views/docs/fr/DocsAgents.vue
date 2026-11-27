@@ -35,7 +35,6 @@ const token = 'tower_…'
   <table>
     <thead><tr><th>Niveau</th><th>Effet</th></tr></thead>
     <tbody>
-      <tr><td><code>search_workspace</code></td><td>chercher un texte dans tout le workspace : merge requests, tickets Jira, tâches, quick-actions et documentation, 5 résultats par type, les non terminés d'abord</td></tr>
       <tr><td>Bloqué</td><td>aucune connexion, aucun jeton ne peut être créé</td></tr>
       <tr><td>Lecture</td><td>les outils de lecture seulement, même pour un jeton en écriture (par défaut)</td></tr>
       <tr><td>Lecture et écriture</td><td>les outils d'écriture pour les jetons qui en ont le droit</td></tr>
@@ -78,6 +77,7 @@ const token = 'tower_…'
   <table>
     <thead><tr><th>Outil</th><th>Effet</th></tr></thead>
     <tbody>
+      <tr><td><code>search_workspace</code></td><td>chercher un texte dans tout le workspace : merge requests, tickets Jira, tâches, quick-actions et documentation, 5 résultats par type, les non terminés d'abord</td></tr>
       <tr><td><code>list_tasks</code>, <code>list_sprints</code>, <code>list_task_history</code></td><td>les tâches, les sprints et leurs liens, l'historique d'une tâche</td></tr>
       <tr><td><code>get_task_timeline</code></td><td>les tâches traitées entre deux jours (92 jours au plus), avec leur début, leur fin et leurs changements de statut sur la période</td></tr>
       <tr><td><code>create_task</code>, <code>update_task</code>, <code>move_task</code>, <code>add_sprint_link</code></td><td>écriture : créer, modifier (titre, description, lien), changer de statut ou de sprint, ajouter un lien à un sprint</td></tr>
