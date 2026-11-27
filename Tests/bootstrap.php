@@ -1,5 +1,6 @@
 <?php
 
+use App\Security\RegistrationConfiguration;
 use Cube\Core\Autoloader;
 use Cube\Data\Database\Database;
 use Cube\Env\Configuration;
@@ -15,6 +16,8 @@ Cube\Env\Environment::getInstance()->set('APP_KEY', 'key-used-by-the-tests-only-
 
 // Each test gets a new database : PHP writes the session at shutdown, once the database of the last test is gone
 Configuration::getInstance()->add(new SessionConfiguration(driver: new PHPGlobalSession()));
+// The tests make their accounts by registering, closed by default
+Configuration::getInstance()->add(new RegistrationConfiguration(open: true));
 
 TestContext::useTemporaryStorage();
 

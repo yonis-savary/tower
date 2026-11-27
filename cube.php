@@ -71,7 +71,8 @@ return [
     ),
 
     // Close public registration here
-    new RegistrationConfiguration(open: true),
+    // Closed : accounts are created with `php do app:create-user <email>`
+    new RegistrationConfiguration(open: (bool) env('REGISTRATION_OPEN')),
 
     // Push notifications : hidden in the front while a key is missing, see `php do app:push-keys`
     new PushConfiguration(

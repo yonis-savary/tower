@@ -87,8 +87,16 @@ make up
 docker compose -f docker-compose.yml run --rm php-fpm php do migrate:migrate
 ```
 
-Open `http://localhost:8081` and create your account: your first workspace is created with it. Devices connect to the
-WebSocket server on port `8088`. Both ports are set in `.env` (`TOWER_HTTP_PORT`, `TOWER_WEBSOCKET_PORT`).
+Create your account, with its first workspace, and log in at `http://localhost:8081` with the printed password:
+
+```sh
+docker compose -f docker-compose.yml run --rm php-fpm php do app:create-user you@example.com
+```
+
+Registration from the login page is closed unless `REGISTRATION_OPEN=true` in `.env`: on a public instance, anyone
+could then create an account. Otherwise every account is created with this command.
+
+Devices connect to the WebSocket server on port `8088`. Both ports are set in `.env` (`TOWER_HTTP_PORT`, `TOWER_WEBSOCKET_PORT`).
 
 In production:
 

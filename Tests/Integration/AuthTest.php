@@ -2,14 +2,18 @@
 
 namespace Tests\Integration;
 
+use App\Commands\CreateUser;
 use App\Domain\Account\LoginHistory;
 use App\Domain\Account\LoginThrottle;
 use App\Models\History;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
+use App\Security\RegistrationConfiguration;
+use Cube\Console\Args;
 use Cube\Data\Database\Database;
 use Cube\Env\Cache;
+use Cube\Env\Configuration;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
 
@@ -22,7 +26,7 @@ class AuthTest extends CubeTestCase
     {
         parent::setUp();
         Authentication::getInstance()->logout();
-        // Kept on disk between runs : the failures of a previous run would block this one
+        // The cache outlives a test : the failures of a previous test would block this one
         Cache::getInstance()->child('login-throttle')->clear();
     }
 
@@ -184,6 +188,24 @@ class AuthTest extends CubeTestCase
         $this->postJson('/api/auth/login', ['email' => 'nobody@example.com', 'password' => self::PASSWORD])->assertUnauthorized();
 
         $this->assertNull(History::findWhere(['type' => LoginHistory::LOGIN_FAILED_TYPE]));
+    }
+
+    public function testClosedRegistrationOnlyLetsTheCommandCreateAccounts()
+    {
+        $closed = new RegistrationConfiguration(open: false);
+        Configuration::getInstance()->add($closed);
+
+        try {
+            $this->postJson('/api/auth/register', ['email' => self::EMAIL, 'password' => self::PASSWORD])->assertForbidden();
+            $this->assertSame(0, User::select()->count());
+
+            $this->assertSame(0, inject(CreateUser::class)->execute((new Args())->addValue(null, 'Carol@Example.com')));
+            $this->assertNotNull(User::findWhere(['email' => 'carol@example.com']));
+            $this->assertSame(1, inject(CreateUser::class)->execute((new Args())->addValue(null, 'carol@example.com')));
+            $this->assertSame(1, inject(CreateUser::class)->execute((new Args())->addValue(null, 'not an email')));
+        } finally {
+            Configuration::getInstance()->add(new RegistrationConfiguration(open: true));
+        }
     }
 
     public function testRepeatedFailuresBlockTheAccountFromThatAddress()

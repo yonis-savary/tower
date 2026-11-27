@@ -50,14 +50,14 @@ Vocabulaire :
 
 ### Comptes
 
-- L'inscription est **ouverte par défaut** ; la configuration PHP permet de la fermer.
+- L'inscription est **fermée par défaut** (`REGISTRATION_OPEN` dans `.env`) : sur une instance
+  publique, n'importe qui pourrait créer un compte, et réserver l'email d'un futur membre. Fermée,
+  un compte se crée par `php do app:create-user <email>`, qui affiche un mot de passe provisoire.
 - À l'inscription, un workspace est créé pour l'utilisateur, qui en est le premier membre.
 - Un utilisateur change son mot de passe depuis les Paramètres, en donnant l'actuel ; le nouveau
   suit les règles de l'inscription. Ses autres sessions restent ouvertes.
-- Un utilisateur n'est jamais supprimé : il est désactivé (`disabled_at`) et ne peut plus se
-  connecter. Ses workspaces, tâches et adhésions restent en place.
-- **(prévu)** Une commande Cube pour inscrire un utilisateur à la main, inscription ouverte ou
-  non.
+- Un utilisateur n'est jamais supprimé : il est désactivé (`disabled_at`), ne peut plus se
+  connecter et perd ses sessions ouvertes. Ses workspaces, tâches et adhésions restent en place.
 
 ### Workspace
 
