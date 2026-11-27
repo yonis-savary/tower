@@ -12,6 +12,7 @@ use Cube\Data\OpenAPI\OpenAPIConfiguration;
 use Cube\Env\Session\Drivers\DatabaseSession;
 use Cube\Env\Session\SessionConfiguration;
 use Cube\Security\Authentication\AuthenticationConfiguration;
+use Cube\Web\Router\RouterConfiguration;
 use Cube\Web\Websocket\Broadcast\BroadcastConfiguration;
 use Cube\Web\Websocket\Servers\WebsocketConfiguration;
 
@@ -50,6 +51,14 @@ return [
 
     // Class discovery is cached in production only : force it on or off here
     // new AutoloaderConfiguration(cached: true),
+
+    new RouterConfiguration(securityHeaders: [
+        'X-Frame-Options' => 'DENY',
+        // The build loads no inline script : an injected one would not run
+        'Content-Security-Policy' => "script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+        // Images of the documentation may come from other sites : they do not learn the page that shows them
+        'Referrer-Policy' => 'same-origin',
+    ]),
 
     new SessionConfiguration(driver: new DatabaseSession()),
 

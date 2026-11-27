@@ -126,6 +126,8 @@ class JiraIssueController extends Controller
         return new Response(StatusCode::OK, $this->issues->attachmentContent($workspace, $found), [
             'Content-Type' => $found->mimeType,
             'Content-Disposition' => "attachment; filename*=UTF-8''".rawurlencode($found->filename),
+            // Its type is whatever Jira says, HTML or SVG included : never run as a page of Tower
+            'Content-Security-Policy' => "default-src 'none'; sandbox",
         ]);
     }
 
