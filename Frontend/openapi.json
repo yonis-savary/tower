@@ -2617,6 +2617,30 @@
                 }
             }
         },
+        "\/api\/auth\/registration": {
+            "get": {
+                "summary": "Read registration",
+                "description": "Whether anyone may create an account from the login page (REGISTRATION_OPEN)",
+                "operationId": "readRegistration",
+                "responses": {
+                    "200": {
+                        "description": "Whether registration is open",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "open": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "\/api\/auth\/register": {
             "post": {
                 "summary": "Register",
@@ -2782,6 +2806,21 @@
                     },
                     "401": {
                         "description": "Wrong email or password, or disabled account",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many failures for this account from this address, or from this address",
                         "content": {
                             "application\/json": {
                                 "schema": {

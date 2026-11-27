@@ -21,6 +21,7 @@ export default {
     hasAccount: 'Déjà un compte ?',
     loginLink: 'Se connecter',
     closed: 'Les inscriptions sont fermées sur cette instance.',
+    disabled: 'Inscriptions désactivées',
     emailTaken: 'Un compte existe déjà avec cet email.',
     invalid: 'Vérifie ton email et utilise un mot de passe de 8 à 72 caractères.',
   },

@@ -196,6 +196,7 @@ class AuthTest extends CubeTestCase
         Configuration::getInstance()->add($closed);
 
         try {
+            $this->assertSame(['open' => false], $this->get('/api/auth/registration')->assertOk()->json());
             $this->postJson('/api/auth/register', ['email' => self::EMAIL, 'password' => self::PASSWORD])->assertForbidden();
             $this->assertSame(0, User::select()->count());
 

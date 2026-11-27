@@ -979,6 +979,24 @@ export type RevokeApiTokenResponses = {
 
 export type RevokeApiTokenResponse = RevokeApiTokenResponses[keyof RevokeApiTokenResponses];
 
+export type ReadRegistrationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/auth/registration';
+};
+
+export type ReadRegistrationResponses = {
+    /**
+     * Whether registration is open
+     */
+    200: {
+        open?: boolean;
+    };
+};
+
+export type ReadRegistrationResponse = ReadRegistrationResponses[keyof ReadRegistrationResponses];
+
 export type RegisterData = {
     body: {
         email: string;
@@ -1043,6 +1061,12 @@ export type LoginErrors = {
      * The request does not follow its rules, errors are keyed by field
      */
     422: ValidationErrors;
+    /**
+     * Too many failures for this account from this address, or from this address
+     */
+    429: {
+        error?: string;
+    };
 };
 
 export type LoginError = LoginErrors[keyof LoginErrors];

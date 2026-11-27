@@ -23,6 +23,7 @@ export default {
     hasAccount: 'Already have an account?',
     loginLink: 'Log in',
     closed: 'Registration is closed on this instance.',
+    disabled: 'Registration disabled',
     emailTaken: 'An account already exists with this email.',
     invalid: 'Check your email and use a password of 8 to 72 characters.',
   },

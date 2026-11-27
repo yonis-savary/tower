@@ -42,6 +42,7 @@ class AuthController extends Controller
     public function routes(Router $router): void
     {
         $router->group('/api/auth', routes: [
+            Route::get('/registration', [self::class, 'registration']),
             Route::post('/register', [self::class, 'register']),
             Route::post('/login', [self::class, 'login']),
         ]);
@@ -51,6 +52,13 @@ class AuthController extends Controller
             Route::get('/me', [self::class, 'currentUser']),
             Route::put('/password', [self::class, 'changePassword']),
         ]);
+    }
+
+    #[Endpoint('Read registration', 'Whether anyone may create an account from the login page (REGISTRATION_OPEN)', 'readRegistration')]
+    #[RawResponse(['open' => false], description: 'Whether registration is open')]
+    public function registration(Request $request): array
+    {
+        return ['open' => $this->registrationConfiguration->open];
     }
 
     #[Endpoint('Register', 'Creates an account with its first workspace, then opens a session', 'register')]

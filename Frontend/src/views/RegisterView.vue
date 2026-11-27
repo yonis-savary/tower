@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Password from 'primevue/password'
+import Tag from 'primevue/tag'
+import { readRegistration } from '../client'
 import AuthLayout from '../components/AuthLayout.vue'
 import { useAuthStore } from '../stores/auth'
 
@@ -17,6 +19,12 @@ const email = ref('')
 const password = ref('')
 const submitting = ref(false)
 const error = ref<string | null>(null)
+const closed = ref(false)
+
+onMounted(async () => {
+  const { data } = await readRegistration()
+  closed.value = data?.open === false
+})
 
 function errorMessage(status: number | null): string {
   if (status === 403) return t('register.closed')
@@ -44,11 +52,12 @@ async function submit() {
 <template>
   <AuthLayout :title="t('register.title')" :subtitle="t('register.subtitle')">
     <form class="auth-form" @submit.prevent="submit">
+      <Tag v-if="closed" class="registration-closed" severity="secondary" icon="pi pi-lock" :value="t('register.disabled')" />
       <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
 
       <div class="auth-field">
         <label for="email">{{ t('auth.email') }}</label>
-        <InputText id="email" v-model="email" type="email" autocomplete="email" required autofocus fluid />
+        <InputText id="email" v-model="email" type="email" autocomplete="email" required autofocus fluid :disabled="closed" />
       </div>
 
       <div class="auth-field">
@@ -60,11 +69,12 @@ async function submit() {
           :feedback="false"
           toggle-mask
           fluid
+          :disabled="closed"
         />
         <small>{{ t('register.passwordHint') }}</small>
       </div>
 
-      <Button type="submit" :label="t('register.submit')" :loading="submitting" fluid />
+      <Button type="submit" :label="t('register.submit')" :loading="submitting" fluid :disabled="closed" />
     </form>
 
     <template #footer>
@@ -73,3 +83,9 @@ async function submit() {
     </template>
   </AuthLayout>
 </template>
+
+<style scoped>
+.registration-closed {
+  align-self: center;
+}
+</style>
