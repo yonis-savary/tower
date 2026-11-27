@@ -4,7 +4,6 @@ namespace App\Domain\Task;
 
 use App\Models\History;
 use App\Models\Task;
-use Cube\Data\Bunch;
 
 /**
  * The tasks worked on during a period. History is kept 31 days : before, a task only has its creation
@@ -31,7 +30,9 @@ class TaskTimelineService
         $from = strtotime($start);
         $to = strtotime($end);
 
-        return Bunch::wrap(Task::select(['_sprint'])->where('workspace', $workspace)->fetch())
+        return Task::select(['_sprint'])
+            ->where('workspace', $workspace)
+            ->toBunch()
             ->map(fn (Task $task) => $this->entry($task, $changes[$task->id] ?? [], $from, $to))
             ->filter()
             ->sort(fn (array $entry) => [$entry['started_at'] ?? $entry['created_at'] ?? '', $entry['id']])
@@ -70,7 +71,11 @@ class TaskTimelineService
     private function statusChanges(int $workspace): array
     {
         $changes = [];
-        $lines = History::select()->where('workspace', $workspace)->where('type', self::STATUS_CHANGED)->order('id', 'ASC')->fetch();
+        $lines = History::select()
+            ->where('workspace', $workspace)
+            ->where('type', self::STATUS_CHANGED)
+            ->order('id', 'ASC')
+            ->fetch();
 
         foreach ($lines as $line) {
             if (null === $line->task)
@@ -89,11 +94,8 @@ class TaskTimelineService
         return $changes;
     }
 
-    private static function stamp(\DateTimeInterface|string|null $date): ?string
+    private static function stamp(?\DateTimeInterface $date): ?string
     {
-        if (null === $date)
-            return null;
-
-        return ($date instanceof \DateTimeInterface ? $date : new \DateTimeImmutable($date))->format('Y-m-d H:i:s');
+        return $date?->format('Y-m-d H:i:s');
     }
 }

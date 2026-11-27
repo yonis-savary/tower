@@ -2,8 +2,6 @@
 
 namespace App\Domain\Task;
 
-use App\Resources\AtomDate;
-
 /**
  * Places a task or an issue on a period from its status changes, each one classified as `todo`,
  * `in_progress` or `done`. Waiting in a to do status is not working on it : the span starts when
@@ -28,6 +26,7 @@ final class TimelineSpan
     public static function place(array $changes, string $category, ?string $created, ?string $ended, int $start, int $end): ?array
     {
         $time = fn (?string $date) => null === $date ? null : (new \DateTimeImmutable($date))->getTimestamp();
+        $atom = fn (?string $date) => null === $date ? null : (new \DateTimeImmutable($date))->format(\DateTimeInterface::ATOM);
 
         $leaving = array_values(array_filter($changes, fn (array $change) => self::TODO !== $change['to_category']));
         $startedAt = $leaving[0]['at'] ?? (self::TODO === $category ? null : $created);
@@ -45,11 +44,11 @@ final class TimelineSpan
             return null;
 
         return [
-            'created_at' => AtomDate::format($created),
-            'started_at' => AtomDate::format($startedAt),
-            'ended_at' => AtomDate::format($endedAt),
+            'created_at' => $atom($created),
+            'started_at' => $atom($startedAt),
+            'ended_at' => $atom($endedAt),
             'initial_category' => $initial,
-            'changes' => array_map(fn (array $change) => [...$change, 'at' => AtomDate::format($change['at'])], $inPeriod),
+            'changes' => array_map(fn (array $change) => [...$change, 'at' => $atom($change['at'])], $inPeriod),
         ];
     }
 }

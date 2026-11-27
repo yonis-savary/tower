@@ -160,10 +160,13 @@ class JiraIssueService
             return null;
 
         $worked = $provider->workedIssues($start, $end);
-        $withTask = array_flip(array_map(
-            fn (JiraIssue $issue) => $issue->issue_key,
-            JiraIssue::select()->whereIn('id', Query::select('task')->selectField('jira_issue', 'task')->where('workspace', $workspace, table: 'task'))->fetch(),
-        ));
+        $linkedIssues = Query::select('task')
+            ->selectField('jira_issue', 'task')
+            ->where('workspace', $workspace, table: 'task');
+        $issuesWithTask = JiraIssue::select()
+            ->whereIn('id', $linkedIssues)
+            ->fetch();
+        $withTask = array_flip(array_map(fn (JiraIssue $issue) => $issue->issue_key, $issuesWithTask));
         $categories = $this->boardCategories($workspace);
         $siteCategories = null;
         $categoryOf = function (?string $statusId) use ($categories, $provider, &$siteCategories): string {
@@ -216,7 +219,11 @@ class JiraIssueService
     private function boardCategories(int $workspace): array
     {
         $categories = [];
-        foreach (JiraProfile::select()->where('workspace', $workspace)->order('id', 'ASC')->fetch() as $profile) {
+        $profiles = JiraProfile::select()
+            ->where('workspace', $workspace)
+            ->order('id', 'ASC')
+            ->fetch();
+        foreach ($profiles as $profile) {
             $columns = json_decode((string) $profile->columns, true) ?: [];
             foreach ($columns as $index => $column) {
                 $category = match (true) {

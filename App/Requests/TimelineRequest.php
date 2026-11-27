@@ -11,6 +11,8 @@ use Cube\Web\Http\Rules\Param;
  */
 class TimelineRequest extends Request
 {
+    use ValidatesOnce;
+
     public const MAX_DAYS = 92;
 
     public function getRules(): ObjectParam
@@ -32,12 +34,12 @@ class TimelineRequest extends Request
     /** The first second of the period */
     public function start(): string
     {
-        return $this->validated('from').' 00:00:00';
+        return $this->validatedValues()['from'].' 00:00:00';
     }
 
     /** The last second of the period */
     public function end(): string
     {
-        return $this->validated('to').' 23:59:59';
+        return $this->validatedValues()['to'].' 23:59:59';
     }
 }

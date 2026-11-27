@@ -74,7 +74,7 @@ class JiraIssueController extends Controller
     public function worked(TimelineRequest $request): Response
     {
         try {
-            $worked = $this->issues->workedIssues($this->workspace(), $request->start(), $request->end());
+            $worked = $this->issues->workedIssues(currentWorkspaceId(), $request->start(), $request->end());
         } catch (\RuntimeException $failure) {
             return Response::json(['error' => $failure->getMessage()], StatusCode::BAD_GATEWAY);
         }
