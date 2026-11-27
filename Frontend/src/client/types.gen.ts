@@ -3660,7 +3660,7 @@ export type CreateScheduledEventData = {
         type: string;
         payload: string;
         cron?: string | null;
-        run_at?: string | null;
+        run_at?: unknown | unknown | null;
     };
     path?: never;
     query?: never;
@@ -3742,7 +3742,7 @@ export type UpdateScheduledEventData = {
         type: string;
         payload: string;
         cron?: string | null;
-        run_at?: string | null;
+        run_at?: unknown | unknown | null;
         enabled: boolean;
     };
     path: {

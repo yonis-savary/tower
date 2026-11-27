@@ -74,11 +74,7 @@
                                         "name": "nostrum quo sequi",
                                         "client_id": "est sed non",
                                         "listen": [],
-                                        "last_used_at": {
-                                            "date": "2021-01-04 02:34:26.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
+                                        "last_used_at": "2021-01-04T02:34:26+00:00",
                                         "handlers": []
                                     }
                                 ]
@@ -455,11 +451,7 @@
                                     "name": "nostrum quo sequi",
                                     "client_id": "est sed non",
                                     "listen": [],
-                                    "last_used_at": {
-                                        "date": "2021-01-04 02:34:26.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "last_used_at": "2021-01-04T02:34:26+00:00",
                                     "handlers": []
                                 }
                             }
@@ -1393,16 +1385,8 @@
                                         "workspace": 467,
                                         "title": "quasi aut placeat",
                                         "description": "id est soluta",
-                                        "starts_at": {
-                                            "date": "2002-12-05 07:40:28.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
-                                        "ends_at": {
-                                            "date": "2028-06-15 18:02:58.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
+                                        "starts_at": "2002-12-05T07:40:28+00:00",
+                                        "ends_at": "2028-06-15T18:02:58+00:00",
                                         "all_day": false,
                                         "link": "aliquid sit aut",
                                         "color": "minus necessitatibus cupiditate",
@@ -1704,16 +1688,8 @@
                                     "workspace": 467,
                                     "title": "quasi aut placeat",
                                     "description": "id est soluta",
-                                    "starts_at": {
-                                        "date": "2002-12-05 07:40:28.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
-                                    "ends_at": {
-                                        "date": "2028-06-15 18:02:58.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "starts_at": "2002-12-05T07:40:28+00:00",
+                                    "ends_at": "2028-06-15T18:02:58+00:00",
                                     "all_day": false,
                                     "link": "aliquid sit aut",
                                     "color": "minus necessitatibus cupiditate",
@@ -2042,16 +2018,8 @@
                                     "workspace": 467,
                                     "title": "quasi aut placeat",
                                     "description": "id est soluta",
-                                    "starts_at": {
-                                        "date": "2002-12-05 07:40:28.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
-                                    "ends_at": {
-                                        "date": "2028-06-15 18:02:58.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "starts_at": "2002-12-05T07:40:28+00:00",
+                                    "ends_at": "2028-06-15T18:02:58+00:00",
                                     "all_day": false,
                                     "link": "aliquid sit aut",
                                     "color": "minus necessitatibus cupiditate",
@@ -2366,21 +2334,9 @@
                                         "id": 51,
                                         "name": "blanditiis minus sed",
                                         "scope": "occaecati consequatur ab",
-                                        "created_at": {
-                                            "date": "2003-08-24 01:13:19.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
-                                        "last_used_at": {
-                                            "date": "2001-02-18 03:21:48.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
-                                        "expires_at": {
-                                            "date": "2006-06-15 08:39:30.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "created_at": "2003-08-24T01:13:19+00:00",
+                                        "last_used_at": "2001-02-18T03:21:48+00:00",
+                                        "expires_at": "2006-06-15T08:39:30+00:00"
                                     }
                                 ]
                             }
@@ -2598,21 +2554,9 @@
                                         "id": 51,
                                         "name": "blanditiis minus sed",
                                         "scope": "occaecati consequatur ab",
-                                        "created_at": {
-                                            "date": "2003-08-24 01:13:19.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
-                                        "last_used_at": {
-                                            "date": "2001-02-18 03:21:48.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
-                                        "expires_at": {
-                                            "date": "2006-06-15 08:39:30.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "created_at": "2003-08-24T01:13:19+00:00",
+                                        "last_used_at": "2001-02-18T03:21:48+00:00",
+                                        "expires_at": "2006-06-15T08:39:30+00:00"
                                     }
                                 ]
                             }
@@ -3159,17 +3103,9 @@
                                         ],
                                         "version": 213,
                                         "created_by": 310,
-                                        "archived_at": {
-                                            "date": "2014-11-28 14:00:13.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
+                                        "archived_at": "2014-11-28T14:00:13+00:00",
                                         "updated_by": null,
-                                        "updated_at": {
-                                            "date": "2010-07-24 05:41:34.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "updated_at": "2010-07-24T05:41:34+00:00"
                                     }
                                 ]
                             }
@@ -3315,17 +3251,9 @@
                                     ],
                                     "version": 213,
                                     "created_by": 310,
-                                    "archived_at": {
-                                        "date": "2014-11-28 14:00:13.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "archived_at": "2014-11-28T14:00:13+00:00",
                                     "updated_by": null,
-                                    "updated_at": {
-                                        "date": "2010-07-24 05:41:34.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "updated_at": "2010-07-24T05:41:34+00:00",
                                     "content": "# Qui consequatur ut debitis minima.\n\nRatione placeat totam commodi modi et facilis itaque. Praesentium eum tenetur voluptatem delectus. Aspernatur dignissimos neque possimus dolor tenetur similique omnis."
                                 }
                             }
@@ -3435,17 +3363,9 @@
                                     ],
                                     "version": 213,
                                     "created_by": 310,
-                                    "archived_at": {
-                                        "date": "2014-11-28 14:00:13.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "archived_at": "2014-11-28T14:00:13+00:00",
                                     "updated_by": null,
-                                    "updated_at": {
-                                        "date": "2010-07-24 05:41:34.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "updated_at": "2010-07-24T05:41:34+00:00",
                                     "content": "# Qui consequatur ut debitis minima.\n\nRatione placeat totam commodi modi et facilis itaque. Praesentium eum tenetur voluptatem delectus. Aspernatur dignissimos neque possimus dolor tenetur similique omnis."
                                 }
                             }
@@ -3619,17 +3539,9 @@
                                     ],
                                     "version": 213,
                                     "created_by": 310,
-                                    "archived_at": {
-                                        "date": "2014-11-28 14:00:13.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "archived_at": "2014-11-28T14:00:13+00:00",
                                     "updated_by": null,
-                                    "updated_at": {
-                                        "date": "2010-07-24 05:41:34.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "updated_at": "2010-07-24T05:41:34+00:00",
                                     "content": "# Qui consequatur ut debitis minima.\n\nRatione placeat totam commodi modi et facilis itaque. Praesentium eum tenetur voluptatem delectus. Aspernatur dignissimos neque possimus dolor tenetur similique omnis."
                                 }
                             }
@@ -3885,17 +3797,9 @@
                                     ],
                                     "version": 213,
                                     "created_by": 310,
-                                    "archived_at": {
-                                        "date": "2014-11-28 14:00:13.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "archived_at": "2014-11-28T14:00:13+00:00",
                                     "updated_by": null,
-                                    "updated_at": {
-                                        "date": "2010-07-24 05:41:34.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "updated_at": "2010-07-24T05:41:34+00:00",
                                     "content": "# Qui consequatur ut debitis minima.\n\nRatione placeat totam commodi modi et facilis itaque. Praesentium eum tenetur voluptatem delectus. Aspernatur dignissimos neque possimus dolor tenetur similique omnis."
                                 }
                             }
@@ -4028,11 +3932,7 @@
                                         ],
                                         "author": null,
                                         "token": "voluptas id quae",
-                                        "created_at": {
-                                            "date": "2028-02-05 06:22:45.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "created_at": "2028-02-05T06:22:45+00:00"
                                     }
                                 ]
                             }
@@ -4150,11 +4050,7 @@
                                     ],
                                     "author": null,
                                     "token": "voluptas id quae",
-                                    "created_at": {
-                                        "date": "2028-02-05 06:22:45.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "created_at": "2028-02-05T06:22:45+00:00",
                                     "content": "# Et natus est.\n\nAtque suscipit mollitia laudantium consequuntur. Voluptatem dolorem magnam nemo dolorum velit qui enim exercitationem. Maxime voluptas eligendi qui quis animi non delectus. Veritatis quo sunt maxime in dicta."
                                 }
                             }
@@ -4824,11 +4720,7 @@
                                         "type": "corporis ut et",
                                         "origin": "eius molestiae nemo",
                                         "details": "explicabo dolores ipsam",
-                                        "created_at": {
-                                            "date": "2028-04-10 23:14:09.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "created_at": "2028-04-10T23:14:09+00:00"
                                     }
                                 ]
                             }
@@ -4919,11 +4811,7 @@
                                         "type": "corporis ut et",
                                         "origin": "eius molestiae nemo",
                                         "details": "explicabo dolores ipsam",
-                                        "created_at": {
-                                            "date": "2028-04-10 23:14:09.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
+                                        "created_at": "2028-04-10T23:14:09+00:00",
                                         "deliveries": {
                                             "succeeded": 0,
                                             "failed": 0,
@@ -5036,11 +4924,7 @@
                                         "status": "consequatur repellendus autem",
                                         "exit_code": 861,
                                         "response": "vero rem officiis",
-                                        "responded_at": {
-                                            "date": "2009-10-10 15:28:16.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "responded_at": "2009-10-10T15:28:16+00:00"
                                     }
                                 ]
                             }
@@ -5122,11 +5006,7 @@
                                 "example": {
                                     "workspace": "",
                                     "email": "",
-                                    "last_synced_at": {
-                                        "date": "2020-09-22 00:50:09.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "last_synced_at": "2020-09-22T00:50:09+00:00",
                                     "last_error": "minus perspiciatis eum"
                                 }
                             }
@@ -5247,11 +5127,7 @@
                                 "example": {
                                     "workspace": "",
                                     "email": "",
-                                    "last_synced_at": {
-                                        "date": "2020-09-22 00:50:09.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "last_synced_at": "2020-09-22T00:50:09+00:00",
                                     "last_error": "minus perspiciatis eum"
                                 }
                             }
@@ -5358,11 +5234,7 @@
                                 "example": {
                                     "workspace": "",
                                     "email": "",
-                                    "last_synced_at": {
-                                        "date": "2020-09-22 00:50:09.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "last_synced_at": "2020-09-22T00:50:09+00:00",
                                     "last_error": "minus perspiciatis eum"
                                 }
                             }
@@ -5444,11 +5316,7 @@
                                 "example": {
                                     "site": "",
                                     "email": "",
-                                    "last_synced_at": {
-                                        "date": "2020-09-22 00:50:09.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "last_synced_at": "2020-09-22T00:50:09+00:00",
                                     "last_error": "minus perspiciatis eum"
                                 }
                             }
@@ -5569,11 +5437,7 @@
                                 "example": {
                                     "site": "",
                                     "email": "",
-                                    "last_synced_at": {
-                                        "date": "2020-09-22 00:50:09.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "last_synced_at": "2020-09-22T00:50:09+00:00",
                                     "last_error": "minus perspiciatis eum"
                                 }
                             }
@@ -5680,11 +5544,7 @@
                                 "example": {
                                     "site": "",
                                     "email": "",
-                                    "last_synced_at": {
-                                        "date": "2020-09-22 00:50:09.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "last_synced_at": "2020-09-22T00:50:09+00:00",
                                     "last_error": "minus perspiciatis eum"
                                 }
                             }
@@ -6398,6 +6258,21 @@
                     }
                 ],
                 "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "The request does not follow its rules, errors are keyed by field",
                         "content": {
@@ -6481,21 +6356,6 @@
                                         },
                                         "truncated": {
                                             "type": "boolean"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "No active session",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
                                         }
                                     }
                                 }
@@ -7328,16 +7188,8 @@
                                         "id": 588,
                                         "endpoint": "quia quia vitae",
                                         "user_agent": "atque et iusto",
-                                        "created_at": {
-                                            "date": "2006-03-27 11:42:47.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
-                                        "last_success_at": {
-                                            "date": "2009-09-05 03:20:37.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "created_at": "2006-03-27T11:42:47+00:00",
+                                        "last_success_at": "2009-09-05T03:20:37+00:00"
                                     }
                                 ]
                             }
@@ -7460,16 +7312,8 @@
                                     "id": 588,
                                     "endpoint": "quia quia vitae",
                                     "user_agent": "atque et iusto",
-                                    "created_at": {
-                                        "date": "2006-03-27 11:42:47.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
-                                    "last_success_at": {
-                                        "date": "2009-09-05 03:20:37.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    }
+                                    "created_at": "2006-03-27T11:42:47+00:00",
+                                    "last_success_at": "2009-09-05T03:20:37+00:00"
                                 }
                             }
                         }
@@ -7782,11 +7626,7 @@
                                         "title": "Pipeline {payload.status}",
                                         "body": "{payload.title} by {payload.author.name}",
                                         "enabled": true,
-                                        "created_at": {
-                                            "date": "2024-08-24 13:19:58.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "created_at": "2024-08-24T13:19:58+00:00"
                                     }
                                 ]
                             }
@@ -7920,11 +7760,7 @@
                                     "title": "Pipeline {payload.status}",
                                     "body": "{payload.title} by {payload.author.name}",
                                     "enabled": true,
-                                    "created_at": {
-                                        "date": "2024-08-24 13:19:58.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    }
+                                    "created_at": "2024-08-24T13:19:58+00:00"
                                 }
                             }
                         }
@@ -8159,11 +7995,7 @@
                                     "title": "Pipeline {payload.status}",
                                     "body": "{payload.title} by {payload.author.name}",
                                     "enabled": true,
-                                    "created_at": {
-                                        "date": "2024-08-24 13:19:58.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    }
+                                    "created_at": "2024-08-24T13:19:58+00:00"
                                 }
                             }
                         }
@@ -8338,11 +8170,7 @@
                                         "url": "quia ut eos",
                                         "comment_count": 581,
                                         "pipeline_status": "perferendis quam error",
-                                        "synced_at": {
-                                            "date": "2023-10-18 08:42:08.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "synced_at": "2023-10-18T08:42:08+00:00"
                                     }
                                 ]
                             }
@@ -8989,584 +8817,6 @@
                 }
             }
         },
-        "\/api\/pull-requests\/{pullRequest}": {
-            "get": {
-                "summary": "Read pull request",
-                "description": "Reads a stored pull request (its `id` from listPullRequests) from its forge, as readRepositoryPullRequest does",
-                "operationId": "readPullRequest",
-                "parameters": [
-                    {
-                        "name": "pullRequest",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "unresolved",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    }
-                ],
-                "responses": {
-                    "422": {
-                        "description": "The request does not follow its rules, errors are keyed by field",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ValidationErrors"
-                                }
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "The pull request",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer"
-                                        },
-                                        "number": {
-                                            "type": "string"
-                                        },
-                                        "repository": {
-                                            "type": "string"
-                                        },
-                                        "url": {
-                                            "type": "string"
-                                        },
-                                        "title": {
-                                            "type": "string"
-                                        },
-                                        "author": {
-                                            "type": "string"
-                                        },
-                                        "state": {
-                                            "type": "string"
-                                        },
-                                        "draft": {
-                                            "type": "boolean"
-                                        },
-                                        "source_branch": {
-                                            "type": "string"
-                                        },
-                                        "target_branch": {
-                                            "type": "string"
-                                        },
-                                        "description": {
-                                            "type": "string"
-                                        },
-                                        "files": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "path": {
-                                                        "type": "string"
-                                                    },
-                                                    "previous_path": {},
-                                                    "status": {
-                                                        "type": "string"
-                                                    },
-                                                    "lines_added": {
-                                                        "type": "integer"
-                                                    },
-                                                    "lines_removed": {
-                                                        "type": "integer"
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        "comments": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "string"
-                                                    },
-                                                    "parent": {},
-                                                    "author": {
-                                                        "type": "string"
-                                                    },
-                                                    "created": {
-                                                        "type": "string"
-                                                    },
-                                                    "body": {
-                                                        "type": "string"
-                                                    },
-                                                    "path": {
-                                                        "type": "string"
-                                                    },
-                                                    "line": {
-                                                        "type": "integer"
-                                                    },
-                                                    "resolved": {
-                                                        "type": "boolean"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "No active session",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Not stored in the current workspace, or the forge does not know it anymore",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "\/api\/repositories\/{repository}\/pull-requests": {
-            "get": {
-                "summary": "Search repository pull requests",
-                "description": "Lists the pull requests of a repository of the Bitbucket workspace, read from Bitbucket : anyone's, followed by Tower or not, the most recently updated first. `repository` is its slug, without the workspace (`api` for `team\/api`). Find the pull request of a branch with `branch` (its source branch) ; `state` defaults to `open`, `limit` to 20. `id` is the id of listPullRequests when Tower follows it, else null",
-                "operationId": "searchRepositoryPullRequests",
-                "parameters": [
-                    {
-                        "name": "repository",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "pattern": "[A-Za-z0-9_-][A-Za-z0-9._-]*"
-                        }
-                    },
-                    {
-                        "name": "branch",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "state",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "open",
-                                "merged",
-                                "declined",
-                                "superseded"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "limit",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 50
-                        }
-                    }
-                ],
-                "responses": {
-                    "422": {
-                        "description": "The request does not follow its rules, errors are keyed by field",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ValidationErrors"
-                                }
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "The pull requests",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "id": {},
-                                            "number": {
-                                                "type": "string"
-                                            },
-                                            "repository": {
-                                                "type": "string"
-                                            },
-                                            "url": {
-                                                "type": "string"
-                                            },
-                                            "title": {
-                                                "type": "string"
-                                            },
-                                            "author": {
-                                                "type": "string"
-                                            },
-                                            "state": {
-                                                "type": "string"
-                                            },
-                                            "draft": {
-                                                "type": "boolean"
-                                            },
-                                            "source_branch": {
-                                                "type": "string"
-                                            },
-                                            "target_branch": {
-                                                "type": "string"
-                                            },
-                                            "comment_count": {
-                                                "type": "integer"
-                                            },
-                                            "reviewers": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "name": {
-                                                            "type": "string"
-                                                        },
-                                                        "status": {
-                                                            "type": "string"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "No active session",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "No Bitbucket integration, or no such repository the account can read",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "\/api\/repositories\/{repository}\/pull-requests\/{number}": {
-            "get": {
-                "summary": "Read repository pull request",
-                "description": "Reads any pull request of a repository of the Bitbucket workspace by its number, followed by Tower or not, to review it : its description in Markdown, the files it changes (`files`, with their added and removed lines, null when the Bitbucket token lacks the `read:repository` scope), and its comments in Markdown, oldest first. A reply carries the id of the comment it answers in `parent`, an inline comment its file in `path` and its line in `line` (null for a general comment), and `resolved` tells whether its thread is resolved. Narrow to the threads still open with `unresolved`. `repository` is its slug, without the workspace (`api` for `team\/api`)",
-                "operationId": "readRepositoryPullRequest",
-                "parameters": [
-                    {
-                        "name": "repository",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "pattern": "[A-Za-z0-9_-][A-Za-z0-9._-]*"
-                        }
-                    },
-                    {
-                        "name": "number",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "unresolved",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "boolean"
-                        }
-                    }
-                ],
-                "responses": {
-                    "422": {
-                        "description": "The request does not follow its rules, errors are keyed by field",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ValidationErrors"
-                                }
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "The pull request",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer"
-                                        },
-                                        "number": {
-                                            "type": "string"
-                                        },
-                                        "repository": {
-                                            "type": "string"
-                                        },
-                                        "url": {
-                                            "type": "string"
-                                        },
-                                        "title": {
-                                            "type": "string"
-                                        },
-                                        "author": {
-                                            "type": "string"
-                                        },
-                                        "state": {
-                                            "type": "string"
-                                        },
-                                        "draft": {
-                                            "type": "boolean"
-                                        },
-                                        "source_branch": {
-                                            "type": "string"
-                                        },
-                                        "target_branch": {
-                                            "type": "string"
-                                        },
-                                        "description": {
-                                            "type": "string"
-                                        },
-                                        "files": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "path": {
-                                                        "type": "string"
-                                                    },
-                                                    "previous_path": {},
-                                                    "status": {
-                                                        "type": "string"
-                                                    },
-                                                    "lines_added": {
-                                                        "type": "integer"
-                                                    },
-                                                    "lines_removed": {
-                                                        "type": "integer"
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        "comments": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "string"
-                                                    },
-                                                    "parent": {},
-                                                    "author": {
-                                                        "type": "string"
-                                                    },
-                                                    "created": {
-                                                        "type": "string"
-                                                    },
-                                                    "body": {
-                                                        "type": "string"
-                                                    },
-                                                    "path": {
-                                                        "type": "string"
-                                                    },
-                                                    "line": {
-                                                        "type": "integer"
-                                                    },
-                                                    "resolved": {
-                                                        "type": "boolean"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "No active session",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "No Bitbucket integration, or no such pull request the account can read",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "\/api\/repositories\/{repository}\/pull-requests\/{number}\/diff": {
-            "get": {
-                "summary": "Read pull request diff",
-                "description": "The unified diff of a pull request of a repository of the Bitbucket workspace, as text, from the point where its source branch left the target one. `repository` is its slug, without the workspace (`api` for `team\/api`). Over 256 KiB, narrow with `path` : a file, or a directory for every file under it (see `files` of readRepositoryPullRequest)",
-                "operationId": "readPullRequestDiff",
-                "parameters": [
-                    {
-                        "name": "repository",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "pattern": "[A-Za-z0-9_-][A-Za-z0-9._-]*"
-                        }
-                    },
-                    {
-                        "name": "number",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "path",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "422": {
-                        "description": "The request does not follow its rules, errors are keyed by field",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "$ref": "#\/components\/schemas\/ValidationErrors"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "No active session",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "No Bitbucket integration, no such pull request the account can read, or no change at `path`",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "413": {
-                        "description": "Over 256 KiB : narrow with `path`",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "\/api\/scheduled-events": {
             "get": {
                 "summary": "List scheduled events",
@@ -9654,22 +8904,10 @@
                                         "type": "error et autem",
                                         "payload": "vero animi incidunt",
                                         "cron": "accusamus rerum hic",
-                                        "run_at": {
-                                            "date": "2007-02-27 13:07:12.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
+                                        "run_at": "2007-02-27T13:07:12+00:00",
                                         "enabled": true,
-                                        "created_at": {
-                                            "date": "2015-01-29 18:26:31.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
-                                        "last_run_at": {
-                                            "date": "2008-07-20 18:09:28.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "created_at": "2015-01-29T18:26:31+00:00",
+                                        "last_run_at": "2008-07-20T18:09:28+00:00"
                                     }
                                 ]
                             }
@@ -9815,22 +9053,10 @@
                                     "type": "error et autem",
                                     "payload": "vero animi incidunt",
                                     "cron": "accusamus rerum hic",
-                                    "run_at": {
-                                        "date": "2007-02-27 13:07:12.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "run_at": "2007-02-27T13:07:12+00:00",
                                     "enabled": true,
-                                    "created_at": {
-                                        "date": "2015-01-29 18:26:31.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
-                                    "last_run_at": {
-                                        "date": "2008-07-20 18:09:28.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    }
+                                    "created_at": "2015-01-29T18:26:31+00:00",
+                                    "last_run_at": "2008-07-20T18:09:28+00:00"
                                 }
                             }
                         }
@@ -9991,22 +9217,10 @@
                                     "type": "error et autem",
                                     "payload": "vero animi incidunt",
                                     "cron": "accusamus rerum hic",
-                                    "run_at": {
-                                        "date": "2007-02-27 13:07:12.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "run_at": "2007-02-27T13:07:12+00:00",
                                     "enabled": true,
-                                    "created_at": {
-                                        "date": "2015-01-29 18:26:31.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
-                                    "last_run_at": {
-                                        "date": "2008-07-20 18:09:28.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    }
+                                    "created_at": "2015-01-29T18:26:31+00:00",
+                                    "last_run_at": "2008-07-20T18:09:28+00:00"
                                 }
                             }
                         }
@@ -10463,6 +9677,21 @@
                     }
                 ],
                 "responses": {
+                    "401": {
+                        "description": "No active session",
+                        "content": {
+                            "application\/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "The request does not follow its rules, errors are keyed by field",
                         "content": {
@@ -10537,21 +9766,6 @@
                                                     }
                                                 }
                                             }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "No active session",
-                        "content": {
-                            "application\/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "type": "string"
                                         }
                                     }
                                 }
@@ -11195,11 +10409,7 @@
                                         "type": "corporis ut et",
                                         "details": "explicabo dolores ipsam",
                                         "author": null,
-                                        "created_at": {
-                                            "date": "2028-04-10 23:14:09.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "created_at": "2028-04-10T23:14:09+00:00"
                                     }
                                 ]
                             }
@@ -11317,16 +10527,8 @@
                                         "id": 891,
                                         "name": "aut similique magni",
                                         "state": "nam error vero",
-                                        "opened_at": {
-                                            "date": "2004-09-03 03:15:54.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
-                                        "closed_at": {
-                                            "date": "2027-05-24 10:54:13.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
+                                        "opened_at": "2004-09-03T03:15:54+00:00",
+                                        "closed_at": "2027-05-24T10:54:13+00:00",
                                         "links": [
                                             {
                                                 "id": 198,
@@ -11458,16 +10660,8 @@
                                     "id": 891,
                                     "name": "aut similique magni",
                                     "state": "nam error vero",
-                                    "opened_at": {
-                                        "date": "2004-09-03 03:15:54.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
-                                    "closed_at": {
-                                        "date": "2027-05-24 10:54:13.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "opened_at": "2004-09-03T03:15:54+00:00",
+                                    "closed_at": "2027-05-24T10:54:13+00:00",
                                     "links": [
                                         {
                                             "id": 198,
@@ -11582,16 +10776,8 @@
                                     "id": 891,
                                     "name": "aut similique magni",
                                     "state": "nam error vero",
-                                    "opened_at": {
-                                        "date": "2004-09-03 03:15:54.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
-                                    "closed_at": {
-                                        "date": "2027-05-24 10:54:13.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "opened_at": "2004-09-03T03:15:54+00:00",
+                                    "closed_at": "2027-05-24T10:54:13+00:00",
                                     "links": [
                                         {
                                             "id": 198,
@@ -11721,16 +10907,8 @@
                                     "id": 891,
                                     "name": "aut similique magni",
                                     "state": "nam error vero",
-                                    "opened_at": {
-                                        "date": "2004-09-03 03:15:54.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
-                                    "closed_at": {
-                                        "date": "2027-05-24 10:54:13.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
+                                    "opened_at": "2004-09-03T03:15:54+00:00",
+                                    "closed_at": "2027-05-24T10:54:13+00:00",
                                     "links": [
                                         {
                                             "id": 198,
@@ -12233,16 +11411,8 @@
                                         "events": [],
                                         "enabled": true,
                                         "secured": true,
-                                        "created_at": {
-                                            "date": "2012-05-02 06:20:33.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        },
-                                        "last_called_at": {
-                                            "date": "2026-12-09 10:58:11.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "created_at": "2012-05-02T06:20:33+00:00",
+                                        "last_called_at": "2026-12-09T10:58:11+00:00"
                                     }
                                 ]
                             }
@@ -12432,11 +11602,7 @@
                                         "webhook": 261,
                                         "webhook_name": "",
                                         "status": "eveniet facere commodi",
-                                        "created_at": {
-                                            "date": "2004-03-20 20:51:46.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "created_at": "2004-03-20T20:51:46+00:00"
                                     }
                                 ]
                             }
@@ -12570,16 +11736,8 @@
                                     "events": [],
                                     "enabled": true,
                                     "secured": true,
-                                    "created_at": {
-                                        "date": "2012-05-02 06:20:33.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    },
-                                    "last_called_at": {
-                                        "date": "2026-12-09 10:58:11.000000",
-                                        "timezone_type": 3,
-                                        "timezone": "UTC"
-                                    }
+                                    "created_at": "2012-05-02T06:20:33+00:00",
+                                    "last_called_at": "2026-12-09T10:58:11+00:00"
                                 }
                             }
                         }
@@ -12835,11 +11993,7 @@
                                         "ip": "eum natus minus",
                                         "user_agent": "non fugiat commodi",
                                         "payload": "enim accusamus ipsa",
-                                        "created_at": {
-                                            "date": "2004-03-20 20:51:46.000000",
-                                            "timezone_type": 3,
-                                            "timezone": "UTC"
-                                        }
+                                        "created_at": "2004-03-20T20:51:46+00:00"
                                     }
                                 ]
                             }
