@@ -194,6 +194,21 @@ class AuthTest extends CubeTestCase
         $this->postJson('/api/auth/login', ['email' => self::EMAIL, 'password' => self::PASSWORD])->assertUnauthorized();
     }
 
+    public function testDisablingAUserEndsTheirOpenSession()
+    {
+        $this->register();
+        $this->get('/api/workspaces')->assertOk();
+
+        $user = User::findWhere(['email' => self::EMAIL]);
+        $user->disabled_at = new \DateTime();
+        $user->save();
+
+        $this->get('/api/workspaces')->assertUnauthorized();
+        $user->disabled_at = null;
+        $user->save();
+        $this->get('/api/workspaces')->assertUnauthorized();
+    }
+
     public function testChangePasswordChecksTheCurrentOne()
     {
         $this->register();
