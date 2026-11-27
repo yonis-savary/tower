@@ -26,7 +26,7 @@ class HistoryResource extends ModelResource
             'type' => $model->type,
             'origin' => $model->origin,
             'details' => $model->details,
-            'created_at' => AtomDate::format($model->created_at),
+            'created_at' => $model->created_at,
         ];
     }
 }

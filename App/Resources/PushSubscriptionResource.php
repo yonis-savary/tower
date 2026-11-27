@@ -28,8 +28,8 @@ class PushSubscriptionResource extends ModelResource
             // Lets a browser find its own subscription in the list
             'endpoint' => $model->endpoint,
             'user_agent' => $model->user_agent,
-            'created_at' => AtomDate::format($model->created_at),
-            'last_success_at' => AtomDate::format($model->last_success_at),
+            'created_at' => $model->created_at,
+            'last_success_at' => $model->last_success_at,
         ];
     }
 }

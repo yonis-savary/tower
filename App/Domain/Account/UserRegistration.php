@@ -22,7 +22,6 @@ class UserRegistration
             return null;
 
         try {
-            // Not fromArray() nor a DateTime : generated models type a DATETIME column as DATE, which drops the time
             $user = (new User([
                 'email' => $email,
                 'password_hash' => password_hash($password, PASSWORD_DEFAULT),

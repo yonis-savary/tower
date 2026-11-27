@@ -32,7 +32,6 @@ class ScheduledEventService
 
     public function create(int $workspace, string $name, string $type, string $payload, ?string $cron, ?string $runAt): ScheduledEvent
     {
-        // Dates as strings : generated models type a DATETIME column as DATE, which drops the time
         $schedule = new ScheduledEvent([
             'workspace' => $workspace,
             'name' => $name,
@@ -76,7 +75,7 @@ class ScheduledEventService
             ->fetch();
 
         foreach ($schedules as $schedule) {
-            $runAt = null === $schedule->run_at ? null : $this->minuteOf($schedule->run_at);
+            $runAt = $schedule->run_at?->format('Y-m-d H:i');
 
             // A one-time schedule left behind by a stopped scheduler is dropped, never caught up
             if (null !== $runAt && $runAt < $minute) {
@@ -111,10 +110,5 @@ class ScheduledEventService
         $schedule->run_at = $date->format('Y-m-d H:i:00');
 
         return $schedule;
-    }
-
-    private function minuteOf(\DateTimeInterface|string $date): string
-    {
-        return ($date instanceof \DateTimeInterface ? $date : new \DateTimeImmutable($date))->format('Y-m-d H:i');
     }
 }

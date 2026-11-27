@@ -34,11 +34,8 @@ class ScheduleOccurrences
      */
     private function occurrencesOf(ScheduledEvent $schedule, \DateTimeImmutable $from, \DateTimeImmutable $to): array
     {
-        if (null !== $schedule->run_at) {
-            $runAt = new \DateTimeImmutable(is_string($schedule->run_at) ? $schedule->run_at : $schedule->run_at->format('Y-m-d H:i:s'));
-
+        if (null !== $runAt = $schedule->run_at)
             return $from <= $runAt && $runAt < $to ? [$this->occurrence($schedule, $runAt, false, 1)] : [];
-        }
 
         [$minute, $hour, $dayOfTheMonth, $month, $dayOfTheWeek] = explode(' ', $schedule->cron);
         // Each field is matched on its own : walking the days, then their hours and minutes, never every minute of the range

@@ -9,7 +9,6 @@ use App\Models\AgendaItemException;
 use App\Models\AgendaItemParticipant;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
-use App\Resources\AtomDate;
 use Cube\Data\Bunch;
 use Cube\Data\Database\Database;
 use Cube\Data\Database\Query;
@@ -69,7 +68,7 @@ class AgendaService
                 $entries[] = $item;
         }
 
-        usort($entries, fn (AgendaItem $a, AgendaItem $b) => [self::moment($a->starts_at), $a->id] <=> [self::moment($b->starts_at), $b->id]);
+        usort($entries, fn (AgendaItem $a, AgendaItem $b) => [$a->starts_at, $a->id] <=> [$b->starts_at, $b->id]);
 
         return Bunch::wrap($entries);
     }
@@ -89,8 +88,8 @@ class AgendaService
      */
     private function occurrencesOf(AgendaItem $item, \DateTimeImmutable $from, \DateTimeImmutable $to): array
     {
-        $first = self::moment($item->starts_at);
-        $duration = $first->diff(self::moment($item->ends_at));
+        $first = $item->starts_at;
+        $duration = $first->diff($item->ends_at);
         $excluded = $this->excludedDays($item);
 
         $occurrences = [];
@@ -110,17 +109,17 @@ class AgendaService
         if (!$item->isRecurring() || in_array($day, $this->excludedDays($item), true))
             return null;
 
-        $start = Recurrence::of($item)->startOn(self::moment($item->starts_at), $day);
+        $start = Recurrence::of($item)->startOn($item->starts_at, $day);
 
         return $start ? $this->occurrence($item, $start) : null;
     }
 
     private function occurrence(AgendaItem $item, \DateTimeImmutable $start): AgendaItem
     {
-        $first = self::moment($item->starts_at);
+        $first = $item->starts_at;
         $occurrence = clone $item;
         $occurrence->starts_at = $start->format('Y-m-d H:i:s');
-        $occurrence->ends_at = $start->add($first->diff(self::moment($item->ends_at)))->format('Y-m-d H:i:s');
+        $occurrence->ends_at = $start->add($first->diff($item->ends_at))->format('Y-m-d H:i:s');
 
         return $occurrence;
     }
@@ -132,7 +131,7 @@ class AgendaService
     {
         $exceptions = $item->references['exceptions'] ?? AgendaItemException::select()->where('item', $item->id)->fetch();
 
-        return array_map(fn (AgendaItemException $exception) => self::day($exception->occurs_on), $exceptions);
+        return array_map(fn (AgendaItemException $exception) => $exception->occurs_on->format('Y-m-d'), $exceptions);
     }
 
     /**
@@ -174,8 +173,8 @@ class AgendaService
             return $updated;
         }
 
-        $day = self::day($occurrence->starts_at);
-        if (self::SCOPE_FOLLOWING === $scope && $day === self::day($item->starts_at))
+        $day = $occurrence->starts_at->format('Y-m-d');
+        if (self::SCOPE_FOLLOWING === $scope && $day === $item->starts_at->format('Y-m-d'))
             $scope = self::SCOPE_SERIES;
 
         $updated = match ($scope) {
@@ -223,7 +222,7 @@ class AgendaService
 
         $days = self::daysBetween($day, self::day($data->startsAt));
         $newStart = self::moment($data->startsAt);
-        $first = self::moment($item->starts_at)->modify("{$days} days")
+        $first = $item->starts_at->modify("{$days} days")
             ->setTime((int) $newStart->format('H'), (int) $newStart->format('i'), (int) $newStart->format('s'));
         $end = $first->add($newStart->diff(self::moment($data->endsAt)));
 
@@ -260,7 +259,7 @@ class AgendaService
         AgendaItemException::delete()->where('item', $from->id)->fetch();
 
         foreach ($exceptions as $exception) {
-            $day = self::day($exception->occurs_on);
+            $day = $exception->occurs_on->format('Y-m-d');
             $moved = null === $since || $day >= $since;
             AgendaItemException::fromArray([
                 'item' => $moved ? $to->id : $from->id,
@@ -274,8 +273,8 @@ class AgendaService
      */
     public function delete(AgendaItem $item, int $user, ?AgendaItem $occurrence = null, string $scope = self::SCOPE_SERIES): void
     {
-        $day = null === $occurrence ? null : self::day($occurrence->starts_at);
-        if (self::SCOPE_FOLLOWING === $scope && $day === self::day($item->starts_at))
+        $day = null === $occurrence ? null : $occurrence->starts_at->format('Y-m-d');
+        if (self::SCOPE_FOLLOWING === $scope && $day === $item->starts_at->format('Y-m-d'))
             $scope = self::SCOPE_SERIES;
 
         if (null === $occurrence || self::SCOPE_SERIES === $scope) {
@@ -334,7 +333,7 @@ class AgendaService
                 }
 
                 $occurrence = $this->occurrenceOf($item, $start->format('Y-m-d'));
-                if ($occurrence && self::moment($occurrence->starts_at) >= $start && self::moment($occurrence->starts_at) < $next)
+                if ($occurrence && $occurrence->starts_at >= $start && $occurrence->starts_at < $next)
                     $this->announceAs($occurrence, self::UPCOMING_TYPE, HistoryService::ORIGIN_AGENDA, null, [...$details, 'occurrence' => $start->format('Y-m-d')]);
             }
         }
@@ -348,8 +347,8 @@ class AgendaService
         return [
             'item' => $item->id,
             'title' => $item->title,
-            'starts_at' => AtomDate::format($item->starts_at),
-            'ends_at' => AtomDate::format($item->ends_at),
+            'starts_at' => $item->starts_at->format(\DateTimeInterface::ATOM),
+            'ends_at' => $item->ends_at->format(\DateTimeInterface::ATOM),
             'all_day' => (bool) $item->all_day,
             'link' => $item->link,
             'color' => $item->color,
@@ -463,12 +462,12 @@ class AgendaService
         $this->announcer->announce($item->workspace, $line->id, $type, json_encode((object) $payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
-    private static function moment(\DateTimeInterface|string $date): \DateTimeImmutable
+    private static function moment(string $date): \DateTimeImmutable
     {
-        return $date instanceof \DateTimeInterface ? \DateTimeImmutable::createFromInterface($date) : new \DateTimeImmutable($date);
+        return new \DateTimeImmutable($date);
     }
 
-    private static function day(\DateTimeInterface|string $date): string
+    private static function day(string $date): string
     {
         return self::moment($date)->format('Y-m-d');
     }

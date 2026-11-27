@@ -30,7 +30,7 @@ class RefusedWebhookCallResource extends ModelResource
             'webhook_name' => $model->isLoaded('_webhook') ? $model->_webhook->name : '',
             // unauthorized, disabled or invalid
             'status' => $model->status,
-            'created_at' => AtomDate::format($model->created_at),
+            'created_at' => $model->created_at,
         ];
     }
 }

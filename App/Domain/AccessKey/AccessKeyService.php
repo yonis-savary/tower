@@ -37,7 +37,6 @@ class AccessKeyService
     {
         $secret = $this->newSecret();
 
-        // created_at as a string : generated models type a DATETIME column as DATE, which drops the time
         $key = (new AccessKey([
             'workspace' => $workspace,
             'name' => $name,

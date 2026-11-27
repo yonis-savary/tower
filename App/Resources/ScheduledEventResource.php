@@ -29,10 +29,10 @@ class ScheduledEventResource extends ModelResource
             'type' => $model->type,
             'payload' => $model->payload,
             'cron' => $model->cron,
-            'run_at' => AtomDate::format($model->run_at),
+            'run_at' => $model->run_at,
             'enabled' => (bool) $model->enabled,
-            'created_at' => AtomDate::format($model->created_at),
-            'last_run_at' => AtomDate::format($model->last_run_at),
+            'created_at' => $model->created_at,
+            'last_run_at' => $model->last_run_at,
         ];
     }
 }

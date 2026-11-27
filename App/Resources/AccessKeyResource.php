@@ -30,7 +30,7 @@ class AccessKeyResource extends ModelResource
             'client_id' => $model->client_id,
             // Patterns of the events sent to the devices using this key
             'listen' => array_values(array_filter((array) (json_decode((string) $model->listen, true) ?? []), 'is_string')),
-            'last_used_at' => AtomDate::format($model->last_used_at),
+            'last_used_at' => $model->last_used_at,
             // The rules written into the downloaded configuration, see HandlerRules
             'handlers' => HandlerRules::decode($model->handlers),
         ];

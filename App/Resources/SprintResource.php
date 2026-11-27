@@ -27,8 +27,8 @@ class SprintResource extends ModelResource
             'id' => $model->id,
             'name' => $model->name,
             'state' => $model->state,
-            'opened_at' => AtomDate::format($model->opened_at),
-            'closed_at' => AtomDate::format($model->closed_at),
+            'opened_at' => $model->opened_at,
+            'closed_at' => $model->closed_at,
             'links' => SprintLinkResource::of($model->loadMissing('links')->links),
         ];
     }

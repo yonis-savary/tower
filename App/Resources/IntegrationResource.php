@@ -28,7 +28,7 @@ class IntegrationResource extends ModelResource
         return [
             'workspace' => (string) ($settings['workspace'] ?? ''),
             'email' => (string) ($settings['email'] ?? ''),
-            'last_synced_at' => AtomDate::format($model->last_synced_at),
+            'last_synced_at' => $model->last_synced_at,
             'last_error' => $model->last_error,
         ];
     }

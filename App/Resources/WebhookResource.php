@@ -33,8 +33,8 @@ class WebhookResource extends ModelResource
             'enabled' => (bool) $model->enabled,
             // false : no secret, the address alone triggers it
             'secured' => (bool) $model->secured,
-            'created_at' => AtomDate::format($model->created_at),
-            'last_called_at' => AtomDate::format($model->last_called_at),
+            'created_at' => $model->created_at,
+            'last_called_at' => $model->last_called_at,
         ];
     }
 }

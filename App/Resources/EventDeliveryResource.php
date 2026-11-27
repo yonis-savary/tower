@@ -31,7 +31,7 @@ class EventDeliveryResource extends ModelResource
             'status' => $model->status,
             'exit_code' => $model->exit_code,
             'response' => $model->response,
-            'responded_at' => AtomDate::format($model->responded_at),
+            'responded_at' => $model->responded_at,
         ];
     }
 }

@@ -52,7 +52,6 @@ class HistoryService
             $details['token'] = $actor->tokenName;
         }
 
-        // created_at as a string : generated models type a DATETIME column as DATE, which drops the time
         $line = (new History([
             'workspace' => $workspace,
             'type' => $type,

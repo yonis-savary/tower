@@ -27,9 +27,9 @@ class ApiTokenResource extends ModelResource
             'id' => $model->id,
             'name' => $model->name,
             'scope' => $model->scope,
-            'created_at' => AtomDate::format($model->created_at),
-            'last_used_at' => AtomDate::format($model->last_used_at),
-            'expires_at' => AtomDate::format($model->expires_at),
+            'created_at' => $model->created_at,
+            'last_used_at' => $model->last_used_at,
+            'expires_at' => $model->expires_at,
         ];
     }
 }

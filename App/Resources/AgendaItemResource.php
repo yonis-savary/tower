@@ -30,14 +30,14 @@ class AgendaItemResource extends ModelResource
             'workspace' => $model->workspace,
             'title' => $model->title,
             'description' => $model->description,
-            'starts_at' => AtomDate::format($model->starts_at),
-            'ends_at' => AtomDate::format($model->ends_at),
+            'starts_at' => $model->starts_at,
+            'ends_at' => $model->ends_at,
             'all_day' => (bool) $model->all_day,
             'link' => $model->link,
             'color' => $model->color,
             'recurrence' => Recurrence::of($model)?->toArray(),
             // A recurring item is listed once per occurrence, with its dates : this day (server time) names it in a change
-            'occurrence' => $model->isRecurring() ? substr(AtomDate::format($model->starts_at), 0, 10) : null,
+            'occurrence' => $model->isRecurring() ? $model->starts_at->format('Y-m-d') : null,
             'participants' => UserResource::of(array_map(fn (AgendaItemParticipant $participant) => $participant->_user, $model->participants)),
             'created_by' => $model->created_by,
         ];

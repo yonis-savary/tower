@@ -69,7 +69,6 @@ class WebhookService
     {
         $secret = $secured ? $this->newSecret() : null;
 
-        // created_at as a string : generated models type a DATETIME column as DATE, which drops the time
         $webhook = (new Webhook([
             'workspace' => $workspace,
             'name' => $name,

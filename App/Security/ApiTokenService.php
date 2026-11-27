@@ -80,8 +80,8 @@ class ApiTokenService
         if (!$token)
             return null;
 
-        $now = date('Y-m-d H:i:s');
-        if (null !== $token->expires_at && $this->dateOf($token->expires_at) <= $now)
+        $now = new \DateTimeImmutable();
+        if (null !== $token->expires_at && $token->expires_at <= $now)
             return null;
 
         $user = User::find($token->user);
@@ -106,10 +106,5 @@ class ApiTokenService
     private function mcpAccessOf(ApiToken $token): string
     {
         return Workspace::find($token->workspace)->mcp_access;
-    }
-
-    private function dateOf(\DateTimeInterface|string $date): string
-    {
-        return $date instanceof \DateTimeInterface ? $date->format('Y-m-d H:i:s') : $date;
     }
 }

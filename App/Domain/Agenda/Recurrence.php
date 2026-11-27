@@ -60,13 +60,12 @@ final class Recurrence
             return null;
 
         $weekdays = (string) $item->recurrence_weekdays;
-        $until = $item->recurrence_until;
 
         return new self(
             $item->recurrence,
             (int) $item->recurrence_interval,
             '' === $weekdays ? [] : array_map('intval', explode(',', $weekdays)),
-            null === $until ? null : ($until instanceof \DateTimeInterface ? $until->format('Y-m-d') : substr((string) $until, 0, 10)),
+            $item->recurrence_until?->format('Y-m-d'),
         );
     }
 

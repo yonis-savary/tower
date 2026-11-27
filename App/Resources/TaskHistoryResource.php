@@ -28,7 +28,7 @@ class TaskHistoryResource extends ModelResource
             'type' => $model->type,
             'details' => $model->details,
             'author' => $model->isLoaded('_user') ? $model->_user?->email : null,
-            'created_at' => AtomDate::format($model->created_at),
+            'created_at' => $model->created_at,
         ];
     }
 }

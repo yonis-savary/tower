@@ -30,7 +30,7 @@ class WebhookCallResource extends ModelResource
             'ip' => $model->ip,
             'user_agent' => $model->user_agent,
             'payload' => $model->payload,
-            'created_at' => AtomDate::format($model->created_at),
+            'created_at' => $model->created_at,
         ];
     }
 }

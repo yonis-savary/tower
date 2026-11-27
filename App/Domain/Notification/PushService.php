@@ -72,7 +72,6 @@ class PushService
     {
         $this->claimBrowser($user, $endpoint);
 
-        // created_at as a string : generated models type a DATETIME column as DATE, which drops the time
         $subscription = PushSubscription::select()
             ->where('endpoint', $endpoint)
             ->where('workspace', $workspace)

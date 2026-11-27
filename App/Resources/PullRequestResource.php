@@ -35,7 +35,7 @@ class PullRequestResource extends ModelResource
             'url' => $model->url,
             'comment_count' => (int) $model->comment_count,
             'pipeline_status' => $model->pipeline_status,
-            'synced_at' => AtomDate::format($model->synced_at),
+            'synced_at' => $model->synced_at,
         ];
     }
 }

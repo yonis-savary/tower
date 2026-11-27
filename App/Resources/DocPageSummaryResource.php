@@ -31,9 +31,9 @@ class DocPageSummaryResource extends ModelResource
             'tags' => DocumentationService::tagsOf($model),
             'version' => $model->version,
             'created_by' => $model->created_by,
-            'archived_at' => AtomDate::format($model->archived_at),
+            'archived_at' => $model->archived_at,
             'updated_by' => $model->isLoaded('_updated_by') ? $model->_updated_by?->email : null,
-            'updated_at' => AtomDate::format($model->updated_at),
+            'updated_at' => $model->updated_at,
         ];
     }
 }

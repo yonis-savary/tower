@@ -28,7 +28,7 @@ class JiraIntegrationResource extends ModelResource
         return [
             'site' => (string) ($settings['site'] ?? ''),
             'email' => (string) ($settings['email'] ?? ''),
-            'last_synced_at' => AtomDate::format($model->last_synced_at),
+            'last_synced_at' => $model->last_synced_at,
             'last_error' => $model->last_error,
         ];
     }

@@ -32,7 +32,7 @@ class DocPageVersionSummaryResource extends ModelResource
             'tags' => DocumentationService::tagsOf($model),
             'author' => $model->isLoaded('_user') ? $model->_user?->email : null,
             'token' => $model->token,
-            'created_at' => AtomDate::format($model->created_at),
+            'created_at' => $model->created_at,
         ];
     }
 }
