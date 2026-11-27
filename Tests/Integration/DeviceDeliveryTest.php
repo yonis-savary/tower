@@ -6,6 +6,7 @@ use App\Channels\DevicesChannel;
 use App\Domain\AccessKey\AccessKeyService;
 use App\Domain\AccessKey\Connector\ConnectorConfiguration;
 use App\Domain\History\HistoryService;
+use App\Models\AccessKey;
 use App\Models\EventDelivery;
 use App\Models\History;
 use App\Models\Workspace;
@@ -123,6 +124,22 @@ class DeviceDeliveryTest extends CubeTestCase
         $this->assertSame(['deploy.end'], array_column($this->events($deploys), 'event'));
         $this->assertSame([], $this->events($deaf));
         $this->assertSame(2, EventDelivery::select()->count());
+    }
+
+    public function testARevokedOrRotatedKeyReceivesNothingEvenIfItsConnectionStayedOpen()
+    {
+        $workspace = $this->workspace();
+        $revoked = $this->connect($workspace, ['*']);
+        $rotated = $this->connect($workspace, ['*']);
+
+        // The disconnect broadcast is lost : the connections stay open
+        $this->keys->revoke(AccessKey::findWhere(['name' => 'Key 0']));
+        $this->keys->rotateSecret(AccessKey::findWhere(['name' => 'Key 1']));
+        $this->send($workspace, 'backup.run');
+
+        $this->assertSame([], $this->events($revoked));
+        $this->assertSame([], $this->events($rotated));
+        $this->assertSame(0, EventDelivery::select()->count());
     }
 
     public function testDeliveryIsWrittenBeforeAndAnsweredLater()

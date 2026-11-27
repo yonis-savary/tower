@@ -33,6 +33,11 @@ class DevicesChannel extends Channel
     private array $accessKeys = [];
 
     /**
+     * @var array<int,string> Hash of the secret each connection authenticated with, by connection id
+     */
+    private array $secretHashes = [];
+
+    /**
      * @var array<int,string> Why Tower is closing a connection, by connection id
      */
     private array $closeReasons = [];
@@ -58,6 +63,7 @@ class DevicesChannel extends Channel
 
         $key = $this->authenticate($connection->httpRequest);
         $this->accessKeys[$connection->resourceId] = $key->id;
+        $this->secretHashes[$connection->resourceId] = $key->secret_hash;
         $this->keys->markUsed($key);
 
         $uuid = Identifier::uuid4();
@@ -96,7 +102,7 @@ class DevicesChannel extends Channel
     {
         $id = $connection->resourceId;
         $reason = $this->closeReasons[$id] ?? 'connection_closed';
-        unset($this->accessKeys[$id], $this->closeReasons[$id]);
+        unset($this->accessKeys[$id], $this->secretHashes[$id], $this->closeReasons[$id]);
 
         if ($removed = ConnectedDevices::getInstance()->remove($id)) {
             $this->history->log($removed['workspace'], 'device.disconnected', [
@@ -158,13 +164,21 @@ class DevicesChannel extends Channel
         if (!$connections)
             return;
 
+        $keys = AccessKey::select()
+            ->whereIn('id', array_unique(array_map(fn (int $id) => $this->accessKeys[$id], $connections)))
+            ->fetch();
+        $keysById = [];
         $listen = [];
-        foreach (AccessKey::select()->whereIn('id', array_unique(array_map(fn (int $id) => $this->accessKeys[$id], $connections)))->fetch() as $key)
+        foreach ($keys as $key) {
+            $keysById[$key->id] = $key;
             $listen[$key->id] = $this->keys->listenOf($key);
+        }
 
         foreach ($connections as $connectionId) {
             $key = $this->accessKeys[$connectionId];
-            if (!$this->keys->listens($listen[$key] ?? [], $data['event']))
+            if (!isset($keysById[$key]) || !$this->isStillValid($keysById[$key], $connectionId))
+                continue;
+            if (!$this->keys->listens($listen[$key], $data['event']))
                 continue;
 
             $device = $connected->deviceOf($connectionId);
@@ -205,7 +219,8 @@ class DevicesChannel extends Channel
     public function onMessage(ChannelSubscriber $from, array $data): void
     {
         $key = $this->accessKeys[$from->connection->resourceId] ?? null;
-        if (null === $key)
+        $accessKey = null === $key ? null : AccessKey::find($key);
+        if (!$accessKey || !$this->isStillValid($accessKey, $from->connection->resourceId))
             return;
 
         if (!$this->history->recordResponse($key, $data['delivery'], $data['status'], $data['exit_code'] ?? null, $data['output'] ?? null) || empty($data['next']))
@@ -229,6 +244,12 @@ class DevicesChannel extends Channel
     public function disconnectKey(int $accessKey, string $reason): void
     {
         $this->emit(['type' => 'disconnect', 'access_key' => $accessKey, 'reason' => $reason]);
+    }
+
+    // Revoking or rotating a key closes its connections through a broadcast, which may not arrive
+    private function isStillValid(AccessKey $key, int $connectionId): bool
+    {
+        return null === $key->revoked_at && $key->secret_hash === ($this->secretHashes[$connectionId] ?? null);
     }
 
     private function authenticate(RequestInterface $request): ?AccessKey
