@@ -90,10 +90,16 @@ docker compose -f docker-compose.yml run --rm php-fpm php do migrate:migrate
 Open `http://localhost:8081` and create your account: your first workspace is created with it. Devices connect to the
 WebSocket server on port `8088`. Both ports are set in `.env` (`TOWER_HTTP_PORT`, `TOWER_WEBSOCKET_PORT`).
 
-In production, put both behind a TLS reverse proxy, on one domain if you like (the websocket paths are `/devices` and
-`/workspaces/<id>/devices`), give its address to `TOWER_WEBSOCKET_URL` (`wss://tower.example.com`) and list your public
-address in `WEBSOCKET_ALLOWED_ORIGINS`. Later
-updates are a single `make deploy`.
+In production:
+
+- set `env=prod` in `.env`: in `debug`, an error answers with its stack trace;
+- put both ports behind a TLS reverse proxy, on one domain if you like (the websocket paths are `/devices` and
+  `/workspaces/<id>/devices`), which sends `X-Forwarded-Proto: https` (the session cookie is only marked `Secure` with
+  it) and `Strict-Transport-Security`, and do not expose ports `8081` and `8088` publicly;
+- give the proxy's address to `TOWER_WEBSOCKET_URL` (`wss://tower.example.com`) and list your public address in
+  `WEBSOCKET_ALLOWED_ORIGINS`.
+
+Later updates are a single `make deploy`.
 
 ## Development
 
