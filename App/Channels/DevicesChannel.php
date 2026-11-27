@@ -13,6 +13,7 @@ use Cube\Web\Websocket\Channel\Channel;
 use Cube\Web\Websocket\Channel\ChannelSubscriber;
 use Psr\Http\Message\RequestInterface;
 use Ratchet\ConnectionInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * The connection of each device, authenticated by an access key given in the handshake headers.
@@ -59,7 +60,7 @@ class DevicesChannel extends Channel
         $this->accessKeys[$connection->resourceId] = $key->id;
         $this->keys->markUsed($key);
 
-        $uuid = $this->uuid();
+        $uuid = Uuid::v4()->toRfc4122();
         $this->getSubscriber($connection)->send(['type' => 'connection', 'uuid' => $uuid]);
         $device = $this->describe($connection->httpRequest, $key->name, $uuid);
         ConnectedDevices::getInstance()->add($connection->resourceId, $key->workspace, $device);
@@ -236,14 +237,5 @@ class DevicesChannel extends Channel
             $request->getHeaderLine(self::HEADER_CLIENT_ID),
             $request->getHeaderLine(self::HEADER_SECRET),
         );
-    }
-
-    private function uuid(): string
-    {
-        $bytes = random_bytes(16);
-        $bytes[6] = chr((ord($bytes[6]) & 0x0F) | 0x40);
-        $bytes[8] = chr((ord($bytes[8]) & 0x3F) | 0x80);
-
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
     }
 }

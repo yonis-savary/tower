@@ -6,6 +6,7 @@ use App\Models\Webhook;
 use App\Models\WebhookCall;
 use Cube\Data\Bunch;
 use Cube\Web\Http\Request;
+use Symfony\Component\Uid\Uuid;
 
 use function Cube\decrypt;
 use function Cube\encrypt;
@@ -67,7 +68,7 @@ class WebhookService
         $webhook = (new Webhook([
             'workspace' => $workspace,
             'name' => $name,
-            'uuid' => $this->uuid(),
+            'uuid' => Uuid::v4()->toRfc4122(),
             'secret' => null === $secret ? null : encrypt($secret),
             'events' => $this->encodeEvents($events),
             'enabled' => true,
@@ -248,14 +249,5 @@ class WebhookService
     private function newSecret(): string
     {
         return 'whsec_'.bin2hex(random_bytes(32));
-    }
-
-    private function uuid(): string
-    {
-        $bytes = random_bytes(16);
-        $bytes[6] = chr(ord($bytes[6]) & 0x0F | 0x40);
-        $bytes[8] = chr(ord($bytes[8]) & 0x3F | 0x80);
-
-        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
     }
 }
