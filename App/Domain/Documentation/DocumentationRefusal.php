@@ -36,6 +36,14 @@ final class DocumentationRefusal
         return new self(StatusCode::FORBIDDEN, "Only the member who created page {$page}, or the author of the workspace, can delete it");
     }
 
+    /**
+     * @param list<int> $subPages
+     */
+    public static function cannotDeleteSubPages(int $page, array $subPages): self
+    {
+        return new self(StatusCode::FORBIDDEN, "Page {$page} holds pages created by other members, which only they or the author of the workspace can delete : ".implode(', ', $subPages));
+    }
+
     public static function notAnImage(): self
     {
         return new self(StatusCode::UNPROCESSABLE_CONTENT, 'The image must be a PNG, JPEG, GIF or WebP image, encoded in base64');

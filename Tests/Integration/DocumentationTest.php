@@ -263,6 +263,32 @@ class DocumentationTest extends CubeTestCase
         $this->assertSame(['Mine'], $this->titles());
     }
 
+    public function testMovingAPageUnderOnesOwnDoesNotGiveTheRightToDeleteIt()
+    {
+        $this->register('bob@example.com');
+        $this->logOut();
+        $this->register();
+        $alicesPage = $this->page('Mine');
+        $workspace = SelectedWorkspace::get();
+        $this->postJson("/api/workspaces/{$workspace}/members", ['email' => 'bob@example.com'])->assertOk();
+        $this->logOut();
+
+        $this->postJson('/api/auth/login', ['email' => 'bob@example.com', 'password' => 'correct horse battery'])->assertOk();
+        $this->putJson('/api/workspaces/current', ['workspace' => $workspace])->assertOk();
+        $bobsPage = $this->page('Trap');
+        $this->putJson("/api/docs/pages/{$alicesPage['id']}", ['parent' => $bobsPage['id']])->assertOk();
+
+        $this->delete("/api/docs/pages/{$bobsPage['id']}")->assertForbidden();
+        $this->assertSame(['Mine', 'Trap'], $this->titles());
+
+        // The author of the workspace keeps the hand on every page
+        $this->logOut();
+        $this->postJson('/api/auth/login', ['email' => 'alice@example.com', 'password' => 'correct horse battery'])->assertOk();
+        $this->putJson('/api/workspaces/current', ['workspace' => $workspace])->assertOk();
+        $this->delete("/api/docs/pages/{$bobsPage['id']}")->assertNoContent();
+        $this->assertSame([], $this->titles());
+    }
+
     public function testDeletingAWorkspaceDeletesItsDocumentation()
     {
         $this->register();

@@ -173,14 +173,18 @@ class DocumentationService
     }
 
     /**
-     * Deletes the page with its sub-pages, whoever wrote them, and their versions.
+     * Deletes the page with its sub-pages and their versions, when the user may delete each of them.
      */
     public function deletePage(DocPage $page, int $user): ?DocumentationRefusal
     {
         if (!$this->canDelete($page, $user))
             return DocumentationRefusal::cannotDelete($page->id);
 
+        // Any member may move a page : the right on the root alone would let them delete anyone's page under their own
         $branch = $this->branchOf($page);
+        $protected = $this->protectedFrom($branch, $page->workspace, $user);
+        if ($protected)
+            return DocumentationRefusal::cannotDeleteSubPages($page->id, $protected);
         $failure = Database::getInstance()->transaction(fn () => $this->deletePages($branch));
         if ($failure)
             throw $failure;
@@ -196,6 +200,23 @@ class DocumentationService
     public function canDelete(DocPage $page, int $user): bool
     {
         return $page->created_by === $user || Workspace::find($page->workspace)->author === $user;
+    }
+
+    /**
+     * @param list<int> $pages
+     *
+     * @return list<int> The pages the user may not delete
+     */
+    private function protectedFrom(array $pages, int $workspace, int $user): array
+    {
+        if (Workspace::find($workspace)->author === $user)
+            return [];
+        $others = DocPage::select()
+            ->whereIn('id', $pages)
+            ->where('created_by', $user, '<>')
+            ->fetch();
+
+        return array_map(fn (DocPage $other) => $other->id, $others);
     }
 
     /**

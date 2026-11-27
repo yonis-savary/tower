@@ -230,8 +230,9 @@ s'écrit dans le front ou par un agent (voir § Serveur MCP), par les mêmes rou
 - **Suppression** : réservée au membre qui a créé la page (`created_by`) et à l'auteur du
   workspace, qui a ainsi la main sur toutes les pages, même celles d'un membre parti (sinon `403`).
   Modifier, déplacer et archiver restent ouverts à tous les membres. Elle
-  emporte toutes ses sous-pages, même écrites par d'autres, et leurs versions, après une
-  confirmation qui les compte. Elle n'est pas exposée aux agents. Supprimer un workspace supprime
+  emporte toutes ses sous-pages et leurs versions, après une confirmation qui les compte, et
+  demande le droit de supprimer chacune : sinon `403` avec les pages bloquantes, puisque n'importe
+  quel membre pourrait déplacer la page d'un autre sous la sienne pour la supprimer. Elle n'est pas exposée aux agents. Supprimer un workspace supprime
   aussi ses pages, leurs versions et ses images (fichiers compris).
 - **Images** (table `doc_image`, fichiers dans `Storage/DocImages`) : PNG, JPEG, GIF ou WebP de
   5 Mio au plus, envoyées en base64 dans du JSON (le même appel sert au front et aux agents),
