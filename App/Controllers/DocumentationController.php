@@ -18,7 +18,6 @@ use App\Resources\DocPageResource;
 use App\Resources\DocPageSummaryResource;
 use App\Resources\DocPageVersionResource;
 use App\Resources\DocPageVersionSummaryResource;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
@@ -31,11 +30,12 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspaceId;
+
 class DocumentationController extends Controller
 {
     public function __construct(
         protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected DocumentationService $documentation,
         protected DocumentationImages $images,
     ) {}
@@ -63,7 +63,7 @@ class DocumentationController extends Controller
     public function list(ListDocPagesRequest $request): Response
     {
         return Response::json(DocPageSummaryResource::of($this->documentation->listPages(
-            $this->workspace(),
+            currentWorkspaceId(),
             $request->validated('search'),
             $request->validated('tag'),
             $request->validated('include_archived') ?? false,
@@ -78,7 +78,7 @@ class DocumentationController extends Controller
     public function create(CreateDocPageRequest $request): Response
     {
         $page = $this->documentation->createPage(
-            $this->workspace(),
+            currentWorkspaceId(),
             $this->authentication->userId(),
             $request->validated('title'),
             $request->validated('content') ?? '',
@@ -96,7 +96,7 @@ class DocumentationController extends Controller
     #[McpTool('get_doc_page')]
     public function read(Request $request, int $page): Response
     {
-        $found = $this->documentation->findPage($this->workspace(), $page);
+        $found = $this->documentation->findPage(currentWorkspaceId(), $page);
 
         return $found ? Response::json(DocPageResource::of($found)) : $this->pageNotFound();
     }
@@ -110,7 +110,7 @@ class DocumentationController extends Controller
     #[McpTool('update_doc_page', write: true)]
     public function update(UpdateDocPageRequest $request, int $page): Response
     {
-        $found = $this->documentation->findPage($this->workspace(), $page);
+        $found = $this->documentation->findPage(currentWorkspaceId(), $page);
         if (!$found)
             return $this->pageNotFound();
 
@@ -136,7 +136,7 @@ class DocumentationController extends Controller
     #[RawResponse(['error' => 'Page not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such page in the current workspace')]
     public function delete(Request $request, int $page): Response
     {
-        $found = $this->documentation->findPage($this->workspace(), $page);
+        $found = $this->documentation->findPage(currentWorkspaceId(), $page);
         if (!$found)
             return $this->pageNotFound();
 
@@ -154,7 +154,7 @@ class DocumentationController extends Controller
     #[McpTool('edit_doc_page', write: true)]
     public function edit(EditDocPageRequest $request, int $page): Response
     {
-        $found = $this->documentation->findPage($this->workspace(), $page);
+        $found = $this->documentation->findPage(currentWorkspaceId(), $page);
         if (!$found)
             return $this->pageNotFound();
 
@@ -168,7 +168,7 @@ class DocumentationController extends Controller
     #[McpTool('list_doc_page_versions')]
     public function versions(Request $request, int $page): Response
     {
-        $found = $this->documentation->findPage($this->workspace(), $page);
+        $found = $this->documentation->findPage(currentWorkspaceId(), $page);
 
         return $found ? Response::json(DocPageVersionSummaryResource::of($this->documentation->versionsOf($found))) : $this->pageNotFound();
     }
@@ -180,7 +180,7 @@ class DocumentationController extends Controller
     #[McpTool('get_doc_page_version')]
     public function readVersion(Request $request, int $version): Response
     {
-        $found = $this->documentation->findVersion($this->workspace(), $version);
+        $found = $this->documentation->findVersion(currentWorkspaceId(), $version);
 
         return $found
             ? Response::json(DocPageVersionResource::of($found))
@@ -195,7 +195,7 @@ class DocumentationController extends Controller
     #[McpTool('upload_doc_image', write: true)]
     public function uploadImage(UploadDocImageRequest $request): Response
     {
-        $image = $this->images->store($this->workspace(), $this->authentication->userId(), $request->validated('name'), $request->validated('content'));
+        $image = $this->images->store(currentWorkspaceId(), $this->authentication->userId(), $request->validated('name'), $request->validated('content'));
 
         return $image instanceof DocumentationRefusal ? $this->refused($image) : Response::json(DocImageResource::of($image), StatusCode::CREATED);
     }
@@ -206,7 +206,7 @@ class DocumentationController extends Controller
     #[McpTool('get_doc_image')]
     public function image(Request $request, int $image): Response
     {
-        $found = $this->images->find($this->workspace(), $image);
+        $found = $this->images->find(currentWorkspaceId(), $image);
         if (!$found)
             return Response::json(['error' => 'Image not found'], StatusCode::NOT_FOUND);
 
@@ -232,10 +232,5 @@ class DocumentationController extends Controller
     private function pageNotFound(): Response
     {
         return Response::json(['error' => 'Page not found'], StatusCode::NOT_FOUND);
-    }
-
-    private function workspace(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 }

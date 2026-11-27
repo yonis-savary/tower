@@ -9,7 +9,6 @@ use App\Resources\EventDeliveryResource;
 use App\Resources\HistoryResource;
 use App\Resources\RecentEventResource;
 use App\Services\HistoryService;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
 use Cube\Data\OpenAPI\Attributes\ResourceResponse;
@@ -21,13 +20,13 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspaceId;
+
 class HistoryController extends Controller
 {
     private const RECENT_LIMIT = 15;
 
     public function __construct(
-        protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected HistoryService $history,
     ) {}
 
@@ -46,7 +45,7 @@ class HistoryController extends Controller
     #[McpTool('list_history')]
     public function list(HistoryRequest $request): Response
     {
-        return Response::json(HistoryResource::of($this->history->page($this->currentWorkspaceId(), $request->validated('before'))));
+        return Response::json(HistoryResource::of($this->history->page(currentWorkspaceId(), $request->validated('before'))));
     }
 
     #[Endpoint('List recent events', 'The last events sent to the devices of the current workspace, newest first, with how their deliveries went', 'listRecentEvents')]
@@ -54,7 +53,7 @@ class HistoryController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function recentEvents(Request $request): Response
     {
-        return Response::json(RecentEventResource::of($this->history->recentEvents($this->currentWorkspaceId(), self::RECENT_LIMIT)));
+        return Response::json(RecentEventResource::of($this->history->recentEvents(currentWorkspaceId(), self::RECENT_LIMIT)));
     }
 
     #[Endpoint('List event deliveries', 'The devices an event of the history was sent to, with their response', 'listEventDeliveries')]
@@ -64,15 +63,10 @@ class HistoryController extends Controller
     #[McpTool('list_event_deliveries')]
     public function deliveries(Request $request, int $line): Response
     {
-        $history = $this->history->find($this->currentWorkspaceId(), $line);
+        $history = $this->history->find(currentWorkspaceId(), $line);
         if (!$history)
             return Response::json(['error' => 'History line not found'], StatusCode::NOT_FOUND);
 
         return Response::json(EventDeliveryResource::of($this->history->deliveriesOf($history)));
-    }
-
-    private function currentWorkspaceId(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 }

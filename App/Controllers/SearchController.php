@@ -7,7 +7,6 @@ use App\Middlewares\IsAuthenticated;
 use App\Requests\SearchRequest;
 use App\Search\SearchResult;
 use App\Search\WorkspaceSearch;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
 use Cube\Security\Authentication;
@@ -17,11 +16,11 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspace;
+
 class SearchController extends Controller
 {
     public function __construct(
-        protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected WorkspaceSearch $search,
     ) {}
 
@@ -38,7 +37,7 @@ class SearchController extends Controller
     #[McpTool('search_workspace')]
     public function search(SearchRequest $request): Response
     {
-        $workspace = $this->workspaces->current($this->authentication->userId());
+        $workspace = currentWorkspace();
         $results = $this->search->search($workspace, trim($request->validated('q')));
 
         return Response::json(array_map(fn (SearchResult $result) => $result->toArray(), $results));

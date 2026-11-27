@@ -29,6 +29,8 @@ use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 use Cube\Web\Websocket\Broadcast\BroadcastConfiguration;
 
+use function App\currentWorkspace;
+
 class WorkspaceController extends Controller
 {
     public function __construct(
@@ -77,7 +79,7 @@ class WorkspaceController extends Controller
     #[RawResponse(['error' => 'No workspace'], responseCode: StatusCode::NOT_FOUND, description: 'The user belongs to no workspace')]
     public function current(Request $request): Response
     {
-        $workspace = $this->workspaces->current($this->authentication->userId());
+        $workspace = currentWorkspace();
         if (!$workspace)
             return Response::json(['error' => 'No workspace'], StatusCode::NOT_FOUND);
 
@@ -90,7 +92,7 @@ class WorkspaceController extends Controller
     #[RawResponse(['error' => 'No workspace'], responseCode: StatusCode::NOT_FOUND, description: 'The user belongs to no workspace')]
     public function socket(Request $request): Response
     {
-        $workspace = $this->workspaces->current($this->authentication->userId());
+        $workspace = currentWorkspace();
         if (!$workspace)
             return Response::json(['error' => 'No workspace'], StatusCode::NOT_FOUND);
 

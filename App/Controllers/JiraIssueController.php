@@ -13,7 +13,6 @@ use App\Requests\TransitionJiraIssueRequest;
 use App\Resources\JiraIssueResource;
 use App\Resources\JiraProfileResource;
 use App\Resources\TaskResource;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
@@ -26,6 +25,8 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspaceId;
+
 class JiraIssueController extends Controller
 {
     private const ISSUE_KEY = '[A-Za-z][A-Za-z0-9_]*-[0-9]+';
@@ -34,7 +35,6 @@ class JiraIssueController extends Controller
 
     public function __construct(
         protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected JiraIssueService $issues,
         protected JiraProfileService $profiles,
     ) {}
@@ -60,7 +60,7 @@ class JiraIssueController extends Controller
     #[McpTool('list_jira_issues')]
     public function list(ListJiraIssuesRequest $request): Response
     {
-        $issues = $this->issues->listIssues($this->workspace(), (bool) $request->validated('mine'), $request->validated('status_category'), $request->validated('profile'));
+        $issues = $this->issues->listIssues(currentWorkspaceId(), (bool) $request->validated('mine'), $request->validated('status_category'), $request->validated('profile'));
 
         return Response::json(JiraIssueResource::of($issues));
     }
@@ -91,7 +91,7 @@ class JiraIssueController extends Controller
     #[McpTool('list_jira_profiles')]
     public function profiles(Request $request): Response
     {
-        $workspace = $this->workspace();
+        $workspace = currentWorkspaceId();
 
         return Response::json([
             'account_id' => $this->issues->accountOf($workspace),
@@ -106,7 +106,7 @@ class JiraIssueController extends Controller
     #[McpTool('get_jira_issue')]
     public function read(Request $request, string $key): Response
     {
-        $content = $this->issues->content($this->workspace(), strtoupper($key));
+        $content = $this->issues->content(currentWorkspaceId(), strtoupper($key));
 
         return $content ? Response::json($this->issues->contentPayload($content)) : $this->issueNotFound();
     }
@@ -118,7 +118,7 @@ class JiraIssueController extends Controller
     #[McpTool('get_jira_attachment')]
     public function attachment(Request $request, int $attachment): Response
     {
-        $workspace = $this->workspace();
+        $workspace = currentWorkspaceId();
         $found = $this->issues->attachment($workspace, (string) $attachment);
         if (!$found)
             return Response::json(['error' => 'Attachment not found'], StatusCode::NOT_FOUND);
@@ -139,7 +139,7 @@ class JiraIssueController extends Controller
     #[McpTool('list_jira_transitions')]
     public function transitions(Request $request, int $issue): Response
     {
-        $found = $this->issues->findIssue($this->workspace(), $issue);
+        $found = $this->issues->findIssue(currentWorkspaceId(), $issue);
         if (!$found)
             return $this->issueNotFound();
 
@@ -160,7 +160,7 @@ class JiraIssueController extends Controller
     #[McpTool('transition_jira_issue', write: true)]
     public function transition(TransitionJiraIssueRequest $request, int $issue): Response
     {
-        $found = $this->issues->findIssue($this->workspace(), $issue);
+        $found = $this->issues->findIssue(currentWorkspaceId(), $issue);
         if (!$found)
             return $this->issueNotFound();
 
@@ -179,7 +179,7 @@ class JiraIssueController extends Controller
     #[McpTool('create_task_from_jira_issue', write: true)]
     public function createTask(Request $request, int $issue): Response
     {
-        $found = $this->issues->findIssue($this->workspace(), $issue);
+        $found = $this->issues->findIssue(currentWorkspaceId(), $issue);
         if (!$found)
             return $this->issueNotFound();
 
@@ -196,7 +196,7 @@ class JiraIssueController extends Controller
     #[RawResponse(['error' => 'Issue not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such issue in the current workspace, or Jira does not know it anymore')]
     public function discuss(Request $request, int $issue): Response
     {
-        $found = $this->issues->findIssue($this->workspace(), $issue);
+        $found = $this->issues->findIssue(currentWorkspaceId(), $issue);
         if (!$found || !$this->issues->discuss($found, $this->authentication->userId()))
             return $this->issueNotFound();
 
@@ -206,10 +206,5 @@ class JiraIssueController extends Controller
     private function issueNotFound(): Response
     {
         return Response::json(['error' => 'Issue not found'], StatusCode::NOT_FOUND);
-    }
-
-    private function workspace(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 }

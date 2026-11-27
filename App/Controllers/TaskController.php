@@ -33,11 +33,12 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspaceId;
+
 class TaskController extends Controller
 {
     public function __construct(
         protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected TaskService $tasks,
         protected FaviconService $favicons,
         protected TaskNotesParser $notesParser,
@@ -72,7 +73,7 @@ class TaskController extends Controller
     #[McpTool('list_tasks')]
     public function list(Request $request): Response
     {
-        return Response::json(TaskResource::of($this->tasks->listTasks($this->workspace())));
+        return Response::json(TaskResource::of($this->tasks->listTasks(currentWorkspaceId())));
     }
 
     #[Endpoint('Task timeline', 'The tasks worked on between two days, both included (92 days at most) : in progress at some point of the period, or finished during it. Statuses fall in three categories : `todo`, `in_progress`, `done` (done and cancelled). Each task has `created_at`, `started_at` (when it first left todo, null if it never did), `ended_at` (when it was done or cancelled, null while it is open), `initial_category` (its category at the start of the period) and its status changes during the period in `changes`, with their categories. Status changes are kept 31 days : an older task is placed by its creation and its completion only. Oldest start first', 'getTaskTimeline')]
@@ -92,7 +93,7 @@ class TaskController extends Controller
     public function create(CreateTaskRequest $request): Response
     {
         $task = $this->tasks->createTask(
-            $this->workspace(),
+            currentWorkspaceId(),
             $this->authentication->userId(),
             $request->validated('title'),
             $request->validated('description') ?? '',
@@ -125,7 +126,7 @@ class TaskController extends Controller
         if (!$notes->isCreatable())
             return Response::json(['error' => 'Invalid notes', ...$notes->toArray()], StatusCode::UNPROCESSABLE_CONTENT);
 
-        $tasks = $this->tasks->createTasks($this->workspace(), $this->authentication->userId(), $notes->tasks, $request->validated('sprint'));
+        $tasks = $this->tasks->createTasks(currentWorkspaceId(), $this->authentication->userId(), $notes->tasks, $request->validated('sprint'));
 
         return null === $tasks
             ? $this->invalidMove()
@@ -139,7 +140,7 @@ class TaskController extends Controller
     #[McpTool('update_task', write: true)]
     public function update(TaskContentRequest $request, int $task): Response
     {
-        $found = $this->tasks->findTask($this->workspace(), $task);
+        $found = $this->tasks->findTask(currentWorkspaceId(), $task);
         if (!$found)
             return $this->taskNotFound();
 
@@ -157,7 +158,7 @@ class TaskController extends Controller
     #[McpTool('move_task', write: true)]
     public function move(MoveTaskRequest $request, int $task): Response
     {
-        $found = $this->tasks->findTask($this->workspace(), $task);
+        $found = $this->tasks->findTask(currentWorkspaceId(), $task);
         if (!$found)
             return $this->taskNotFound();
 
@@ -173,7 +174,7 @@ class TaskController extends Controller
     #[McpTool('list_task_history')]
     public function history(Request $request, int $task): Response
     {
-        $found = $this->tasks->findTask($this->workspace(), $task);
+        $found = $this->tasks->findTask(currentWorkspaceId(), $task);
 
         return $found ? Response::json(TaskHistoryResource::of($this->tasks->historyOf($found))) : $this->taskNotFound();
     }
@@ -184,7 +185,7 @@ class TaskController extends Controller
     #[McpTool('list_sprints')]
     public function listSprints(Request $request): Response
     {
-        return Response::json(SprintResource::of($this->tasks->listSprints($this->workspace())));
+        return Response::json(SprintResource::of($this->tasks->listSprints(currentWorkspaceId())));
     }
 
     #[Endpoint('Create sprint', 'Plans a new sprint in the current workspace', 'createSprint')]
@@ -192,7 +193,7 @@ class TaskController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function createSprint(CreateSprintRequest $request): Response
     {
-        $sprint = $this->tasks->createSprint($this->workspace(), $this->authentication->userId(), $request->validated('name'));
+        $sprint = $this->tasks->createSprint(currentWorkspaceId(), $this->authentication->userId(), $request->validated('name'));
 
         return Response::json(SprintResource::of($sprint), StatusCode::CREATED);
     }
@@ -203,7 +204,7 @@ class TaskController extends Controller
     #[RawResponse(['error' => 'Sprint not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such sprint in the current workspace')]
     public function openSprint(Request $request, int $sprint): Response
     {
-        $found = $this->tasks->findSprint($this->workspace(), $sprint);
+        $found = $this->tasks->findSprint(currentWorkspaceId(), $sprint);
         if (!$found)
             return $this->sprintNotFound();
 
@@ -219,7 +220,7 @@ class TaskController extends Controller
     #[RawResponse(['error' => 'This sprint is not active'], responseCode: StatusCode::CONFLICT, description: 'Only an active sprint can be closed')]
     public function closeSprint(Request $request, int $sprint): Response
     {
-        $found = $this->tasks->findSprint($this->workspace(), $sprint);
+        $found = $this->tasks->findSprint(currentWorkspaceId(), $sprint);
         if (!$found)
             return $this->sprintNotFound();
 
@@ -236,7 +237,7 @@ class TaskController extends Controller
     #[McpTool('add_sprint_link', write: true)]
     public function addSprintLink(SaveSprintLinkRequest $request, int $sprint): Response
     {
-        $found = $this->tasks->findSprint($this->workspace(), $sprint);
+        $found = $this->tasks->findSprint(currentWorkspaceId(), $sprint);
         if (!$found)
             return $this->sprintNotFound();
 
@@ -252,7 +253,7 @@ class TaskController extends Controller
     #[RawResponse(['error' => 'This sprint is closed'], responseCode: StatusCode::CONFLICT, description: 'The links of a closed sprint no longer change')]
     public function updateSprintLink(SaveSprintLinkRequest $request, int $link): Response
     {
-        $found = $this->tasks->findLink($this->workspace(), $link);
+        $found = $this->tasks->findLink(currentWorkspaceId(), $link);
         if (!$found)
             return $this->linkNotFound();
 
@@ -268,7 +269,7 @@ class TaskController extends Controller
     #[RawResponse(['error' => 'This sprint is closed'], responseCode: StatusCode::CONFLICT, description: 'The links of a closed sprint no longer change')]
     public function removeSprintLink(Request $request, int $link): Response
     {
-        $found = $this->tasks->findLink($this->workspace(), $link);
+        $found = $this->tasks->findLink(currentWorkspaceId(), $link);
         if (!$found)
             return $this->linkNotFound();
 
@@ -280,7 +281,7 @@ class TaskController extends Controller
     #[RawResponse(['error' => 'Icon not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such link, or no icon for its site')]
     public function sprintLinkIcon(Request $request, int $link): Response
     {
-        $found = $this->tasks->findLink($this->workspace(), $link);
+        $found = $this->tasks->findLink(currentWorkspaceId(), $link);
         $favicon = $found ? $this->favicons->of($found->url) : null;
         if (!$favicon)
             return Response::json(['error' => 'Icon not found'], StatusCode::NOT_FOUND);
@@ -317,10 +318,5 @@ class TaskController extends Controller
     private function sprintClosed(): Response
     {
         return Response::json(['error' => 'This sprint is closed'], StatusCode::CONFLICT);
-    }
-
-    private function workspace(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 }

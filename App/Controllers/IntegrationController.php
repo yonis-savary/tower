@@ -13,7 +13,6 @@ use App\Requests\SaveJiraRequest;
 use App\Resources\IntegrationResource;
 use App\Resources\JiraIntegrationResource;
 use App\Resources\JiraProfileResource;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
@@ -26,11 +25,11 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspaceId;
+
 class IntegrationController extends Controller
 {
     public function __construct(
-        protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected IntegrationService $integrations,
         protected PullRequestSync $sync,
         protected JiraIssueSync $jiraSync,
@@ -60,7 +59,7 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Bitbucket integration')]
     public function show(Request $request): Response
     {
-        $integration = $this->integrations->findBitbucket($this->currentWorkspaceId());
+        $integration = $this->integrations->findBitbucket(currentWorkspaceId());
 
         return $integration ? Response::json(IntegrationResource::of($integration)) : $this->notFound();
     }
@@ -71,7 +70,7 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'A token is required'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'No token was given for a new integration, or an invalid field')]
     public function save(SaveBitbucketRequest $request): Response
     {
-        $workspace = $this->currentWorkspaceId();
+        $workspace = currentWorkspaceId();
         $token = $request->validated('token') ?: null;
 
         if (null === $token && !$this->integrations->findBitbucket($workspace))
@@ -88,7 +87,7 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Bitbucket integration')]
     public function delete(Request $request): Response
     {
-        $integration = $this->integrations->findBitbucket($this->currentWorkspaceId());
+        $integration = $this->integrations->findBitbucket(currentWorkspaceId());
         if (!$integration)
             return $this->notFound();
 
@@ -103,7 +102,7 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Bitbucket integration')]
     public function synchronize(Request $request): Response
     {
-        $integration = $this->integrations->findBitbucket($this->currentWorkspaceId());
+        $integration = $this->integrations->findBitbucket(currentWorkspaceId());
         if (!$integration)
             return $this->notFound();
 
@@ -118,7 +117,7 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Jira integration')]
     public function showJira(Request $request): Response
     {
-        $integration = $this->integrations->findJira($this->currentWorkspaceId());
+        $integration = $this->integrations->findJira(currentWorkspaceId());
 
         return $integration ? Response::json(JiraIntegrationResource::of($integration)) : $this->notFound();
     }
@@ -129,7 +128,7 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'A token is required'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'No token was given for a new integration, or an invalid field')]
     public function saveJira(SaveJiraRequest $request): Response
     {
-        $workspace = $this->currentWorkspaceId();
+        $workspace = currentWorkspaceId();
         $token = $request->validated('token') ?: null;
 
         if (null === $token && !$this->integrations->findJira($workspace))
@@ -146,7 +145,7 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Jira integration')]
     public function deleteJira(Request $request): Response
     {
-        $integration = $this->integrations->findJira($this->currentWorkspaceId());
+        $integration = $this->integrations->findJira(currentWorkspaceId());
         if (!$integration)
             return $this->notFound();
 
@@ -161,7 +160,7 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Jira integration')]
     public function synchronizeJira(Request $request): Response
     {
-        $integration = $this->integrations->findJira($this->currentWorkspaceId());
+        $integration = $this->integrations->findJira(currentWorkspaceId());
         if (!$integration)
             return $this->notFound();
 
@@ -176,7 +175,7 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Jira integration')]
     public function createJiraProfile(SaveJiraProfileRequest $request): Response
     {
-        $integration = $this->integrations->findJira($this->currentWorkspaceId());
+        $integration = $this->integrations->findJira(currentWorkspaceId());
         if (!$integration)
             return $this->notFound();
 
@@ -191,7 +190,7 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'Profile not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such profile in the current workspace')]
     public function updateJiraProfile(SaveJiraProfileRequest $request, int $profile): Response
     {
-        $found = $this->jiraProfiles->find($this->currentWorkspaceId(), $profile);
+        $found = $this->jiraProfiles->find(currentWorkspaceId(), $profile);
         if (!$found)
             return $this->profileNotFound();
 
@@ -206,7 +205,7 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'Profile not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such profile in the current workspace')]
     public function deleteJiraProfile(Request $request, int $profile): Response
     {
-        $found = $this->jiraProfiles->find($this->currentWorkspaceId(), $profile);
+        $found = $this->jiraProfiles->find(currentWorkspaceId(), $profile);
         if (!$found)
             return $this->profileNotFound();
 
@@ -230,10 +229,5 @@ class IntegrationController extends Controller
     private function notFound(): Response
     {
         return Response::json(['error' => 'Integration not found'], StatusCode::NOT_FOUND);
-    }
-
-    private function currentWorkspaceId(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 }

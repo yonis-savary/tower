@@ -10,7 +10,6 @@ use App\Resources\ScheduledEventResource;
 use App\Services\EventService;
 use App\Services\HistoryService;
 use App\Services\ScheduledEventService;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
@@ -23,11 +22,12 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspaceId;
+
 class ScheduledEventController extends Controller
 {
     public function __construct(
         protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected ScheduledEventService $schedules,
         protected EventService $events,
         protected HistoryService $history,
@@ -50,7 +50,7 @@ class ScheduledEventController extends Controller
     #[McpTool('list_scheduled_events')]
     public function list(Request $request): Response
     {
-        return Response::json(ScheduledEventResource::of($this->schedules->listFor($this->currentWorkspaceId())));
+        return Response::json(ScheduledEventResource::of($this->schedules->listFor(currentWorkspaceId())));
     }
 
     #[Endpoint('Create scheduled event', 'Schedules an enabled event in the current workspace : recurring with `cron`, or once at `run_at` (server time), to the minute', 'createScheduledEvent')]
@@ -59,7 +59,7 @@ class ScheduledEventController extends Controller
     public function create(ScheduledEventRequest $request): Response
     {
         $schedule = $this->schedules->create(
-            $this->currentWorkspaceId(),
+            currentWorkspaceId(),
             $request->validated('name'),
             $request->validated('type'),
             $request->validated('payload'),
@@ -77,7 +77,7 @@ class ScheduledEventController extends Controller
     #[RawResponse(['error' => 'Scheduled event not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such scheduled event in the current workspace')]
     public function update(UpdateScheduledEventRequest $request, int $schedule): Response
     {
-        $found = $this->schedules->find($this->currentWorkspaceId(), $schedule);
+        $found = $this->schedules->find(currentWorkspaceId(), $schedule);
         if (!$found)
             return $this->notFound();
 
@@ -105,7 +105,7 @@ class ScheduledEventController extends Controller
     #[RawResponse(['error' => 'Scheduled event not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such scheduled event in the current workspace')]
     public function delete(Request $request, int $schedule): Response
     {
-        $found = $this->schedules->find($this->currentWorkspaceId(), $schedule);
+        $found = $this->schedules->find(currentWorkspaceId(), $schedule);
         if (!$found)
             return $this->notFound();
 
@@ -121,7 +121,7 @@ class ScheduledEventController extends Controller
     #[RawResponse(['error' => 'Scheduled event not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such scheduled event in the current workspace')]
     public function trigger(Request $request, int $schedule): Response
     {
-        $workspace = $this->currentWorkspaceId();
+        $workspace = currentWorkspaceId();
         $found = $this->schedules->find($workspace, $schedule);
         if (!$found)
             return $this->notFound();
@@ -134,10 +134,5 @@ class ScheduledEventController extends Controller
     private function notFound(): Response
     {
         return Response::json(['error' => 'Scheduled event not found'], StatusCode::NOT_FOUND);
-    }
-
-    private function currentWorkspaceId(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 }

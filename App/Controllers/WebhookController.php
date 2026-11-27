@@ -11,7 +11,6 @@ use App\Resources\WebhookCallResource;
 use App\Resources\WebhookResource;
 use App\Services\HistoryService;
 use App\Services\WebhookService;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\ObjectResponse;
@@ -24,6 +23,8 @@ use Cube\Web\Http\Response;
 use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
+
+use function App\currentWorkspaceId;
 
 class WebhookController extends Controller
 {
@@ -38,7 +39,6 @@ class WebhookController extends Controller
 
     public function __construct(
         protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected WebhookService $webhooks,
         protected HistoryService $history,
     ) {}
@@ -66,7 +66,7 @@ class WebhookController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function list(Request $request): Response
     {
-        return Response::json(WebhookResource::of($this->webhooks->listFor($this->currentWorkspaceId())));
+        return Response::json(WebhookResource::of($this->webhooks->listFor(currentWorkspaceId())));
     }
 
     #[Endpoint('Create webhook', 'Creates an enabled webhook in the current workspace, secured unless `secured` is false : this choice cannot change. The secret is only given by this answer, null for an unsecured webhook', 'createWebhook')]
@@ -75,7 +75,7 @@ class WebhookController extends Controller
     public function create(CreateWebhookRequest $request): Response
     {
         $secured = $request->validated('secured') ?? true;
-        [$webhook, $secret] = $this->webhooks->create($this->currentWorkspaceId(), $request->validated('name'), $request->validated('events'), (bool) $secured);
+        [$webhook, $secret] = $this->webhooks->create(currentWorkspaceId(), $request->validated('name'), $request->validated('events'), (bool) $secured);
         $this->history->log($webhook->workspace, 'webhook.created', ['name' => $webhook->name, 'secured' => $webhook->secured], user: $this->authentication->userId());
 
         return Response::json(['webhook' => WebhookResource::of($webhook), 'secret' => $secret], StatusCode::CREATED);
@@ -87,7 +87,7 @@ class WebhookController extends Controller
     #[RawResponse(['error' => 'Webhook not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such webhook in the current workspace')]
     public function update(UpdateWebhookRequest $request, int $webhook): Response
     {
-        $found = $this->webhooks->find($this->currentWorkspaceId(), $webhook);
+        $found = $this->webhooks->find(currentWorkspaceId(), $webhook);
         if (!$found)
             return $this->notFound();
 
@@ -107,7 +107,7 @@ class WebhookController extends Controller
     #[RawResponse(['error' => 'Webhook not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such webhook in the current workspace')]
     public function delete(Request $request, int $webhook): Response
     {
-        $found = $this->webhooks->find($this->currentWorkspaceId(), $webhook);
+        $found = $this->webhooks->find(currentWorkspaceId(), $webhook);
         if (!$found)
             return $this->notFound();
 
@@ -124,7 +124,7 @@ class WebhookController extends Controller
     #[RawResponse(['error' => 'Unsecured webhook'], responseCode: StatusCode::CONFLICT, description: 'The webhook was created without a secret')]
     public function regenerateSecret(Request $request, int $webhook): Response
     {
-        $found = $this->webhooks->find($this->currentWorkspaceId(), $webhook);
+        $found = $this->webhooks->find(currentWorkspaceId(), $webhook);
         if (!$found)
             return $this->notFound();
 
@@ -143,7 +143,7 @@ class WebhookController extends Controller
     #[RawResponse(['error' => 'Webhook not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such webhook in the current workspace')]
     public function calls(HistoryRequest $request, int $webhook): Response
     {
-        $found = $this->webhooks->find($this->currentWorkspaceId(), $webhook);
+        $found = $this->webhooks->find(currentWorkspaceId(), $webhook);
         if (!$found)
             return $this->notFound();
 
@@ -155,7 +155,7 @@ class WebhookController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function refusedCalls(Request $request): Response
     {
-        return Response::json(RefusedWebhookCallResource::of($this->webhooks->refusedCalls($this->currentWorkspaceId(), self::RECENT_LIMIT)));
+        return Response::json(RefusedWebhookCallResource::of($this->webhooks->refusedCalls(currentWorkspaceId(), self::RECENT_LIMIT)));
     }
 
     #[Endpoint('Call webhook', 'Triggers the events of a webhook, with the body as payload. Authenticated by the secret in X-Tower-Secret, or by a signature of the body in X-Hub-Signature-256 or X-Hub-Signature (sha256=<HMAC-SHA256>). An unsecured webhook needs neither', 'callWebhook')]
@@ -178,10 +178,5 @@ class WebhookController extends Controller
     private function notFound(): Response
     {
         return Response::json(['error' => 'Webhook not found'], StatusCode::NOT_FOUND);
-    }
-
-    private function currentWorkspaceId(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 }

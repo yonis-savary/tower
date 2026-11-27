@@ -27,3 +27,12 @@ can do with it :
   `Tests/Integration/McpTest.php` when the call is not a plain JSON route.
 - A new source of activity also has its place in the history origins and the home circuit
   (`HomeFlow`).
+
+### Helpers for recurring expressions
+
+A short expression repeated across the project becomes a namespaced function in `App/Helpers/`
+(loaded at boot by Cube), rather than a private method copied into each class. A helper that uses a
+component takes it as a nullable last parameter, like any method outside a constructor.
+
+- `App\currentWorkspace()` / `App\currentWorkspaceId()` : the workspace the logged user, or the
+  MCP token, acts on.

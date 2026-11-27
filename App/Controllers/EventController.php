@@ -8,7 +8,6 @@ use App\Requests\CreateQuickActionRequest;
 use App\Requests\TriggerEventRequest;
 use App\Resources\QuickActionResource;
 use App\Services\EventService;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
@@ -21,11 +20,12 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspaceId;
+
 class EventController extends Controller
 {
     public function __construct(
         protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected EventService $events,
     ) {}
 
@@ -47,7 +47,7 @@ class EventController extends Controller
     #[McpTool('trigger_event', write: true)]
     public function trigger(TriggerEventRequest $request): Response
     {
-        $this->events->triggerAsUser($this->currentWorkspaceId(), $this->authentication->userId(), $request->validated('type'), $request->validated('payload'));
+        $this->events->triggerAsUser(currentWorkspaceId(), $this->authentication->userId(), $request->validated('type'), $request->validated('payload'));
 
         return Response::noContent();
     }
@@ -58,7 +58,7 @@ class EventController extends Controller
     #[McpTool('suggest_event_types')]
     public function suggestions(Request $request): Response
     {
-        return Response::json($this->events->suggestedTypes($this->currentWorkspaceId()));
+        return Response::json($this->events->suggestedTypes(currentWorkspaceId()));
     }
 
     #[Endpoint('List quick actions', 'The predefined events of the current workspace', 'listQuickActions')]
@@ -67,7 +67,7 @@ class EventController extends Controller
     #[McpTool('list_quick_actions')]
     public function listQuickActions(Request $request): Response
     {
-        return Response::json(QuickActionResource::of($this->events->listQuickActions($this->currentWorkspaceId())));
+        return Response::json(QuickActionResource::of($this->events->listQuickActions(currentWorkspaceId())));
     }
 
     #[Endpoint('Create quick action', 'Saves a predefined event in the current workspace', 'createQuickAction')]
@@ -76,7 +76,7 @@ class EventController extends Controller
     public function createQuickAction(CreateQuickActionRequest $request): Response
     {
         $action = $this->events->createQuickAction(
-            $this->currentWorkspaceId(),
+            currentWorkspaceId(),
             $request->validated('name'),
             $request->validated('description'),
             $request->validated('type'),
@@ -92,7 +92,7 @@ class EventController extends Controller
     #[RawResponse(['error' => 'Quick action not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such quick action in the current workspace')]
     public function deleteQuickAction(Request $request, int $action): Response
     {
-        $quickAction = $this->events->findQuickAction($this->currentWorkspaceId(), $action);
+        $quickAction = $this->events->findQuickAction(currentWorkspaceId(), $action);
         if (!$quickAction)
             return $this->quickActionNotFound();
 
@@ -108,7 +108,7 @@ class EventController extends Controller
     #[McpTool('trigger_quick_action', write: true)]
     public function triggerQuickAction(Request $request, int $action): Response
     {
-        $workspace = $this->currentWorkspaceId();
+        $workspace = currentWorkspaceId();
         $quickAction = $this->events->findQuickAction($workspace, $action);
         if (!$quickAction)
             return $this->quickActionNotFound();
@@ -121,10 +121,5 @@ class EventController extends Controller
     private function quickActionNotFound(): Response
     {
         return Response::json(['error' => 'Quick action not found'], StatusCode::NOT_FOUND);
-    }
-
-    private function currentWorkspaceId(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 }

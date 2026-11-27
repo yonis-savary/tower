@@ -16,7 +16,6 @@ use App\Requests\UpdateHandlersRequest;
 use App\Resources\AccessKeyResource;
 use App\Services\AccessKeyService;
 use App\Services\HistoryService;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\ObjectResponse;
@@ -30,11 +29,12 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspaceId;
+
 class AccessKeyController extends Controller
 {
     public function __construct(
         protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected AccessKeyService $keys,
         protected ConnectorPackager $connector,
         protected DevicesChannel $devices,
@@ -74,7 +74,7 @@ class AccessKeyController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function list(Request $request): Response
     {
-        return Response::json(AccessKeyResource::of($this->keys->listFor($this->currentWorkspaceId())));
+        return Response::json(AccessKeyResource::of($this->keys->listFor(currentWorkspaceId())));
     }
 
     #[Endpoint('Create access key', 'Creates an access key in the current workspace. The secret is only given by this answer', 'createAccessKey')]
@@ -83,7 +83,7 @@ class AccessKeyController extends Controller
     public function create(CreateAccessKeyRequest $request): Response
     {
         [$key, $secret] = $this->keys->create(
-            $this->currentWorkspaceId(),
+            currentWorkspaceId(),
             $request->validated('name'),
             $request->validated('listen') ?? AccessKeyService::LISTEN_EVERYTHING,
             HandlerRules::normalize($request->validated('handlers') ?? []),
@@ -99,7 +99,7 @@ class AccessKeyController extends Controller
     #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace')]
     public function updateHandlers(UpdateHandlersRequest $request, int $key): Response
     {
-        $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
+        $accessKey = $this->keys->findUsable(currentWorkspaceId(), $key);
         if (!$accessKey)
             return $this->keyNotFound();
 
@@ -116,7 +116,7 @@ class AccessKeyController extends Controller
     #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace')]
     public function rotateSecret(Request $request, int $key): Response
     {
-        $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
+        $accessKey = $this->keys->findUsable(currentWorkspaceId(), $key);
         if (!$accessKey)
             return $this->keyNotFound();
 
@@ -136,7 +136,7 @@ class AccessKeyController extends Controller
     {
         $secret = $request->validated('secret');
         $format = $request->validated('format');
-        $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
+        $accessKey = $this->keys->findUsable(currentWorkspaceId(), $key);
         if (!$accessKey || !$this->keys->secretMatches($accessKey, $secret))
             return $this->keyNotFound();
 
@@ -173,7 +173,7 @@ class AccessKeyController extends Controller
     #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace')]
     public function revoke(Request $request, int $key): Response
     {
-        $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
+        $accessKey = $this->keys->findUsable(currentWorkspaceId(), $key);
         if (!$accessKey)
             return $this->keyNotFound();
 
@@ -190,7 +190,7 @@ class AccessKeyController extends Controller
     #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace')]
     public function updateListen(ListenRequest $request, int $key): Response
     {
-        $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
+        $accessKey = $this->keys->findUsable(currentWorkspaceId(), $key);
         if (!$accessKey)
             return $this->keyNotFound();
 
@@ -231,7 +231,7 @@ class AccessKeyController extends Controller
     public function downloadPreconfigured(PreconfiguredConnectorRequest $request, int $key): Response
     {
         $secret = $request->validated('secret');
-        $accessKey = $this->keys->findUsable($this->currentWorkspaceId(), $key);
+        $accessKey = $this->keys->findUsable(currentWorkspaceId(), $key);
         if (!$accessKey || !$this->keys->secretMatches($accessKey, $secret))
             return $this->keyNotFound();
 
@@ -268,10 +268,5 @@ class AccessKeyController extends Controller
     private function connectorUnavailable(): Response
     {
         return Response::json(['error' => 'Connector unavailable'], StatusCode::SERVICE_UNAVAILABLE);
-    }
-
-    private function currentWorkspaceId(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 }

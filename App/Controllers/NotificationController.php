@@ -12,7 +12,6 @@ use App\Requests\UpdateNotificationRuleRequest;
 use App\Resources\NotificationRuleResource;
 use App\Resources\PushSubscriptionResource;
 use App\Services\PushService;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
@@ -25,6 +24,9 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspace;
+use function App\currentWorkspaceId;
+
 /**
  * Push notifications : the browsers of the user and their rules, both in the current workspace.
  * Each member only sees and changes their own.
@@ -33,7 +35,6 @@ class NotificationController extends Controller
 {
     public function __construct(
         protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected PushService $push,
     ) {}
 
@@ -67,7 +68,7 @@ class NotificationController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function listSubscriptions(Request $request): Response
     {
-        return Response::json(PushSubscriptionResource::of($this->push->subscriptionsOf($this->currentWorkspaceId(), $this->authentication->userId())));
+        return Response::json(PushSubscriptionResource::of($this->push->subscriptionsOf(currentWorkspaceId(), $this->authentication->userId())));
     }
 
     #[Endpoint('Save push subscription', 'Enables the push notifications of the current workspace on this browser, or updates its subscription there. What another user enabled on this browser is dropped', 'savePushSubscription')]
@@ -80,7 +81,7 @@ class NotificationController extends Controller
             return Response::json(['error' => 'Push notifications are not set up'], StatusCode::CONFLICT);
 
         $subscription = $this->push->saveSubscription(
-            $this->currentWorkspaceId(),
+            currentWorkspaceId(),
             $this->authentication->userId(),
             $request->validated('endpoint'),
             $request->validated('keys')['p256dh'],
@@ -108,7 +109,7 @@ class NotificationController extends Controller
     #[RawResponse(['error' => 'Subscription not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such subscription of the user in the current workspace')]
     public function deleteSubscription(Request $request, int $subscription): Response
     {
-        $found = $this->push->findSubscription($this->currentWorkspaceId(), $this->authentication->userId(), $subscription);
+        $found = $this->push->findSubscription(currentWorkspaceId(), $this->authentication->userId(), $subscription);
         if (!$found)
             return $this->subscriptionNotFound();
 
@@ -124,7 +125,7 @@ class NotificationController extends Controller
     #[RawResponse(['error' => 'The push service refused the notification'], responseCode: StatusCode::BAD_GATEWAY, description: 'The push service of the browser refused it')]
     public function testSubscription(PushTestRequest $request, int $subscription): Response
     {
-        $found = $this->push->findSubscription($this->currentWorkspaceId(), $this->authentication->userId(), $subscription);
+        $found = $this->push->findSubscription(currentWorkspaceId(), $this->authentication->userId(), $subscription);
         if (!$found)
             return $this->subscriptionNotFound();
 
@@ -139,7 +140,7 @@ class NotificationController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function listRules(Request $request): Response
     {
-        return Response::json(NotificationRuleResource::of($this->push->rulesOf($this->currentWorkspaceId(), $this->authentication->userId())));
+        return Response::json(NotificationRuleResource::of($this->push->rulesOf(currentWorkspaceId(), $this->authentication->userId())));
     }
 
     #[Endpoint('Create notification rule', 'Notifies the browsers of the user of the events of the current workspace matching `listen`. `title` and `body` are each a raw value or a key of the payload, null for the default text', 'createNotificationRule')]
@@ -148,7 +149,7 @@ class NotificationController extends Controller
     public function createRule(NotificationRuleRequest $request): Response
     {
         $rule = $this->push->createRule(
-            $this->currentWorkspaceId(),
+            currentWorkspaceId(),
             $this->authentication->userId(),
             $request->validated('name'),
             $request->validated('listen'),
@@ -167,7 +168,7 @@ class NotificationController extends Controller
         return Response::json($this->push->content(
             $request->validated('title'),
             $request->validated('body'),
-            $this->workspaces->current($this->authentication->userId())->name,
+            currentWorkspace()->name,
             $request->validated('type'),
             $request->validated('payload'),
         ));
@@ -179,7 +180,7 @@ class NotificationController extends Controller
     #[RawResponse(['error' => 'Notification rule not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such rule of the user in the current workspace')]
     public function updateRule(UpdateNotificationRuleRequest $request, int $rule): Response
     {
-        $found = $this->push->findRule($this->currentWorkspaceId(), $this->authentication->userId(), $rule);
+        $found = $this->push->findRule(currentWorkspaceId(), $this->authentication->userId(), $rule);
         if (!$found)
             return $this->ruleNotFound();
 
@@ -201,7 +202,7 @@ class NotificationController extends Controller
     #[RawResponse(['error' => 'Notification rule not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such rule of the user in the current workspace')]
     public function deleteRule(Request $request, int $rule): Response
     {
-        $found = $this->push->findRule($this->currentWorkspaceId(), $this->authentication->userId(), $rule);
+        $found = $this->push->findRule(currentWorkspaceId(), $this->authentication->userId(), $rule);
         if (!$found)
             return $this->ruleNotFound();
 
@@ -218,10 +219,5 @@ class NotificationController extends Controller
     private function ruleNotFound(): Response
     {
         return Response::json(['error' => 'Notification rule not found'], StatusCode::NOT_FOUND);
-    }
-
-    private function currentWorkspaceId(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 }

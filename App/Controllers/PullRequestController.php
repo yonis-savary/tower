@@ -13,7 +13,6 @@ use App\Requests\ReadPullRequestRequest;
 use App\Requests\SearchPullRequestsRequest;
 use App\Resources\PullRequestApprovalResource;
 use App\Resources\PullRequestResource;
-use App\Services\WorkspaceService;
 use Cube\Data\Bunch;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
@@ -25,6 +24,8 @@ use Cube\Web\Http\Response;
 use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
+
+use function App\currentWorkspaceId;
 
 class PullRequestController extends Controller
 {
@@ -42,8 +43,6 @@ class PullRequestController extends Controller
     ];
 
     public function __construct(
-        protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected PullRequestService $pullRequests,
     ) {}
 
@@ -65,7 +64,7 @@ class PullRequestController extends Controller
     #[McpTool('list_pull_requests')]
     public function list(Request $request): Response
     {
-        $rows = PullRequest::select()->where('workspace', $this->currentWorkspaceId())->order('id', 'DESC')->fetch();
+        $rows = PullRequest::select()->where('workspace', currentWorkspaceId())->order('id', 'DESC')->fetch();
 
         return Response::json(PullRequestResource::of(Bunch::wrap($rows)));
     }
@@ -75,7 +74,7 @@ class PullRequestController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function approvals(Request $request): Response
     {
-        $workspace = $this->currentWorkspaceId();
+        $workspace = currentWorkspaceId();
         $rows = PullRequestApprovals::select()->whereRaw("pull_request IN (SELECT id FROM pull_request WHERE workspace = {$workspace})")->fetch();
 
         return Response::json(PullRequestApprovalResource::of(Bunch::wrap($rows)));
@@ -88,7 +87,7 @@ class PullRequestController extends Controller
     #[McpTool('get_pull_request')]
     public function read(ReadPullRequestRequest $request, int $pullRequest): Response
     {
-        $workspace = $this->currentWorkspaceId();
+        $workspace = currentWorkspaceId();
         $found = $this->pullRequests->find($workspace, $pullRequest);
         $content = $found ? $this->pullRequests->content($found) : null;
 
@@ -104,7 +103,7 @@ class PullRequestController extends Controller
     #[McpTool('search_repository_pull_requests')]
     public function search(SearchPullRequestsRequest $request, string $repository): Response
     {
-        $workspace = $this->currentWorkspaceId();
+        $workspace = currentWorkspaceId();
         $found = $this->pullRequests->search(
             $workspace,
             $repository,
@@ -125,7 +124,7 @@ class PullRequestController extends Controller
     #[McpTool('get_repository_pull_request')]
     public function readInRepository(ReadPullRequestRequest $request, string $repository, int $number): Response
     {
-        $workspace = $this->currentWorkspaceId();
+        $workspace = currentWorkspaceId();
         $content = $this->pullRequests->repositoryContent($workspace, $repository, (string) $number);
 
         return $content
@@ -141,7 +140,7 @@ class PullRequestController extends Controller
     public function diff(PullRequestDiffRequest $request, string $repository, int $number): Response
     {
         $path = $request->validated('path');
-        $diff = $this->pullRequests->diff($this->currentWorkspaceId(), $repository, (string) $number, $path);
+        $diff = $this->pullRequests->diff(currentWorkspaceId(), $repository, (string) $number, $path);
         if (null === $diff)
             return $this->pullRequestNotFound();
         if ('' === $diff)
@@ -156,10 +155,5 @@ class PullRequestController extends Controller
     private function pullRequestNotFound(): Response
     {
         return Response::json(['error' => 'Pull request not found'], StatusCode::NOT_FOUND);
-    }
-
-    private function currentWorkspaceId(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 }

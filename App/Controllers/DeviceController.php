@@ -4,7 +4,6 @@ namespace App\Controllers;
 
 use App\Channels\DevicesChannel;
 use App\Middlewares\IsAuthenticated;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
@@ -16,11 +15,11 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspaceId;
+
 class DeviceController extends Controller
 {
     public function __construct(
-        protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected DevicesChannel $devices,
     ) {}
 
@@ -36,7 +35,7 @@ class DeviceController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function disconnect(Request $request, string $uuid): Response
     {
-        $workspace = $this->workspaces->current($this->authentication->userId())->id;
+        $workspace = currentWorkspaceId();
         $this->devices->disconnectDevice($workspace, $uuid, 'disconnected_by_user');
 
         return Response::noContent();

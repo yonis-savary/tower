@@ -26,6 +26,8 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspaceId;
+
 class AgendaController extends Controller
 {
     public function __construct(
@@ -68,7 +70,7 @@ class AgendaController extends Controller
     #[McpTool('create_agenda_item', write: true)]
     public function create(CreateAgendaItemRequest $request): Response
     {
-        $workspace = $request->validated('workspace') ?? $this->currentWorkspaceId();
+        $workspace = $request->validated('workspace') ?? currentWorkspaceId();
         if (!in_array($workspace, $this->reachable(), true))
             return $this->workspaceNotFound();
 
@@ -147,7 +149,7 @@ class AgendaController extends Controller
      */
     private function requestedWorkspaces(AgendaRangeRequest $request): ?array
     {
-        $requested = $request->workspaces() ?? [$this->currentWorkspaceId()];
+        $requested = $request->workspaces() ?? [currentWorkspaceId()];
 
         return array_diff($requested, $this->reachable()) ? null : $requested;
     }
@@ -158,11 +160,6 @@ class AgendaController extends Controller
     private function reachable(): array
     {
         return $this->workspaces->reachableIds($this->authentication->userId());
-    }
-
-    private function currentWorkspaceId(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 
     private function workspaceNotFound(): Response

@@ -21,11 +21,13 @@ use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
+use function App\currentWorkspace;
+use function App\currentWorkspaceId;
+
 class ApiTokenController extends Controller
 {
     public function __construct(
         protected Authentication $authentication,
-        protected WorkspaceService $workspaces,
         protected ApiTokenService $tokens,
         protected HistoryService $history,
     ) {}
@@ -45,7 +47,7 @@ class ApiTokenController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function list(Request $request): Response
     {
-        return Response::json(ApiTokenResource::of($this->tokens->listFor($this->authentication->userId(), $this->currentWorkspaceId())));
+        return Response::json(ApiTokenResource::of($this->tokens->listFor($this->authentication->userId(), currentWorkspaceId())));
     }
 
     #[Endpoint('List workspace API tokens', 'The API tokens of every member for the current workspace, oldest first : the agents drawn on the home circuit', 'listWorkspaceApiTokens')]
@@ -53,7 +55,7 @@ class ApiTokenController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function listWorkspace(Request $request): Response
     {
-        return Response::json(ApiTokenResource::of($this->tokens->listForWorkspace($this->currentWorkspaceId())));
+        return Response::json(ApiTokenResource::of($this->tokens->listForWorkspace(currentWorkspaceId())));
     }
 
     #[Endpoint('Create API token', 'Creates an API token of the user for the current workspace. Its value is only given by this answer', 'createApiToken')]
@@ -62,7 +64,7 @@ class ApiTokenController extends Controller
     #[RawResponse(['error' => 'MCP access is blocked for this workspace'], responseCode: StatusCode::CONFLICT, description: 'The workspace refuses MCP connections')]
     public function create(CreateApiTokenRequest $request): Response
     {
-        $workspace = $this->workspaces->current($this->authentication->userId());
+        $workspace = currentWorkspace();
         if (WorkspaceService::MCP_BLOCKED === $workspace->mcp_access)
             return Response::json(['error' => 'MCP access is blocked for this workspace'], StatusCode::CONFLICT);
 
@@ -84,7 +86,7 @@ class ApiTokenController extends Controller
     #[RawResponse(['error' => 'Token not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such token for this user in the current workspace')]
     public function revoke(Request $request, int $token): Response
     {
-        $found = $this->tokens->find($this->authentication->userId(), $this->currentWorkspaceId(), $token);
+        $found = $this->tokens->find($this->authentication->userId(), currentWorkspaceId(), $token);
         if (!$found)
             return Response::json(['error' => 'Token not found'], StatusCode::NOT_FOUND);
 
@@ -92,10 +94,5 @@ class ApiTokenController extends Controller
         $this->history->log($found->workspace, 'token.revoked', ['name' => $found->name], user: $found->user);
 
         return Response::noContent();
-    }
-
-    private function currentWorkspaceId(): int
-    {
-        return $this->workspaces->current($this->authentication->userId())->id;
     }
 }
