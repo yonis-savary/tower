@@ -4,6 +4,7 @@ namespace App\Requests;
 
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Rules\Param;
+use Cube\Web\Http\Rules\UploadRule;
 
 class UploadDocImageRequest extends Request
 {
@@ -14,7 +15,7 @@ class UploadDocImageRequest extends Request
                 fn ($name) => '' !== (string) $name && mb_strlen((string) $name) <= 255,
                 '{key} must contain between 1 and 255 characters'
             ),
-            'content' => Param::string(),
+            'content' => UploadRule::fromBase64(),
         ];
     }
 }

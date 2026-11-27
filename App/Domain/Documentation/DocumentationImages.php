@@ -13,13 +13,12 @@ class DocumentationImages
     /** Detected type => extension of the stored file. No SVG : it can carry scripts */
     public const TYPES = ['image/png' => 'png', 'image/jpeg' => 'jpg', 'image/gif' => 'gif', 'image/webp' => 'webp'];
 
-    public function store(int $workspace, int $user, string $name, string $base64): DocImage|DocumentationRefusal
+    public function store(int $workspace, int $user, string $name, Upload $image): DocImage|DocumentationRefusal
     {
-        $content = base64_decode($base64, true);
-        if (false === $content)
-            return DocumentationRefusal::notAnImage();
-        if (strlen($content) > self::MAX_SIZE)
-            return DocumentationRefusal::imageTooLarge(strlen($content));
+        if ($image->size > self::MAX_SIZE)
+            return DocumentationRefusal::imageTooLarge($image->size);
+
+        $content = file_get_contents($image->tempName);
 
         $type = $this->typeOf($content);
         if (null === $type)
