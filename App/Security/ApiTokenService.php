@@ -7,6 +7,7 @@ use App\Models\ApiToken;
 use App\Models\User;
 use App\Models\Workspace;
 use Cube\Data\Bunch;
+use Cube\Utils\Identifier;
 
 class ApiTokenService
 {
@@ -25,13 +26,13 @@ class ApiTokenService
      */
     public function create(int $user, int $workspace, string $name, string $scope, ?int $expiresInDays): array
     {
-        $value = self::PREFIX.bin2hex(random_bytes(32));
+        $value = Identifier::prefixed(self::PREFIX);
 
         $token = (new ApiToken([
             'user' => $user,
             'workspace' => $workspace,
             'name' => $name,
-            'token_hash' => $this->hash($value),
+            'token_hash' => Identifier::hash256($value),
             'scope' => $scope,
             'created_at' => date('Y-m-d H:i:s'),
             'expires_at' => null === $expiresInDays ? null : date('Y-m-d H:i:s', strtotime("+{$expiresInDays} days")),
@@ -75,7 +76,7 @@ class ApiTokenService
 
     public function authenticate(#[\SensitiveParameter] string $value): ?ApiToken
     {
-        $token = ApiToken::findWhere(['token_hash' => $this->hash($value)]);
+        $token = ApiToken::findWhere(['token_hash' => Identifier::hash256($value)]);
         if (!$token)
             return null;
 
@@ -110,10 +111,5 @@ class ApiTokenService
     private function dateOf(\DateTimeInterface|string $date): string
     {
         return $date instanceof \DateTimeInterface ? $date->format('Y-m-d H:i:s') : $date;
-    }
-
-    private function hash(#[\SensitiveParameter] string $value): string
-    {
-        return hash('sha256', $value);
     }
 }

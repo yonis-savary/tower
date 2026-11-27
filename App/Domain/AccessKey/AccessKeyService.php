@@ -6,6 +6,7 @@ use App\Domain\AccessKey\Connector\HandlerRules;
 use App\Models\AccessKey;
 use App\Models\ConfigDownload;
 use Cube\Data\Bunch;
+use Cube\Utils\Identifier;
 
 class AccessKeyService
 {
@@ -41,7 +42,7 @@ class AccessKeyService
             'workspace' => $workspace,
             'name' => $name,
             'client_id' => 'twr_'.bin2hex(random_bytes(12)),
-            'secret_hash' => $this->hash($secret),
+            'secret_hash' => Identifier::hash256($secret),
             'listen' => $this->encodeListen($listen),
             'handlers' => HandlerRules::encode($handlers),
             'created_at' => date('Y-m-d H:i:s'),
@@ -124,7 +125,7 @@ class AccessKeyService
     public function rotateSecret(AccessKey $key): string
     {
         $secret = $this->newSecret();
-        $key->secret_hash = $this->hash($secret);
+        $key->secret_hash = Identifier::hash256($secret);
         $key->save();
         ConfigDownload::delete()->where('access_key', $key->id)->fetch();
 
@@ -140,7 +141,8 @@ class AccessKeyService
 
     public function secretMatches(AccessKey $key, #[\SensitiveParameter] string $secret): bool
     {
-        return hash_equals($key->secret_hash, $this->hash($secret));
+        // A 256-bit random secret needs no slow hash, and bcrypt would hold the websocket event loop
+        return Identifier::matches256($secret, $key->secret_hash);
     }
 
     public function authenticate(string $clientId, #[\SensitiveParameter] string $secret): ?AccessKey
@@ -159,11 +161,5 @@ class AccessKeyService
     private function newSecret(): string
     {
         return bin2hex(random_bytes(32));
-    }
-
-    // A 256-bit random secret needs no slow hash, and bcrypt would hold the websocket event loop
-    private function hash(#[\SensitiveParameter] string $secret): string
-    {
-        return hash('sha256', $secret);
     }
 }

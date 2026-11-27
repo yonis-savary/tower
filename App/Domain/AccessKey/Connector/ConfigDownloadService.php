@@ -5,6 +5,7 @@ namespace App\Domain\AccessKey\Connector;
 use App\Models\AccessKey;
 use App\Models\ConfigDownload;
 use Cube\Data\Database\Database;
+use Cube\Utils\Identifier;
 
 use function Cube\decrypt;
 use function Cube\encrypt;
@@ -34,7 +35,7 @@ class ConfigDownloadService
 
         (new ConfigDownload([
             'access_key' => $key->id,
-            'token_hash' => $this->hash($token),
+            'token_hash' => Identifier::hash256($token),
             'format' => $format,
             'payload' => encrypt(json_encode($config, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)),
             'expires_at' => $expiresAt,
@@ -51,7 +52,7 @@ class ConfigDownloadService
      */
     public function consume(#[\SensitiveParameter] string $token): ?array
     {
-        $link = ConfigDownload::findWhere(['token_hash' => $this->hash($token)]);
+        $link = ConfigDownload::findWhere(['token_hash' => Identifier::hash256($token)]);
         if (!$link)
             return null;
 
@@ -72,10 +73,5 @@ class ConfigDownloadService
     public function purgeExpired(): void
     {
         Database::getInstance()->exec('DELETE FROM config_download WHERE expires_at < {} OR used_at IS NOT NULL', [date('Y-m-d H:i:s')]);
-    }
-
-    private function hash(#[\SensitiveParameter] string $token): string
-    {
-        return hash('sha256', $token);
     }
 }

@@ -7,6 +7,7 @@ use App\Domain\Workspace\WorkspaceSignals;
 use App\Models\Webhook;
 use App\Models\WebhookCall;
 use Cube\Data\Bunch;
+use Cube\Utils\Identifier;
 use Cube\Web\Http\Request;
 use Symfony\Component\Uid\Uuid;
 
@@ -257,6 +258,6 @@ class WebhookService
 
     private function newSecret(): string
     {
-        return 'whsec_'.bin2hex(random_bytes(32));
+        return Identifier::prefixed('whsec_');
     }
 }
