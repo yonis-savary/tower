@@ -67,7 +67,6 @@ class WorkspaceController extends Controller
 
     #[Endpoint('List workspaces', 'The workspaces the current user is a member of', 'listWorkspaces')]
     #[ResourceResponse(WorkspaceResource::class, isArray: true, description: 'The workspaces of the user')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function list(Request $request): Response
     {
         return Response::json(WorkspaceResource::of($this->workspaces->listFor($this->authentication->userId())));
@@ -75,7 +74,6 @@ class WorkspaceController extends Controller
 
     #[Endpoint('Current workspace', 'The workspace selected in the current session', 'getCurrentWorkspace')]
     #[ResourceResponse(WorkspaceResource::class, description: 'The selected workspace')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'No workspace'], responseCode: StatusCode::NOT_FOUND, description: 'The user belongs to no workspace')]
     public function current(Request $request): Response
     {
@@ -88,7 +86,6 @@ class WorkspaceController extends Controller
 
     #[Endpoint('Workspace socket', 'The websocket URL following the devices of the current workspace, valid for a minute', 'getWorkspaceSocket')]
     #[RawResponse(['url' => 'ws://localhost:8088/workspaces/1/devices?token=1794245494.abcdef'], description: 'The URL to open')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'No workspace'], responseCode: StatusCode::NOT_FOUND, description: 'The user belongs to no workspace')]
     public function socket(Request $request): Response
     {
@@ -104,7 +101,6 @@ class WorkspaceController extends Controller
 
     #[Endpoint('Select workspace','Changes the workspace of the current session', 'selectWorkspace')]
     #[ResourceResponse(WorkspaceResource::class, description: 'The newly selected workspace')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
     public function select(SelectWorkspaceRequest $request): Response
     {
@@ -117,7 +113,6 @@ class WorkspaceController extends Controller
 
     #[Endpoint('Create workspace', 'Creates a workspace whose only member is the current user. It is not selected', 'createWorkspace')]
     #[ResourceResponse(WorkspaceResource::class, responseCode: StatusCode::CREATED, description: 'The workspace')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function create(WorkspaceNameRequest $request): Response
     {
         $workspace = $this->workspaces->create($this->authentication->userId(), trim($request->validated('name')));
@@ -127,7 +122,6 @@ class WorkspaceController extends Controller
 
     #[Endpoint('Update workspace', 'Changes the name, the accent color and, when given, the sections, the MCP access and the agenda reminder (minutes before an item starts, null for none) of a workspace the current user is a member of', 'updateWorkspace')]
     #[ResourceResponse(WorkspaceResource::class, description: 'The workspace')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
     public function update(UpdateWorkspaceRequest $request, int $workspace): Response
     {
@@ -144,7 +138,6 @@ class WorkspaceController extends Controller
 
     #[Endpoint('Delete workspace', 'Deletes a workspace and everything it holds : tasks, sprints, history, integrations, webhooks, access keys, API tokens, members. Only its author can, and not their last workspace', 'deleteWorkspace')]
     #[NoContentResponse('The workspace is deleted')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Only the author deletes a workspace'], responseCode: StatusCode::FORBIDDEN, description: 'The current user is a member but not the author')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
     #[RawResponse(['error' => 'Keep at least one workspace'], responseCode: StatusCode::CONFLICT, description: 'This is the last workspace the current user is a member of')]
@@ -166,7 +159,6 @@ class WorkspaceController extends Controller
     }
 
     #[Endpoint('Get workspace icon', 'The icon of a workspace : the image a member uploaded (PNG or JPEG), else the logo of Tower in the workspace color (SVG). The page uses it as its favicon', 'getWorkspaceIcon')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
     public function icon(Request $request, int $workspace): Response
     {
@@ -202,7 +194,6 @@ class WorkspaceController extends Controller
     #[Endpoint('Set workspace icon', 'Replaces the icon of a workspace the current user is a member of. The body is the image itself, PNG or JPEG, 1 MiB at most', 'setWorkspaceIcon')]
     #[RawBody('image/png', 'A PNG or JPEG image, 1 MiB at most')]
     #[ResourceResponse(WorkspaceResource::class, description: 'The workspace')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
     #[RawResponse(['error' => 'The icon must be a PNG or JPEG image'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'Not a PNG or JPEG image, or larger than 1 MiB')]
     public function setIcon(Request $request, int $workspace): Response
@@ -224,7 +215,6 @@ class WorkspaceController extends Controller
 
     #[Endpoint('Remove workspace icon', 'Removes the uploaded icon of a workspace : it gets the logo of Tower in its color back', 'removeWorkspaceIcon')]
     #[ResourceResponse(WorkspaceResource::class, description: 'The workspace')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
     public function removeIcon(Request $request, int $workspace): Response
     {
@@ -235,7 +225,6 @@ class WorkspaceController extends Controller
 
     #[Endpoint('List workspace members', 'The members of a workspace the current user is a member of, oldest first', 'listWorkspaceMembers')]
     #[ResourceResponse(UserResource::class, isArray: true, description: 'The members')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
     public function members(Request $request, int $workspace): Response
     {
@@ -246,7 +235,6 @@ class WorkspaceController extends Controller
 
     #[Endpoint('Add workspace member', 'Adds the user with this e-mail to the workspace. Adding a member again changes nothing', 'addWorkspaceMember')]
     #[ResourceResponse(UserResource::class, description: 'The member')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
     #[RawResponse(['error' => 'No account with this e-mail'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'No active account has this e-mail, or an invalid field')]
     public function addMember(AddWorkspaceMemberRequest $request, int $workspace): Response
@@ -264,7 +252,6 @@ class WorkspaceController extends Controller
 
     #[Endpoint('Remove workspace member', 'Removes a member from a workspace, the current user included', 'removeWorkspaceMember')]
     #[NoContentResponse('The member is removed')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist, or the current user or this user is not a member of it')]
     #[RawResponse(['error' => 'A workspace keeps at least one member'], responseCode: StatusCode::CONFLICT, description: 'This is the last member : a workspace is deleted, never left empty')]
     public function removeMember(Request $request, int $workspace, int $user): Response

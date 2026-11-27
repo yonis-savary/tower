@@ -60,7 +60,6 @@ class PullRequestController extends Controller
 
     #[Endpoint('List pull requests', 'The open and recently closed pull requests of the current workspace', 'listPullRequests')]
     #[ResourceResponse(PullRequestResource::class, isArray: true, description: 'The stored pull requests')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[McpTool('list_pull_requests')]
     public function list(Request $request): Response
     {
@@ -74,7 +73,6 @@ class PullRequestController extends Controller
 
     #[Endpoint('List pull request approvals', 'The reviewers of every stored pull request of the current workspace', 'listPullRequestApprovals')]
     #[ResourceResponse(PullRequestApprovalResource::class, isArray: true, description: 'The reviewers')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function approvals(Request $request): Response
     {
         $workspace = currentWorkspaceId();
@@ -85,7 +83,6 @@ class PullRequestController extends Controller
 
     #[Endpoint('Read pull request', 'Reads a stored pull request (its `id` from listPullRequests) from its forge, as readRepositoryPullRequest does', 'readPullRequest')]
     #[RawResponse(self::CONTENT_EXAMPLE, description: 'The pull request')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Pull request not found'], responseCode: StatusCode::NOT_FOUND, description: 'Not stored in the current workspace, or the forge does not know it anymore')]
     #[McpTool('get_pull_request')]
     public function read(ReadPullRequestRequest $request, int $pullRequest): Response
@@ -101,7 +98,6 @@ class PullRequestController extends Controller
 
     #[Endpoint('Search repository pull requests', 'Lists the pull requests of a repository of the Bitbucket workspace, read from Bitbucket : anyone\'s, followed by Tower or not, the most recently updated first. `repository` is its slug, without the workspace (`api` for `team/api`). Find the pull request of a branch with `branch` (its source branch) ; `state` defaults to `open`, `limit` to '.SearchPullRequestsRequest::DEFAULT_LIMIT.'. `id` is the id of listPullRequests when Tower follows it, else null', 'searchRepositoryPullRequests')]
     #[RawResponse([['id' => null, 'number' => '12', 'repository' => 'team/api', 'url' => 'https://bitbucket.org/team/api/pull-requests/12', 'title' => 'Add login', 'author' => 'Bob', 'state' => 'open', 'draft' => false, 'source_branch' => 'login', 'target_branch' => 'main', 'comment_count' => 3, 'reviewers' => [['name' => 'Alice', 'status' => 'pending']]]], description: 'The pull requests')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Repository not found'], responseCode: StatusCode::NOT_FOUND, description: 'No Bitbucket integration, or no such repository the account can read')]
     #[McpTool('search_repository_pull_requests')]
     public function search(SearchPullRequestsRequest $request, string $repository): Response
@@ -123,7 +119,6 @@ class PullRequestController extends Controller
 
     #[Endpoint('Read repository pull request', 'Reads any pull request of a repository of the Bitbucket workspace by its number, followed by Tower or not, to review it : its description in Markdown, the files it changes (`files`, with their added and removed lines, null when the Bitbucket token lacks the `read:repository` scope), and its comments in Markdown, oldest first. A reply carries the id of the comment it answers in `parent`, an inline comment its file in `path` and its line in `line` (null for a general comment), and `resolved` tells whether its thread is resolved. Narrow to the threads still open with `unresolved`. `repository` is its slug, without the workspace (`api` for `team/api`)', 'readRepositoryPullRequest')]
     #[RawResponse(self::CONTENT_EXAMPLE, description: 'The pull request')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Pull request not found'], responseCode: StatusCode::NOT_FOUND, description: 'No Bitbucket integration, or no such pull request the account can read')]
     #[McpTool('get_repository_pull_request')]
     public function readInRepository(ReadPullRequestRequest $request, string $repository, int $number): Response
@@ -137,7 +132,6 @@ class PullRequestController extends Controller
     }
 
     #[Endpoint('Read pull request diff', 'The unified diff of a pull request of a repository of the Bitbucket workspace, as text, from the point where its source branch left the target one. `repository` is its slug, without the workspace (`api` for `team/api`). Over 256 KiB, narrow with `path` : a file, or a directory for every file under it (see `files` of readRepositoryPullRequest)', 'readPullRequestDiff')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Pull request not found'], responseCode: StatusCode::NOT_FOUND, description: 'No Bitbucket integration, no such pull request the account can read, or no change at `path`')]
     #[RawResponse(['error' => 'Diff too large'], responseCode: StatusCode::CONTENT_TOO_LARGE, description: 'Over 256 KiB : narrow with `path`')]
     #[McpTool('get_pull_request_diff')]

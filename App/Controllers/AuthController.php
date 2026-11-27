@@ -92,7 +92,6 @@ class AuthController extends Controller
 
     #[Endpoint('Log out', 'Closes the current session', 'logout')]
     #[NoContentResponse('The session is closed')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function logout(Request $request): Response
     {
         $this->authentication->logout();
@@ -103,7 +102,6 @@ class AuthController extends Controller
 
     #[Endpoint('Current user', 'The user of the current session', 'getCurrentUser')]
     #[ResourceResponse(UserResource::class, description: 'The logged in user')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function currentUser(Request $request): Response
     {
         return Response::json(UserResource::of($this->authentication->user()));
@@ -111,7 +109,6 @@ class AuthController extends Controller
 
     #[Endpoint('Change password', 'Replaces the password of the current user, after checking the current one. Other open sessions stay open', 'changePassword')]
     #[NoContentResponse('The password is changed')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Wrong current password'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'The current password is wrong, or the new one is invalid')]
     public function changePassword(ChangePasswordRequest $request): Response
     {

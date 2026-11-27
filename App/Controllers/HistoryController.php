@@ -41,7 +41,6 @@ class HistoryController extends Controller
 
     #[Endpoint('List history', 'The history of the current workspace, newest first, by pages of 50 lines', 'listHistory')]
     #[ResourceResponse(HistoryResource::class, isArray: true, description: 'The lines older than `before`, or the latest ones')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[McpTool('list_history')]
     public function list(HistoryRequest $request): Response
     {
@@ -50,7 +49,6 @@ class HistoryController extends Controller
 
     #[Endpoint('List recent events', 'The last events sent to the devices of the current workspace, newest first, with how their deliveries went', 'listRecentEvents')]
     #[ResourceResponse(RecentEventResource::class, isArray: true, description: 'The last 15 events')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function recentEvents(Request $request): Response
     {
         return Response::json(RecentEventResource::of($this->history->recentEvents(currentWorkspaceId(), self::RECENT_LIMIT)));
@@ -58,7 +56,6 @@ class HistoryController extends Controller
 
     #[Endpoint('List event deliveries', 'The devices an event of the history was sent to, with their response', 'listEventDeliveries')]
     #[ResourceResponse(EventDeliveryResource::class, isArray: true, description: 'One delivery per contacted device')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'History line not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such line in the current workspace')]
     #[McpTool('list_event_deliveries')]
     public function deliveries(Request $request, int $line): Response

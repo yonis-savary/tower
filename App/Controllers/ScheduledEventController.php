@@ -46,7 +46,6 @@ class ScheduledEventController extends Controller
 
     #[Endpoint('List scheduled events', 'The scheduled events of the current workspace, oldest first', 'listScheduledEvents')]
     #[ResourceResponse(ScheduledEventResource::class, isArray: true, description: 'The scheduled events')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[McpTool('list_scheduled_events')]
     public function list(Request $request): Response
     {
@@ -55,7 +54,6 @@ class ScheduledEventController extends Controller
 
     #[Endpoint('Create scheduled event', 'Schedules an enabled event in the current workspace : recurring with `cron`, or once at `run_at` (server time), to the minute', 'createScheduledEvent')]
     #[ResourceResponse(ScheduledEventResource::class, responseCode: StatusCode::CREATED, description: 'The scheduled event')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function create(ScheduledEventRequest $request): Response
     {
         $validated = $request->validated();
@@ -74,7 +72,6 @@ class ScheduledEventController extends Controller
 
     #[Endpoint('Update scheduled event', 'Changes the event, the timing and the state of a scheduled event of the current workspace', 'updateScheduledEvent')]
     #[ResourceResponse(ScheduledEventResource::class, description: 'The scheduled event')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Scheduled event not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such scheduled event in the current workspace')]
     public function update(UpdateScheduledEventRequest $request, int $schedule): Response
     {
@@ -103,7 +100,6 @@ class ScheduledEventController extends Controller
 
     #[Endpoint('Delete scheduled event', 'Deletes a scheduled event of the current workspace. The events it triggered stay in the history', 'deleteScheduledEvent')]
     #[NoContentResponse('The scheduled event is deleted')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Scheduled event not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such scheduled event in the current workspace')]
     public function delete(Request $request, int $schedule): Response
     {
@@ -119,7 +115,6 @@ class ScheduledEventController extends Controller
 
     #[Endpoint('Trigger scheduled event', 'Launches the event of a scheduled event of the current workspace now, without changing its schedule', 'triggerScheduledEvent')]
     #[NoContentResponse('The event is launched')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Scheduled event not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such scheduled event in the current workspace')]
     public function trigger(Request $request, int $schedule): Response
     {

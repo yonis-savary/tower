@@ -71,7 +71,6 @@ class AccessKeyController extends Controller
 
     #[Endpoint('List access keys', 'The usable access keys of the current workspace', 'listAccessKeys')]
     #[ResourceResponse(AccessKeyResource::class, isArray: true, description: 'The access keys')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function list(Request $request): Response
     {
         return Response::json(AccessKeyResource::of($this->keys->listFor(currentWorkspaceId())));
@@ -79,7 +78,6 @@ class AccessKeyController extends Controller
 
     #[Endpoint('Create access key', 'Creates an access key in the current workspace. The secret is only given by this answer', 'createAccessKey')]
     #[ObjectResponse(self::CONFIG_EXAMPLE, responseCode: StatusCode::CREATED, description: 'The key and its connector configuration')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function create(CreateAccessKeyRequest $request): Response
     {
         $validated = $request->validated();
@@ -96,7 +94,6 @@ class AccessKeyController extends Controller
 
     #[Endpoint('Update handlers', 'Replaces the handler rules written into the configuration of this key. Gives it a new secret : the devices using it are disconnected, and need the new configuration', 'updateAccessKeyHandlers')]
     #[ObjectResponse(self::CONFIG_EXAMPLE, description: 'The key and its new connector configuration')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace')]
     public function updateHandlers(UpdateHandlersRequest $request, int $key): Response
     {
@@ -113,7 +110,6 @@ class AccessKeyController extends Controller
 
     #[Endpoint('Rotate secret', 'Gives a new secret to this key. The devices using it are disconnected, and need the new configuration', 'rotateAccessKeySecret')]
     #[ObjectResponse(self::CONFIG_EXAMPLE, description: 'The key and its new connector configuration')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace')]
     public function rotateSecret(Request $request, int $key): Response
     {
@@ -130,7 +126,6 @@ class AccessKeyController extends Controller
 
     #[Endpoint('Create download link', 'A single-use link to download the configuration or the preconfigured connector from a terminal, without a session. Needs the secret, and expires after 15 minutes', 'createConfigDownloadLink')]
     #[RawResponse(['path' => '/api/config-links/abcdef', 'expires_at' => '2026-11-17T22:15:00+00:00'], responseCode: StatusCode::CREATED, description: 'The path of the link, to append to the address of Tower')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace, or wrong secret')]
     #[RawResponse(['error' => 'Connector unavailable'], responseCode: StatusCode::SERVICE_UNAVAILABLE, description: 'A connector is asked, and it was not built into this image')]
     public function createDownloadLink(CreateDownloadLinkRequest $request, int $key): Response
@@ -171,7 +166,6 @@ class AccessKeyController extends Controller
 
     #[Endpoint('Revoke access key', 'Revokes a key of the current workspace and disconnects the devices using it', 'revokeAccessKey')]
     #[NoContentResponse('The key is revoked')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace')]
     public function revoke(Request $request, int $key): Response
     {
@@ -188,7 +182,6 @@ class AccessKeyController extends Controller
 
     #[Endpoint('Update listened events', 'Changes the patterns of the events sent to the devices using this key. Applies without reconnecting', 'updateAccessKeyListen')]
     #[ResourceResponse(AccessKeyResource::class, description: 'The key')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace')]
     public function updateListen(ListenRequest $request, int $key): Response
     {
@@ -203,7 +196,6 @@ class AccessKeyController extends Controller
 
     #[Endpoint('Download connector', 'The Tower connector, to run with a configuration file', 'downloadConnector')]
     #[RawResponse(mimeType: 'application/octet-stream', description: 'tower-connector.pyz')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Connector unavailable'], responseCode: StatusCode::SERVICE_UNAVAILABLE, description: 'The connector was not built into this image')]
     public function download(Request $request): Response
     {
@@ -215,7 +207,6 @@ class AccessKeyController extends Controller
 
     #[Endpoint('Download basic handler', 'The basic handler of Tower events, run by the connector : ai.discuss opens a Claude Code discussion about a Jira issue', 'downloadHandler')]
     #[RawResponse(mimeType: 'application/octet-stream', description: 'tower-handler.pyz')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Connector unavailable'], responseCode: StatusCode::SERVICE_UNAVAILABLE, description: 'The handler was not built into this image')]
     public function downloadHandler(Request $request): Response
     {
@@ -227,7 +218,6 @@ class AccessKeyController extends Controller
 
     #[Endpoint('Download preconfigured connector', 'The Tower connector with this key embedded : it runs without a configuration file. Needs the secret given at creation', 'downloadPreconfiguredConnector')]
     #[RawResponse(mimeType: 'application/octet-stream', description: 'tower-connector-preconfigured.pyz')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Access key not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such usable key in the current workspace, or wrong secret')]
     #[RawResponse(['error' => 'Connector unavailable'], responseCode: StatusCode::SERVICE_UNAVAILABLE, description: 'The connector was not built into this image')]
     public function downloadPreconfigured(PreconfiguredConnectorRequest $request, int $key): Response

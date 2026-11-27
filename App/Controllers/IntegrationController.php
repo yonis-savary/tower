@@ -55,7 +55,6 @@ class IntegrationController extends Controller
 
     #[Endpoint('Get Bitbucket integration', 'The Bitbucket integration of the current workspace, without its token', 'getBitbucketIntegration')]
     #[ResourceResponse(IntegrationResource::class, description: 'The integration')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Bitbucket integration')]
     public function show(Request $request): Response
     {
@@ -66,7 +65,6 @@ class IntegrationController extends Controller
 
     #[Endpoint('Save Bitbucket integration', 'Creates or updates the Bitbucket integration of the current workspace. Without token, the current one is kept', 'saveBitbucketIntegration')]
     #[ResourceResponse(IntegrationResource::class, description: 'The integration')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'A token is required'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'No token was given for a new integration, or an invalid field')]
     public function save(SaveBitbucketRequest $request): Response
     {
@@ -84,7 +82,6 @@ class IntegrationController extends Controller
 
     #[Endpoint('Delete Bitbucket integration', 'Deletes the Bitbucket integration of the current workspace, its token and its pull requests', 'deleteBitbucketIntegration')]
     #[NoContentResponse('The integration is deleted')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Bitbucket integration')]
     public function delete(Request $request): Response
     {
@@ -99,7 +96,6 @@ class IntegrationController extends Controller
 
     #[Endpoint('Synchronize Bitbucket integration', 'Reads Bitbucket now instead of waiting for the next scheduled run. A failure is reported in `last_error`', 'syncBitbucketIntegration')]
     #[ResourceResponse(IntegrationResource::class, description: 'The integration after the run')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Bitbucket integration')]
     public function synchronize(Request $request): Response
     {
@@ -114,7 +110,6 @@ class IntegrationController extends Controller
 
     #[Endpoint('Get Jira integration', 'The Jira integration of the current workspace, without its token', 'getJiraIntegration')]
     #[ResourceResponse(JiraIntegrationResource::class, description: 'The integration')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Jira integration')]
     public function showJira(Request $request): Response
     {
@@ -125,7 +120,6 @@ class IntegrationController extends Controller
 
     #[Endpoint('Save Jira integration', 'Creates or updates the Jira integration of the current workspace. Without token, the current one is kept', 'saveJiraIntegration')]
     #[ResourceResponse(JiraIntegrationResource::class, description: 'The integration')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'A token is required'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'No token was given for a new integration, or an invalid field')]
     public function saveJira(SaveJiraRequest $request): Response
     {
@@ -143,7 +137,6 @@ class IntegrationController extends Controller
 
     #[Endpoint('Delete Jira integration', 'Deletes the Jira integration of the current workspace, its token, its profiles and its issues. Their tasks stay, unlinked', 'deleteJiraIntegration')]
     #[NoContentResponse('The integration is deleted')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Jira integration')]
     public function deleteJira(Request $request): Response
     {
@@ -158,7 +151,6 @@ class IntegrationController extends Controller
 
     #[Endpoint('Synchronize Jira integration', 'Reads Jira now instead of waiting for the next scheduled run. A failure is reported in `last_error`', 'syncJiraIntegration')]
     #[ResourceResponse(JiraIntegrationResource::class, description: 'The integration after the run')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Jira integration')]
     public function synchronizeJira(Request $request): Response
     {
@@ -173,7 +165,6 @@ class IntegrationController extends Controller
 
     #[Endpoint('Create Jira profile', 'Adds a profile to the Jira integration of the current workspace : a board to follow, narrowed by an optional JQL condition. Without name, the profile shows the name of its board. Its issues are read on the next sync, without being announced', 'createJiraProfile')]
     #[ResourceResponse(JiraProfileResource::class, responseCode: StatusCode::CREATED, description: 'The profile')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Jira integration')]
     public function createJiraProfile(SaveJiraProfileRequest $request): Response
     {
@@ -189,7 +180,6 @@ class IntegrationController extends Controller
 
     #[Endpoint('Update Jira profile', 'Changes the name, the board and the JQL condition of a Jira profile. Another board or condition is read again from a new reference : the issues no other profile shows leave without being announced', 'updateJiraProfile')]
     #[ResourceResponse(JiraProfileResource::class, description: 'The profile')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Profile not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such profile in the current workspace')]
     public function updateJiraProfile(SaveJiraProfileRequest $request, int $profile): Response
     {
@@ -205,7 +195,6 @@ class IntegrationController extends Controller
 
     #[Endpoint('Delete Jira profile', 'Deletes a Jira profile. The issues no other profile shows leave without being announced, those linked to a task stay', 'deleteJiraProfile')]
     #[NoContentResponse('The profile is deleted')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Profile not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such profile in the current workspace')]
     public function deleteJiraProfile(Request $request, int $profile): Response
     {

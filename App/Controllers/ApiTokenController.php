@@ -44,7 +44,6 @@ class ApiTokenController extends Controller
 
     #[Endpoint('List API tokens', 'The API tokens of the user for the current workspace, newest first', 'listApiTokens')]
     #[ResourceResponse(ApiTokenResource::class, isArray: true, description: 'The tokens')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function list(Request $request): Response
     {
         return Response::json(ApiTokenResource::of($this->tokens->listFor($this->authentication->userId(), currentWorkspaceId())));
@@ -52,7 +51,6 @@ class ApiTokenController extends Controller
 
     #[Endpoint('List workspace API tokens', 'The API tokens of every member for the current workspace, oldest first : the agents drawn on the home circuit', 'listWorkspaceApiTokens')]
     #[ResourceResponse(ApiTokenResource::class, isArray: true, description: 'The tokens')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function listWorkspace(Request $request): Response
     {
         return Response::json(ApiTokenResource::of($this->tokens->listForWorkspace(currentWorkspaceId())));
@@ -60,7 +58,6 @@ class ApiTokenController extends Controller
 
     #[Endpoint('Create API token', 'Creates an API token of the user for the current workspace. Its value is only given by this answer', 'createApiToken')]
     #[ObjectResponse(['token' => ApiTokenResource::class, 'value' => 'tower_abcdef'], responseCode: StatusCode::CREATED, description: 'The token and its value')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'MCP access is blocked for this workspace'], responseCode: StatusCode::CONFLICT, description: 'The workspace refuses MCP connections')]
     public function create(CreateApiTokenRequest $request): Response
     {
@@ -83,7 +80,6 @@ class ApiTokenController extends Controller
 
     #[Endpoint('Revoke API token', 'Deletes an API token of the user for the current workspace : it stops working at once', 'revokeApiToken')]
     #[NoContentResponse('The token is revoked')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Token not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such token for this user in the current workspace')]
     public function revoke(Request $request, int $token): Response
     {

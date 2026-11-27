@@ -56,7 +56,6 @@ class JiraIssueController extends Controller
 
     #[Endpoint('List Jira issues', 'The unfinished issues of the Jira profiles (`tracked`), whoever they are assigned to, with the ids of the profiles showing each one in `profiles`, and the issues kept because a task is linked to them. The subtasks of these issues, done or not, carry the id of their issue in `parent` and their own assignee. A board often holds hundreds : narrow with `profile` (see list_jira_profiles), `mine` (assigned to the Jira account of the integration) and `status_category`', 'listJiraIssues')]
     #[ResourceResponse(JiraIssueResource::class, isArray: true, description: 'The stored issues')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[McpTool('list_jira_issues')]
     public function list(ListJiraIssuesRequest $request): Response
     {
@@ -88,7 +87,6 @@ class JiraIssueController extends Controller
 
     #[Endpoint('List Jira profiles', 'The Jira account of the token, and the profiles of the workspace, oldest first : each one follows a board, narrowed by an optional JQL condition. A profile without name shows its board name. Its columns are those of its board in their order, with the ids of the statuses each one holds, the last one being its "done". Read on each sync', 'listJiraProfiles')]
     #[RawResponse(['account_id' => '5b10a2844c20165700ede21g', 'profiles' => [['id' => 1, 'name' => 'Billing team', 'board' => 12, 'board_name' => 'PLAT board', 'jql' => 'component = Billing', 'columns' => [['name' => 'In Review', 'statuses' => ['10002', '10007']]]]]], description: 'The account, null before the first sync, and the profiles, without columns before their first sync')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[McpTool('list_jira_profiles')]
     public function profiles(Request $request): Response
     {
@@ -102,7 +100,6 @@ class JiraIssueController extends Controller
 
     #[Endpoint('Read Jira issue', 'Reads an issue from Jira by its key, on the board or not : its description and last 20 comments in Jira wiki text, its labels and the list of its attachments', 'readJiraIssue')]
     #[RawResponse(['key' => 'PLAT-12', 'url' => 'https://example.atlassian.net/browse/PLAT-12', 'summary' => 'Pay again', 'project' => 'Platform', 'issue_type' => 'Story', 'priority' => 'High', 'status' => 'In Progress', 'sprint' => 'Sprint 4', 'assignee' => 'Alice', 'reporter' => 'Bob', 'labels' => ['billing'], 'description' => 'h2. Context', 'comments' => [['author' => 'Bob', 'created' => '2026-11-10T10:00:00.000+0100', 'body' => 'Remark']], 'attachments' => [['id' => '10200', 'filename' => 'mockup.png', 'mime_type' => 'image/png', 'size' => 48213, 'created' => '2026-11-10T10:00:00.000+0100', 'author' => 'Bob']]], description: 'The issue')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Issue not found'], responseCode: StatusCode::NOT_FOUND, description: 'No Jira integration, or Jira does not know this issue')]
     #[McpTool('get_jira_issue')]
     public function read(Request $request, string $key): Response
@@ -113,7 +110,6 @@ class JiraIssueController extends Controller
     }
 
     #[Endpoint('Download Jira attachment', 'Downloads an attachment of a Jira issue, as listed by readJiraIssue, of 5 MiB at most', 'downloadJiraAttachment')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Attachment not found'], responseCode: StatusCode::NOT_FOUND, description: 'No Jira integration, or Jira does not know this attachment')]
     #[RawResponse(['error' => 'Attachment too large'], responseCode: StatusCode::CONTENT_TOO_LARGE, description: 'Over 5 MiB')]
     #[McpTool('get_jira_attachment')]
@@ -135,7 +131,6 @@ class JiraIssueController extends Controller
 
     #[Endpoint('List Jira issue transitions', 'The transitions the Jira workflow allows from the current status of the issue, read from Jira', 'listJiraIssueTransitions')]
     #[RawResponse([['id' => '21', 'name' => 'Start progress', 'status_id' => '10001', 'status' => 'In Progress', 'status_category' => 'in_progress']], description: 'The transitions')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Issue not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such issue in the current workspace')]
     #[McpTool('list_jira_transitions')]
     public function transitions(Request $request, int $issue): Response
@@ -155,7 +150,6 @@ class JiraIssueController extends Controller
 
     #[Endpoint('Transition Jira issue', 'Applies a transition in Jira, then stores the new status of the issue', 'transitionJiraIssue')]
     #[ResourceResponse(JiraIssueResource::class, description: 'The issue in its new status')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Issue not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such issue in the current workspace')]
     #[RawResponse(['error' => 'Field "resolution" is required.'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'Jira refused the transition, for example because it needs more fields')]
     #[McpTool('transition_jira_issue', write: true)]
@@ -174,7 +168,6 @@ class JiraIssueController extends Controller
 
     #[Endpoint('Create task from Jira issue', 'Adds a task linked to the issue at the end of the backlog', 'createTaskFromJiraIssue')]
     #[ResourceResponse(TaskResource::class, responseCode: StatusCode::CREATED, description: 'The task')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Issue not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such issue in the current workspace')]
     #[RawResponse(['error' => 'This issue already has a task'], responseCode: StatusCode::CONFLICT, description: 'An issue has one task at most')]
     #[McpTool('create_task_from_jira_issue', write: true)]
@@ -193,7 +186,6 @@ class JiraIssueController extends Controller
 
     #[Endpoint('Discuss Jira issue', 'Reads the issue from Jira (description, last comments...) and sends it to the connected devices as an `ai.discuss` event', 'discussJiraIssue')]
     #[NoContentResponse('The event is sent')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Issue not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such issue in the current workspace, or Jira does not know it anymore')]
     public function discuss(Request $request, int $issue): Response
     {

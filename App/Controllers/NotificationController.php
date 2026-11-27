@@ -57,7 +57,6 @@ class NotificationController extends Controller
 
     #[Endpoint('Push configuration', 'Whether this server can send push notifications, and the public VAPID key a browser subscribes with', 'getPushConfiguration')]
     #[RawResponse(['enabled' => true, 'public_key' => 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U'], description: 'public_key is null when push notifications are not set up')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function configuration(Request $request): Response
     {
         return Response::json(['enabled' => $this->push->isEnabled(), 'public_key' => $this->push->publicKey()]);
@@ -65,7 +64,6 @@ class NotificationController extends Controller
 
     #[Endpoint('List push subscriptions', 'The browsers where the user enabled the push notifications of the current workspace, oldest first', 'listPushSubscriptions')]
     #[ResourceResponse(PushSubscriptionResource::class, isArray: true, description: 'The subscriptions')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function listSubscriptions(Request $request): Response
     {
         return Response::json(PushSubscriptionResource::of($this->push->subscriptionsOf(currentWorkspaceId(), $this->authentication->userId())));
@@ -73,7 +71,6 @@ class NotificationController extends Controller
 
     #[Endpoint('Save push subscription', 'Enables the push notifications of the current workspace on this browser, or updates its subscription there. What another user enabled on this browser is dropped', 'savePushSubscription')]
     #[ResourceResponse(PushSubscriptionResource::class, description: 'The subscription')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Push notifications are not set up'], responseCode: StatusCode::CONFLICT, description: 'No VAPID keys on this server')]
     public function saveSubscription(PushSubscriptionRequest $request): Response
     {
@@ -96,7 +93,6 @@ class NotificationController extends Controller
 
     #[Endpoint('Claim browser', 'Sent each time Tower opens : drops what another user enabled on this browser, which now belongs to the user logged in', 'claimPushBrowser')]
     #[NoContentResponse('The browser belongs to the user')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function claimBrowser(PushClaimRequest $request): Response
     {
         $this->push->claimBrowser($this->authentication->userId(), $request->validated('endpoint'));
@@ -106,7 +102,6 @@ class NotificationController extends Controller
 
     #[Endpoint('Delete push subscription', 'Stops the push notifications of the current workspace on one browser of the user', 'deletePushSubscription')]
     #[NoContentResponse('The subscription is deleted')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Subscription not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such subscription of the user in the current workspace')]
     public function deleteSubscription(Request $request, int $subscription): Response
     {
@@ -121,7 +116,6 @@ class NotificationController extends Controller
 
     #[Endpoint('Test push subscription', 'Sends a notification to one browser of the user. A browser that dropped its subscription is deleted', 'testPushSubscription')]
     #[NoContentResponse('The browser accepted the notification')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Subscription not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such subscription of the user in the current workspace')]
     #[RawResponse(['error' => 'The push service refused the notification'], responseCode: StatusCode::BAD_GATEWAY, description: 'The push service of the browser refused it')]
     public function testSubscription(PushTestRequest $request, int $subscription): Response
@@ -139,7 +133,6 @@ class NotificationController extends Controller
 
     #[Endpoint('List notification rules', 'The notification rules of the user in the current workspace, oldest first', 'listNotificationRules')]
     #[ResourceResponse(NotificationRuleResource::class, isArray: true, description: 'The rules')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function listRules(Request $request): Response
     {
         return Response::json(NotificationRuleResource::of($this->push->rulesOf(currentWorkspaceId(), $this->authentication->userId())));
@@ -147,7 +140,6 @@ class NotificationController extends Controller
 
     #[Endpoint('Create notification rule', 'Notifies the browsers of the user of the events of the current workspace matching `listen`. `title` and `body` are each a raw value or a key of the payload, null for the default text', 'createNotificationRule')]
     #[ResourceResponse(NotificationRuleResource::class, responseCode: StatusCode::CREATED, description: 'The rule')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function createRule(NotificationRuleRequest $request): Response
     {
         $validated = $request->validated();
@@ -165,7 +157,6 @@ class NotificationController extends Controller
 
     #[Endpoint('Preview notification', 'The title and the body a rule would give for this event', 'previewNotification')]
     #[RawResponse(['title' => 'Pipeline failed', 'body' => 'Fix the login form'], description: 'The text of the notification')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function previewRule(NotificationPreviewRequest $request): Response
     {
         $validated = $request->validated();
@@ -180,7 +171,6 @@ class NotificationController extends Controller
 
     #[Endpoint('Update notification rule', 'Changes the events, the text and the state of a rule of the user in the current workspace', 'updateNotificationRule')]
     #[ResourceResponse(NotificationRuleResource::class, description: 'The rule')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Notification rule not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such rule of the user in the current workspace')]
     public function updateRule(UpdateNotificationRuleRequest $request, int $rule): Response
     {
@@ -203,7 +193,6 @@ class NotificationController extends Controller
 
     #[Endpoint('Delete notification rule', 'Deletes a rule of the user in the current workspace', 'deleteNotificationRule')]
     #[NoContentResponse('The rule is deleted')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Notification rule not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such rule of the user in the current workspace')]
     public function deleteRule(Request $request, int $rule): Response
     {

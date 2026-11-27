@@ -6,12 +6,10 @@ use App\Channels\DevicesChannel;
 use App\Middlewares\IsAuthenticated;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
-use Cube\Data\OpenAPI\Attributes\RawResponse;
 use Cube\Security\Authentication;
 use Cube\Web\Controller;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Response;
-use Cube\Web\Http\StatusCode;
 use Cube\Web\Router\Route;
 use Cube\Web\Router\Router;
 
@@ -32,7 +30,6 @@ class DeviceController extends Controller
 
     #[Endpoint('Disconnect device', 'Closes the connection of a device of the current workspace. The connector stops until it is launched again', 'disconnectDevice')]
     #[NoContentResponse('The device is asked to disconnect, if it is still connected')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function disconnect(Request $request, string $uuid): Response
     {
         $workspace = currentWorkspaceId();

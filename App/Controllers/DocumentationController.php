@@ -58,7 +58,6 @@ class DocumentationController extends Controller
 
     #[Endpoint('List documentation pages', 'The pages of the documentation of the current workspace, sorted by title, without their content : read one with readDocPage. A page with a parent is a sub-page of it. Narrow the list with search (in the title and the content), tag, and include_archived to see archived pages too', 'listDocPages')]
     #[ResourceResponse(DocPageSummaryResource::class, isArray: true, description: 'The pages')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[McpTool('list_doc_pages')]
     public function list(ListDocPagesRequest $request): Response
     {
@@ -73,7 +72,6 @@ class DocumentationController extends Controller
 
     #[Endpoint('Create documentation page', 'Adds a page to the documentation of the current workspace. The content is Markdown : fenced code blocks are highlighted, ```mermaid blocks are drawn as diagrams, and images uploaded with uploadDocImage are shown with their markdown snippet. Give a parent to make it a sub-page', 'createDocPage')]
     #[ResourceResponse(DocPageResource::class, responseCode: StatusCode::CREATED, description: 'The page, at version 1')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Page 12 cannot be the parent'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'Unknown parent, or an invalid field')]
     #[McpTool('create_doc_page', write: true)]
     public function create(CreateDocPageRequest $request): Response
@@ -93,7 +91,6 @@ class DocumentationController extends Controller
 
     #[Endpoint('Read documentation page', 'A page of the documentation with its Markdown content and its version : give that version back when changing the page, so that a change made in the meantime is not overwritten', 'readDocPage')]
     #[ResourceResponse(DocPageResource::class, description: 'The page')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Page not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such page in the current workspace')]
     #[McpTool('get_doc_page')]
     public function read(Request $request, int $page): Response
@@ -105,7 +102,6 @@ class DocumentationController extends Controller
 
     #[Endpoint('Update documentation page', 'Changes the title, the whole content, the tags, the parent (null for a top-level page) or the archived state of a page : archiving or restoring a page does the same to all its sub-pages. A left out field is kept. Give the version read with readDocPage : the change is refused with a 409 if the page changed since. To change a few passages of a long page, prefer editDocPage', 'updateDocPage')]
     #[ResourceResponse(DocPageResource::class, description: 'The page')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Page not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such page in the current workspace')]
     #[RawResponse(['error' => 'The page changed since version 3'], responseCode: StatusCode::CONFLICT, description: 'The page is no longer at the given version')]
     #[RawResponse(['error' => 'Page 12 cannot be the parent'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'Unknown parent, the page itself or one of its sub-pages, or an invalid field')]
@@ -133,7 +129,6 @@ class DocumentationController extends Controller
 
     #[Endpoint('Delete documentation page', 'Deletes a page with all its sub-pages and their versions. Only the member who created the page, or the author of the workspace, can delete it', 'deleteDocPage')]
     #[NoContentResponse('The page and its sub-pages are deleted')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Only the member who created page 12, or the author of the workspace, can delete it'], responseCode: StatusCode::FORBIDDEN, description: 'The current user neither created the page nor the workspace')]
     #[RawResponse(['error' => 'Page not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such page in the current workspace')]
     public function delete(Request $request, int $page): Response
@@ -149,7 +144,6 @@ class DocumentationController extends Controller
 
     #[Endpoint('Edit documentation page', 'Replaces passages of the content of a page : each old_text must appear exactly once in the content, and is replaced by its new_text. The edits apply in order, all or none. Give the version read with readDocPage to be refused with a 409 if the page changed since', 'editDocPage')]
     #[ResourceResponse(DocPageResource::class, description: 'The page')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Page not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such page in the current workspace')]
     #[RawResponse(['error' => 'The page changed since version 3'], responseCode: StatusCode::CONFLICT, description: 'The page is no longer at the given version')]
     #[RawResponse(['error' => 'edits.0.old_text must appear exactly once in the content, found 0 times'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'A passage is missing or ambiguous, or the content would be too long')]
@@ -166,7 +160,6 @@ class DocumentationController extends Controller
 
     #[Endpoint('List documentation page versions', 'The versions of a page kept for 31 days, newest first, without their content : who wrote each one, and through which agent token. Read one with readDocPageVersion', 'listDocPageVersions')]
     #[ResourceResponse(DocPageVersionSummaryResource::class, isArray: true, description: 'The versions')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Page not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such page in the current workspace')]
     #[McpTool('list_doc_page_versions')]
     public function versions(Request $request, int $page): Response
@@ -178,7 +171,6 @@ class DocumentationController extends Controller
 
     #[Endpoint('Read documentation page version', 'A past version of a page, with its whole Markdown content', 'readDocPageVersion')]
     #[ResourceResponse(DocPageVersionResource::class, description: 'The version')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Version not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such version in the current workspace')]
     #[McpTool('get_doc_page_version')]
     public function readVersion(Request $request, int $version): Response
@@ -192,7 +184,6 @@ class DocumentationController extends Controller
 
     #[Endpoint('Upload documentation image', 'Stores an image for the documentation of the current workspace : PNG, JPEG, GIF or WebP, 5 MiB at most, its bytes encoded in base64. Put the markdown snippet of the answer in a page to show it', 'uploadDocImage')]
     #[ResourceResponse(DocImageResource::class, responseCode: StatusCode::CREATED, description: 'The image')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'The image must be a PNG, JPEG, GIF or WebP image'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'Not base64, or not an accepted image')]
     #[RawResponse(['error' => 'The image weighs 6000000 bytes'], responseCode: StatusCode::CONTENT_TOO_LARGE, description: 'Over 5 MiB')]
     #[McpTool('upload_doc_image', write: true)]
@@ -205,7 +196,6 @@ class DocumentationController extends Controller
     }
 
     #[Endpoint('Get documentation image', 'An image of the documentation, as referenced by the pages (/api/docs/images/{image})', 'getDocImage')]
-    #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     #[RawResponse(['error' => 'Image not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such image in the current workspace')]
     #[McpTool('get_doc_image')]
     public function image(Request $request, int $image): Response
