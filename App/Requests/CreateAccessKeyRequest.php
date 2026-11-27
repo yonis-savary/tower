@@ -2,7 +2,7 @@
 
 namespace App\Requests;
 
-use App\Connector\HandlerRules;
+use App\Domain\AccessKey\Connector\HandlerRules;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Rules\Param;
 

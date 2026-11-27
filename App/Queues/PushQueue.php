@@ -2,7 +2,7 @@
 
 namespace App\Queues;
 
-use App\Services\PushService;
+use App\Domain\Notification\PushService;
 use Cube\Data\Database\Database;
 use Cube\Env\Logger\Logger;
 use Cube\Queue\Queue;

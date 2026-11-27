@@ -2,7 +2,7 @@
 
 namespace App\Requests;
 
-use App\Services\WebhookService;
+use App\Domain\Webhook\WebhookService;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Rules\Param;
 

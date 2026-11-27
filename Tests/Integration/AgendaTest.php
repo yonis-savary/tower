@@ -2,7 +2,8 @@
 
 namespace Tests\Integration;
 
-use App\Agenda\AgendaService;
+use App\Domain\Agenda\AgendaService;
+use App\Domain\Workspace\WorkspaceSignals;
 use App\Models\AgendaItem;
 use App\Models\AgendaItemException;
 use App\Models\AgendaItemParticipant;
@@ -11,7 +12,6 @@ use App\Models\ScheduledEvent;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
-use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;

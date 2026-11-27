@@ -2,14 +2,14 @@
 
 namespace Tests\Integration;
 
-use App\Documentation\DocumentationService;
+use App\Domain\Documentation\DocumentationService;
+use App\Domain\History\HistoryConfiguration;
+use App\Domain\Workspace\WorkspaceSignals;
 use App\Models\DocImage;
 use App\Models\DocPage;
 use App\Models\DocPageVersion;
 use App\Models\History;
 use App\Models\User;
-use App\Services\HistoryConfiguration;
-use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Env\Storage;
 use Cube\Security\Authentication;

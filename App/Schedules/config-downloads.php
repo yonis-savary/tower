@@ -1,5 +1,5 @@
 <?php
 
-use App\Connector\ConfigDownloadService;
+use App\Domain\AccessKey\Connector\ConfigDownloadService;
 
 Cube\daily([ConfigDownloadService::class, 'purgeExpired']);

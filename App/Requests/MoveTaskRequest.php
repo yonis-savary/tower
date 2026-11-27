@@ -2,7 +2,7 @@
 
 namespace App\Requests;
 
-use App\Services\TaskService;
+use App\Domain\Task\TaskService;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Rules\Param;
 

@@ -2,11 +2,11 @@
 
 namespace App\Controllers;
 
+use App\Domain\Search\SearchResult;
+use App\Domain\Search\WorkspaceSearch;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\SearchRequest;
-use App\Search\SearchResult;
-use App\Search\WorkspaceSearch;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
 use Cube\Security\Authentication;

@@ -2,15 +2,15 @@
 
 namespace Tests\Integration;
 
-use App\Integrations\IntegrationService;
-use App\Integrations\Jira\JiraClient;
-use App\Integrations\Jira\JiraIssueSync;
+use App\Domain\Integrations\IntegrationService;
+use App\Domain\Integrations\Jira\JiraClient;
+use App\Domain\Integrations\Jira\JiraIssueSync;
+use App\Domain\Workspace\WorkspaceSignals;
 use App\Models\History;
 use App\Models\Integration;
 use App\Models\JiraIssue;
 use App\Models\JiraProfile;
 use App\Models\Task;
-use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;

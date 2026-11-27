@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use App\TaskNotes\NoteError;
-use App\TaskNotes\TaskNotesParser;
+use App\Domain\Task\Notes\NoteError;
+use App\Domain\Task\Notes\TaskNotesParser;
 use PHPUnit\Framework\TestCase;
 
 class TaskNotesParserTest extends TestCase

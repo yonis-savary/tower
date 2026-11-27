@@ -3,19 +3,19 @@
 namespace App\Controllers;
 
 use App\Channels\DevicesChannel;
-use App\Connector\ConfigDownloadService;
-use App\Connector\ConnectorPackager;
-use App\Connector\HandlerRules;
-use App\Models\AccessKey;
+use App\Domain\AccessKey\AccessKeyService;
+use App\Domain\AccessKey\Connector\ConfigDownloadService;
+use App\Domain\AccessKey\Connector\ConnectorPackager;
+use App\Domain\AccessKey\Connector\HandlerRules;
+use App\Domain\History\HistoryService;
 use App\Middlewares\IsAuthenticated;
+use App\Models\AccessKey;
 use App\Requests\CreateAccessKeyRequest;
 use App\Requests\CreateDownloadLinkRequest;
 use App\Requests\ListenRequest;
 use App\Requests\PreconfiguredConnectorRequest;
 use App\Requests\UpdateHandlersRequest;
 use App\Resources\AccessKeyResource;
-use App\Services\AccessKeyService;
-use App\Services\HistoryService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\ObjectResponse;

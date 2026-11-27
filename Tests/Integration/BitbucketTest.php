@@ -2,18 +2,18 @@
 
 namespace Tests\Integration;
 
-use App\Integrations\Bitbucket\BitbucketClient;
-use App\Integrations\Bitbucket\BitbucketProvider;
-use App\Integrations\IntegrationConfiguration;
-use App\Integrations\IntegrationEvents;
-use App\Integrations\IntegrationService;
-use App\Integrations\PullRequestContent;
-use App\Integrations\PullRequestData;
-use App\Integrations\PullRequestProvider;
-use App\Integrations\PullRequestSync;
+use App\Domain\Integrations\Bitbucket\BitbucketClient;
+use App\Domain\Integrations\Bitbucket\BitbucketProvider;
+use App\Domain\Integrations\IntegrationConfiguration;
+use App\Domain\Integrations\IntegrationEvents;
+use App\Domain\Integrations\IntegrationService;
+use App\Domain\Integrations\PullRequestContent;
+use App\Domain\Integrations\PullRequestData;
+use App\Domain\Integrations\PullRequestProvider;
+use App\Domain\Integrations\PullRequestSync;
+use App\Domain\Workspace\WorkspaceSignals;
 use App\Models\Integration;
 use App\Models\PullRequest;
-use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;

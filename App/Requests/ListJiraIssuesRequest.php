@@ -2,7 +2,7 @@
 
 namespace App\Requests;
 
-use App\Integrations\Jira\JiraIssueData;
+use App\Domain\Integrations\Jira\JiraIssueData;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Rules\Param;
 

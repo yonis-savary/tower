@@ -2,7 +2,7 @@
 
 namespace App\Resources;
 
-use App\Documentation\DocumentationImages;
+use App\Domain\Documentation\DocumentationImages;
 use App\Models\DocImage;
 use Cube\Data\Models\Model;
 use Cube\Data\Models\ModelResource;

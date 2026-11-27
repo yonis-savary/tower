@@ -2,9 +2,9 @@
 
 namespace App\Resources;
 
+use App\Domain\History\HistoryService;
 use App\Models\EventDelivery;
 use App\Models\History;
-use App\Services\HistoryService;
 use Cube\Data\Bunch;
 use Cube\Data\Models\Model;
 use Cube\Data\Models\ModelResource;

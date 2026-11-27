@@ -2,11 +2,11 @@
 
 namespace App\Channels;
 
+use App\Domain\AccessKey\AccessKeyService;
+use App\Domain\Event\EventService;
+use App\Domain\History\HistoryService;
 use App\Models\AccessKey;
-use App\Services\AccessKeyService;
 use App\Requests\TriggerEventRequest;
-use App\Services\EventService;
-use App\Services\HistoryService;
 use Cube\Web\Http\Rules\Param;
 use Cube\Web\Http\Rules\Rule;
 use Cube\Web\Websocket\Channel\Channel;

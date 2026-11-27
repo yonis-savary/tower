@@ -2,7 +2,7 @@
 
 namespace App\Requests;
 
-use App\Connector\ConfigDownloadService;
+use App\Domain\AccessKey\Connector\ConfigDownloadService;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Rules\Param;
 

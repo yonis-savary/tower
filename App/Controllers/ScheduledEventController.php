@@ -2,14 +2,14 @@
 
 namespace App\Controllers;
 
+use App\Domain\Event\EventService;
+use App\Domain\Event\ScheduledEventService;
+use App\Domain\History\HistoryService;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\ScheduledEventRequest;
 use App\Requests\UpdateScheduledEventRequest;
 use App\Resources\ScheduledEventResource;
-use App\Services\EventService;
-use App\Services\HistoryService;
-use App\Services\ScheduledEventService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;

@@ -2,9 +2,9 @@
 
 namespace App\Mcp;
 
+use App\Domain\Workspace\WorkspaceSignals;
 use App\Models\ApiToken;
 use App\Security\ApiTokenIdentity;
-use App\Services\WorkspaceSignals;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Response;
 use Mcp\Schema\Content\Content;

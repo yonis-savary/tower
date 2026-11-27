@@ -2,6 +2,10 @@
 
 namespace App\Controllers;
 
+use App\Domain\Account\AccountService;
+use App\Domain\Account\LoginHistory;
+use App\Domain\Account\UserRegistration;
+use App\Domain\Workspace\WorkspaceService;
 use App\Middlewares\IsAuthenticated;
 use App\Models\User;
 use App\Requests\ChangePasswordRequest;
@@ -9,10 +13,6 @@ use App\Requests\LoginRequest;
 use App\Requests\RegisterRequest;
 use App\Resources\UserResource;
 use App\Security\RegistrationConfiguration;
-use App\Services\AccountService;
-use App\Services\LoginHistory;
-use App\Services\UserRegistration;
-use App\Services\WorkspaceService;
 use App\Session\SelectedWorkspace;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;

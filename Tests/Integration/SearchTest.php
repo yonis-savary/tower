@@ -2,7 +2,7 @@
 
 namespace Tests\Integration;
 
-use App\Integrations\IntegrationService;
+use App\Domain\Integrations\IntegrationService;
 use App\Models\DocPage;
 use App\Models\Integration;
 use App\Models\JiraIssue;

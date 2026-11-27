@@ -42,3 +42,11 @@ component takes it as a nullable last parameter, like any method outside a const
 From three chained calls, a query puts one call per line. A query used inside a `foreach`, an `if`
 or as a sub-query of `whereIn()` is first named in a variable. A query ending in a `Bunch` uses
 `toBunch()`, never `Bunch::wrap(...->fetch())`.
+
+### Where code goes
+
+Business code lives in `App/Domain/<Feature>/` : the feature's service and its classes side by side,
+a sub-folder only for a real sub-concern (`Integrations/Jira`, `Task/Notes`). The root of `App/`
+keeps the HTTP layer (`Controllers`, `Requests`, `Resources`, `Middlewares`), the infrastructure
+(`Security`, `Mcp`, `Push`, `Channels`, `Queues`...) and the directories Cube reads by name
+(`Models`, `Migrations`, `Routes`, `Schedules`, `Helpers`, `Requires`), which only work at that level.

@@ -2,7 +2,7 @@
 
 namespace Tests\Integration;
 
-use Cube\Web\Http\Request;
+use App\Domain\Notification\PushService;
 use App\Models\NotificationRule;
 use App\Models\PushSubscription;
 use App\Models\Workspace;
@@ -11,11 +11,11 @@ use App\Push\PushConfiguration;
 use App\Push\PushResult;
 use App\Push\PushSender;
 use App\Queues\PushQueue;
-use App\Services\PushService;
 use App\Session\SelectedWorkspace;
 use Cube\Env\Configuration;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
+use Cube\Web\Http\Request;
 use Cube\Web\Websocket\Broadcast\Broadcast;
 use Cube\Web\Websocket\Broadcast\BroadcastConfiguration;
 

@@ -2,7 +2,7 @@
 
 namespace App\Requests\Rules;
 
-use App\Documentation\DocumentationService;
+use App\Domain\Documentation\DocumentationService;
 use Cube\Web\Http\Rules\ArrayParam;
 use Cube\Web\Http\Rules\Param;
 

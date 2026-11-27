@@ -2,10 +2,10 @@
 
 namespace Tests\Integration;
 
+use App\Domain\Event\ScheduledEventService;
+use App\Domain\Workspace\WorkspaceSignals;
 use App\Models\History;
 use App\Models\ScheduledEvent;
-use App\Services\ScheduledEventService;
-use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;

@@ -1,5 +1,5 @@
 <?php
 
-use App\Documentation\DocumentationService;
+use App\Domain\Documentation\DocumentationService;
 
 Cube\daily([DocumentationService::class, 'purgeExpiredVersions']);

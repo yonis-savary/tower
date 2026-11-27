@@ -2,11 +2,11 @@
 
 namespace Tests\Integration;
 
+use App\Domain\History\HistoryConfiguration;
+use App\Domain\History\HistoryService;
+use App\Domain\Workspace\WorkspaceSignals;
 use App\Models\EventDelivery;
 use App\Models\History;
-use App\Services\HistoryConfiguration;
-use App\Services\HistoryService;
-use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;

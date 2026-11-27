@@ -2,7 +2,7 @@
 
 namespace App\Requests;
 
-use App\Services\PushService;
+use App\Domain\Notification\PushService;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Rules\Param;
 use Cube\Web\Http\Rules\Rule;

@@ -1,7 +1,7 @@
 <?php
 
+use App\Domain\AccessKey\Connector\ConnectorConfiguration;
 use App\Models\User;
-use App\Connector\ConnectorConfiguration;
 use App\Push\PushConfiguration;
 use App\Security\ActiveUserAuthentication;
 use App\Security\RegistrationConfiguration;

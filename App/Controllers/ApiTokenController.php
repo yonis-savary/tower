@@ -2,12 +2,12 @@
 
 namespace App\Controllers;
 
+use App\Domain\History\HistoryService;
+use App\Domain\Workspace\WorkspaceService;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\CreateApiTokenRequest;
 use App\Resources\ApiTokenResource;
 use App\Security\ApiTokenService;
-use App\Services\HistoryService;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\ObjectResponse;

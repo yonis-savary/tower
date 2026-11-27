@@ -2,10 +2,11 @@
 
 namespace App\Controllers;
 
-use App\Agenda\AgendaItemData;
-use App\Agenda\AgendaService;
-use App\Agenda\ScheduleOccurrence;
-use App\Agenda\ScheduleOccurrences;
+use App\Domain\Agenda\AgendaItemData;
+use App\Domain\Agenda\AgendaService;
+use App\Domain\Agenda\ScheduleOccurrence;
+use App\Domain\Agenda\ScheduleOccurrences;
+use App\Domain\Workspace\WorkspaceService;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\AgendaRangeRequest;
@@ -14,7 +15,6 @@ use App\Requests\DeleteAgendaItemRequest;
 use App\Requests\ListAgendaItemsRequest;
 use App\Requests\UpdateAgendaItemRequest;
 use App\Resources\AgendaItemResource;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;

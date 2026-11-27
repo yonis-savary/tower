@@ -2,7 +2,7 @@
 
 namespace App\Requests;
 
-use App\Services\AccessKeyService;
+use App\Domain\AccessKey\AccessKeyService;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Rules\Param;
 use Cube\Web\Http\Rules\Rule;

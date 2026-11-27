@@ -2,8 +2,8 @@
 
 namespace App;
 
+use App\Domain\Workspace\WorkspaceService;
 use App\Models\Workspace;
-use App\Services\WorkspaceService;
 use Cube\Security\Authentication;
 
 function currentWorkspace(?Authentication $authentication = null): Workspace

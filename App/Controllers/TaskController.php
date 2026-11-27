@@ -2,6 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Domain\Task\Notes\TaskNotesParser;
+use App\Domain\Task\TaskService;
+use App\Domain\Task\TaskTimelineService;
 use App\Favicons\FaviconService;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
@@ -17,10 +20,6 @@ use App\Resources\SprintLinkResource;
 use App\Resources\SprintResource;
 use App\Resources\TaskHistoryResource;
 use App\Resources\TaskResource;
-use App\Services\TaskService;
-use App\Services\TaskTimelineService;
-use App\Services\WorkspaceService;
-use App\TaskNotes\TaskNotesParser;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
@@ -82,7 +81,7 @@ class TaskController extends Controller
     #[McpTool('get_task_timeline')]
     public function timeline(TimelineRequest $request): Response
     {
-        return Response::json($this->timeline->timeline($this->workspace(), $request->start(), $request->end()));
+        return Response::json($this->timeline->timeline(currentWorkspaceId(), $request->start(), $request->end()));
     }
 
     #[Endpoint('Create task', 'Adds a task at the end of the backlog or of a sprint, optionally with a single http(s) link to a page it is about', 'createTask')]

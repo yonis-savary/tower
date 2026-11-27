@@ -2,7 +2,7 @@
 
 namespace App\Resources;
 
-use App\Agenda\Recurrence;
+use App\Domain\Agenda\Recurrence;
 use App\Models\AgendaItem;
 use App\Models\AgendaItemParticipant;
 use Cube\Data\Models\Model;

@@ -2,11 +2,11 @@
 
 namespace Tests\Integration;
 
+use App\Domain\Account\LoginHistory;
 use App\Models\History;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
-use App\Services\LoginHistory;
 use Cube\Data\Database\Database;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;

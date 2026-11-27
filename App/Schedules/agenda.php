@@ -1,5 +1,5 @@
 <?php
 
-use App\Agenda\AgendaService;
+use App\Domain\Agenda\AgendaService;
 
 Cube\everyMinute([AgendaService::class, 'announceUpcoming']);

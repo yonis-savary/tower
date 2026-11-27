@@ -2,8 +2,8 @@
 
 namespace App\Resources;
 
+use App\Domain\Notification\PushService;
 use App\Models\NotificationRule;
-use App\Services\PushService;
 use Cube\Data\Models\Model;
 use Cube\Data\Models\ModelResource;
 use Cube\Data\OpenAPI\Attributes\Nullable;

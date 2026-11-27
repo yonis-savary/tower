@@ -2,8 +2,8 @@
 
 namespace App\Requests;
 
+use App\Domain\Workspace\WorkspaceService;
 use App\Requests\Rules\HexColor;
-use App\Services\WorkspaceService;
 use Cube\Web\Http\Rules\Param;
 
 class UpdateWorkspaceRequest extends WorkspaceNameRequest

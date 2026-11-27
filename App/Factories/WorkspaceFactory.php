@@ -2,8 +2,8 @@
 
 namespace App\Factories;
 
+use App\Domain\Workspace\WorkspaceService;
 use App\Models\Workspace;
-use App\Services\WorkspaceService;
 use Cube\Data\Models\ModelFactory;
 use Faker\Generator;
 

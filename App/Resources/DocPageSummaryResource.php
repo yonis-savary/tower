@@ -2,7 +2,7 @@
 
 namespace App\Resources;
 
-use App\Documentation\DocumentationService;
+use App\Domain\Documentation\DocumentationService;
 use App\Models\DocPage;
 use Cube\Data\Models\Model;
 use Cube\Data\Models\ModelResource;

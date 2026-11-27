@@ -3,14 +3,14 @@
 namespace Tests\Integration;
 
 use App\Channels\DevicesChannel;
-use App\Connector\ConnectorConfiguration;
-use App\Connector\HandlerRules;
-use App\Models\ConfigDownload;
-use App\Connector\ConnectorPackager;
+use App\Domain\AccessKey\AccessKeyService;
+use App\Domain\AccessKey\Connector\ConnectorConfiguration;
+use App\Domain\AccessKey\Connector\ConnectorPackager;
+use App\Domain\AccessKey\Connector\HandlerRules;
+use App\Domain\History\HistoryService;
+use App\Domain\Workspace\WorkspaceSignals;
 use App\Models\AccessKey;
-use App\Services\AccessKeyService;
-use App\Services\HistoryService;
-use App\Services\WorkspaceSignals;
+use App\Models\ConfigDownload;
 use App\Session\SelectedWorkspace;
 use Cube\Env\Configuration;
 use Cube\Security\Authentication;

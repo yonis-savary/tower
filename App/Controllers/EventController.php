@@ -2,12 +2,12 @@
 
 namespace App\Controllers;
 
+use App\Domain\Event\EventService;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\CreateQuickActionRequest;
 use App\Requests\TriggerEventRequest;
 use App\Resources\QuickActionResource;
-use App\Services\EventService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;

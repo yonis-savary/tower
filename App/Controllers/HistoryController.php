@@ -2,13 +2,13 @@
 
 namespace App\Controllers;
 
+use App\Domain\History\HistoryService;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\HistoryRequest;
 use App\Resources\EventDeliveryResource;
 use App\Resources\HistoryResource;
 use App\Resources\RecentEventResource;
-use App\Services\HistoryService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\RawResponse;
 use Cube\Data\OpenAPI\Attributes\ResourceResponse;

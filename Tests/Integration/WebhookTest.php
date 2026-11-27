@@ -2,9 +2,9 @@
 
 namespace Tests\Integration;
 
+use App\Domain\Workspace\WorkspaceSignals;
 use App\Models\History;
 use App\Models\WebhookCall;
-use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;

@@ -2,7 +2,7 @@
 
 namespace App\Requests;
 
-use App\Agenda\Recurrence;
+use App\Domain\Agenda\Recurrence;
 use App\Requests\Rules\HexColor;
 use App\Requests\Rules\Instant;
 use App\Requests\Rules\WebAddress;

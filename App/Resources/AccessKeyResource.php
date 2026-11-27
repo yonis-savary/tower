@@ -2,7 +2,7 @@
 
 namespace App\Resources;
 
-use App\Connector\HandlerRules;
+use App\Domain\AccessKey\Connector\HandlerRules;
 use App\Models\AccessKey;
 use Cube\Data\Models\Model;
 use Cube\Data\Models\ModelResource;

@@ -2,10 +2,10 @@
 
 namespace App\Controllers;
 
-use App\Integrations\IntegrationService;
-use App\Integrations\Jira\JiraIssueSync;
-use App\Integrations\Jira\JiraProfileService;
-use App\Integrations\PullRequestSync;
+use App\Domain\Integrations\IntegrationService;
+use App\Domain\Integrations\Jira\JiraIssueSync;
+use App\Domain\Integrations\Jira\JiraProfileService;
+use App\Domain\Integrations\PullRequestSync;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\SaveBitbucketRequest;
 use App\Requests\SaveJiraProfileRequest;

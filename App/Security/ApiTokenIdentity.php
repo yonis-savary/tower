@@ -2,10 +2,10 @@
 
 namespace App\Security;
 
+use App\Domain\History\HistoryActor;
+use App\Domain\History\HistoryService;
 use App\Models\ApiToken;
 use App\Models\User;
-use App\Services\HistoryActor;
-use App\Services\HistoryService;
 use App\Session\MemorySession;
 use App\Session\SelectedWorkspace;
 use Cube\Env\Session;

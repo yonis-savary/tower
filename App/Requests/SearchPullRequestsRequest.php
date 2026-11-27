@@ -2,7 +2,7 @@
 
 namespace App\Requests;
 
-use App\Integrations\PullRequestData;
+use App\Domain\Integrations\PullRequestData;
 use Cube\Web\Http\Request;
 use Cube\Web\Http\Rules\Param;
 

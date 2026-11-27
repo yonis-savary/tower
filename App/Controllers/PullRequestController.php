@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
-use App\Integrations\PullRequestData;
-use App\Integrations\PullRequestService;
+use App\Domain\Integrations\PullRequestData;
+use App\Domain\Integrations\PullRequestService;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Models\PullRequest;

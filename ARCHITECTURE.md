@@ -149,11 +149,11 @@ entre deux jours, inclus (un mois glissant par défaut, 92 jours au plus) : une 
 découpée par statut (un trait fin tant qu'elle attend « à faire », une barre quand elle est en
 cours, rien une fois finie) et un point par changement de statut sur la période.
 
-- Les statuts tombent dans trois catégories, `todo`, `in_progress` et `done` (`App/Services/TimelineSpan`).
+- Les statuts tombent dans trois catégories, `todo`, `in_progress` et `done` (`App/Domain/Task/TimelineSpan`).
   Attendre dans un statut à faire n'est pas travailler : une tâche **commence** quand elle quitte
   `todo` pour la première fois, et elle est traitée si elle a été en cours pendant la période ou
   s'est finie pendant celle-ci. Une tâche qui n'a fait que bouger entre statuts à faire n'apparaît pas.
-- `GET /api/tasks/timeline?from=&to=` (`App/Services/TaskTimelineService`) : `done` et `cancelled`
+- `GET /api/tasks/timeline?from=&to=` (`App/Domain/Task/TaskTimelineService`) : `done` et `cancelled`
   sont `done`. Sa fin est `done_at`, ou la date d'annulation. L'historique n'étant gardé que 31 jours,
   une tâche plus ancienne n'est placée que par sa création et sa fin.
 - Une case « Inclure les tickets Jira sans tâche », proposée quand le workspace a des profils Jira et
@@ -177,7 +177,7 @@ Le sprint se choisit une fois pour tout le lot. La saisie est ponctuelle : la no
 gardée une fois les tâches créées, seul un brouillon vit dans le `localStorage` (un par
 workspace) tant qu'elles ne le sont pas.
 
-- `App/TaskNotes/TaskNotesParser` est la **seule** implémentation de la syntaxe.
+- `App/Domain/Task/Notes/TaskNotesParser` est la **seule** implémentation de la syntaxe.
   `POST /api/tasks/notes/preview` renvoie les tâches et les erreurs par ligne sans rien créer :
   le front l'appelle après une pause de frappe pour l'aperçu, qui ne peut donc pas annoncer
   autre chose que ce qui sera créé.
@@ -284,7 +284,7 @@ récurrence facultative.
 - **Couleur** : un élément prend la couleur de son workspace, ou la sienne (`#rrggbb`). Le
   formulaire propose une palette fixe de dix couleurs (`AGENDA_COLORS`, côté front), précédée d'un
   cercle vide pour « aucune couleur » ; l'API accepte toute couleur `#rrggbb`, pour un agent.
-- **Récurrence** (`App/Agenda/Recurrence`) : `recurrence` (`daily`, `weekly`, `monthly`, `yearly`, nul pour un
+- **Récurrence** (`App/Domain/Agenda/Recurrence`) : `recurrence` (`daily`, `weekly`, `monthly`, `yearly`, nul pour un
   élément unique), `recurrence_interval` (toutes les N périodes, 1 à 99), `recurrence_weekdays` (jours ISO d'un élément
   hebdomadaire, `1` = lundi, séparés par des virgules ; le jour du début par défaut) et `recurrence_until` (dernier jour
   où une occurrence peut commencer, inclus ; nul : sans fin). L'élément donne la première occurrence ; les autres
@@ -319,7 +319,7 @@ en haut de la page, le champ déjà actif.
   **5 résultats par type**, les non terminés d'abord ; `done` marque une merge request fermée, un
   ticket terminé ou qui n'est plus suivi, une tâche terminée ou annulée, une page archivée, affichés
   plus discrètement. Une section que le workspace n'affiche pas n'est pas cherchée.
-- Chaque type est une classe qui étend `App/Search/SearchSource` (son type, sa position, sa section,
+- Chaque type est une classe qui étend `App/Domain/Search/SearchSource` (son type, sa position, sa section,
   ses champs, ce qui est terminé), trouvée par découverte : ajouter un type, c'est ajouter un fichier.
 - Les **workspaces** de l'utilisateur sont cherchés dans le front, par leur nom, et s'insèrent après
   les tâches.
@@ -422,7 +422,7 @@ lance pour chaque événement, construit dans un formulaire du front plutôt qu'
   exécute. Sans handler, le fichier n'a pas de section `handlers` (le connecteur refuse une
   section vide).
 - Stockés comme une liste de règles (`pattern`, `run`, `response`, `next`), pour garder leur ordre
-  et des motifs que JSON transformerait en indices ; `App\Connector\HandlerRules` les valide avec
+  et des motifs que JSON transformerait en indices ; `App\Domain\AccessKey\Connector\HandlerRules` les valide avec
   les contraintes de `parse_chain` du connecteur (guillemets fermés, types d'événements, 10
   `next` au plus…) et les traduit au format du connecteur. Le formulaire ne propose que des
   réponses et des payloads à un niveau (champs texte).

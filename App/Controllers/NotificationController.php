@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Domain\Notification\PushService;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\NotificationPreviewRequest;
 use App\Requests\NotificationRuleRequest;
@@ -11,7 +12,6 @@ use App\Requests\PushTestRequest;
 use App\Requests\UpdateNotificationRuleRequest;
 use App\Resources\NotificationRuleResource;
 use App\Resources\PushSubscriptionResource;
-use App\Services\PushService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawResponse;

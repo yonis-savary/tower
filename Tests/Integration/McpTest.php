@@ -2,8 +2,9 @@
 
 namespace Tests\Integration;
 
-use App\Integrations\Bitbucket\BitbucketClient;
-use App\Integrations\Jira\JiraClient;
+use App\Domain\Integrations\Bitbucket\BitbucketClient;
+use App\Domain\Integrations\Jira\JiraClient;
+use App\Domain\Workspace\WorkspaceSignals;
 use App\Models\AgendaItem;
 use App\Models\ApiToken;
 use App\Models\DocPageVersion;
@@ -12,7 +13,6 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
-use App\Services\WorkspaceSignals;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;

@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Agenda\Recurrence;
+use App\Domain\Agenda\Recurrence;
 use PHPUnit\Framework\TestCase;
 
 class RecurrenceTest extends TestCase

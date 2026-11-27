@@ -2,9 +2,9 @@
 
 namespace App\Controllers;
 
-use App\Documentation\DocumentationImages;
-use App\Documentation\DocumentationRefusal;
-use App\Documentation\DocumentationService;
+use App\Domain\Documentation\DocumentationImages;
+use App\Domain\Documentation\DocumentationRefusal;
+use App\Domain\Documentation\DocumentationService;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Models\DocPage;

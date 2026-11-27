@@ -1,5 +1,5 @@
 <?php
 
-use App\Services\HistoryService;
+use App\Domain\History\HistoryService;
 
 Cube\daily([HistoryService::class, 'purgeExpired']);

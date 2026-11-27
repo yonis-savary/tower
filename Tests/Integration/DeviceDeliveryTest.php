@@ -3,12 +3,12 @@
 namespace Tests\Integration;
 
 use App\Channels\DevicesChannel;
-use App\Connector\ConnectorConfiguration;
-use App\Models\History;
+use App\Domain\AccessKey\AccessKeyService;
+use App\Domain\AccessKey\Connector\ConnectorConfiguration;
+use App\Domain\History\HistoryService;
 use App\Models\EventDelivery;
+use App\Models\History;
 use App\Models\Workspace;
-use App\Services\AccessKeyService;
-use App\Services\HistoryService;
 use App\Session\SelectedWorkspace;
 use Cube\Env\Configuration;
 use Cube\Security\Authentication;

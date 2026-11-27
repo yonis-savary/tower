@@ -2,7 +2,7 @@
 
 namespace App\Requests;
 
-use App\Agenda\AgendaService;
+use App\Domain\Agenda\AgendaService;
 use Cube\Web\Http\Rules\Param;
 
 /**

@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Domain\History\HistoryService;
+use App\Domain\Webhook\WebhookService;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\CreateWebhookRequest;
 use App\Requests\HistoryRequest;
@@ -9,8 +11,6 @@ use App\Requests\UpdateWebhookRequest;
 use App\Resources\RefusedWebhookCallResource;
 use App\Resources\WebhookCallResource;
 use App\Resources\WebhookResource;
-use App\Services\HistoryService;
-use App\Services\WebhookService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\ObjectResponse;

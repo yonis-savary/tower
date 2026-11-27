@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Channels\WorkspaceDevicesChannel;
+use App\Domain\Workspace\WorkspaceIconService;
+use App\Domain\Workspace\WorkspaceService;
 use App\Favicons\Favicon;
 use App\Middlewares\IsAuthenticated;
 use App\Models\Workspace;
@@ -13,8 +15,6 @@ use App\Requests\WorkspaceNameRequest;
 use App\Resources\UserResource;
 use App\Resources\WorkspaceResource;
 use App\Security\WorkspaceSocketToken;
-use App\Services\WorkspaceIconService;
-use App\Services\WorkspaceService;
 use Cube\Data\OpenAPI\Attributes\Endpoint;
 use Cube\Data\OpenAPI\Attributes\NoContentResponse;
 use Cube\Data\OpenAPI\Attributes\RawBody;

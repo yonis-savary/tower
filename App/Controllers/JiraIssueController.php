@@ -2,9 +2,9 @@
 
 namespace App\Controllers;
 
-use App\Integrations\Jira\JiraIssueService;
-use App\Integrations\Jira\JiraProfileService;
-use App\Integrations\Jira\JiraTransition;
+use App\Domain\Integrations\Jira\JiraIssueService;
+use App\Domain\Integrations\Jira\JiraProfileService;
+use App\Domain\Integrations\Jira\JiraTransition;
 use App\Mcp\McpTool;
 use App\Middlewares\IsAuthenticated;
 use App\Requests\ListJiraIssuesRequest;

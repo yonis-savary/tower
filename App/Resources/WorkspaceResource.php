@@ -2,9 +2,9 @@
 
 namespace App\Resources;
 
+use App\Domain\Workspace\WorkspaceIconService;
+use App\Domain\Workspace\WorkspaceService;
 use App\Models\Workspace;
-use App\Services\WorkspaceIconService;
-use App\Services\WorkspaceService;
 use Cube\Data\Models\Model;
 use Cube\Data\Models\ModelResource;
 use Cube\Data\OpenAPI\Attributes\Nullable;
