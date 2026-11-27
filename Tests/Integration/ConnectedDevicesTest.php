@@ -9,7 +9,6 @@ use App\Domain\AccessKey\AccessKeyService;
 use App\Domain\History\HistoryService;
 use App\Security\WorkspaceSocketToken;
 use Cube\Test\CubeTestCase;
-use Cube\Web\Websocket\Servers\WebsocketConfiguration;
 use GuzzleHttp\Psr7\Request;
 
 class ConnectedDevicesTest extends CubeTestCase
@@ -21,7 +20,7 @@ class ConnectedDevicesTest extends CubeTestCase
 
     public function testListIsPublishedPerWorkspace()
     {
-        $tokens = new WorkspaceSocketToken(new WebsocketConfiguration(broadcastSecret: 'a-secret-for-the-tests'));
+        $tokens = new WorkspaceSocketToken();
         $channel = new class($tokens) extends WorkspaceDevicesChannel {
             public array $published = [];
 

@@ -8,14 +8,13 @@ use App\Security\WorkspaceSocketToken;
 use App\Session\SelectedWorkspace;
 use Cube\Security\Authentication;
 use Cube\Test\CubeTestCase;
-use Cube\Web\Websocket\Servers\WebsocketConfiguration;
 use GuzzleHttp\Psr7\Request;
 
 class WorkspaceSocketTest extends CubeTestCase
 {
     private function tokens(): WorkspaceSocketToken
     {
-        return new WorkspaceSocketToken(new WebsocketConfiguration(broadcastSecret: 'a-secret-for-the-tests'));
+        return new WorkspaceSocketToken();
     }
 
     private function authorize(string $url): ?string
@@ -33,18 +32,19 @@ class WorkspaceSocketTest extends CubeTestCase
 
     public function testTokenExpires()
     {
-        $issuedAt = 1_000_000;
-        $token = $this->tokens()->issue(12, $issuedAt);
-
-        $this->assertTrue($this->tokens()->isValid(12, $token, $issuedAt + 60));
-        $this->assertFalse($this->tokens()->isValid(12, $token, $issuedAt + 61));
+        $this->assertTrue($this->tokens()->isValid(12, $this->tokens()->issue(12, time() - 59)));
+        $this->assertFalse($this->tokens()->isValid(12, $this->tokens()->issue(12, time() - 60)));
     }
 
     public function testForgedTokensAreRefused()
     {
-        [$expiresAt, $signature] = explode('.', $this->tokens()->issue(12));
+        $now = time();
+        $token = $this->tokens()->issue(12, $now);
+        $expiresAt = (string) ($now + 60);
+        $extended = str_replace($expiresAt.'.', ($expiresAt + 3600).'.', $token);
 
-        $this->assertFalse($this->tokens()->isValid(12, ($expiresAt + 3600).'.'.$signature));
+        $this->assertNotSame($token, $extended);
+        $this->assertFalse($this->tokens()->isValid(12, $extended));
         $this->assertFalse($this->tokens()->isValid(12, ''));
         $this->assertFalse($this->tokens()->isValid(12, 'garbage'));
     }

@@ -2,7 +2,7 @@
 
 namespace App\Security;
 
-use Cube\Web\Websocket\Servers\WebsocketConfiguration;
+use Cube\Utils\SignedPayload;
 
 /**
  * Short-lived proof that a browser may follow a workspace : the socket process has no PHP session.
@@ -12,28 +12,18 @@ class WorkspaceSocketToken
 {
     private const LIFETIME_SECONDS = 60;
 
-    public function __construct(
-        protected WebsocketConfiguration $configuration,
-    ) {}
-
     public function issue(int $workspace, ?int $now = null): string
     {
-        $expiresAt = ($now ?? time()) + self::LIFETIME_SECONDS;
-
-        return $expiresAt.'.'.$this->sign($workspace, $expiresAt);
+        return SignedPayload::sign($this->payloadOf($workspace), expiresAt: ($now ?? time()) + self::LIFETIME_SECONDS);
     }
 
-    public function isValid(int $workspace, string $token, ?int $now = null): bool
+    public function isValid(int $workspace, string $token): bool
     {
-        [$expiresAt, $signature] = array_pad(explode('.', $token, 2), 2, '');
-
-        return ctype_digit($expiresAt)
-            && (int) $expiresAt >= ($now ?? time())
-            && hash_equals($this->sign($workspace, (int) $expiresAt), $signature);
+        return SignedPayload::verify($token) === $this->payloadOf($workspace);
     }
 
-    private function sign(int $workspace, int $expiresAt): string
+    private function payloadOf(int $workspace): string
     {
-        return hash_hmac('sha256', "workspace-socket.{$workspace}.{$expiresAt}", (string) $this->configuration->broadcastSecret);
+        return "workspace-socket.{$workspace}";
     }
 }
