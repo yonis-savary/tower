@@ -49,7 +49,7 @@ services:
   websocket:
     image: ${COMPOSE_PROJECT_NAME}-php
     pull_policy: never # Built by php-fpm, it exists in no registry
-    command: ["php", "do", "app:serve-websocket", "-l"]
+    command: ["php", "do", "websocket:serve", "-l"]
     restart: unless-stopped
     ports:
       - "${TOWER_WEBSOCKET_PORT:-8088}:8088" # Host port the devices and browsers connect to, see .env.example
