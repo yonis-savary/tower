@@ -38,7 +38,7 @@ return [
 
     new WebsocketConfiguration(
         httpHost: '0.0.0.0',
-        broadcastSecret: env('WEBSOCKET_SECRET'),
+        broadcastSecret: env('WEBSOCKET_SECRET') ?: null, // Empty, every broadcast would match it : null makes the server refuse to start
         allowedOrigins: explode(',', env('WEBSOCKET_ALLOWED_ORIGINS', 'http://localhost:' . env('TOWER_VITE_DEV_PORT', '5173') . ',http://localhost:' . env('TOWER_HTTP_PORT', '8081'))),
     ),
 

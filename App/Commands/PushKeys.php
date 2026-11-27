@@ -27,8 +27,8 @@ class PushKeys extends Command
     {
         $keys = VAPID::createVapidKeys();
 
-        Console::log('VAPID_PUBLIC_KEY='.$keys['publicKey']);
-        Console::log('VAPID_PRIVATE_KEY='.$keys['privateKey']);
+        Console::print('VAPID_PUBLIC_KEY='.$keys['publicKey']);
+        Console::print('VAPID_PRIVATE_KEY='.$keys['privateKey']);
 
         return 0;
     }
