@@ -70,11 +70,12 @@ class AgendaController extends Controller
     #[McpTool('create_agenda_item', write: true)]
     public function create(CreateAgendaItemRequest $request): Response
     {
-        $workspace = $request->validated('workspace') ?? currentWorkspaceId();
+        $validated = $request->validated();
+        $workspace = $validated['workspace'] ?? currentWorkspaceId();
         if (!in_array($workspace, $this->reachable(), true))
             return $this->workspaceNotFound();
 
-        $item = $this->agenda->create($workspace, $this->authentication->userId(), AgendaItemData::fromValidated($request->validated()));
+        $item = $this->agenda->create($workspace, $this->authentication->userId(), AgendaItemData::fromValidated($validated));
         if (!$item)
             return $this->participantsRefused();
 

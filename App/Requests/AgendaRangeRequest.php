@@ -9,6 +9,8 @@ use Cube\Web\Http\Rules\Param;
 
 class AgendaRangeRequest extends Request
 {
+    use ValidatesOnce;
+
     public const MAX_DAYS = 62;
 
     public function getRules(): ObjectParam
@@ -45,12 +47,12 @@ class AgendaRangeRequest extends Request
 
     public function from(): string
     {
-        return Instant::toServerTime($this->validated('from'));
+        return Instant::toServerTime($this->validatedValues()['from']);
     }
 
     public function to(): string
     {
-        return Instant::toServerTime($this->validated('to'));
+        return Instant::toServerTime($this->validatedValues()['to']);
     }
 
     /**
@@ -66,7 +68,7 @@ class AgendaRangeRequest extends Request
      */
     protected function ids(string $key): ?array
     {
-        $ids = $this->validated($key);
+        $ids = $this->validatedValues()[$key] ?? null;
 
         return null === $ids ? null : array_values(array_unique(array_map('intval', explode(',', $ids))));
     }

@@ -62,11 +62,12 @@ class DocumentationController extends Controller
     #[McpTool('list_doc_pages')]
     public function list(ListDocPagesRequest $request): Response
     {
+        $validated = $request->validated();
         return Response::json(DocPageSummaryResource::of($this->documentation->listPages(
             currentWorkspaceId(),
-            $request->validated('search'),
-            $request->validated('tag'),
-            $request->validated('include_archived') ?? false,
+            $validated['search'] ?? null,
+            $validated['tag'] ?? null,
+            $validated['include_archived'] ?? false,
         )));
     }
 
@@ -77,13 +78,14 @@ class DocumentationController extends Controller
     #[McpTool('create_doc_page', write: true)]
     public function create(CreateDocPageRequest $request): Response
     {
+        $validated = $request->validated();
         $page = $this->documentation->createPage(
             currentWorkspaceId(),
             $this->authentication->userId(),
-            $request->validated('title'),
-            $request->validated('content') ?? '',
-            $request->validated('parent'),
-            $request->validated('tags') ?? [],
+            $validated['title'],
+            $validated['content'] ?? '',
+            $validated['parent'] ?? null,
+            $validated['tags'] ?? [],
         );
 
         return $page instanceof DocumentationRefusal ? $this->refused($page) : Response::json(DocPageResource::of($page), StatusCode::CREATED);
@@ -154,11 +156,12 @@ class DocumentationController extends Controller
     #[McpTool('edit_doc_page', write: true)]
     public function edit(EditDocPageRequest $request, int $page): Response
     {
+        $validated = $request->validated();
         $found = $this->documentation->findPage(currentWorkspaceId(), $page);
         if (!$found)
             return $this->pageNotFound();
 
-        return $this->answer($this->documentation->editPage($found, $this->authentication->userId(), $request->validated('version'), $request->validated('edits')));
+        return $this->answer($this->documentation->editPage($found, $this->authentication->userId(), $validated['version'] ?? null, $validated['edits']));
     }
 
     #[Endpoint('List documentation page versions', 'The versions of a page kept for 31 days, newest first, without their content : who wrote each one, and through which agent token. Read one with readDocPageVersion', 'listDocPageVersions')]
@@ -195,7 +198,8 @@ class DocumentationController extends Controller
     #[McpTool('upload_doc_image', write: true)]
     public function uploadImage(UploadDocImageRequest $request): Response
     {
-        $image = $this->images->store(currentWorkspaceId(), $this->authentication->userId(), $request->validated('name'), $request->validated('content'));
+        $validated = $request->validated();
+        $image = $this->images->store(currentWorkspaceId(), $this->authentication->userId(), $validated['name'], $validated['content']);
 
         return $image instanceof DocumentationRefusal ? $this->refused($image) : Response::json(DocImageResource::of($image), StatusCode::CREATED);
     }

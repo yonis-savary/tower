@@ -131,12 +131,13 @@ class WorkspaceController extends Controller
     #[RawResponse(['error' => 'Workspace not found'], responseCode: StatusCode::NOT_FOUND, description: 'The workspace does not exist or the user is not a member of it')]
     public function update(UpdateWorkspaceRequest $request, int $workspace): Response
     {
+        $validated = $request->validated();
         $found = $this->workspaceOfUser($workspace);
         if (!$found)
             return $this->workspaceNotFound();
 
-        $reminder = array_key_exists('agenda_reminder_minutes', $request->validated()) ? $request->validated('agenda_reminder_minutes') : false;
-        $updated = $this->workspaces->update($found, trim($request->validated('name')), $request->validated('accent_color'), $request->validated('sections'), $request->validated('mcp_access'), $reminder);
+        $reminder = array_key_exists('agenda_reminder_minutes', $validated) ? $validated['agenda_reminder_minutes'] : false;
+        $updated = $this->workspaces->update($found, trim($validated['name']), $validated['accent_color'], $validated['sections'] ?? null, $validated['mcp_access'] ?? null, $reminder);
 
         return Response::json(WorkspaceResource::of($updated));
     }

@@ -103,13 +103,14 @@ class PullRequestController extends Controller
     #[McpTool('search_repository_pull_requests')]
     public function search(SearchPullRequestsRequest $request, string $repository): Response
     {
+        $validated = $request->validated();
         $workspace = currentWorkspaceId();
         $found = $this->pullRequests->search(
             $workspace,
             $repository,
-            $request->validated('branch'),
-            $request->validated('state') ?? PullRequestData::STATE_OPEN,
-            $request->validated('limit') ?? SearchPullRequestsRequest::DEFAULT_LIMIT,
+            $validated['branch'] ?? null,
+            $validated['state'] ?? PullRequestData::STATE_OPEN,
+            $validated['limit'] ?? SearchPullRequestsRequest::DEFAULT_LIMIT,
         );
 
         return null === $found

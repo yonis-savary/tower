@@ -57,10 +57,11 @@ class AuthController extends Controller
     #[RawResponse(['error' => 'Email already used'], responseCode: StatusCode::CONFLICT, description: 'An account already uses this email')]
     public function register(RegisterRequest $request): Response
     {
+        $validated = $request->validated();
         if (!$this->registrationConfiguration->open)
             return Response::json(['error' => 'Registration is closed'], StatusCode::FORBIDDEN);
 
-        $user = $this->registration->register($request->validated('email'), $request->validated('password'));
+        $user = $this->registration->register($validated['email'], $validated['password']);
         if (!$user)
             return Response::json(['error' => 'Email already used'], StatusCode::CONFLICT);
 
@@ -75,8 +76,9 @@ class AuthController extends Controller
     #[RawResponse(['error' => 'Invalid credentials'], responseCode: StatusCode::UNAUTHORIZED, description: 'Wrong email or password, or disabled account')]
     public function login(LoginRequest $request): Response
     {
-        if (!$this->authentication->attempt($request->validated('email'), $request->validated('password'))) {
-            $this->logins->failed($request->validated('email'));
+        $validated = $request->validated();
+        if (!$this->authentication->attempt($validated['email'], $validated['password'])) {
+            $this->logins->failed($validated['email']);
             return Response::json(['error' => 'Invalid credentials'], StatusCode::UNAUTHORIZED);
         }
 
@@ -113,10 +115,11 @@ class AuthController extends Controller
     #[RawResponse(['error' => 'Wrong current password'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'The current password is wrong, or the new one is invalid')]
     public function changePassword(ChangePasswordRequest $request): Response
     {
+        $validated = $request->validated();
         $changed = $this->accounts->changePassword(
             User::find($this->authentication->userId()),
-            $request->validated('current_password'),
-            $request->validated('new_password'),
+            $validated['current_password'],
+            $validated['new_password'],
         );
 
         return $changed

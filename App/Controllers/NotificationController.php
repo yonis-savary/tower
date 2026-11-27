@@ -77,16 +77,17 @@ class NotificationController extends Controller
     #[RawResponse(['error' => 'Push notifications are not set up'], responseCode: StatusCode::CONFLICT, description: 'No VAPID keys on this server')]
     public function saveSubscription(PushSubscriptionRequest $request): Response
     {
+        $validated = $request->validated();
         if (!$this->push->isEnabled())
             return Response::json(['error' => 'Push notifications are not set up'], StatusCode::CONFLICT);
 
         $subscription = $this->push->saveSubscription(
             currentWorkspaceId(),
             $this->authentication->userId(),
-            $request->validated('endpoint'),
-            $request->validated('keys')['p256dh'],
-            $request->validated('keys')['auth'],
-            $request->validated('content_encoding'),
+            $validated['endpoint'],
+            $validated['keys']['p256dh'],
+            $validated['keys']['auth'],
+            $validated['content_encoding'],
             $request->getHeader('User-Agent'),
         );
 
@@ -125,11 +126,12 @@ class NotificationController extends Controller
     #[RawResponse(['error' => 'The push service refused the notification'], responseCode: StatusCode::BAD_GATEWAY, description: 'The push service of the browser refused it')]
     public function testSubscription(PushTestRequest $request, int $subscription): Response
     {
+        $validated = $request->validated();
         $found = $this->push->findSubscription(currentWorkspaceId(), $this->authentication->userId(), $subscription);
         if (!$found)
             return $this->subscriptionNotFound();
 
-        if (!$this->push->isEnabled() || !$this->push->sendTest($found, $request->validated('title'), (string) $request->validated('body')))
+        if (!$this->push->isEnabled() || !$this->push->sendTest($found, $validated['title'], (string) $validated['body']))
             return Response::json(['error' => 'The push service refused the notification'], StatusCode::BAD_GATEWAY);
 
         return Response::noContent();
@@ -148,13 +150,14 @@ class NotificationController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function createRule(NotificationRuleRequest $request): Response
     {
+        $validated = $request->validated();
         $rule = $this->push->createRule(
             currentWorkspaceId(),
             $this->authentication->userId(),
-            $request->validated('name'),
-            $request->validated('listen'),
-            $request->validated('title'),
-            $request->validated('body'),
+            $validated['name'],
+            $validated['listen'],
+            $validated['title'] ?? null,
+            $validated['body'] ?? null,
         );
 
         return Response::json(NotificationRuleResource::of($rule), StatusCode::CREATED);
@@ -165,12 +168,13 @@ class NotificationController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function previewRule(NotificationPreviewRequest $request): Response
     {
+        $validated = $request->validated();
         return Response::json($this->push->content(
-            $request->validated('title'),
-            $request->validated('body'),
+            $validated['title'] ?? null,
+            $validated['body'] ?? null,
             currentWorkspace()->name,
-            $request->validated('type'),
-            $request->validated('payload'),
+            $validated['type'],
+            $validated['payload'],
         ));
     }
 
@@ -180,17 +184,18 @@ class NotificationController extends Controller
     #[RawResponse(['error' => 'Notification rule not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such rule of the user in the current workspace')]
     public function updateRule(UpdateNotificationRuleRequest $request, int $rule): Response
     {
+        $validated = $request->validated();
         $found = $this->push->findRule(currentWorkspaceId(), $this->authentication->userId(), $rule);
         if (!$found)
             return $this->ruleNotFound();
 
         $this->push->updateRule(
             $found,
-            $request->validated('name'),
-            $request->validated('listen'),
-            $request->validated('title'),
-            $request->validated('body'),
-            (bool) $request->validated('enabled'),
+            $validated['name'],
+            $validated['listen'],
+            $validated['title'] ?? null,
+            $validated['body'] ?? null,
+            (bool) $validated['enabled'],
         );
 
         return Response::json(NotificationRuleResource::of($found));

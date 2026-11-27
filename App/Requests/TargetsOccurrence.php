@@ -10,6 +10,8 @@ use Cube\Web\Http\Rules\Param;
  */
 trait TargetsOccurrence
 {
+    use ValidatesOnce;
+
     /**
      * @return array<string,Param>
      */
@@ -24,12 +26,12 @@ trait TargetsOccurrence
 
     public function occurrence(): ?string
     {
-        return $this->validated('occurrence');
+        return $this->validatedValues()['occurrence'] ?? null;
     }
 
     // An occurrence alone by default : the whole item without one
     public function scope(): string
     {
-        return $this->validated('scope') ?? (null === $this->occurrence() ? AgendaService::SCOPE_SERIES : AgendaService::SCOPE_OCCURRENCE);
+        return $this->validatedValues()['scope'] ?? (null === $this->occurrence() ? AgendaService::SCOPE_SERIES : AgendaService::SCOPE_OCCURRENCE);
     }
 }

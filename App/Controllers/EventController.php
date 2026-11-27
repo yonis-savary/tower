@@ -47,7 +47,8 @@ class EventController extends Controller
     #[McpTool('trigger_event', write: true)]
     public function trigger(TriggerEventRequest $request): Response
     {
-        $this->events->triggerAsUser(currentWorkspaceId(), $this->authentication->userId(), $request->validated('type'), $request->validated('payload'));
+        $validated = $request->validated();
+        $this->events->triggerAsUser(currentWorkspaceId(), $this->authentication->userId(), $validated['type'], $validated['payload']);
 
         return Response::noContent();
     }
@@ -75,12 +76,13 @@ class EventController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function createQuickAction(CreateQuickActionRequest $request): Response
     {
+        $validated = $request->validated();
         $action = $this->events->createQuickAction(
             currentWorkspaceId(),
-            $request->validated('name'),
-            $request->validated('description'),
-            $request->validated('type'),
-            $request->validated('payload'),
+            $validated['name'],
+            $validated['description'] ?? null,
+            $validated['type'],
+            $validated['payload'],
         );
 
         return Response::json(QuickActionResource::of($action), StatusCode::CREATED);

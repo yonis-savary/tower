@@ -82,11 +82,12 @@ class AccessKeyController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function create(CreateAccessKeyRequest $request): Response
     {
+        $validated = $request->validated();
         [$key, $secret] = $this->keys->create(
             currentWorkspaceId(),
-            $request->validated('name'),
-            $request->validated('listen') ?? AccessKeyService::LISTEN_EVERYTHING,
-            HandlerRules::normalize($request->validated('handlers') ?? []),
+            $validated['name'],
+            $validated['listen'] ?? AccessKeyService::LISTEN_EVERYTHING,
+            HandlerRules::normalize($validated['handlers'] ?? []),
         );
         $this->history->log($key->workspace, 'key.created', ['name' => $key->name], user: $this->authentication->userId());
 
@@ -134,8 +135,9 @@ class AccessKeyController extends Controller
     #[RawResponse(['error' => 'Connector unavailable'], responseCode: StatusCode::SERVICE_UNAVAILABLE, description: 'A connector is asked, and it was not built into this image')]
     public function createDownloadLink(CreateDownloadLinkRequest $request, int $key): Response
     {
-        $secret = $request->validated('secret');
-        $format = $request->validated('format');
+        $validated = $request->validated();
+        $secret = $validated['secret'];
+        $format = $validated['format'];
         $accessKey = $this->keys->findUsable(currentWorkspaceId(), $key);
         if (!$accessKey || !$this->keys->secretMatches($accessKey, $secret))
             return $this->keyNotFound();

@@ -64,6 +64,7 @@ class ApiTokenController extends Controller
     #[RawResponse(['error' => 'MCP access is blocked for this workspace'], responseCode: StatusCode::CONFLICT, description: 'The workspace refuses MCP connections')]
     public function create(CreateApiTokenRequest $request): Response
     {
+        $validated = $request->validated();
         $workspace = currentWorkspace();
         if (WorkspaceService::MCP_BLOCKED === $workspace->mcp_access)
             return Response::json(['error' => 'MCP access is blocked for this workspace'], StatusCode::CONFLICT);
@@ -71,9 +72,9 @@ class ApiTokenController extends Controller
         [$token, $value] = $this->tokens->create(
             $this->authentication->userId(),
             $workspace->id,
-            $request->validated('name'),
-            $request->validated('scope'),
-            $request->validated('expires_in_days'),
+            $validated['name'],
+            $validated['scope'],
+            $validated['expires_in_days'] ?? null,
         );
         $this->history->log($token->workspace, 'token.created', ['name' => $token->name, 'scope' => $token->scope], user: $token->user);
 

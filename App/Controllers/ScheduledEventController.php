@@ -58,13 +58,14 @@ class ScheduledEventController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function create(ScheduledEventRequest $request): Response
     {
+        $validated = $request->validated();
         $schedule = $this->schedules->create(
             currentWorkspaceId(),
-            $request->validated('name'),
-            $request->validated('type'),
-            $request->validated('payload'),
-            $request->validated('cron'),
-            $request->validated('run_at'),
+            $validated['name'],
+            $validated['type'],
+            $validated['payload'],
+            $validated['cron'] ?? null,
+            $validated['run_at'] ?? null,
         );
         $this->history->log($schedule->workspace, 'schedule.created', ['name' => $schedule->name], user: $this->authentication->userId());
 
@@ -77,19 +78,20 @@ class ScheduledEventController extends Controller
     #[RawResponse(['error' => 'Scheduled event not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such scheduled event in the current workspace')]
     public function update(UpdateScheduledEventRequest $request, int $schedule): Response
     {
+        $validated = $request->validated();
         $found = $this->schedules->find(currentWorkspaceId(), $schedule);
         if (!$found)
             return $this->notFound();
 
         $wasEnabled = (bool) $found->enabled;
-        $enabled = (bool) $request->validated('enabled');
+        $enabled = (bool) $validated['enabled'];
         $this->schedules->update(
             $found,
-            $request->validated('name'),
-            $request->validated('type'),
-            $request->validated('payload'),
-            $request->validated('cron'),
-            $request->validated('run_at'),
+            $validated['name'],
+            $validated['type'],
+            $validated['payload'],
+            $validated['cron'] ?? null,
+            $validated['run_at'] ?? null,
             $enabled,
         );
 

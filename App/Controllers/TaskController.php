@@ -92,13 +92,14 @@ class TaskController extends Controller
     #[McpTool('create_task', write: true)]
     public function create(CreateTaskRequest $request): Response
     {
+        $validated = $request->validated();
         $task = $this->tasks->createTask(
             currentWorkspaceId(),
             $this->authentication->userId(),
-            $request->validated('title'),
-            $request->validated('description') ?? '',
-            $request->validated('sprint'),
-            link: $request->validated('link'),
+            $validated['title'],
+            $validated['description'] ?? '',
+            $validated['sprint'] ?? null,
+            link: $validated['link'] ?? null,
         );
 
         return $task
@@ -122,11 +123,12 @@ class TaskController extends Controller
     #[McpTool('create_tasks_from_notes', write: true)]
     public function createFromNotes(CreateTaskNotesRequest $request): Response
     {
-        $notes = $this->notesParser->parse($request->validated('text'));
+        $validated = $request->validated();
+        $notes = $this->notesParser->parse($validated['text']);
         if (!$notes->isCreatable())
             return Response::json(['error' => 'Invalid notes', ...$notes->toArray()], StatusCode::UNPROCESSABLE_CONTENT);
 
-        $tasks = $this->tasks->createTasks(currentWorkspaceId(), $this->authentication->userId(), $notes->tasks, $request->validated('sprint'));
+        $tasks = $this->tasks->createTasks(currentWorkspaceId(), $this->authentication->userId(), $notes->tasks, $validated['sprint'] ?? null);
 
         return null === $tasks
             ? $this->invalidMove()
@@ -140,12 +142,13 @@ class TaskController extends Controller
     #[McpTool('update_task', write: true)]
     public function update(TaskContentRequest $request, int $task): Response
     {
+        $validated = $request->validated();
         $found = $this->tasks->findTask(currentWorkspaceId(), $task);
         if (!$found)
             return $this->taskNotFound();
 
-        $link = array_key_exists('link', $request->validated()) ? $request->validated('link') : $found->link;
-        $this->tasks->updateTask($found, $this->authentication->userId(), $request->validated('title'), $request->validated('description') ?? '', $link);
+        $link = array_key_exists('link', $validated) ? $validated['link'] : $found->link;
+        $this->tasks->updateTask($found, $this->authentication->userId(), $validated['title'], $validated['description'] ?? '', $link);
 
         return Response::json(TaskResource::of($found));
     }
@@ -158,11 +161,12 @@ class TaskController extends Controller
     #[McpTool('move_task', write: true)]
     public function move(MoveTaskRequest $request, int $task): Response
     {
+        $validated = $request->validated();
         $found = $this->tasks->findTask(currentWorkspaceId(), $task);
         if (!$found)
             return $this->taskNotFound();
 
-        $moved = $this->tasks->moveTask($found, $this->authentication->userId(), $request->validated('sprint'), $request->validated('status'), $request->validated('ordered'));
+        $moved = $this->tasks->moveTask($found, $this->authentication->userId(), $validated['sprint'], $validated['status'], $validated['ordered'] ?? null);
 
         return $moved ? Response::json(TaskResource::of($moved)) : $this->invalidMove();
     }
@@ -237,11 +241,12 @@ class TaskController extends Controller
     #[McpTool('add_sprint_link', write: true)]
     public function addSprintLink(SaveSprintLinkRequest $request, int $sprint): Response
     {
+        $validated = $request->validated();
         $found = $this->tasks->findSprint(currentWorkspaceId(), $sprint);
         if (!$found)
             return $this->sprintNotFound();
 
-        $link = $this->tasks->addLink($found, $this->authentication->userId(), $request->validated('url'), $request->validated('label') ?: null);
+        $link = $this->tasks->addLink($found, $this->authentication->userId(), $validated['url'], ($validated['label'] ?? null) ?: null);
 
         return $link ? Response::json(SprintLinkResource::of($link), StatusCode::CREATED) : $this->sprintClosed();
     }
@@ -253,11 +258,12 @@ class TaskController extends Controller
     #[RawResponse(['error' => 'This sprint is closed'], responseCode: StatusCode::CONFLICT, description: 'The links of a closed sprint no longer change')]
     public function updateSprintLink(SaveSprintLinkRequest $request, int $link): Response
     {
+        $validated = $request->validated();
         $found = $this->tasks->findLink(currentWorkspaceId(), $link);
         if (!$found)
             return $this->linkNotFound();
 
-        return $this->tasks->updateLink($found, $this->authentication->userId(), $request->validated('url'), $request->validated('label') ?: null)
+        return $this->tasks->updateLink($found, $this->authentication->userId(), $validated['url'], ($validated['label'] ?? null) ?: null)
             ? Response::json(SprintLinkResource::of($found))
             : $this->sprintClosed();
     }

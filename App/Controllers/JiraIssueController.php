@@ -60,7 +60,8 @@ class JiraIssueController extends Controller
     #[McpTool('list_jira_issues')]
     public function list(ListJiraIssuesRequest $request): Response
     {
-        $issues = $this->issues->listIssues(currentWorkspaceId(), (bool) $request->validated('mine'), $request->validated('status_category'), $request->validated('profile'));
+        $validated = $request->validated();
+        $issues = $this->issues->listIssues(currentWorkspaceId(), (bool) ($validated['mine'] ?? null), $validated['status_category'] ?? null, $validated['profile'] ?? null);
 
         return Response::json(JiraIssueResource::of($issues));
     }

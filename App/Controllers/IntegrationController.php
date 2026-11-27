@@ -70,13 +70,14 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'A token is required'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'No token was given for a new integration, or an invalid field')]
     public function save(SaveBitbucketRequest $request): Response
     {
+        $validated = $request->validated();
         $workspace = currentWorkspaceId();
-        $token = $request->validated('token') ?: null;
+        $token = ($validated['token'] ?? null) ?: null;
 
         if (null === $token && !$this->integrations->findBitbucket($workspace))
             return Response::json(['error' => 'A token is required'], StatusCode::UNPROCESSABLE_CONTENT);
 
-        $integration = $this->integrations->saveBitbucket($workspace, $request->validated('workspace'), $request->validated('email'), $token);
+        $integration = $this->integrations->saveBitbucket($workspace, $validated['workspace'], $validated['email'], $token);
 
         return Response::json(IntegrationResource::of($integration));
     }
@@ -128,13 +129,14 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'A token is required'], responseCode: StatusCode::UNPROCESSABLE_CONTENT, description: 'No token was given for a new integration, or an invalid field')]
     public function saveJira(SaveJiraRequest $request): Response
     {
+        $validated = $request->validated();
         $workspace = currentWorkspaceId();
-        $token = $request->validated('token') ?: null;
+        $token = ($validated['token'] ?? null) ?: null;
 
         if (null === $token && !$this->integrations->findJira($workspace))
             return Response::json(['error' => 'A token is required'], StatusCode::UNPROCESSABLE_CONTENT);
 
-        $integration = $this->integrations->saveJira($workspace, $request->validated('site'), $request->validated('email'), $token);
+        $integration = $this->integrations->saveJira($workspace, $validated['site'], $validated['email'], $token);
 
         return Response::json(JiraIntegrationResource::of($integration));
     }
@@ -175,11 +177,12 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'Integration not found'], responseCode: StatusCode::NOT_FOUND, description: 'The current workspace has no Jira integration')]
     public function createJiraProfile(SaveJiraProfileRequest $request): Response
     {
+        $validated = $request->validated();
         $integration = $this->integrations->findJira(currentWorkspaceId());
         if (!$integration)
             return $this->notFound();
 
-        $profile = $this->jiraProfiles->create($integration, self::textOrNull($request->validated('name')), $request->validated('board'), self::textOrNull($request->validated('jql')));
+        $profile = $this->jiraProfiles->create($integration, self::textOrNull($validated['name'] ?? null), $validated['board'], self::textOrNull($validated['jql'] ?? null));
 
         return Response::json(JiraProfileResource::of($profile), StatusCode::CREATED);
     }
@@ -190,11 +193,12 @@ class IntegrationController extends Controller
     #[RawResponse(['error' => 'Profile not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such profile in the current workspace')]
     public function updateJiraProfile(SaveJiraProfileRequest $request, int $profile): Response
     {
+        $validated = $request->validated();
         $found = $this->jiraProfiles->find(currentWorkspaceId(), $profile);
         if (!$found)
             return $this->profileNotFound();
 
-        $updated = $this->jiraProfiles->update($found, self::textOrNull($request->validated('name')), $request->validated('board'), self::textOrNull($request->validated('jql')));
+        $updated = $this->jiraProfiles->update($found, self::textOrNull($validated['name'] ?? null), $validated['board'], self::textOrNull($validated['jql'] ?? null));
 
         return Response::json(JiraProfileResource::of($updated));
     }

@@ -74,8 +74,9 @@ class WebhookController extends Controller
     #[RawResponse(['error' => 'Authentication required'], responseCode: StatusCode::UNAUTHORIZED, description: 'No active session')]
     public function create(CreateWebhookRequest $request): Response
     {
-        $secured = $request->validated('secured') ?? true;
-        [$webhook, $secret] = $this->webhooks->create(currentWorkspaceId(), $request->validated('name'), $request->validated('events'), (bool) $secured);
+        $validated = $request->validated();
+        $secured = $validated['secured'] ?? true;
+        [$webhook, $secret] = $this->webhooks->create(currentWorkspaceId(), $validated['name'], $validated['events'], (bool) $secured);
         $this->history->log($webhook->workspace, 'webhook.created', ['name' => $webhook->name, 'secured' => $webhook->secured], user: $this->authentication->userId());
 
         return Response::json(['webhook' => WebhookResource::of($webhook), 'secret' => $secret], StatusCode::CREATED);
@@ -87,13 +88,14 @@ class WebhookController extends Controller
     #[RawResponse(['error' => 'Webhook not found'], responseCode: StatusCode::NOT_FOUND, description: 'No such webhook in the current workspace')]
     public function update(UpdateWebhookRequest $request, int $webhook): Response
     {
+        $validated = $request->validated();
         $found = $this->webhooks->find(currentWorkspaceId(), $webhook);
         if (!$found)
             return $this->notFound();
 
         $wasEnabled = (bool) $found->enabled;
-        $enabled = (bool) $request->validated('enabled');
-        $this->webhooks->update($found, $request->validated('name'), $request->validated('events'), $enabled);
+        $enabled = (bool) $validated['enabled'];
+        $this->webhooks->update($found, $validated['name'], $validated['events'], $enabled);
 
         if ($wasEnabled !== $enabled)
             $this->history->log($found->workspace, $enabled ? 'webhook.enabled' : 'webhook.disabled', ['name' => $found->name], user: $this->authentication->userId());
